@@ -1,0 +1,218 @@
+import Link from "next/link";
+import Wordmark from "@/components/Wordmark";
+
+const FEATURES = [
+  ["Intelligent matching", "Every project is scored against 1,000+ grants, funds, labs, markets and investors on eight weighted criteria — genre, stage, territory, budget, format, funding gap, language and track record."],
+  ["Verified industry access", "Producers, investors and distributors are individually approved before they can read a single script. Your material is never public."],
+  ["Direct offers", "Approved producers and investors can send offers straight to your project — investment, co-production, distribution or acquisition."],
+  ["One pitch, many doors", "Submit your project once. FYLYMPITCH keeps it matched against new opportunities as deadlines open worldwide."],
+];
+
+const STEPS = [
+  ["Create your project", "Logline, synopsis, stage, budget, territory — plus your script and pitch deck in private, access-controlled storage."],
+  ["Receive your matches", "The engine ranks every live opportunity for your project and tells you why each one fits — and what to fix when it doesn't."],
+  ["Apply and connect", "Apply to funds and labs in two clicks, track every application, and field offers from verified producers and investors."],
+];
+
+const FAQS = [
+  ["Who can see my script and pitch deck?", "Only you, FYLYMPITCH administrators, and industry accounts that have been individually verified and approved. Files live in private storage with row-level access control — there are no public links."],
+  ["How is the match score calculated?", "Eight weighted criteria totalling 100 points: genre (20), stage (20), territory (15), budget (15), format (10), funding gap (10), language (5) and historical success (5). Anything under 60 is hidden so you only see real prospects."],
+  ["Is FYLYMPITCH free for filmmakers?", "Creating a profile, submitting one project and viewing your matches is free. Unlimited projects and priority matching are part of the Pro plan."],
+  ["How do producers and investors join?", "Sign up with a producer or investor account. Our team verifies your credits and company before granting access to projects — usually within 48 hours."],
+];
+
+export default function Home() {
+  return (
+    <main>
+      {/* NAV */}
+      <header className="max-w-6xl mx-auto px-6 py-7 flex items-center justify-between">
+        <Wordmark />
+        <nav className="hidden md:flex items-center gap-10 text-[12px] tracking-[0.18em] uppercase text-ash">
+          <a href="#features" className="hover:text-ink transition-colors">Platform</a>
+          <a href="#how" className="hover:text-ink transition-colors">How it works</a>
+          <a href="#pricing" className="hover:text-ink transition-colors">Pricing</a>
+          <a href="#faq" className="hover:text-ink transition-colors">FAQ</a>
+        </nav>
+        <div className="flex items-center gap-3">
+          <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase text-ink hover:text-gold transition-colors px-3 py-2">Sign in</Link>
+          <Link href="/signup" className="btn-gold !px-5 !py-2.5">Join</Link>
+        </div>
+      </header>
+
+      {/* HERO */}
+      <section className="max-w-6xl mx-auto px-6 pt-20 pb-28 md:pt-28 md:pb-36">
+        <p className="eyebrow mb-8">The global intelligence layer for cinema</p>
+        <h1 className="font-display font-normal text-[44px] leading-[1.08] md:text-[76px] max-w-4xl">
+          Where films find <span className="italic text-gold">their financiers.</span>
+        </h1>
+        <p className="mt-9 max-w-xl text-[17px] leading-relaxed text-ash">
+          FYLYMPITCH matches your project with the producers, funds, grants, labs,
+          markets and investors most likely to say yes — and tells you exactly why.
+        </p>
+        <div className="mt-12 flex flex-wrap gap-4">
+          <Link href="/signup" className="btn-gold">Submit your project</Link>
+          <Link href="/signup?role=producer" className="btn-ghost">I'm a producer / investor</Link>
+        </div>
+        <div className="mt-24 hairline-gold pt-6 flex flex-wrap gap-x-14 gap-y-4 text-[12px] tracking-[0.18em] uppercase text-ash">
+          <span>Grants</span><span>Film funds</span><span>Labs</span><span>Co-productions</span>
+          <span>Markets</span><span>Distribution</span><span>Investors</span><span>Streamers</span>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section id="features" className="bg-parchment">
+        <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">
+          <p className="eyebrow mb-4">Platform</p>
+          <h2 className="font-display text-[32px] md:text-[44px] max-w-2xl leading-tight">
+            Built for the way films actually get financed.
+          </h2>
+          <div className="mt-16 grid md:grid-cols-2 gap-x-16 gap-y-14">
+            {FEATURES.map(([title, body]) => (
+              <div key={title} className="hairline pt-6">
+                <h3 className="font-display text-[21px] mb-3">{title}</h3>
+                <p className="text-[15px] leading-relaxed text-ash">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section id="how" className="max-w-6xl mx-auto px-6 py-24 md:py-32">
+        <p className="eyebrow mb-4">How it works</p>
+        <h2 className="font-display text-[32px] md:text-[44px] leading-tight">From logline to letter of intent.</h2>
+        <div className="mt-16 grid md:grid-cols-3 gap-12">
+          {STEPS.map(([title, body], i) => (
+            <div key={title}>
+              <div className="font-display italic text-gold text-[34px] mb-4">{i + 1}</div>
+              <h3 className="font-display text-[20px] mb-3">{title}</h3>
+              <p className="text-[15px] leading-relaxed text-ash">{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section className="bg-deep text-ivory">
+        <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">
+          <p className="eyebrow mb-12">From the community</p>
+          <div className="grid md:grid-cols-2 gap-16">
+            <blockquote>
+              <p className="font-display italic text-[22px] md:text-[26px] leading-snug">
+                "For the first time I could see, in one ranked list, every fund my
+                Wayanad-set feature was actually eligible for — with the deadlines."
+              </p>
+              <footer className="mt-6 text-[12px] tracking-[0.2em] uppercase text-gold">Independent director — Kerala, India</footer>
+            </blockquote>
+            <blockquote>
+              <p className="font-display italic text-[22px] md:text-[26px] leading-snug">
+                "As a producer I only see projects that fit my slate. No noise,
+                verified filmmakers, scripts behind access control. That's rare."
+              </p>
+              <footer className="mt-6 text-[12px] tracking-[0.2em] uppercase text-gold">Co-production executive — Europe</footer>
+            </blockquote>
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="pricing" className="max-w-6xl mx-auto px-6 py-24 md:py-32">
+        <p className="eyebrow mb-4">Pricing</p>
+        <h2 className="font-display text-[32px] md:text-[44px] leading-tight">Start free. Upgrade when you're pitching.</h2>
+        <div className="mt-16 grid md:grid-cols-3 gap-8">
+          {[
+            ["Free", "$0", ["1 active project", "Match scores & reasons", "Save opportunities", "Apply to 3 opportunities / month"], "Start free", "/signup"],
+            ["Single Pitch", "$19", ["Everything in Free", "1 project, unlimited applications", "Priority in producer discovery", "Deadline alerts"], "Choose Single Pitch", "/signup"],
+            ["Pro", "$49", ["Unlimited projects", "Unlimited applications", "Early access to new funds", "Pitch materials review queue"], "Go Pro", "/signup"],
+          ].map(([name, price, items, cta, href], i) => (
+            <div key={name as string} className={`card p-8 ${i === 2 ? "border-gold" : ""}`}>
+              <h3 className="eyebrow">{name as string}</h3>
+              <div className="mt-4 font-display text-[40px]">{price as string}<span className="text-[14px] text-ash font-sans"> /month</span></div>
+              <ul className="mt-6 space-y-3 text-[14px] text-ash">
+                {(items as string[]).map((it) => (
+                  <li key={it} className="hairline pt-3">{it}</li>
+                ))}
+              </ul>
+              <Link href={href as string} className={`mt-8 w-full ${i === 2 ? "btn-gold" : "btn-ghost"}`}>{cta as string}</Link>
+            </div>
+          ))}
+        </div>
+        <p className="mt-8 text-[13px] text-ash">Producer and investor accounts are free — verification required.</p>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="bg-parchment">
+        <div className="max-w-3xl mx-auto px-6 py-24 md:py-32">
+          <p className="eyebrow mb-4">FAQ</p>
+          <h2 className="font-display text-[32px] md:text-[40px]">Questions, answered.</h2>
+          <div className="mt-12">
+            {FAQS.map(([q, a]) => (
+              <details key={q} className="hairline py-5 group">
+                <summary className="cursor-pointer list-none flex justify-between items-center font-normal text-[16px]">
+                  {q}
+                  <span className="text-gold ml-6 group-open:rotate-45 transition-transform">+</span>
+                </summary>
+                <p className="mt-4 text-[15px] leading-relaxed text-ash">{a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CONTACT */}
+      <section id="contact" className="max-w-6xl mx-auto px-6 py-24">
+        <div className="hairline-gold pt-10 md:flex items-end justify-between gap-12">
+          <div>
+            <p className="eyebrow mb-4">Contact</p>
+            <h2 className="font-display text-[28px] md:text-[36px] max-w-lg leading-tight">
+              Festivals, funds and institutions — list your programme on FYLYMPITCH.
+            </h2>
+          </div>
+          <a href="mailto:nobinkurian@yahoo.com" className="btn-ghost mt-8 md:mt-0 shrink-0">Write to us</a>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="bg-deep text-ivory">
+        <div className="max-w-6xl mx-auto px-6 py-16">
+          <div className="md:flex justify-between gap-12">
+            <div className="max-w-xs">
+              <Wordmark light />
+              <p className="mt-5 text-[13px] leading-relaxed text-ivory/50">
+                Intelligent matchmaking between film projects and the people who finance them. A FYLYM company.
+              </p>
+            </div>
+            <div className="mt-10 md:mt-0 grid grid-cols-2 sm:grid-cols-3 gap-12 text-[13px]">
+              <div>
+                <p className="eyebrow !text-ivory/40 mb-4">Platform</p>
+                <ul className="space-y-3 text-ivory/70">
+                  <li><a href="#features" className="hover:text-gold">Features</a></li>
+                  <li><a href="#pricing" className="hover:text-gold">Pricing</a></li>
+                  <li><Link href="/signup" className="hover:text-gold">Join</Link></li>
+                </ul>
+              </div>
+              <div>
+                <p className="eyebrow !text-ivory/40 mb-4">For industry</p>
+                <ul className="space-y-3 text-ivory/70">
+                  <li><Link href="/signup?role=producer" className="hover:text-gold">Producers</Link></li>
+                  <li><Link href="/signup?role=investor" className="hover:text-gold">Investors</Link></li>
+                  <li><a href="#contact" className="hover:text-gold">List a fund</a></li>
+                </ul>
+              </div>
+              <div>
+                <p className="eyebrow !text-ivory/40 mb-4">Company</p>
+                <ul className="space-y-3 text-ivory/70">
+                  <li><a href="https://www.nobinkurian.com" className="hover:text-gold">About</a></li>
+                  <li><a href="mailto:nobinkurian@yahoo.com" className="hover:text-gold">Contact</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div className="hairline-gold mt-14 pt-6 text-[11px] tracking-[0.2em] uppercase text-ivory/40">
+            © {new Date().getFullYear()} FYLYMPITCH · A FYLYM Company · Ernakulam, Kerala
+          </div>
+        </div>
+      </footer>
+    </main>
+  );
+}
