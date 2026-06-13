@@ -70,7 +70,7 @@ export default function Home() {
             {FEATURES.map(([title, body]) => (
               <div key={title} className="hairline pt-6">
                 <h3 className="font-display text-[21px] mb-3">{title}</h3>
-                <p className="text-[15px] leading-relaxed text-ash">{body}</p>
+                <p className="text-[21px] leading-[1.7] text-ash">{body}</p>
               </div>
             ))}
           </div>
@@ -86,7 +86,7 @@ export default function Home() {
             <div key={title}>
               <div className="font-display italic text-gold text-[34px] mb-4">{i + 1}</div>
               <h3 className="font-display text-[20px] mb-3">{title}</h3>
-              <p className="text-[15px] leading-relaxed text-ash">{body}</p>
+              <p className="text-[21px] leading-[1.7] text-ash">{body}</p>
             </div>
           ))}
         </div>
@@ -152,7 +152,7 @@ export default function Home() {
                   {q}
                   <span className="text-gold ml-6 group-open:rotate-45 transition-transform">+</span>
                 </summary>
-                <p className="mt-4 text-[15px] leading-relaxed text-ash">{a}</p>
+                <p className="mt-4 text-[21px] leading-[1.7] text-ash">{a}</p>
               </details>
             ))}
           </div>

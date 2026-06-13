@@ -132,7 +132,7 @@ export default function ProjectForm() {
       </div>
 
       <label className="flex items-center gap-3 text-[14px]">
-        <input type="checkbox" name="is_public" defaultChecked className="accent-[#C9A96E] h-4 w-4" />
+        <input type="checkbox" name="is_public" defaultChecked className="accent-[#BF9953] h-4 w-4" />
         Visible to verified producers and investors
       </label>
 

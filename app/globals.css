@@ -3,13 +3,20 @@
 @tailwind utilities;
 
 :root {
-  --gold: #C9A96E;
+  --gold: #BF9953;
   --font-montserrat: "Montserrat", "Helvetica Neue", Arial, sans-serif;
   --font-playfair: "Playfair Display", Georgia, serif;
 }
 
 html { scroll-behavior: smooth; }
-body { @apply bg-ivory text-ink font-sans antialiased; font-weight: 300; }
+body {
+  @apply bg-ivory text-ink font-sans antialiased;
+  font-weight: 300;
+  font-size: 20px;
+  line-height: 1.7;
+}
+
+nav { font-weight: 400; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -17,7 +24,7 @@ body { @apply bg-ivory text-ink font-sans antialiased; font-weight: 300; }
 }
 
 .hairline { @apply border-t border-line; }
-.hairline-gold { border-top: 1px solid rgba(201,169,110,.45); }
+.hairline-gold { border-top: 1px solid rgba(191,153,83,.45); }
 
 .eyebrow { @apply text-[11px] tracking-[0.28em] uppercase text-ash font-normal; }
 

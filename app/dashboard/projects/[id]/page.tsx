@@ -64,19 +64,19 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       {project.synopsis && (
         <section className="mt-12 max-w-2xl">
           <h2 className="eyebrow mb-3">Synopsis</h2>
-          <p className="text-[15px] leading-relaxed text-ink/85 whitespace-pre-line">{project.synopsis}</p>
+          <p className="text-[21px] leading-[1.7] text-ink/85 whitespace-pre-line">{project.synopsis}</p>
         </section>
       )}
       {project.director_statement && (
         <section className="mt-10 max-w-2xl">
           <h2 className="eyebrow mb-3">Director's statement</h2>
-          <p className="text-[15px] leading-relaxed text-ink/85 whitespace-pre-line">{project.director_statement}</p>
+          <p className="text-[21px] leading-[1.7] text-ink/85 whitespace-pre-line">{project.director_statement}</p>
         </section>
       )}
       {project.producer_info && (
         <section className="mt-10 max-w-2xl">
           <h2 className="eyebrow mb-3">Producers</h2>
-          <p className="text-[15px] leading-relaxed text-ink/85 whitespace-pre-line">{project.producer_info}</p>
+          <p className="text-[21px] leading-[1.7] text-ink/85 whitespace-pre-line">{project.producer_info}</p>
         </section>
       )}
 

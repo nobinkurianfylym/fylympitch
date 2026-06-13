@@ -43,7 +43,7 @@ export default async function OpportunityDetailPage({
         {opp.formats?.length > 0 && <span>Formats — <span className="text-ink">{opp.formats.join(", ")}</span></span>}
       </div>
 
-      {opp.description && <p className="mt-8 text-[15px] leading-relaxed text-ink/85">{opp.description}</p>}
+      {opp.description && <p className="mt-8 text-[21px] leading-[1.7] text-ink/85">{opp.description}</p>}
 
       <div className="mt-6 flex gap-3">
         {opp.url && <a href={opp.url} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">Official site</a>}

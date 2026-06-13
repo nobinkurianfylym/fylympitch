@@ -5,11 +5,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ivory: "#FAF8F4",
+        ivory: "#F5F5F7",
         parchment: "#F1EDE4",
         ink: "#1A1815",
         ash: "#8A857C",
-        gold: "#C9A96E",
+        gold: "#BF9953",
         deep: "#262320",
         line: "#E5E0D5",
       },
