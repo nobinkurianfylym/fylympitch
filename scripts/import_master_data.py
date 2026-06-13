@@ -183,7 +183,7 @@ def sql_arr(values):
         return "'{}'"
     parts = []
     for v in values:
-        esc = str(v).replace("\\", "\\\\").replace('"', '\\"')
+        esc = str(v).replace("\\", "\\\\").replace('"', '\\"').replace("'", "''")
         parts.append(f'"{esc}"')
     body = ",".join(parts)
     return f"'{{{body}}}'"
