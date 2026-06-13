@@ -325,6 +325,27 @@ export async function adminCreateOpportunity(formData: FormData) {
   redirect("/admin/opportunities");
 }
 
+// ---------- BOOTSTRAP: SELF-PROMOTE FIRST ADMIN ----------
+export async function adminSelfPromote() {
+  const { supabase, user } = await requireUser();
+
+  const { count } = await supabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "admin");
+
+  if ((count ?? 0) > 0) {
+    redirect("/whoami?error=" + encodeURIComponent("An admin already exists — ask them to promote you, or update your role via SQL."));
+  }
+
+  const { error } = await supabase.from("profiles").update({ role: "admin" }).eq("id", user.id);
+  if (error) {
+    redirect("/whoami?error=" + encodeURIComponent(error.message));
+  }
+
+  redirect("/admin");
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
