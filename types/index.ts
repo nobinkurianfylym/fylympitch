@@ -18,6 +18,14 @@ export interface Profile {
   imdb_url: string | null;
   avatar_url: string | null;
   created_at: string;
+  // Producer/investor/organization matching fields (services/fylympitchEngine.ts)
+  industry_genres?: string[];
+  industry_formats?: ProjectFormat[];
+  industry_countries?: string[];
+  min_budget_usd?: number | null;
+  max_budget_usd?: number | null;
+  available_funding_usd?: number | null;
+  festival_track_record?: boolean;
 }
 
 export interface Project {
@@ -39,6 +47,8 @@ export interface Project {
   script_path: string | null;
   is_public: boolean;
   created_at: string;
+  /** e.g. "First-time", "Emerging", "Established" — hybrid matching bonus (fylympitchEngine.ts) */
+  career_stage?: string | null;
 }
 
 export interface Opportunity {
@@ -58,6 +68,9 @@ export interface Opportunity {
   deadline: string | null;
   url: string | null;
   is_active: boolean;
+  /** MASTER_DATA hybrid-matching extras (fylympitchEngine.ts) */
+  career_stages?: string[];
+  match_weight?: "high" | "medium" | "low" | null;
 }
 
 export interface Application {

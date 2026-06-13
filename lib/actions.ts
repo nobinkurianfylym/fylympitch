@@ -4,6 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { calculateMatchScore } from "@/services/matching";
+import {
+  runFylympitchEngine,
+  type OpportunityIntelligenceExtras,
+  type ProducerMatchProfile,
+} from "@/services/fylympitchEngine";
 import type { Opportunity, Project } from "@/types";
 
 async function requireUser() {
@@ -57,6 +62,7 @@ export async function createProject(formData: FormData) {
       producer_info: str(formData, "producer_info") || null,
       pitch_deck_path: str(formData, "pitch_deck_path") || null,
       script_path: str(formData, "script_path") || null,
+      career_stage: str(formData, "career_stage") || null,
       is_public: formData.get("is_public") === "on",
     })
     .select("id")
@@ -68,23 +74,97 @@ export async function createProject(formData: FormData) {
     user_id: user.id, action: "project_created", entity: "project", entity_id: data.id,
   });
 
-  // Pre-compute and cache matches for this project
+  // ---------- FYLYMPITCH ENGINE ----------
+  // Runs ONCE, here, at submission time: hybrid matching, funding
+  // readiness/discovery/obstacles, financing roadmap, producer matches,
+  // AI Executive Producer (OpenAI, falls back to a heuristic if
+  // OPENAI_API_KEY is unset or the call fails), and the dream scenario.
+  // Cached into `matches` (tiered) and `project_intelligence`. The
+  // project page reads from this cache — no recompute, no AI on load.
   const { data: opps } = await supabase.from("opportunities").select("*").eq("is_active", true);
-  if (opps && opps.length) {
-    const { data: project } = await supabase.from("projects").select("*").eq("id", data.id).single();
-    if (project) {
-      const rows = (opps as Opportunity[])
-        .map((o) => ({ o, m: calculateMatchScore(project as Project, o) }))
-        .filter((r) => r.m.tier !== "hidden")
-        .map((r) => ({
-          project_id: data.id,
-          opportunity_id: r.o.id,
-          score: r.m.score,
-          confidence: r.m.confidence,
-          reasons: r.m.reasons,
-        }));
-      if (rows.length) await supabase.from("matches").upsert(rows, { onConflict: "project_id,opportunity_id" });
+  const { data: project } = await supabase.from("projects").select("*").eq("id", data.id).single();
+
+  if (project) {
+    const opportunityExtras: Record<string, OpportunityIntelligenceExtras> = {};
+    for (const o of (opps ?? []) as Opportunity[]) {
+      if ((o.career_stages?.length ?? 0) > 0 || o.match_weight) {
+        opportunityExtras[o.id] = {
+          career_stages: o.career_stages?.length ? o.career_stages : undefined,
+          match_weight: o.match_weight ?? undefined,
+        };
+      }
     }
+
+    const { data: industryProfiles } = await supabase
+      .from("profiles")
+      .select(
+        "id, full_name, company, role, industry_genres, industry_formats, industry_countries, min_budget_usd, max_budget_usd, available_funding_usd, festival_track_record"
+      )
+      .in("role", ["producer", "investor", "organization"])
+      .eq("approval_status", "approved");
+
+    type IndustryProfileRow = {
+      id: string;
+      full_name: string;
+      company: string | null;
+      role: "producer" | "investor" | "organization";
+      industry_genres: string[] | null;
+      industry_formats: string[] | null;
+      industry_countries: string[] | null;
+      min_budget_usd: number | null;
+      max_budget_usd: number | null;
+      available_funding_usd: number | null;
+      festival_track_record: boolean | null;
+    };
+
+    const producerProfiles: ProducerMatchProfile[] = ((industryProfiles ?? []) as IndustryProfileRow[]).map((p) => ({
+      id: p.id,
+      full_name: p.full_name,
+      company: p.company,
+      role: p.role,
+      genres: p.industry_genres ?? [],
+      formats: p.industry_formats ?? [],
+      countries: p.industry_countries ?? [],
+      min_budget_usd: p.min_budget_usd,
+      max_budget_usd: p.max_budget_usd,
+      available_funding_usd: p.available_funding_usd,
+      festival_track_record: !!p.festival_track_record,
+    }));
+
+    const engine = await runFylympitchEngine({
+      project: project as Project,
+      opportunities: (opps ?? []) as Opportunity[],
+      opportunityExtras,
+      producerProfiles,
+      openaiApiKey: process.env.OPENAI_API_KEY,
+    });
+
+    if (engine.matches.length) {
+      await supabase.from("matches").upsert(
+        engine.matches.map((m) => ({
+          project_id: data.id,
+          opportunity_id: m.opportunity.id,
+          score: m.match.score,
+          tier: m.match.tier,
+          confidence: m.match.confidence,
+          reasons: m.match.reasons,
+        })),
+        { onConflict: "project_id,opportunity_id" }
+      );
+    }
+
+    await supabase.from("project_intelligence").upsert({
+      project_id: data.id,
+      funding_readiness: engine.funding_readiness,
+      funding_discovery: engine.funding_discovery,
+      obstacles: engine.obstacles,
+      roadmap: engine.roadmap,
+      producer_matches: engine.producer_matches,
+      executive_producer: engine.executive_producer,
+      dream_scenario: engine.dream_scenario,
+      generated_by: engine.executive_producer.generated_by,
+      generated_at: engine.generated_at,
+    });
   }
 
   revalidatePath("/dashboard");

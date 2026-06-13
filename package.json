@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:matching": "node --experimental-strip-types tests/matching.test.ts"
+    "test:matching": "node --experimental-strip-types tests/matching.test.ts",
+    "test:engine": "node --experimental-strip-types tests/fylympitch-engine.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
