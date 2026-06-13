@@ -71,6 +71,17 @@ export interface Opportunity {
   /** MASTER_DATA hybrid-matching extras (fylympitchEngine.ts) */
   career_stages?: string[];
   match_weight?: "high" | "medium" | "low" | null;
+  /** MASTER_DATA metadata (migration 004) */
+  gender_focus?: string | null;
+  copro_required?: boolean;
+  festival_affiliated?: boolean;
+  ott_affiliated?: boolean;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  key_person?: string | null;
+  app_link?: string | null;
+  /** Free-text deadline cycle, e.g. "Annual — Jan/Feb. Check thewhickers.com" */
+  deadline_note?: string | null;
 }
 
 export interface Application {

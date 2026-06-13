@@ -74,5 +74,21 @@ expect("score never exceeds 100", ranked.every(r => r.match.score <= 100));
 
 expect("tier boundaries", tierOf(90) === "excellent" && tierOf(89) === "strong" && tierOf(75) === "strong" && tierOf(74) === "possible" && tierOf(60) === "possible" && tierOf(59) === "hidden");
 
+// MASTER_DATA import: "Global" region opportunities are fully open regardless
+// of country, even when a (non-matching) country is also set.
+const globalOpp: any = { ...perfectOpp, id: "o6", country: "United States", region: "Global", genres: [], formats: [], stages: [], languages: [] };
+const r7 = calculateMatchScore(project, globalOpp);
+expect("'Global' region opportunity scores 90+ for any country", r7.score >= 90, r7);
+
+// MASTER_DATA import: "India/South Asia" region gives partial country credit
+// to South Asian projects even without an exact country match.
+const southAsiaOpp: any = { ...perfectOpp, id: "o7", country: null, region: "India/South Asia", genres: [], formats: [], stages: [], languages: [] };
+const r8 = calculateMatchScore(project, southAsiaOpp);
+expect("'India/South Asia' region credits an Indian project's country", r8.score >= 90, r8);
+
+const nonSouthAsiaProject: any = { ...project, country: "France" };
+const r9 = calculateMatchScore(nonSouthAsiaProject, southAsiaOpp);
+expect("'India/South Asia' region does not credit a French project's country", r9.score < r8.score, { r8, r9 });
+
 console.log(`\n${pass} passed, ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

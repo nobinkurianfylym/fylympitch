@@ -34,6 +34,7 @@ const REGION_MAP: Record<string, string[]> = {
   Americas: ["United States", "Canada", "Mexico", "Brazil", "Argentina", "Colombia", "Chile", "Peru"],
   "Middle East": ["UAE", "Qatar", "Saudi Arabia", "Jordan", "Lebanon", "Israel", "Iran", "Egypt"],
   Africa: ["Nigeria", "Kenya", "South Africa", "Egypt", "Morocco", "Ghana", "Senegal", "Tunisia"],
+  "India/South Asia": ["India", "Pakistan", "Bangladesh", "Sri Lanka", "Nepal", "Bhutan", "Maldives", "Afghanistan"],
   "Global South": Array.from(GLOBAL_SOUTH),
 };
 
@@ -69,6 +70,9 @@ function stageScore(project: Project, opp: Opportunity): { pts: number; reason: 
 }
 
 function countryScore(project: Project, opp: Opportunity): { pts: number; reason: string | null } {
+  if (opp.region === "Global") {
+    return { pts: WEIGHTS.country, reason: "Open worldwide" };
+  }
   if (!opp.country && !opp.region) {
     return { pts: WEIGHTS.country, reason: "Open worldwide" };
   }
