@@ -8,52 +8,56 @@ export default async function AdminOpportunities() {
   const supabase = await createClient();
   const { data: opps } = await supabase
     .from("opportunities")
-    .select("id, name, organization_name, type, country, max_award_usd, deadline, is_active")
+    .select("id, title, opp_type, country, region, max_award_usd, deadline, is_active")
     .order("created_at", { ascending: false })
     .limit(200);
 
   return (
     <div>
-      <p className="eyebrow">Opportunity management</p>
-      <h1 className="font-display text-3xl font-light mt-1">Opportunities</h1>
+      <p className="eyebrow">Fund management</p>
+      <h1 className="font-display text-3xl font-light mt-1">Grants, funds &amp; opportunities</h1>
 
       <div className="card mt-8 divide-y divide-line">
         {(opps ?? []).map((o) => (
           <div key={o.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="font-light text-ink">{o.name}</p>
+              <p className="font-light text-ink">{o.title}</p>
               <p className="text-xs text-ash font-light mt-0.5">
-                {[o.organization_name, TYPE_LABEL[o.type] ?? o.type, o.country].filter(Boolean).join(" · ")}
+                {[TYPE_LABEL[o.opp_type] ?? o.opp_type, o.country || o.region || "Worldwide"].filter(Boolean).join(" · ")}
                 {o.max_award_usd ? ` · up to ${usd(o.max_award_usd)}` : ""}
                 {o.deadline ? ` · deadline ${new Date(o.deadline).toLocaleDateString()}` : ""}
               </p>
             </div>
-            <form action={adminToggleOpportunity}>
-              <input type="hidden" name="opportunity_id" value={o.id} />
-              <input type="hidden" name="active" value={o.is_active ? "false" : "true"} />
-              <button className={o.is_active ? "btn-ghost !py-1.5 !px-4 text-sm" : "btn-gold !py-1.5 !px-4 text-sm"}>
-                {o.is_active ? "Deactivate" : "Activate"}
-              </button>
-            </form>
+            <div className="flex items-center gap-3">
+              <span className={`text-xs uppercase tracking-[0.14em] font-light ${o.is_active ? "text-emerald-700" : "text-ash"}`}>
+                {o.is_active ? "Active" : "Inactive"}
+              </span>
+              <form action={adminToggleOpportunity}>
+                <input type="hidden" name="opportunity_id" value={o.id} />
+                <input type="hidden" name="active" value={o.is_active ? "false" : "true"} />
+                <button className={o.is_active ? "btn-ghost !py-1.5 !px-4 text-sm" : "btn-gold !py-1.5 !px-4 text-sm"}>
+                  {o.is_active ? "Deactivate" : "Activate"}
+                </button>
+              </form>
+            </div>
           </div>
         ))}
+        {(!opps || opps.length === 0) && (
+          <p className="px-5 py-6 text-sm text-ash font-light">No opportunities yet.</p>
+        )}
       </div>
 
       <div className="card mt-10 p-6 sm:p-8">
         <p className="eyebrow">Add opportunity</p>
         <h2 className="font-display text-2xl font-light mt-1">New opportunity</h2>
         <form action={async (fd: FormData) => { "use server"; await adminCreateOpportunity(fd); }} className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label className="block">
-            <span className="eyebrow">Name *</span>
-            <input name="name" required className="field mt-1.5" />
-          </label>
-          <label className="block">
-            <span className="eyebrow">Organization</span>
-            <input name="organization_name" className="field mt-1.5" />
+          <label className="block sm:col-span-2">
+            <span className="eyebrow">Title *</span>
+            <input name="title" required className="field mt-1.5" />
           </label>
           <label className="block">
             <span className="eyebrow">Type *</span>
-            <select name="type" required className="field mt-1.5" defaultValue="grant">
+            <select name="opp_type" required className="field mt-1.5" defaultValue="grant">
               <option value="grant">Grant</option>
               <option value="fund">Fund</option>
               <option value="lab">Lab</option>
@@ -61,11 +65,18 @@ export default async function AdminOpportunities() {
               <option value="market">Market</option>
               <option value="distribution">Distribution</option>
               <option value="investor">Investor</option>
+              <option value="broadcaster">Broadcaster</option>
+              <option value="streamer">Streamer</option>
+              <option value="sales_agent">Sales agent</option>
             </select>
           </label>
           <label className="block">
             <span className="eyebrow">Country / region</span>
             <input name="country" placeholder="e.g. Netherlands, Global" className="field mt-1.5" />
+          </label>
+          <label className="block">
+            <span className="eyebrow">Region</span>
+            <input name="region" placeholder="e.g. Europe, Asia-Pacific" className="field mt-1.5" />
           </label>
           <label className="block">
             <span className="eyebrow">Genres (comma-separated, empty = all)</span>
@@ -100,8 +111,8 @@ export default async function AdminOpportunities() {
             <input name="deadline" type="date" className="field mt-1.5" />
           </label>
           <label className="block sm:col-span-2">
-            <span className="eyebrow">Website</span>
-            <input name="website" type="url" placeholder="https://" className="field mt-1.5" />
+            <span className="eyebrow">URL</span>
+            <input name="url" type="url" placeholder="https://" className="field mt-1.5" />
           </label>
           <label className="block sm:col-span-2">
             <span className="eyebrow">Description</span>

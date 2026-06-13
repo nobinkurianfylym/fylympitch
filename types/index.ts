@@ -101,3 +101,30 @@ export interface MatchResult {
   strengths: string[];
   warnings: string[];
 }
+
+export type CertificateType = "incorporation" | "accreditation" | "id_proof" | "tax" | "other";
+export type CertificateStatus = "pending" | "approved" | "rejected";
+
+export interface Certificate {
+  id: string;
+  user_id: string;
+  cert_type: CertificateType;
+  label: string;
+  file_path: string;
+  status: CertificateStatus;
+  notes: string | null;
+  created_at: string;
+}
+
+export type ReportStatus = "open" | "resolved" | "dismissed";
+export type ReportTarget = "profile" | "project" | "offer" | "opportunity";
+
+export interface Report {
+  id: string;
+  reporter_id: string | null;
+  target_type: ReportTarget;
+  target_id: string;
+  reason: string;
+  status: ReportStatus;
+  created_at: string;
+}

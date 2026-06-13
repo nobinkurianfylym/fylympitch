@@ -241,6 +241,58 @@ export async function adminToggleOpportunity(formData: FormData) {
   revalidatePath("/admin/opportunities");
 }
 
+// ---------- ADMIN: PROJECT MANAGEMENT ----------
+export async function adminToggleProjectVisibility(formData: FormData) {
+  const { supabase, user } = await requireAdmin();
+  const id = str(formData, "project_id");
+  const is_public = str(formData, "is_public") === "true";
+  await supabase.from("projects").update({ is_public }).eq("id", id);
+  await supabase.from("audit_logs").insert({
+    actor_id: user.id, action: is_public ? "project_unhidden" : "project_hidden",
+    target: "project", target_id: id,
+  });
+  revalidatePath("/admin/projects");
+}
+
+export async function adminDeleteProject(formData: FormData) {
+  const { supabase, user } = await requireAdmin();
+  const id = str(formData, "project_id");
+  await supabase.from("projects").delete().eq("id", id);
+  await supabase.from("audit_logs").insert({
+    actor_id: user.id, action: "project_removed", target: "project", target_id: id,
+  });
+  revalidatePath("/admin/projects");
+}
+
+// ---------- ADMIN: CERTIFICATE MANAGEMENT ----------
+export async function adminSetCertificateStatus(formData: FormData) {
+  const { supabase, user } = await requireAdmin();
+  const id = str(formData, "certificate_id");
+  const status = str(formData, "status") === "approved" ? "approved" : "rejected";
+  const notes = str(formData, "notes") || null;
+  await supabase.from("certificates")
+    .update({ status, notes, reviewed_by: user.id, reviewed_at: new Date().toISOString() })
+    .eq("id", id);
+  await supabase.from("audit_logs").insert({
+    actor_id: user.id, action: `certificate_${status}`, target: "certificate", target_id: id,
+  });
+  revalidatePath("/admin/certificates");
+}
+
+// ---------- ADMIN: MODERATION ----------
+export async function adminResolveReport(formData: FormData) {
+  const { supabase, user } = await requireAdmin();
+  const id = str(formData, "report_id");
+  const status = str(formData, "status") === "dismissed" ? "dismissed" : "resolved";
+  await supabase.from("reports")
+    .update({ status, resolved_by: user.id, resolved_at: new Date().toISOString() })
+    .eq("id", id);
+  await supabase.from("audit_logs").insert({
+    actor_id: user.id, action: `report_${status}`, target: "report", target_id: id,
+  });
+  revalidatePath("/admin/moderation");
+}
+
 export async function adminCreateOpportunity(formData: FormData) {
   const { supabase, user } = await requireAdmin();
   const title = str(formData, "title");
