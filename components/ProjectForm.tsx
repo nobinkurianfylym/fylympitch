@@ -308,14 +308,26 @@ export default function ProjectForm() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (aiLoading || uploading) return;   // guard: don't submit mid-upload
     setError(null);
-    setBusy(true);            // show EngineLoader immediately on click
+    setBusy(true);
     const formData = new FormData(e.currentTarget);
-    const result = await createProject(formData);
-    if (result?.error) {
-      setError(result.error);
-      setBusy(false);
-      setEngineStep(0);
+    try {
+      const result = await createProject(formData);
+      if (result?.error) {
+        setError(result.error);
+        setBusy(false);
+        setEngineStep(0);
+      }
+      // On success, createProject calls redirect() server-side — no client code needed.
+    } catch (err: unknown) {
+      // redirect() throws a Next.js NEXT_REDIRECT — let it propagate.
+      // Any other error shows in the form.
+      if (err instanceof Error && err.message !== "NEXT_REDIRECT") {
+        setError(err.message || "Something went wrong. Please try again.");
+        setBusy(false);
+        setEngineStep(0);
+      }
     }
   }
 

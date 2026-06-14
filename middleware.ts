@@ -28,8 +28,6 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/producer");
 
   const isAuthPage = path === "/login" || path === "/signup";
-  const isProducerPending = path === "/producer/pending";
-
   // Not logged in → login
   if (isProtected && (!user || error)) {
     const url = request.nextUrl.clone();
@@ -38,27 +36,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Logged-in user on auth pages → route directly to their workspace.
-  // Checking role here avoids a /dashboard → /producer double-redirect
-  // for approved producers.
+  // Logged-in user on auth page → send them to their intended destination.
+  // This handles the homepage toggle: /login?next=/producer goes to /producer,
+  // plain /login goes to /dashboard.
   if (isAuthPage && user && !error) {
+    const rawNext = request.nextUrl.searchParams.get("next") ?? "";
+    // Inline sanitize (edge-compatible — no Node.js APIs)
+    const safe =
+      rawNext.length > 0 &&
+      rawNext.length <= 200 &&
+      rawNext.startsWith("/") &&
+      !rawNext.startsWith("//") &&
+      !rawNext.startsWith("/login") &&
+      !rawNext.startsWith("/signup") &&
+      !rawNext.startsWith("/auth");
+    const destination = safe ? rawNext : "/dashboard";
     const url = request.nextUrl.clone();
     url.search = "";
-    // We don't query the DB in middleware (keep it lightweight), but we CAN
-    // read the Supabase session claims if they exist. Fall back to /dashboard
-    // and let the layout handle the final routing if no claim is available.
-    url.pathname = "/dashboard";
+    url.pathname = destination;
     return NextResponse.redirect(url);
   }
-
-  // Producer-pending page: the layout handles redirection if already approved,
-  // middleware only ensures a session exists (already covered by isProtected above).
-  // No additional check needed here.
-
-  // Producer studio: check approval status inline (fast, no extra DB call needed
-  // since Supabase session contains user id — we gate at the page/layout level
-  // to keep middleware lightweight). The layout handles the pending → /producer/pending
-  // redirect; middleware just ensures session exists.
 
   return response;
 }
