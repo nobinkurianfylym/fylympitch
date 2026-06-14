@@ -480,6 +480,26 @@ export async function completeOnboarding(formData: FormData) {
 
   if (error) return { error: error.message };
 
+  // Notify all admin accounts when a producer signs up for approval
+  if (role === "producer") {
+    const { data: admins } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("role", "admin");
+
+    if (admins?.length) {
+      await supabase.from("notifications").insert(
+        admins.map((admin) => ({
+          user_id: admin.id,
+          kind: "system",
+          title: "New producer application",
+          body: `${full_name}${company ? ` from ${company}` : ""} has applied for a producer account and is awaiting your approval.`,
+          link: "/admin/producers",
+        }))
+      );
+    }
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/producer");
 
