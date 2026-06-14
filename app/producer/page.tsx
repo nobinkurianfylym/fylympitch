@@ -22,11 +22,9 @@ export default async function ProducerPipelinePage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, approval_status")
+    .select("role")
     .eq("id", user.id)
     .single();
-
-  if (profile?.approval_status !== "approved") redirect("/producer/pending");
 
   // Fetch all CRM rows with project data
   const { data: rows } = await supabase
@@ -55,10 +53,32 @@ export default async function ProducerPipelinePage() {
 
   return (
     <div className="p-6 md:p-10">
+
+      {/* ── Role toggle ── */}
+      <div className="inline-flex items-center gap-0 mb-10 relative">
+        {[
+          { label: "Filmmaker", href: "/dashboard", active: false },
+          { label: "Producer", href: "/producer", active: true },
+        ].map(({ label, href, active }) => (
+          <a
+            key={href}
+            href={href}
+            className="relative px-5 py-2 text-[11px] tracking-[0.18em] uppercase transition-colors duration-200"
+            style={{ color: active ? "var(--color-ink)" : "var(--color-ash)" }}
+          >
+            {label}
+            {active && (
+              <span className="absolute bottom-0 left-5 right-5 h-[1.5px] bg-gold" />
+            )}
+          </a>
+        ))}
+        <span className="absolute left-1/2 -translate-x-1/2 h-3 w-[1px] bg-line" />
+      </div>
+
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <p className="eyebrow mb-2">Producer Studio</p>
+          <p className="eyebrow mb-2">FYLYMPITCH Engine · Producer CRM</p>
           <h1 className="font-display text-[32px]">Pipeline</h1>
         </div>
         <Link href="/producer/projects" className="btn-gold">

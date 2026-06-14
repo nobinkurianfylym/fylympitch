@@ -193,7 +193,7 @@ export async function createProject(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/projects");          // refresh public showcase
   revalidatePath("/dashboard/projects");
-  redirect(`/dashboard/projects/${data.id}`);
+  redirect("/dashboard");   // Engine results = dashboard showing slate + match scores
 }
 
 export async function deleteProject(formData: FormData) {
