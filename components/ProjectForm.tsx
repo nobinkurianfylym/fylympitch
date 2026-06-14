@@ -306,9 +306,11 @@ export default function ProjectForm() {
 
   // ── Submit ──────────────────────────────────────────────────────────────────
 
-  async function action(formData: FormData) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setError(null);
-    setBusy(true);
+    setBusy(true);            // show EngineLoader immediately on click
+    const formData = new FormData(e.currentTarget);
     const result = await createProject(formData);
     if (result?.error) {
       setError(result.error);
@@ -329,7 +331,7 @@ export default function ProjectForm() {
   );
 
   return (
-    <form action={action} className="space-y-7 max-w-2xl">
+    <form onSubmit={handleSubmit} className="space-y-7 max-w-2xl">
       <input type="hidden" name="pitch_deck_path" value={deckPath} />
       <input type="hidden" name="script_path" value={scriptPath} />
       <input type="hidden" name="poster_path" value={posterPath} />
