@@ -138,53 +138,61 @@ export async function createProject(formData: FormData) {
       festival_track_record: !!p.festival_track_record,
     }));
 
-    const engine = await runAIEnhancedEngine({
-      project: project as Project,
-      opportunities: (opps ?? []) as Opportunity[],
-      opportunityExtras,
-      producerProfiles,
-      cerebrasApiKey: process.env.CEREBERAS_API,    // primary — ultra-fast inference
-      groqApiKey: process.env.GROQ_API_KEY,          // secondary — Groq LPU
-      openaiApiKey: process.env.OPENAI_API_KEY,      // last resort + web search EP brief
-      useWebSearch: process.env.OPENAI_WEB_SEARCH === "true",
-    });
+    try {
+      const engine = await runAIEnhancedEngine({
+        project: project as Project,
+        opportunities: (opps ?? []) as Opportunity[],
+        opportunityExtras,
+        producerProfiles,
+        cerebrasApiKey: process.env.CEREBERAS_API,
+        groqApiKey: process.env.GROQ_API_KEY,
+        openaiApiKey: process.env.OPENAI_API_KEY,
+        useWebSearch: process.env.OPENAI_WEB_SEARCH === "true",
+      });
 
-    if (engine.matches.length) {
-      await supabase.from("matches").upsert(
-        engine.matches.map((m) => ({
-          project_id: data.id,
-          opportunity_id: m.opportunity.id,
-          score: m.match.score,
-          tier: m.match.tier,
-          confidence: m.match.confidence,
-          reasons: m.match.reasons,
-        })),
-        { onConflict: "project_id,opportunity_id" }
-      );
+      if (engine.matches.length) {
+        await supabase.from("matches").upsert(
+          engine.matches.map((m) => ({
+            project_id: data.id,
+            opportunity_id: m.opportunity.id,
+            score: m.match.score,
+            tier: m.match.tier,
+            confidence: m.match.confidence,
+            reasons: m.match.reasons,
+          })),
+          { onConflict: "project_id,opportunity_id" }
+        );
+      }
+
+      await supabase.from("project_intelligence").upsert({
+        project_id: data.id,
+        funding_readiness: engine.funding_readiness,
+        funding_discovery: engine.funding_discovery,
+        obstacles: engine.obstacles,
+        roadmap: engine.roadmap,
+        producer_matches: engine.producer_matches,
+        executive_producer: engine.executive_producer,
+        dream_scenario: engine.dream_scenario,
+        project_profile: (engine as any).project_profile ?? {},
+        semantic_matches: (engine as any).semantic_matches ?? [],
+        ai_obstacles: (engine as any).ai_obstacles ?? [],
+        market_intelligence: (engine as any).market_intelligence ?? {},
+        enhanced_ep_brief: (engine as any).enhanced_ep_brief ?? {},
+        engine_version: (engine as any).engine_version ?? "v1_hybrid",
+        generated_by: engine.executive_producer.generated_by,
+        generated_at: engine.generated_at,
+      });
+    } catch (engineErr) {
+      // Engine failure must never block project creation.
+      // Project is saved — user lands on their project page without matches.
+      // They can re-trigger evaluation later.
+      console.error("[createProject] Engine failed:", engineErr);
     }
-
-    await supabase.from("project_intelligence").upsert({
-      project_id: data.id,
-      funding_readiness: engine.funding_readiness,
-      funding_discovery: engine.funding_discovery,
-      obstacles: engine.obstacles,
-      roadmap: engine.roadmap,
-      producer_matches: engine.producer_matches,
-      executive_producer: engine.executive_producer,
-      dream_scenario: engine.dream_scenario,
-      // AI-enhanced fields (empty if no API keys)
-      project_profile: (engine as any).project_profile ?? {},
-      semantic_matches: (engine as any).semantic_matches ?? [],
-      ai_obstacles: (engine as any).ai_obstacles ?? [],
-      market_intelligence: (engine as any).market_intelligence ?? {},
-      enhanced_ep_brief: (engine as any).enhanced_ep_brief ?? {},
-      engine_version: (engine as any).engine_version ?? "v1_hybrid",
-      generated_by: engine.executive_producer.generated_by,
-      generated_at: engine.generated_at,
-    });
   }
 
   revalidatePath("/dashboard");
+  revalidatePath("/projects");          // refresh public showcase
+  revalidatePath("/dashboard/projects");
   redirect(`/dashboard/projects/${data.id}`);
 }
 

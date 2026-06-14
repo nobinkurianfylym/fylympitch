@@ -5,5 +5,13 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# Increase serverless function timeout to 26s (Netlify free-tier max).
+# The FYLYMPITCH engine makes several sequential AI calls (Cerebras →
+# Groq → OpenAI fallback) which can take 15-25s on first submission.
+# Without this, Netlify kills the function at 10s and the engine result
+# is lost — the project saves but matches/intelligence never write.
+[functions]
+  node_bundler = "esbundle"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
