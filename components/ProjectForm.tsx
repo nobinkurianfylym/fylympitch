@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
+import { flushSync } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { createProject } from "@/lib/actions";
 
@@ -280,14 +281,20 @@ export default function ProjectForm() {
       return;
     }
 
-    setError(null);
-    setBusy(true);
-
+    // Capture formData while form is still mounted
     const formData = new FormData(e.currentTarget);
 
-    // startTransition is required for server actions that call redirect().
-    // Without it, redirect() throws NEXT_REDIRECT which gets swallowed by
-    // a regular try/catch and navigation never fires.
+    // flushSync forces setBusy(true) to commit to the DOM synchronously
+    // BEFORE startTransition starts the async server action.
+    // Without this, React 19 may batch the render with the transition,
+    // so the EngineLoader animation never gets a chance to appear.
+    flushSync(() => {
+      setError(null);
+      setBusy(true);  // EngineLoader is now rendered and animating
+    });
+
+    // startTransition correctly handles redirect() from the server action.
+    // A plain try/catch swallows NEXT_REDIRECT so navigation never fires.
     startTransition(async () => {
       const result = await createProject(formData);
       if (result?.error) {
@@ -295,8 +302,8 @@ export default function ProjectForm() {
         setBusy(false);
         setEngineStep(0);
       }
-      // On success: createProject calls redirect("/dashboard") — Next.js
-      // intercepts it inside startTransition and performs the navigation.
+      // On success: redirect("/dashboard") is intercepted by Next.js
+      // inside startTransition → client navigation fires automatically.
     });
   }
 
