@@ -11,7 +11,7 @@
 # Without this, Netlify kills the function at 10s and the engine result
 # is lost — the project saves but matches/intelligence never write.
 [functions]
-  node_bundler = "esbundle"
+  node_bundler = "esbuild"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
