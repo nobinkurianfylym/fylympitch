@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import MatchBadge from "@/components/MatchBadge";
+import MessageButton from "@/components/MessageButton";
 import { usd, STAGE_LABEL, TYPE_LABEL, timeAgo } from "@/lib/format";
 import { deleteProject, respondToOffer } from "@/lib/actions";
 import type { Opportunity, Project } from "@/types";
@@ -347,6 +348,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                       <input type="hidden" name="decision" value="declined" />
                       <button className="btn-ghost !px-5 !py-2.5">Decline</button>
                     </form>
+                    <MessageButton otherUserId={o.from_user_id} label="Reply" className="btn-ghost !px-5 !py-2.5 gap-2" />
                   </div>
                 ) : (
                   <p className="mt-4 eyebrow">{o.status}</p>

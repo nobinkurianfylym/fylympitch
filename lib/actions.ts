@@ -529,6 +529,64 @@ export async function updateMeetingStatus(formData: FormData) {
   revalidatePath("/producer/meetings");
 }
 
+// ---------- MESSAGING ----------
+export async function findOrCreateConversation(otherUserId: string, projectId?: string) {
+  const { supabase, user } = await requireUser();
+  if (user.id === otherUserId) return { error: "Cannot message yourself." };
+
+  // Check if blocked
+  const { data: block } = await supabase
+    .from("user_blocks")
+    .select("blocker_id")
+    .or(`blocker_id.eq.${user.id},blocker_id.eq.${otherUserId}`)
+    .or(`blocked_id.eq.${user.id},blocked_id.eq.${otherUserId}`)
+    .maybeSingle();
+  if (block) return { error: "This conversation is not available." };
+
+  const { data: convId, error } = await supabase.rpc("find_or_create_conversation", {
+    other_user_id: otherUserId,
+    p_project_id: projectId ?? null,
+  });
+  if (error) return { error: error.message };
+  return { conversationId: convId as string };
+}
+
+export async function archiveConversation(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const convId = str(formData, "conversation_id");
+  const unarchive = str(formData, "unarchive") === "true";
+  if (!convId) return;
+  await supabase
+    .from("conversation_participants")
+    .update({ archived_at: unarchive ? null : new Date().toISOString() })
+    .eq("conversation_id", convId)
+    .eq("user_id", user.id);
+  revalidatePath("/dashboard/messages");
+}
+
+export async function blockUser(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const blockedId = str(formData, "blocked_id");
+  if (!blockedId) return;
+  await supabase
+    .from("user_blocks")
+    .insert({ blocker_id: user.id, blocked_id: blockedId })
+    .onConflict("blocker_id,blocked_id").ignore();
+  // Archive all conversations with this user
+  const { data: convs } = await supabase
+    .from("conversation_participants")
+    .select("conversation_id")
+    .eq("user_id", blockedId);
+  if (convs?.length) {
+    await supabase
+      .from("conversation_participants")
+      .update({ archived_at: new Date().toISOString() })
+      .in("conversation_id", convs.map((c) => c.conversation_id))
+      .eq("user_id", user.id);
+  }
+  revalidatePath("/dashboard/messages");
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();

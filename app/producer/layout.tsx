@@ -32,6 +32,7 @@ export default async function ProducerLayout({ children }: { children: React.Rea
     { href: "/producer/projects", label: "All projects", icon: "ti-stack-2" },
     { href: "/producer/meetings", label: "Meetings", icon: "ti-calendar" },
     { href: "/producer/notes", label: "Notes", icon: "ti-notes" },
+    { href: "/dashboard/messages", label: "Messages", icon: "ti-message-circle" },
   ];
 
   return (

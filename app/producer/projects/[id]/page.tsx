@@ -3,6 +3,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { usd, STAGE_LABEL, TYPE_LABEL } from "@/lib/format";
 import { upsertProducerProject, requestMeeting } from "@/lib/actions";
+import MessageButton from "@/components/MessageButton";
 
 export const dynamic = "force-dynamic";
 
@@ -108,9 +109,15 @@ export default async function ProducerProjectDetailPage({
           </div>
 
           {(deckUrl || scriptUrl) && (
-            <div className="flex gap-3 mb-8">
+            <div className="flex flex-wrap gap-3 mb-8">
               {deckUrl && <a href={deckUrl} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">View pitch deck</a>}
               {scriptUrl && <a href={scriptUrl} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">Read script</a>}
+              <MessageButton otherUserId={filmmaker?.id ?? project.owner_id} projectId={project.id} label="Message filmmaker" />
+            </div>
+          )}
+          {!deckUrl && !scriptUrl && filmmaker && (
+            <div className="mb-8">
+              <MessageButton otherUserId={filmmaker?.id ?? project.owner_id} projectId={project.id} label="Message filmmaker" />
             </div>
           )}
 

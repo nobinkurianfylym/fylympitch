@@ -32,6 +32,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .from("notifications").select("id", { count: "exact", head: true })
     .eq("user_id", user.id).eq("read", false);
 
+  // Unread messages count
+  const { data: msgUnread } = await supabase
+    .from("conversation_participants")
+    .select("unread_count")
+    .eq("user_id", user.id)
+    .is("archived_at", null);
+  const totalMsgUnread = (msgUnread ?? []).reduce((s, r) => s + (r.unread_count ?? 0), 0);
+
   const nav = [
     { href: "/dashboard", label: "Overview" },
     ...(!isIndustry ? [
@@ -44,6 +52,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       { href: "/dashboard/opportunities", label: "Opportunities" },
     ]),
     { href: "/projects", label: "Projects showcase" },
+    { href: "/dashboard/messages", label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}` },
     { href: "/dashboard/notifications", label: `Notifications${unread ? ` (${unread})` : ""}` },
     { href: "/dashboard/profile", label: "Profile" },
     ...(role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
