@@ -309,7 +309,17 @@ export async function adminSetApproval(formData: FormData) {
   const decision = str(formData, "decision");
   const status = decision === "approved" ? "approved" : "rejected";
   if (!target) return;
-  await supabase.from("profiles").update({ approval_status: status }).eq("id", target);
+
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ approval_status: status })
+    .eq("id", target);
+
+  if (updateError) {
+    console.error("[adminSetApproval] profile update failed:", updateError.message);
+    return; // admin sees the page unchanged — they can retry
+  }
+
   await supabase.from("audit_logs").insert({
     actor_id: user.id, action: `user_${status}`, target: "profile", target_id: target,
   });
@@ -323,6 +333,7 @@ export async function adminSetApproval(formData: FormData) {
   });
   revalidatePath("/admin/users");
   revalidatePath("/admin/producers");
+  revalidatePath("/producer/pending");  // bust pending page cache
 }
 
 export async function adminToggleOpportunity(formData: FormData) {

@@ -36,6 +36,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const role = profile?.role ?? "filmmaker";
   const isIndustry = role === "producer" || role === "investor" || role === "organization";
 
+  // Guard: producers have their own workspace — route them to the right place.
+  if (role === "producer") {
+    if (profile?.approval_status === "approved") redirect("/producer");
+    redirect("/producer/pending");
+  }
+
   const nav = [
     { href: "/dashboard", label: "Overview" },
     ...(!isIndustry ? [
