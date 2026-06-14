@@ -15,6 +15,8 @@ import type {
   FundingReadiness,
   ProducerMatch,
 } from "@/services/fylympitchEngine";
+import MatchList from "@/components/MatchList";
+import type { MatchRow } from "@/components/MatchList";
 
 export const dynamic = "force-dynamic";
 
@@ -111,7 +113,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       {/* ── PROJECT HEADER ── */}
       <p className="eyebrow mb-3">{project.genre} · {project.format} · {STAGE_LABEL[project.stage]}</p>
       <h1 className="font-display text-[34px]">{project.title}</h1>
-      <p className="mt-4 text-[16px] leading-relaxed max-w-2xl font-display italic text-ink">"{project.logline}"</p>
+
+      {project.synopsis && (
+        <p className="mt-5 text-[16px] leading-[1.75] text-ash max-w-2xl whitespace-pre-line">
+          {project.synopsis}
+        </p>
+      )}
+
+      <p className="mt-5 text-[16px] leading-relaxed max-w-2xl font-display italic text-ink">"{project.logline}"</p>
 
       <div className="mt-6 flex flex-wrap gap-x-10 gap-y-3 text-[13px] text-ash">
         <span>Country — <span className="text-ink">{project.country}</span></span>
@@ -209,29 +218,20 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <section className="mt-12">
           <h2 className="font-display text-[22px] mb-2">Matched opportunities</h2>
           <p className="text-[13px] text-ash mb-6">Ranked live against every active opportunity.</p>
-          <div>
-            {ranked.map(({ o, m }) => (
-              <Link key={o.id} href={`/dashboard/opportunities/${o.id}?project=${project.id}`}
-                className="hairline py-5 flex items-center justify-between gap-6 hover:bg-parchment/60 px-2 -mx-2 transition-colors">
-                <div className="min-w-0">
-                  <div className="font-normal text-[15px] truncate">{o.title}</div>
-                  <div className="mt-1 text-[12px] tracking-[0.14em] uppercase text-ash">
-                    {TYPE_LABEL[o.opp_type]}{o.max_award_usd ? ` · up to ${usd(o.max_award_usd)}` : ""}
-                    {(o as any).deadline_note ? ` · ${(o as any).deadline_note}` : o.deadline ? ` · ${o.deadline}` : ""}
-                  </div>
-                  {m.warnings.length > 0 && (
-                    <div className="mt-1 text-[12px] text-[#9a6b1f]">{m.warnings[0]}</div>
-                  )}
-                </div>
-                <MatchBadge score={m.score} tier={m.tier} />
-              </Link>
-            ))}
-            {ranked.length === 0 && (
-              <p className="hairline py-8 text-[14px] text-ash">
-                No opportunities clear the 60-point bar yet. Add budget and funding details to sharpen your matches.
-              </p>
-            )}
-          </div>
+          <MatchList
+            projectId={project.id}
+            matches={ranked.map(({ o, m }): MatchRow => ({
+              id: o.id,
+              title: o.title,
+              opp_type: o.opp_type,
+              max_award_usd: o.max_award_usd ?? null,
+              deadline_note: (o as any).deadline_note ?? null,
+              deadline: o.deadline ?? null,
+              score: m.score,
+              tier: m.tier,
+              warnings: m.warnings,
+            }))}
+          />
         </section>
       )}
 
@@ -301,12 +301,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       )}
 
       {/* ── PROJECT DETAILS ── */}
-      {project.synopsis && (
-        <section className="mt-14 max-w-2xl">
-          <h2 className="eyebrow mb-3">Synopsis</h2>
-          <p className="text-[21px] leading-[1.7] text-ink whitespace-pre-line">{project.synopsis}</p>
-        </section>
-      )}
       {project.director_statement && (
         <section className="mt-10 max-w-2xl">
           <h2 className="eyebrow mb-3">Director's statement</h2>
