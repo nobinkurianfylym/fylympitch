@@ -138,8 +138,12 @@ export async function createProject(formData: FormData) {
       festival_track_record: !!p.festival_track_record,
     }));
 
+    // Hard timeout: engine must finish within 20s so redirect() always fires
+    // before Netlify's 26s function limit kills the response.
+    const ENGINE_TIMEOUT_MS = 20_000;
+
     try {
-      const engine = await runAIEnhancedEngine({
+      const enginePromise = runAIEnhancedEngine({
         project: project as Project,
         opportunities: (opps ?? []) as Opportunity[],
         opportunityExtras,
@@ -149,6 +153,12 @@ export async function createProject(formData: FormData) {
         openaiApiKey: process.env.OPENAI_API_KEY,
         useWebSearch: process.env.OPENAI_WEB_SEARCH === "true",
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Engine timeout after 20s")), ENGINE_TIMEOUT_MS)
+      );
+
+      const engine = await Promise.race([enginePromise, timeoutPromise]);
 
       if (engine.matches.length) {
         await supabase.from("matches").upsert(
@@ -183,10 +193,10 @@ export async function createProject(formData: FormData) {
         generated_at: engine.generated_at,
       });
     } catch (engineErr) {
-      // Engine failure must never block project creation.
-      // Project is saved — user lands on their project page without matches.
-      // They can re-trigger evaluation later.
-      console.error("[createProject] Engine failed:", engineErr);
+      // Engine failure or timeout must never block project creation.
+      // Project is saved — dashboard shows it immediately, matches arrive
+      // if engine completed before the timeout.
+      console.error("[createProject] Engine failed/timed out:", engineErr);
     }
   }
 
