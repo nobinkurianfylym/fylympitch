@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import EngineDemo from "@/components/EngineDemo";
+import HeroToggle from "@/components/HeroToggle";
 
 const FEATURES = [
   ["Intelligent matching", "Every project is scored against 1,000+ grants, funds, labs, markets and investors on eight weighted criteria — genre, stage, territory, budget, format, funding gap, language and track record."],
@@ -42,24 +43,7 @@ export default function Home() {
       </header>
 
       {/* HERO */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-28 md:pt-28 md:pb-36">
-        <p className="eyebrow mb-8">The global intelligence layer for cinema</p>
-        <h1 className="font-display font-normal text-[44px] leading-[1.08] md:text-[76px] max-w-4xl">
-          Where films find <span className="italic text-gold">their financiers.</span>
-        </h1>
-        <p className="mt-9 max-w-xl text-[17px] leading-relaxed text-ash">
-          FYLYMPITCH matches your project with the producers, funds, grants, labs,
-          markets and investors most likely to say yes — and tells you exactly why.
-        </p>
-        <div className="mt-12 flex flex-wrap gap-4">
-          <Link href="/login" className="btn-gold">Submit your project</Link>
-          <Link href="/login" className="btn-ghost">I'm a producer / investor</Link>
-        </div>
-        <div className="mt-24 hairline-gold pt-6 flex flex-wrap gap-x-14 gap-y-4 text-[12px] tracking-[0.18em] uppercase text-ash">
-          <span>Grants</span><span>Film funds</span><span>Labs</span><span>Co-productions</span>
-          <span>Markets</span><span>Distribution</span><span>Investors</span><span>Streamers</span>
-        </div>
-      </section>
+      <HeroToggle />
 
       {/* FEATURES */}
       <section id="features" className="bg-parchment">
