@@ -14,7 +14,7 @@
 
 import { Resend } from "resend";
 
-const FROM_ADDRESS = "FYLYMPITCH <onboarding@resend.dev>";
+const FROM_ADDRESS = "FYLYMPITCH <hello@fylym.com>";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fylympitch.com";
 
 function getResend() {
