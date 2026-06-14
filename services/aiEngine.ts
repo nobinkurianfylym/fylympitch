@@ -129,40 +129,78 @@ export interface AIEngineResult extends FylympitchEngineResult {
 
 // ── OpenAI helpers ───────────────────────────────────────────
 
-const COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions";
-const RESPONSES_URL   = "https://api.openai.com/v1/responses";   // Responses API (web search)
-const MODEL_FAST      = "gpt-4o-mini";                            // analysis + matching
-const MODEL_SEARCH    = "gpt-4o-mini-search-preview";             // EP brief + web search
+// ── Provider config ──────────────────────────────────────────
+//
+// Priority:
+//   1. Groq  (GROQ_API_KEY set)  — pure inference, 5-8× faster than OpenAI
+//   2. OpenAI (OPENAI_API_KEY)   — required for web_search_preview EP brief
+//   3. Heuristic                 — no keys set; rule-based engine only
+//
+// Groq uses an OpenAI-compatible REST API, so only the base URL and
+// model name differ — the request/response shape is identical.
+
+const GROQ_URL          = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL        = "openai/gpt-oss-120b";          // ~400 tok/s on Groq LPU
+
+const OPENAI_URL        = "https://api.openai.com/v1/chat/completions";
+const OPENAI_MODEL_FAST = "gpt-4o-mini";                  // ~70 tok/s fallback
+
+const OPENAI_RESPONSES_URL   = "https://api.openai.com/v1/responses";
+const OPENAI_MODEL_SEARCH    = "gpt-4o-mini-search-preview";
 
 interface Message { role: "system" | "user" | "assistant"; content: string; }
 
-async function callCompletions(
+/** Unified inference call — uses Groq if key present, else OpenAI. */
+async function callLLM(
   messages: Message[],
-  apiKey: string,
+  keys: { groq?: string; openai?: string },
   maxTokens = 2000
 ): Promise<string> {
-  try {
-    const res = await fetch(COMPLETIONS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: MODEL_FAST, max_tokens: maxTokens, messages }),
-    });
-    if (!res.ok) throw new Error(`OpenAI HTTP ${res.status}`);
-    const data = await res.json();
-    return data.choices?.[0]?.message?.content ?? "";
-  } catch (e) {
-    console.error("[aiEngine] completions error:", e);
-    return "";
+  const { groq, openai } = keys;
+
+  if (groq) {
+    try {
+      const res = await fetch(GROQ_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${groq}` },
+        body: JSON.stringify({ model: GROQ_MODEL, max_tokens: maxTokens, messages }),
+      });
+      if (!res.ok) throw new Error(`Groq HTTP ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content ?? "";
+      if (text) return text;
+      throw new Error("Empty Groq response");
+    } catch (e) {
+      console.warn("[aiEngine] Groq failed, falling back to OpenAI:", (e as Error).message);
+    }
   }
+
+  if (openai) {
+    try {
+      const res = await fetch(OPENAI_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${openai}` },
+        body: JSON.stringify({ model: OPENAI_MODEL_FAST, max_tokens: maxTokens, messages }),
+      });
+      if (!res.ok) throw new Error(`OpenAI HTTP ${res.status}`);
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content ?? "";
+    } catch (e) {
+      console.error("[aiEngine] OpenAI completions error:", (e as Error).message);
+    }
+  }
+
+  return "";
 }
 
-async function callWithWebSearch(prompt: string, apiKey: string): Promise<string> {
+/** Web-search EP brief — OpenAI Responses API only (Groq has no search tool). */
+async function callWithWebSearch(prompt: string, openaiKey: string): Promise<string> {
   try {
-    const res = await fetch(RESPONSES_URL, {
+    const res = await fetch(OPENAI_RESPONSES_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
       body: JSON.stringify({
-        model: MODEL_SEARCH,
+        model: OPENAI_MODEL_SEARCH,
         tools: [{ type: "web_search_preview" }],
         input: prompt,
         max_output_tokens: 3000,
@@ -170,14 +208,12 @@ async function callWithWebSearch(prompt: string, apiKey: string): Promise<string
     });
     if (!res.ok) throw new Error(`OpenAI Responses HTTP ${res.status}`);
     const data = await res.json();
-    // Responses API returns output array
-    const text = (data.output ?? [])
+    return (data.output ?? [])
       .find((item: any) => item.type === "message")
       ?.content?.find((c: any) => c.type === "output_text")
       ?.text ?? "";
-    return text;
   } catch (e) {
-    console.error("[aiEngine] web search error:", e);
+    console.error("[aiEngine] web search error:", (e as Error).message);
     return "";
   }
 }
@@ -197,7 +233,7 @@ function safeJSON<T>(raw: string, fallback: T): T {
 
 async function analyzeProject(
   project: Project,
-  apiKey: string
+  keys: { groq?: string; openai?: string }
 ): Promise<ProjectSemanticProfile> {
   const hasNarrative = !!(project.synopsis || project.director_statement);
 
@@ -223,7 +259,7 @@ Return ONLY valid JSON with this structure:
   "strategic_notes": "one paragraph of strategic insight that a financing consultant would actually say to this filmmaker"
 }`;
 
-  const raw = await callCompletions([{ role: "user", content: prompt }], apiKey, 1500);
+  const raw = await callLLM([{ role: "user", content: prompt }], keys, 1500);
   return safeJSON<ProjectSemanticProfile>(raw, {
     themes: [],
     tone: [],
@@ -240,7 +276,7 @@ Return ONLY valid JSON with this structure:
 
 async function analyzeOpportunitiesBatch(
   opportunities: Opportunity[],
-  apiKey: string
+  keys: { groq?: string; openai?: string }
 ): Promise<Map<string, OpportunitySemanticProfile>> {
   const results = new Map<string, OpportunitySemanticProfile>();
   const BATCH = 12; // 12 per call keeps prompt size manageable
@@ -275,7 +311,7 @@ Return ONLY a valid JSON array with one object per opportunity in the same order
   }
 ]`;
 
-    const raw = await callCompletions([{ role: "user", content: prompt }], apiKey, 2500);
+    const raw = await callLLM([{ role: "user", content: prompt }], keys, 2500);
     const parsed = safeJSON<OpportunitySemanticProfile[]>(raw, []);
     for (const profile of parsed) {
       if (profile.opportunity_id) results.set(profile.opportunity_id, profile);
@@ -292,7 +328,7 @@ async function computeSemanticScores(
   projectProfile: ProjectSemanticProfile,
   topMatches: { opportunity: Opportunity; ruleScore: number }[],
   opportunityProfiles: Map<string, OpportunitySemanticProfile>,
-  apiKey: string
+  keys: { groq?: string; openai?: string }
 ): Promise<SemanticMatch[]> {
   const prompt = `You are an expert film financing consultant. Score the semantic alignment between this project and each funding opportunity. Look beyond field matching to thematic resonance, cultural fit, narrative style, and strategic value.
 
@@ -335,7 +371,7 @@ Return ONLY a valid JSON array in the same order as the opportunities above:
   }
 ]`;
 
-  const raw = await callCompletions([{ role: "user", content: prompt }], apiKey, 2500);
+  const raw = await callLLM([{ role: "user", content: prompt }], keys, 2500);
   return safeJSON<SemanticMatch[]>(raw, []);
 }
 
@@ -345,7 +381,7 @@ async function detectAIObstacles(
   project: Project,
   projectProfile: ProjectSemanticProfile,
   topMatches: { opportunity: Opportunity; hybridScore: number }[],
-  apiKey: string
+  keys: { groq?: string; openai?: string }
 ): Promise<AIObstacle[]> {
   const prompt = `You are a veteran film financing consultant. Analyse this project and identify the real obstacles blocking it from financing — go beyond obvious missing fields to identify narrative, structural and strategic problems.
 
@@ -377,7 +413,7 @@ Return ONLY valid JSON array:
   }
 ]`;
 
-  const raw = await callCompletions([{ role: "user", content: prompt }], apiKey, 1500);
+  const raw = await callLLM([{ role: "user", content: prompt }], keys, 1500);
   return safeJSON<AIObstacle[]>(raw, []);
 }
 
@@ -386,7 +422,7 @@ Return ONLY valid JSON array:
 async function generateMarketIntelligence(
   project: Project,
   projectProfile: ProjectSemanticProfile,
-  apiKey: string
+  keys: { groq?: string; openai?: string }
 ): Promise<MarketIntelligence> {
   const prompt = `You are a film market strategist. Provide market intelligence for this project to help position it for international co-production and financing.
 
@@ -406,7 +442,7 @@ Return ONLY valid JSON:
   "competitive_landscape": "one paragraph on what makes this project stand out from (and compete with) similar films currently seeking financing"
 }`;
 
-  const raw = await callCompletions([{ role: "user", content: prompt }], apiKey, 1200);
+  const raw = await callLLM([{ role: "user", content: prompt }], keys, 1200);
   return safeJSON<MarketIntelligence>(raw, {
     positioning_statement: "",
     timing_assessment: "",
@@ -423,7 +459,7 @@ async function generateEnhancedEPBrief(
   projectProfile: ProjectSemanticProfile,
   topMatches: EnhancedMatch[],
   aiObstacles: AIObstacle[],
-  apiKey: string,
+  keys: { groq?: string; openai?: string },
   useWebSearch: boolean
 ): Promise<EnhancedEPBrief> {
   const matchesSummary = topMatches.slice(0, 8).map((m) => {
@@ -475,15 +511,15 @@ Return ONLY valid JSON:
 }`;
 
   let raw: string;
-  if (useWebSearch) {
-    raw = await callWithWebSearch(prompt, apiKey);
+  if (useWebSearch && keys.openai) {
+    raw = await callWithWebSearch(prompt, keys.openai);
   } else {
-    raw = await callCompletions(
+    raw = await callLLM(
       [
         { role: "system", content: "You are a senior Executive Producer with 20 years of international film financing experience. Be specific, direct and actionable." },
         { role: "user", content: prompt },
       ],
-      apiKey,
+      keys,
       2500
     );
   }
@@ -538,18 +574,27 @@ function heuristicMarketIntel(project: Project): MarketIntelligence {
 // ── Main orchestrator ────────────────────────────────────────
 
 export interface AIEngineInput extends FylympitchEngineInput {
+  /** Groq API key — primary inference provider (5-8× faster than OpenAI) */
+  groqApiKey?: string;
+  /** OpenAI API key — required only for web_search EP brief; used as inference fallback if no Groq key */
+  openaiApiKey?: string;
   /** Set OPENAI_WEB_SEARCH=true in env to enable live deadline verification */
   useWebSearch?: boolean;
 }
 
 export async function runAIEnhancedEngine(input: AIEngineInput): Promise<AIEngineResult> {
-  const { project, openaiApiKey, useWebSearch = false } = input;
+  const { project, groqApiKey, openaiApiKey, useWebSearch = false } = input;
+
+  // Build the provider keys object — passed to every AI call
+  const keys = { groq: groqApiKey, openai: openaiApiKey };
+  const hasAI = !!(groqApiKey || openaiApiKey);
+  const provider = groqApiKey ? "Groq" : openaiApiKey ? "OpenAI" : "none";
 
   // ── Always run the rule-based engine first ──
   const base = await runFylympitchEngine(input);
 
-  // ── No API key → return base result with empty AI fields ──
-  if (!openaiApiKey) {
+  // ── No keys → return base result with empty AI fields ──
+  if (!hasAI) {
     return {
       ...base,
       matches: base.matches.map((m) => ({
@@ -579,27 +624,27 @@ export async function runAIEnhancedEngine(input: AIEngineInput): Promise<AIEngin
   const RULE_WEIGHT = 1 - AI_WEIGHT;
 
   // ── Step 1: Analyse the project ──
-  console.log("[aiEngine] Analysing project narrative…");
-  const projectProfile = await analyzeProject(project, openaiApiKey);
+  console.log(`[aiEngine] Analysing project narrative via ${provider}…`);
+  const projectProfile = await analyzeProject(project, keys);
 
   // ── Step 2: Filter to top rule-based matches (≥60) for AI pass ──
   const ruleMatches = base.matches.filter((m) => m.match.score >= 60).slice(0, 20);
 
   // ── Step 3: Analyse top opportunities in batches ──
-  console.log(`[aiEngine] Analysing ${ruleMatches.length} shortlisted opportunities…`);
+  console.log(`[aiEngine] Analysing ${ruleMatches.length} shortlisted opportunities via ${provider}…`);
   const opportunityProfiles = await analyzeOpportunitiesBatch(
     ruleMatches.map((m) => m.opportunity),
-    openaiApiKey
+    keys
   );
 
   // ── Step 4: Semantic scoring ──
-  console.log("[aiEngine] Computing semantic match scores…");
+  console.log(`[aiEngine] Computing semantic match scores via ${provider}…`);
   const semanticScores = await computeSemanticScores(
     project,
     projectProfile,
     ruleMatches.map((m) => ({ opportunity: m.opportunity, ruleScore: m.match.score })),
     opportunityProfiles,
-    openaiApiKey
+    keys
   );
 
   const semanticById = new Map(semanticScores.map((s) => [s.opportunity_id, s]));
@@ -614,27 +659,28 @@ export async function runAIEnhancedEngine(input: AIEngineInput): Promise<AIEngin
   }).sort((a, b) => b.hybrid_score - a.hybrid_score);
 
   // ── Step 6: AI obstacle detection ──
-  console.log("[aiEngine] Detecting narrative obstacles…");
+  console.log(`[aiEngine] Detecting narrative obstacles via ${provider}…`);
   const aiObstacles = await detectAIObstacles(
     project,
     projectProfile,
     enhancedMatches.map((m) => ({ opportunity: m.opportunity, hybridScore: m.hybrid_score })),
-    openaiApiKey
+    keys
   );
 
   // ── Step 7: Market intelligence ──
-  console.log("[aiEngine] Generating market intelligence…");
-  const marketIntelligence = await generateMarketIntelligence(project, projectProfile, openaiApiKey);
+  console.log(`[aiEngine] Generating market intelligence via ${provider}…`);
+  const marketIntelligence = await generateMarketIntelligence(project, projectProfile, keys);
 
-  // ── Step 8: Enhanced EP brief (with optional web search) ──
-  console.log(`[aiEngine] Generating enhanced EP brief (web search: ${useWebSearch})…`);
+  // ── Step 8: Enhanced EP brief (web search requires OpenAI key) ──
+  const canWebSearch = useWebSearch && !!openaiApiKey;
+  console.log(`[aiEngine] Generating enhanced EP brief (provider: ${provider}, web search: ${canWebSearch})…`);
   const enhancedEPBrief = await generateEnhancedEPBrief(
     project,
     projectProfile,
     enhancedMatches,
     aiObstacles,
-    openaiApiKey,
-    useWebSearch
+    keys,
+    canWebSearch
   );
 
   // ── Merge AI obstacles with rule-based obstacles ──

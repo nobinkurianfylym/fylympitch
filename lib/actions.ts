@@ -9,6 +9,7 @@ import {
   type OpportunityIntelligenceExtras,
   type ProducerMatchProfile,
 } from "@/services/fylympitchEngine";
+import { runAIEnhancedEngine } from "@/services/aiEngine";
 import type { Opportunity, Project } from "@/types";
 
 async function requireUser() {
@@ -132,12 +133,14 @@ export async function createProject(formData: FormData) {
       festival_track_record: !!p.festival_track_record,
     }));
 
-    const engine = await runFylympitchEngine({
+    const engine = await runAIEnhancedEngine({
       project: project as Project,
       opportunities: (opps ?? []) as Opportunity[],
       opportunityExtras,
       producerProfiles,
-      openaiApiKey: process.env.OPENAI_API_KEY,
+      groqApiKey: process.env.GROQ_API_KEY,         // primary — fast LPU inference
+      openaiApiKey: process.env.OPENAI_API_KEY,      // fallback + web search EP brief
+      useWebSearch: process.env.OPENAI_WEB_SEARCH === "true",
     });
 
     if (engine.matches.length) {
@@ -163,6 +166,13 @@ export async function createProject(formData: FormData) {
       producer_matches: engine.producer_matches,
       executive_producer: engine.executive_producer,
       dream_scenario: engine.dream_scenario,
+      // AI-enhanced fields (empty if no API keys)
+      project_profile: (engine as any).project_profile ?? {},
+      semantic_matches: (engine as any).semantic_matches ?? [],
+      ai_obstacles: (engine as any).ai_obstacles ?? [],
+      market_intelligence: (engine as any).market_intelligence ?? {},
+      enhanced_ep_brief: (engine as any).enhanced_ep_brief ?? {},
+      engine_version: (engine as any).engine_version ?? "v1_hybrid",
       generated_by: engine.executive_producer.generated_by,
       generated_at: engine.generated_at,
     });
