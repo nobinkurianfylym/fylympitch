@@ -14,18 +14,12 @@ export default async function MessagesPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/dashboard/messages");
 
-  const { data: me } = await supabase
-    .from("profiles")
-    .select("id, full_name, role, company")
-    .eq("id", user.id)
-    .single();
-
-  // Fetch my conversations (not archived)
-  const { data: myParticipations } = await supabase
-    .from("conversation_participants")
-    .select("conversation_id, unread_count")
-    .eq("user_id", user.id)
-    .is("archived_at", null);
+  // Parallel fetch — profile and participations have no dependency on each other
+  const [{ data: me }, { data: myParticipations }] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, role, company").eq("id", user.id).single(),
+    supabase.from("conversation_participants").select("conversation_id, unread_count")
+      .eq("user_id", user.id).is("archived_at", null),
+  ]);
 
   const convIds = (myParticipations ?? []).map((p) => p.conversation_id);
 

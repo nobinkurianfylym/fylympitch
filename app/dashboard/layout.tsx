@@ -12,14 +12,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (!user || authError) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single<Profile>();
+  // Parallel fetch — all three are independent once we have user.id
+  const [
+    { data: profile },
+    { count: unread },
+    { data: msgUnread },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).single<Profile>(),
+    supabase.from("notifications").select("id", { count: "exact", head: true })
+      .eq("user_id", user.id).eq("read", false),
+    supabase.from("conversation_participants").select("unread_count")
+      .eq("user_id", user.id).is("archived_at", null),
+  ]);
 
-  // Guard: if onboarding was never completed (e.g. user bookmarked /dashboard
-  // directly before finishing), send them through onboarding now.
+  const totalMsgUnread = (msgUnread ?? []).reduce((s: number, r: any) => s + (r.unread_count ?? 0), 0);
+
+  // Guard: if onboarding was never completed, redirect now.
   if (profile && profile.onboarded_at === null) {
     redirect("/onboarding");
   }
@@ -27,18 +35,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Safe fallback if profile row is missing (trigger race or DB error).
   const role = profile?.role ?? "filmmaker";
   const isIndustry = role === "producer" || role === "investor" || role === "organization";
-
-  const { count: unread } = await supabase
-    .from("notifications").select("id", { count: "exact", head: true })
-    .eq("user_id", user.id).eq("read", false);
-
-  // Unread messages count
-  const { data: msgUnread } = await supabase
-    .from("conversation_participants")
-    .select("unread_count")
-    .eq("user_id", user.id)
-    .is("archived_at", null);
-  const totalMsgUnread = (msgUnread ?? []).reduce((s, r) => s + (r.unread_count ?? 0), 0);
 
   const nav = [
     { href: "/dashboard", label: "Overview" },

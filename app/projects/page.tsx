@@ -4,7 +4,8 @@ import Wordmark from "@/components/Wordmark";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import { usd, STAGE_LABEL } from "@/lib/format";
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"; // user-specific (logged-in check)
+export const revalidate = 0; // always fresh for auth check
 
 const FORMATS = ["Feature", "Documentary", "Series", "Animation", "Short"];
 

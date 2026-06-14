@@ -1,17 +1,25 @@
-"use client";
+// ProjectThumbnail — three-tier image with instant render, no blocking.
+//
+// Priority:
+//   1. poster_path  → Supabase public storage URL → next/image (WebP, lazy, sized)
+//   2. No poster    → Generated SVG title card (inline, instant, no network)
+//
+// The PDF.js deck-extraction tier was removed: it loaded ~3 MB of JS
+// from CDN per tile, blocked the main thread, and caused visible delay
+// on every page that showed thumbnails without posters. Poster upload
+// is the intended path; the SVG card is the elegant permanent fallback.
 
-import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 
-// Deterministic pastel palette from title string
 const PALETTES = [
-  { bg: "#F0E8FF", accent: "#C4A8E8", text: "#4A1D96" }, // lavender
-  { bg: "#E8F8F0", accent: "#A8E8C4", text: "#1A5C3A" }, // sage
-  { bg: "#FFF0E8", accent: "#F5C4A0", text: "#8B3A0F" }, // peach
-  { bg: "#E8F0FF", accent: "#A8C0F0", text: "#1A2E7A" }, // periwinkle
-  { bg: "#FFF0F5", accent: "#F0B0C8", text: "#7A1A3C" }, // rose
-  { bg: "#F5FFE8", accent: "#C0E888", text: "#2A5C0A" }, // lime
-  { bg: "#FFFCE8", accent: "#F0DCA0", text: "#6B4A00" }, // butter
-  { bg: "#E8FFFD", accent: "#A0E8E4", text: "#0A4A48" }, // aqua
+  { bg: "#F0E8FF", accent: "#C4A8E8", text: "#4A1D96" },
+  { bg: "#E8F8F0", accent: "#A8E8C4", text: "#1A5C3A" },
+  { bg: "#FFF0E8", accent: "#F5C4A0", text: "#8B3A0F" },
+  { bg: "#E8F0FF", accent: "#A8C0F0", text: "#1A2E7A" },
+  { bg: "#FFF0F5", accent: "#F0B0C8", text: "#7A1A3C" },
+  { bg: "#F5FFE8", accent: "#C0E888", text: "#2A5C0A" },
+  { bg: "#FFFCE8", accent: "#F0DCA0", text: "#6B4A00" },
+  { bg: "#E8FFFD", accent: "#A0E8E4", text: "#0A4A48" },
 ];
 
 function hashTitle(s: string): number {
@@ -20,115 +28,68 @@ function hashTitle(s: string): number {
   return Math.abs(h);
 }
 
-function generateSVGCard(title: string, genre: string): string {
+function SVGCard({ title, genre, className }: { title: string; genre: string; className?: string }) {
   const p = PALETTES[hashTitle(title) % PALETTES.length];
-  // Wrap title into up to 2 lines of ~18 chars each
   const words = title.split(" ");
   const lines: string[] = [];
   let cur = "";
   for (const w of words) {
-    if ((cur + " " + w).trim().length > 18 && cur) {
-      lines.push(cur.trim());
-      cur = w;
-    } else {
-      cur = (cur + " " + w).trim();
-    }
+    if ((cur + " " + w).trim().length > 16 && cur) { lines.push(cur.trim()); cur = w; }
+    else { cur = (cur + " " + w).trim(); }
   }
   if (cur) lines.push(cur.trim());
-  const displayLines = lines.slice(0, 2);
-  if (lines.length > 2) displayLines[1] = displayLines[1].slice(0, 15) + "…";
+  const display = lines.slice(0, 2);
+  if (lines.length > 2) display[1] = display[1].slice(0, 13) + "…";
+  const y0 = display.length === 1 ? 88 : 72;
 
-  const titleY = displayLines.length === 1 ? 90 : 80;
-
-  const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400">
-    <rect width="600" height="400" fill="${p.bg}"/>
-    <rect x="0" y="320" width="600" height="80" fill="${p.accent}" opacity="0.45"/>
-    <rect x="40" y="40" width="8" height="8" rx="2" fill="${p.accent}"/>
-    <rect x="552" y="40" width="8" height="8" rx="2" fill="${p.accent}"/>
-    <rect x="40" y="352" width="8" height="8" rx="2" fill="${p.accent}"/>
-    <rect x="552" y="352" width="8" height="8" rx="2" fill="${p.accent}"/>
-    ${displayLines.map((line, i) => `<text x="300" y="${titleY + i * 52}" text-anchor="middle" font-family="Georgia, serif" font-size="38" font-weight="400" fill="${p.text}">${line}</text>`).join("")}
-    <text x="300" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" letter-spacing="3" fill="${p.text}" opacity="0.6">${genre.toUpperCase()}</text>
-  </svg>`;
-
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+  return (
+    <div className={className} style={{ background: p.bg, aspectRatio: "3/2", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+      {/* Bottom accent band */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "22%", background: p.accent, opacity: 0.4 }} />
+      {/* Corner dots */}
+      {[[10, 10], [10, "auto"], ["auto", 10], ["auto", "auto"]].map(([t, r], i) => (
+        <div key={i} style={{ position: "absolute", top: t === "auto" ? undefined : 12, bottom: t === "auto" ? 12 : undefined, left: r === "auto" ? undefined : 12, right: r === "auto" ? 12 : undefined, width: 7, height: 7, borderRadius: 2, background: p.accent }} />
+      ))}
+      <svg viewBox="0 0 300 200" style={{ width: "90%", height: "90%", position: "relative" }}>
+        {display.map((line, i) => (
+          <text key={i} x="150" y={y0 + i * 42} textAnchor="middle" fontFamily="Georgia, serif" fontSize="28" fontWeight="400" fill={p.text}>
+            {line}
+          </text>
+        ))}
+        <text x="150" y="180" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="10" letterSpacing="3" fill={p.text} opacity="0.55">
+          {genre.toUpperCase()}
+        </text>
+      </svg>
+    </div>
+  );
 }
 
 interface Props {
   posterPath: string | null;
-  deckPath: string | null;
+  deckPath?: string | null;  // kept for API compatibility, not used for extraction
   title: string;
   genre: string;
   supabaseUrl: string;
   className?: string;
 }
 
-export default function ProjectThumbnail({ posterPath, deckPath, title, genre, supabaseUrl, className = "" }: Props) {
-  const [deckThumb, setDeckThumb] = useState<string | null>(null);
-  const [deckFailed, setDeckFailed] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+export default function ProjectThumbnail({ posterPath, title, genre, supabaseUrl, className = "" }: Props) {
+  if (!posterPath) {
+    return <SVGCard title={title} genre={genre} className={`${className} rounded-card`} />;
+  }
 
-  const posterUrl = posterPath
-    ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`
-    : null;
-
-  // Try to render first page of pitch deck via PDF.js (client-only)
-  useEffect(() => {
-    if (posterUrl || !deckPath || deckFailed) return;
-    let cancelled = false;
-
-    async function extractDeckThumb() {
-      try {
-        // Dynamically load PDF.js from CDN (only when actually needed)
-        const script = document.createElement("script");
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-        await new Promise<void>((res, rej) => {
-          script.onload = () => res();
-          script.onerror = () => rej();
-          document.head.appendChild(script);
-        });
-
-        const pdfjsLib = (window as any)["pdfjs-dist/build/pdf"];
-        pdfjsLib.GlobalWorkerOptions.workerSrc =
-          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
-        // Get signed URL for the deck (private bucket)
-        const res = await fetch(`/api/deck-url?path=${encodeURIComponent(deckPath ?? "")}`);
-        if (!res.ok || !deckPath) throw new Error("no url");
-        const { url } = await res.json();
-
-        const pdf = await pdfjsLib.getDocument(url).promise;
-        const page = await pdf.getPage(1);
-        const viewport = page.getViewport({ scale: 1.5 });
-
-        const canvas = document.createElement("canvas");
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
-
-        if (!cancelled) setDeckThumb(canvas.toDataURL("image/jpeg", 0.85));
-      } catch {
-        if (!cancelled) setDeckFailed(true);
-      }
-    }
-
-    extractDeckThumb();
-    return () => { cancelled = true; };
-  }, [posterUrl, deckPath, deckFailed]);
-
-  const src = posterUrl ?? deckThumb ?? generateSVGCard(title, genre);
-  const isGenerated = !posterUrl && !deckThumb;
+  const src = `${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`;
 
   return (
-    <div className={`relative overflow-hidden bg-ivory ${className}`} style={{ aspectRatio: "3/2" }}>
-      <img
+    <div className={`${className} relative overflow-hidden`} style={{ aspectRatio: "3/2" }}>
+      <Image
         src={src}
-        alt={`${title} thumbnail`}
-        className="w-full h-full object-cover"
-        style={isGenerated ? { objectFit: "contain" } : undefined}
-        onError={() => {
-          if (!isGenerated) setDeckFailed(true);
-        }}
+        alt={`${title} poster`}
+        fill
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        className="object-cover"
+        loading="lazy"
+        placeholder="empty"
       />
     </div>
   );
