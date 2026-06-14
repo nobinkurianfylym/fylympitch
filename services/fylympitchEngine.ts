@@ -176,10 +176,12 @@ export interface FundingSourceCounts {
   co_producers: number;
 }
 
-export interface FundingDiscovery {
-  total_usd: number;
-  breakdown: FundingDiscoveryItem[];
-  source_counts: FundingSourceCounts;
+export interface FundingSourceCounts {
+  total: number;
+  producers: number;
+  investors: number;
+  grants: number;
+  co_producers: number;
 }
 
 function sumByType(
