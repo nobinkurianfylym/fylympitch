@@ -143,8 +143,9 @@ export async function createProject(formData: FormData) {
       opportunities: (opps ?? []) as Opportunity[],
       opportunityExtras,
       producerProfiles,
-      groqApiKey: process.env.GROQ_API_KEY,         // primary — fast LPU inference
-      openaiApiKey: process.env.OPENAI_API_KEY,      // fallback + web search EP brief
+      cerebrasApiKey: process.env.CEREBERAS_API,    // primary — ultra-fast inference
+      groqApiKey: process.env.GROQ_API_KEY,          // secondary — Groq LPU
+      openaiApiKey: process.env.OPENAI_API_KEY,      // last resort + web search EP brief
       useWebSearch: process.env.OPENAI_WEB_SEARCH === "true",
     });
 

@@ -88,7 +88,7 @@ export interface EnhancedEPBrief {
   six_month_roadmap: string;
   key_relationships: string[];
   market_positioning: string;
-  generated_by: "groq" | "openai" | "heuristic";
+  generated_by: "cerebras" | "groq" | "openai" | "heuristic";
 }
 
 export interface AIObstacle {
@@ -139,25 +139,47 @@ export interface AIEngineResult extends FylympitchEngineResult {
 // Groq uses an OpenAI-compatible REST API, so only the base URL and
 // model name differ — the request/response shape is identical.
 
-const GROQ_URL          = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL        = "openai/gpt-oss-120b";          // ~400 tok/s on Groq LPU
+const CEREBRAS_URL   = "https://api.cerebras.ai/v1/chat/completions";
+const CEREBRAS_MODEL = "llama-3.3-70b";                   // Cerebras — primary, ultra-fast
+
+const GROQ_URL       = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_MODEL     = "openai/gpt-oss-120b";             // Groq LPU — secondary
 
 const OPENAI_URL        = "https://api.openai.com/v1/chat/completions";
-const OPENAI_MODEL_FAST = "gpt-4o-mini";                  // ~70 tok/s fallback
+const OPENAI_MODEL_FAST = "gpt-4o-mini";                  // OpenAI — last resort
 
-const OPENAI_RESPONSES_URL   = "https://api.openai.com/v1/responses";
-const OPENAI_MODEL_SEARCH    = "gpt-4o-mini-search-preview";
+const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
+const OPENAI_MODEL_SEARCH  = "gpt-4o-mini-search-preview";
 
 interface Message { role: "system" | "user" | "assistant"; content: string; }
 
-/** Unified inference call — uses Groq if key present, else OpenAI. */
+/** Unified inference call — waterfall: Cerebras → Groq → OpenAI */
 async function callLLM(
   messages: Message[],
-  keys: { groq?: string; openai?: string },
+  keys: { cerebras?: string; groq?: string; openai?: string },
   maxTokens = 2000
 ): Promise<string> {
-  const { groq, openai } = keys;
+  const { cerebras, groq, openai } = keys;
 
+  // 1. Cerebras — primary
+  if (cerebras) {
+    try {
+      const res = await fetch(CEREBRAS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${cerebras}` },
+        body: JSON.stringify({ model: CEREBRAS_MODEL, max_tokens: maxTokens, messages }),
+      });
+      if (!res.ok) throw new Error(`Cerebras HTTP ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content ?? "";
+      if (text) return text;
+      throw new Error("Empty Cerebras response");
+    } catch (e) {
+      console.warn("[aiEngine] Cerebras failed, falling back to Groq:", (e as Error).message);
+    }
+  }
+
+  // 2. Groq — secondary
   if (groq) {
     try {
       const res = await fetch(GROQ_URL, {
@@ -175,6 +197,7 @@ async function callLLM(
     }
   }
 
+  // 3. OpenAI — last resort
   if (openai) {
     try {
       const res = await fetch(OPENAI_URL, {
@@ -233,7 +256,7 @@ function safeJSON<T>(raw: string, fallback: T): T {
 
 async function analyzeProject(
   project: Project,
-  keys: { groq?: string; openai?: string }
+  keys: { cerebras?: string; groq?: string; openai?: string }
 ): Promise<ProjectSemanticProfile> {
   const hasNarrative = !!(project.synopsis || project.director_statement);
 
@@ -276,7 +299,7 @@ Return ONLY valid JSON with this structure:
 
 async function analyzeOpportunitiesBatch(
   opportunities: Opportunity[],
-  keys: { groq?: string; openai?: string }
+  keys: { cerebras?: string; groq?: string; openai?: string }
 ): Promise<Map<string, OpportunitySemanticProfile>> {
   const results = new Map<string, OpportunitySemanticProfile>();
   const BATCH = 12; // 12 per call keeps prompt size manageable
@@ -328,7 +351,7 @@ async function computeSemanticScores(
   projectProfile: ProjectSemanticProfile,
   topMatches: { opportunity: Opportunity; ruleScore: number }[],
   opportunityProfiles: Map<string, OpportunitySemanticProfile>,
-  keys: { groq?: string; openai?: string }
+  keys: { cerebras?: string; groq?: string; openai?: string }
 ): Promise<SemanticMatch[]> {
   const prompt = `You are an expert film financing consultant. Score the semantic alignment between this project and each funding opportunity. Look beyond field matching to thematic resonance, cultural fit, narrative style, and strategic value.
 
@@ -381,7 +404,7 @@ async function detectAIObstacles(
   project: Project,
   projectProfile: ProjectSemanticProfile,
   topMatches: { opportunity: Opportunity; hybridScore: number }[],
-  keys: { groq?: string; openai?: string }
+  keys: { cerebras?: string; groq?: string; openai?: string }
 ): Promise<AIObstacle[]> {
   const prompt = `You are a veteran film financing consultant. Analyse this project and identify the real obstacles blocking it from financing — go beyond obvious missing fields to identify narrative, structural and strategic problems.
 
@@ -422,7 +445,7 @@ Return ONLY valid JSON array:
 async function generateMarketIntelligence(
   project: Project,
   projectProfile: ProjectSemanticProfile,
-  keys: { groq?: string; openai?: string }
+  keys: { cerebras?: string; groq?: string; openai?: string }
 ): Promise<MarketIntelligence> {
   const prompt = `You are a film market strategist. Provide market intelligence for this project to help position it for international co-production and financing.
 
@@ -459,7 +482,7 @@ async function generateEnhancedEPBrief(
   projectProfile: ProjectSemanticProfile,
   topMatches: EnhancedMatch[],
   aiObstacles: AIObstacle[],
-  keys: { groq?: string; openai?: string },
+  keys: { cerebras?: string; groq?: string; openai?: string },
   useWebSearch: boolean
 ): Promise<EnhancedEPBrief> {
   const matchesSummary = topMatches.slice(0, 8).map((m) => {
@@ -511,32 +534,38 @@ Return ONLY valid JSON:
 }`;
 
   // ── Provider waterfall for the EP brief ─────────────────────
-  // 1. Groq  — fast LPU inference (~400 tok/s), no web search
-  // 2. OpenAI WITH web search — if Groq unavailable/failed and web search is enabled
-  // 3. OpenAI plain — if Groq failed and web search is off/unavailable
-  // 4. Heuristic — if neither key is set
+  // 1. Cerebras — primary (ultra-fast inference)
+  // 2. Groq     — secondary (LPU-accelerated)
+  // 3. OpenAI WITH web search — if web search enabled and only OpenAI key set
+  // 4. OpenAI plain — last resort inference
+  // 5. Heuristic — no keys set
 
   let raw = "";
-  let usedProvider: "groq" | "openai" | "heuristic" = "heuristic";
+  let usedProvider: "cerebras" | "groq" | "openai" | "heuristic" = "heuristic";
 
   const systemMsg = {
     role: "system" as const,
     content: "You are a senior Executive Producer with 20 years of international film financing experience. Be specific, direct and actionable.",
   };
 
-  // Step 1: try Groq
-  if (keys.groq) {
+  // Step 1: Cerebras — primary
+  if (keys.cerebras) {
+    raw = await callLLM([systemMsg, { role: "user", content: prompt }], { cerebras: keys.cerebras }, 2500);
+    if (raw) usedProvider = "cerebras";
+  }
+
+  // Step 2: Groq — secondary
+  if (!raw && keys.groq) {
     raw = await callLLM([systemMsg, { role: "user", content: prompt }], { groq: keys.groq }, 2500);
     if (raw) usedProvider = "groq";
   }
 
-  // Step 2: Groq failed or not set → try OpenAI (with web search if enabled)
+  // Step 3: OpenAI — last resort (with web search if enabled)
   if (!raw && keys.openai) {
     if (useWebSearch) {
       raw = await callWithWebSearch(prompt, keys.openai);
     }
     if (!raw) {
-      // Plain OpenAI fallback (web search failed or disabled)
       raw = await callLLM([systemMsg, { role: "user", content: prompt }], { openai: keys.openai }, 2500);
     }
     if (raw) usedProvider = "openai";
@@ -592,21 +621,23 @@ function heuristicMarketIntel(project: Project): MarketIntelligence {
 // ── Main orchestrator ────────────────────────────────────────
 
 export interface AIEngineInput extends FylympitchEngineInput {
-  /** Groq API key — primary inference provider (5-8× faster than OpenAI) */
+  /** Cerebras API key — primary inference provider (fastest inference) */
+  cerebrasApiKey?: string;
+  /** Groq API key — secondary inference provider (LPU-accelerated) */
   groqApiKey?: string;
-  /** OpenAI API key — required only for web_search EP brief; used as inference fallback if no Groq key */
+  /** OpenAI API key — last resort + web_search EP brief */
   openaiApiKey?: string;
   /** Set OPENAI_WEB_SEARCH=true in env to enable live deadline verification */
   useWebSearch?: boolean;
 }
 
 export async function runAIEnhancedEngine(input: AIEngineInput): Promise<AIEngineResult> {
-  const { project, groqApiKey, openaiApiKey, useWebSearch = false } = input;
+  const { project, cerebrasApiKey, groqApiKey, openaiApiKey, useWebSearch = false } = input;
 
   // Build the provider keys object — passed to every AI call
-  const keys = { groq: groqApiKey, openai: openaiApiKey };
-  const hasAI = !!(groqApiKey || openaiApiKey);
-  const provider = groqApiKey ? "Groq" : openaiApiKey ? "OpenAI" : "none";
+  const keys = { cerebras: cerebrasApiKey, groq: groqApiKey, openai: openaiApiKey };
+  const hasAI = !!(cerebrasApiKey || groqApiKey || openaiApiKey);
+  const provider = cerebrasApiKey ? "Cerebras" : groqApiKey ? "Groq" : openaiApiKey ? "OpenAI" : "none";
 
   // ── Always run the rule-based engine first ──
   const base = await runFylympitchEngine(input);
