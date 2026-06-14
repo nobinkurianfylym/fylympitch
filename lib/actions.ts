@@ -10,6 +10,11 @@ import {
   type ProducerMatchProfile,
 } from "@/services/fylympitchEngine";
 import { runAIEnhancedEngine } from "@/services/aiEngine";
+import {
+  sendProducerApplicationEmail,
+  sendProducerApprovedEmail,
+  sendProducerDeclinedEmail,
+} from "@/lib/email";
 import type { Opportunity, Project } from "@/types";
 
 async function requireUser() {
@@ -317,7 +322,30 @@ export async function adminSetApproval(formData: FormData) {
 
   if (updateError) {
     console.error("[adminSetApproval] profile update failed:", updateError.message);
-    return; // admin sees the page unchanged — they can retry
+    return;
+  }
+
+  // Fetch producer's profile for email + notification
+  const { data: producerProfile } = await supabase
+    .from("profiles")
+    .select("full_name, company, email")
+    .eq("id", target)
+    .single();
+
+  // Send email if we have their address
+  if (producerProfile?.email) {
+    if (status === "approved") {
+      await sendProducerApprovedEmail(
+        producerProfile.email,
+        producerProfile.full_name ?? "there",
+        producerProfile.company ?? ""
+      );
+    } else {
+      await sendProducerDeclinedEmail(
+        producerProfile.email,
+        producerProfile.full_name ?? "there"
+      );
+    }
   }
 
   await supabase.from("audit_logs").insert({
@@ -466,12 +494,15 @@ export async function completeOnboarding(formData: FormData) {
   if (!full_name) return { error: "Please enter your name." };
   if (role === "producer" && !company) return { error: "Please enter your company name." };
 
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+
   const { error } = await supabase
     .from("profiles")
     .update({
       role,
       full_name,
       company,
+      email: authUser?.email ?? null,  // store for transactional emails
       // Producers need admin approval; filmmakers get instant access
       approval_status: role === "producer" ? "pending" : "approved",
       onboarded_at: new Date().toISOString(),
@@ -497,6 +528,12 @@ export async function completeOnboarding(formData: FormData) {
           link: "/admin/producers",
         }))
       );
+    }
+
+    // Send confirmation email to the producer
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (authUser?.email) {
+      await sendProducerApplicationEmail(authUser.email, full_name, company ?? "");
     }
   }
 

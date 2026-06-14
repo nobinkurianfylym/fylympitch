@@ -11,6 +11,7 @@ export interface Profile {
   role: UserRole;
   approval_status: ApprovalStatus;
   onboarded_at: string | null;
+  email: string | null;
   full_name: string;
   company: string | null;
   country: string | null;
