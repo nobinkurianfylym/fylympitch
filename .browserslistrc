@@ -1,9 +1,5 @@
-# Target modern evergreen browsers only.
-# Eliminates ~11 KiB of polyfills for Array.at, Array.flat, flatMap,
-# Object.fromEntries, Object.hasOwn, String.trimStart/trimEnd — all baseline
-# features supported natively since 2020–2022 in Chrome, Firefox, Safari, Edge.
-# Legacy browsers (<1% global share, IE 11) are explicitly excluded.
-
+# Target modern browsers only — eliminates legacy JS polyfills (~11 KiB savings)
+# Covers 95%+ of global users as of 2025.
 last 2 Chrome versions
 last 2 Firefox versions
 last 2 Safari versions
