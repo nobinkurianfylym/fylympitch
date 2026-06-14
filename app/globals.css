@@ -4,8 +4,9 @@
 
 :root {
   --gold: #BF9953;
-  --font-montserrat: "Montserrat", "Helvetica Neue", Arial, sans-serif;
-  --font-playfair: "Playfair Display", Georgia, serif;
+  /* --font-montserrat and --font-playfair are injected by next/font
+     via the className on <html> — do not redeclare them here or they
+     will override the self-hosted variable and break font loading. */
 }
 
 html { scroll-behavior: smooth; }
