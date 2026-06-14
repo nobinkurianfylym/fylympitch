@@ -49,13 +49,13 @@ export default async function AdminHome() {
   return (
     <div>
       <p className="eyebrow">Platform health</p>
-      <h1 className="font-display text-3xl font-light mt-1">Analytics</h1>
+      <h1 className="font-display text-[30px] font-normal mt-1">Analytics</h1>
 
       <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((s) => (
           <div key={s.label} className="card p-5">
-            <p className={`text-3xl font-light ${s.accent ? "text-gold" : "text-ink"}`}>{s.value}</p>
-            <p className="mt-1 text-xs uppercase tracking-[0.14em] text-ash font-light">{s.label}</p>
+            <p className={`text-[30px] font-normal ${s.accent ? "text-gold" : "text-ink"}`}>{s.value}</p>
+            <p className="mt-1 text-[12px] uppercase tracking-[0.14em] text-ash font-normal">{s.label}</p>
           </div>
         ))}
       </div>
@@ -66,16 +66,16 @@ export default async function AdminHome() {
           {(recent ?? []).map((r, i) => {
             const who = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
             return (
-              <div key={i} className="px-5 py-3 flex items-center justify-between text-sm font-light">
+              <div key={i} className="px-5 py-3 flex items-center justify-between text-[14px] font-normal">
                 <span className="text-ink">
                   {who?.full_name ?? "Someone"} · {r.action.replaceAll("_", " ")} {r.entity}
                 </span>
-                <span className="text-ash text-xs">{new Date(r.created_at).toLocaleString()}</span>
+                <span className="text-ash text-[12px]">{new Date(r.created_at).toLocaleString()}</span>
               </div>
             );
           })}
           {(!recent || recent.length === 0) && (
-            <p className="px-5 py-6 text-sm text-ash font-light">No activity yet.</p>
+            <p className="px-5 py-6 text-[14px] text-ash font-normal">No activity yet.</p>
           )}
         </div>
       </div>

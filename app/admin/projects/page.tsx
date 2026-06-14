@@ -33,7 +33,7 @@ export default async function AdminProjects({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Project management</p>
-          <h1 className="font-display text-3xl font-light mt-1">Projects</h1>
+          <h1 className="font-display text-[30px] font-normal mt-1">Projects</h1>
         </div>
         <div className="flex gap-2">
           <a href="/admin/projects" className={`btn-ghost ${!filter ? "border-gold text-ink" : ""}`}>All</a>
@@ -49,8 +49,8 @@ export default async function AdminProjects({
           return (
             <div key={p.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="font-light text-ink">{p.title}</p>
-                <p className="text-xs text-ash font-light mt-0.5">
+                <p className="font-normal text-ink">{p.title}</p>
+                <p className="text-[12px] text-ash font-normal mt-0.5">
                   {[owner?.full_name ?? "Unknown", owner?.company, p.genre, STAGE_LABEL[p.stage] ?? p.stage, p.country]
                     .filter(Boolean)
                     .join(" · ")}
@@ -58,24 +58,24 @@ export default async function AdminProjects({
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`text-xs uppercase tracking-[0.14em] font-light ${p.is_public ? "text-emerald-700" : "text-gold"}`}>
+                <span className={`text-[12px] uppercase tracking-[0.14em] font-normal ${p.is_public ? "text-emerald-700" : "text-gold"}`}>
                   {p.is_public ? "Public" : "Hidden"}
                 </span>
                 <form action={adminToggleProjectVisibility}>
                   <input type="hidden" name="project_id" value={p.id} />
                   <input type="hidden" name="is_public" value={p.is_public ? "false" : "true"} />
-                  <button className="btn-ghost !py-1.5 !px-4 text-sm">{p.is_public ? "Hide" : "Unhide"}</button>
+                  <button className="btn-ghost !py-1.5 !px-4 text-[14px]">{p.is_public ? "Hide" : "Unhide"}</button>
                 </form>
                 <form action={adminDeleteProject}>
                   <input type="hidden" name="project_id" value={p.id} />
-                  <button className="btn-ghost !py-1.5 !px-4 text-sm">Remove</button>
+                  <button className="btn-ghost !py-1.5 !px-4 text-[14px]">Remove</button>
                 </form>
               </div>
             </div>
           );
         })}
         {(!projects || projects.length === 0) && (
-          <p className="px-5 py-6 text-sm text-ash font-light">No projects found.</p>
+          <p className="px-5 py-6 text-[14px] text-ash font-normal">No projects found.</p>
         )}
       </div>
     </div>

@@ -54,7 +54,7 @@ function initials(name: string | null) {
 
 function Avatar({ name, size = 40 }: { name: string | null; size?: number }) {
   return (
-    <div className="rounded-full bg-parchment border border-line flex items-center justify-center font-normal text-ink/70 shrink-0"
+    <div className="rounded-full bg-parchment border border-line flex items-center justify-center font-normal text-ash shrink-0"
       style={{ width: size, height: size, fontSize: size * 0.35 }}>
       {initials(name)}
     </div>
@@ -298,7 +298,7 @@ export default function MessagesClient({
                     <span className="bg-ink text-ivory text-[10px] rounded-full px-1.5 py-0.5 shrink-0">{conv.unread_count}</span>
                   )}
                 </div>
-                <p className="text-[11px] text-ash/60 mt-0.5 capitalize">{conv.other_user?.role ?? ""}</p>
+                <p className="text-[11px] text-ash mt-0.5 capitalize">{conv.other_user?.role ?? ""}</p>
               </div>
             </button>
           ))}
@@ -393,7 +393,7 @@ export default function MessagesClient({
                             <span className="text-[10px]" title={msg.status}>
                               {msg.status === "read" ? <span className="text-gold">✓✓</span>
                                 : msg.status === "delivered" ? <span className="text-ash">✓✓</span>
-                                : <span className="text-ash/50">✓</span>}
+                                : <span className="text-ash">✓</span>}
                             </span>
                           )}
                         </div>

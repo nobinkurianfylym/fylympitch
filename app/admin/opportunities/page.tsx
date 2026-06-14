@@ -15,27 +15,27 @@ export default async function AdminOpportunities() {
   return (
     <div>
       <p className="eyebrow">Fund management</p>
-      <h1 className="font-display text-3xl font-light mt-1">Grants, funds &amp; opportunities</h1>
+      <h1 className="font-display text-[30px] font-normal mt-1">Grants, funds &amp; opportunities</h1>
 
       <div className="card mt-8 divide-y divide-line">
         {(opps ?? []).map((o) => (
           <div key={o.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="font-light text-ink">{o.title}</p>
-              <p className="text-xs text-ash font-light mt-0.5">
+              <p className="font-normal text-ink">{o.title}</p>
+              <p className="text-[12px] text-ash font-normal mt-0.5">
                 {[TYPE_LABEL[o.opp_type] ?? o.opp_type, o.country || o.region || "Worldwide"].filter(Boolean).join(" · ")}
                 {o.max_award_usd ? ` · up to ${usd(o.max_award_usd)}` : ""}
                 {o.deadline ? ` · deadline ${new Date(o.deadline).toLocaleDateString()}` : ""}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-xs uppercase tracking-[0.14em] font-light ${o.is_active ? "text-emerald-700" : "text-ash"}`}>
+              <span className={`text-[12px] uppercase tracking-[0.14em] font-normal ${o.is_active ? "text-emerald-700" : "text-ash"}`}>
                 {o.is_active ? "Active" : "Inactive"}
               </span>
               <form action={adminToggleOpportunity}>
                 <input type="hidden" name="opportunity_id" value={o.id} />
                 <input type="hidden" name="active" value={o.is_active ? "false" : "true"} />
-                <button className={o.is_active ? "btn-ghost !py-1.5 !px-4 text-sm" : "btn-gold !py-1.5 !px-4 text-sm"}>
+                <button className={o.is_active ? "btn-ghost !py-1.5 !px-4 text-[14px]" : "btn-gold !py-1.5 !px-4 text-[14px]"}>
                   {o.is_active ? "Deactivate" : "Activate"}
                 </button>
               </form>
@@ -43,13 +43,13 @@ export default async function AdminOpportunities() {
           </div>
         ))}
         {(!opps || opps.length === 0) && (
-          <p className="px-5 py-6 text-sm text-ash font-light">No opportunities yet.</p>
+          <p className="px-5 py-6 text-[14px] text-ash font-normal">No opportunities yet.</p>
         )}
       </div>
 
       <div className="card mt-10 p-6 sm:p-8">
         <p className="eyebrow">Add opportunity</p>
-        <h2 className="font-display text-2xl font-light mt-1">New opportunity</h2>
+        <h2 className="font-display text-[24px] font-normal mt-1">New opportunity</h2>
         <form action={async (fd: FormData) => { "use server"; await adminCreateOpportunity(fd); }} className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <label className="block sm:col-span-2">
             <span className="eyebrow">Title *</span>

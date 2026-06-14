@@ -77,7 +77,7 @@ function OnboardingForm() {
                   <div>
                     <div className="font-display text-[20px] mb-1">{r.label}</div>
                     <div className="text-[14px] text-ash leading-relaxed">{r.description}</div>
-                    <div className={`mt-2 text-[12px] tracking-wide ${role === r.value ? "text-gold" : "text-ash/70"}`}>
+                    <div className={`mt-2 text-[12px] tracking-wide ${role === r.value ? "text-gold" : "text-ash"}`}>
                       {r.note}
                     </div>
                   </div>

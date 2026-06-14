@@ -55,7 +55,7 @@ export default async function ProducerNotesPage() {
                     </span>
                   </div>
                 </div>
-                <p className="text-[14px] leading-[1.6] text-ink/85 whitespace-pre-line">{row.notes}</p>
+                <p className="text-[14px] leading-[1.6] text-ink whitespace-pre-line">{row.notes}</p>
                 <p className="text-[12px] text-ash mt-3">{timeAgo(row.updated_at)}</p>
               </div>
             );

@@ -71,7 +71,7 @@ export default async function ProducerMeetingsPage() {
                 </div>
 
                 {m.message && (
-                  <p className="text-[13px] text-ink/80 italic border-l-2 border-line pl-3 mb-3">
+                  <p className="text-[13px] text-ink italic border-l-2 border-line pl-3 mb-3">
                     "{m.message}"
                   </p>
                 )}

@@ -11,7 +11,7 @@ export default function OfferForm({ projectId }: { projectId: string }) {
 
   if (done) {
     return (
-      <p className="text-sm text-gold font-light tracking-wide">
+      <p className="text-[14px] text-gold font-normal tracking-wide">
         Offer sent. The filmmaker has been notified.
       </p>
     );
@@ -72,7 +72,7 @@ export default function OfferForm({ projectId }: { projectId: string }) {
           className="field mt-1.5"
         />
       </label>
-      {error && <p className="text-sm text-red-700 font-light">{error}</p>}
+      {error && <p className="text-[14px] text-red-700 font-normal">{error}</p>}
       <div className="flex items-center gap-3">
         <button type="submit" disabled={pending} className="btn-gold disabled:opacity-50">
           {pending ? "Sending…" : "Send offer"}

@@ -33,7 +33,7 @@ export default async function AdminModeration({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Moderation</p>
-          <h1 className="font-display text-3xl font-light mt-1">Reports</h1>
+          <h1 className="font-display text-[30px] font-normal mt-1">Reports</h1>
         </div>
         <div className="flex gap-2">
           <a href="/admin/moderation" className={`btn-ghost ${!filter || filter === "open" ? "border-gold text-ink" : ""}`}>
@@ -59,15 +59,15 @@ export default async function AdminModeration({
           {(reports ?? []).map((r) => (
             <div key={r.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="font-light text-ink">
+                <p className="font-normal text-ink">
                   {TARGET_LABEL[r.target_type] ?? r.target_type}{" "}
-                  <span className="text-xs text-ash">· {r.target_id}</span>
+                  <span className="text-[12px] text-ash">· {r.target_id}</span>
                 </p>
-                <p className="text-xs text-ash font-light mt-0.5">{r.reason}</p>
+                <p className="text-[12px] text-ash font-normal mt-0.5">{r.reason}</p>
               </div>
               <div className="flex items-center gap-3">
                 <span
-                  className={`text-xs uppercase tracking-[0.14em] font-light ${
+                  className={`text-[12px] uppercase tracking-[0.14em] font-normal ${
                     r.status === "resolved" ? "text-emerald-700" : r.status === "dismissed" ? "text-ash" : "text-gold"
                   }`}
                 >
@@ -78,12 +78,12 @@ export default async function AdminModeration({
                     <form action={adminResolveReport}>
                       <input type="hidden" name="report_id" value={r.id} />
                       <input type="hidden" name="status" value="resolved" />
-                      <button className="btn-gold !py-1.5 !px-4 text-sm">Resolve</button>
+                      <button className="btn-gold !py-1.5 !px-4 text-[14px]">Resolve</button>
                     </form>
                     <form action={adminResolveReport}>
                       <input type="hidden" name="report_id" value={r.id} />
                       <input type="hidden" name="status" value="dismissed" />
-                      <button className="btn-ghost !py-1.5 !px-4 text-sm">Dismiss</button>
+                      <button className="btn-ghost !py-1.5 !px-4 text-[14px]">Dismiss</button>
                     </form>
                   </>
                 )}
@@ -91,7 +91,7 @@ export default async function AdminModeration({
             </div>
           ))}
           {(!reports || reports.length === 0) && (
-            <p className="px-5 py-6 text-sm text-ash font-light">
+            <p className="px-5 py-6 text-[14px] text-ash font-normal">
               {!filter || filter === "open" ? "Queue is clear — no open reports." : "No reports found."}
             </p>
           )}

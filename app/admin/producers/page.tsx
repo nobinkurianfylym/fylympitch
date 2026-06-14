@@ -41,7 +41,7 @@ export default async function AdminProducersPage({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Producer management</p>
-          <h1 className="font-display text-3xl font-light mt-1">
+          <h1 className="font-display text-[30px] font-normal mt-1">
             Producers
             {(pendingCount ?? 0) > 0 && (
               <span className="ml-3 text-[14px] font-normal bg-amber-100 text-amber-800 px-3 py-1 rounded-full align-middle">
@@ -80,7 +80,7 @@ export default async function AdminProducersPage({
                   IMDb profile ↗
                 </a>
               )}
-              <p className="text-[11px] text-ash/60 mt-1">
+              <p className="text-[11px] text-ash mt-1">
                 Joined {new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
               </p>
             </div>

@@ -95,7 +95,7 @@ export default async function ProducerProjectDetailPage({
           </p>
 
           {project.logline && (
-            <p className="font-display italic text-[17px] leading-[1.6] text-ink/80 mb-6">
+            <p className="font-display italic text-[17px] leading-[1.6] text-ink mb-6">
               "{project.logline}"
             </p>
           )}
@@ -124,19 +124,19 @@ export default async function ProducerProjectDetailPage({
           {project.synopsis && (
             <section className="mb-8">
               <h2 className="eyebrow mb-3">Synopsis</h2>
-              <p className="text-[17px] leading-[1.7] text-ink/85 whitespace-pre-line">{project.synopsis}</p>
+              <p className="text-[17px] leading-[1.7] text-ink whitespace-pre-line">{project.synopsis}</p>
             </section>
           )}
           {project.director_statement && (
             <section className="mb-8">
               <h2 className="eyebrow mb-3">Director's statement</h2>
-              <p className="text-[17px] leading-[1.7] text-ink/85 whitespace-pre-line">{project.director_statement}</p>
+              <p className="text-[17px] leading-[1.7] text-ink whitespace-pre-line">{project.director_statement}</p>
             </section>
           )}
           {project.producer_info && (
             <section className="mb-8">
               <h2 className="eyebrow mb-3">Producers</h2>
-              <p className="text-[17px] leading-[1.7] text-ink/85 whitespace-pre-line">{project.producer_info}</p>
+              <p className="text-[17px] leading-[1.7] text-ink whitespace-pre-line">{project.producer_info}</p>
             </section>
           )}
         </div>
@@ -175,7 +175,7 @@ export default async function ProducerProjectDetailPage({
                 {[1, 2, 3, 4, 5].map((n) => (
                   <label key={n} className="cursor-pointer">
                     <input type="radio" name="rating" value={n} defaultChecked={crm?.rating === n} className="sr-only" />
-                    <span className={`text-[22px] ${(crm?.rating ?? 0) >= n ? "text-gold" : "text-ash/30"}`}>★</span>
+                    <span className={`text-[22px] ${(crm?.rating ?? 0) >= n ? "text-gold" : "text-ash"}`}>★</span>
                   </label>
                 ))}
               </div>

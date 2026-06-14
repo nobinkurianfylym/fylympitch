@@ -101,7 +101,7 @@ export default async function ProjectsPage({
                     {p.title}
                   </h2>
                   {p.logline && (
-                    <p className="font-display italic text-[14px] leading-[1.55] text-ink/70 line-clamp-2 flex-1">
+                    <p className="font-display italic text-[14px] leading-[1.55] text-ash line-clamp-2 flex-1">
                       "{p.logline}"
                     </p>
                   )}

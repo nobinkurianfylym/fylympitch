@@ -28,34 +28,34 @@ export default async function WhoAmI({
 
   return (
     <main className="min-h-screen bg-ivory text-ink font-sans p-8 max-w-2xl mx-auto">
-      <h1 className="font-display text-2xl mb-4">Who am I?</h1>
+      <h1 className="font-display text-[24px] mb-4">Who am I?</h1>
 
       <div className="card p-5 mb-4">
         <p className="eyebrow mb-2">Auth user</p>
-        <pre className="text-xs whitespace-pre-wrap">{JSON.stringify({ id: user.id, email: user.email }, null, 2)}</pre>
+        <pre className="text-[12px] whitespace-pre-wrap">{JSON.stringify({ id: user.id, email: user.email }, null, 2)}</pre>
       </div>
 
       <div className="card p-5 mb-4">
         <p className="eyebrow mb-2">Profile row (public.profiles)</p>
         {error ? (
-          <p className="text-red-700 text-sm">Error reading profile: {error.message}</p>
+          <p className="text-red-700 text-[14px]">Error reading profile: {error.message}</p>
         ) : (
-          <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(profile, null, 2)}</pre>
+          <pre className="text-[12px] whitespace-pre-wrap">{JSON.stringify(profile, null, 2)}</pre>
         )}
       </div>
 
       <div className="card p-5 mb-4">
         <p className="eyebrow mb-2">Admins currently in system</p>
-        <p className="text-sm">{adminCount ?? 0} account(s) with role = admin</p>
+        <p className="text-[14px]">{adminCount ?? 0} account(s) with role = admin</p>
       </div>
 
       {promoteError && (
         <div className="card p-5 mb-4 border-red-300">
-          <p className="text-sm text-red-700 mb-2">Could not self-promote: {promoteError}</p>
-          <p className="text-xs text-ash mb-2">
+          <p className="text-[14px] text-red-700 mb-2">Could not self-promote: {promoteError}</p>
+          <p className="text-[12px] text-ash mb-2">
             Run this in Supabase SQL editor instead (replace the id if different):
           </p>
-          <pre className="text-xs whitespace-pre-wrap bg-deep text-ivory p-3 rounded-card">
+          <pre className="text-[12px] whitespace-pre-wrap bg-deep text-ivory p-3 rounded-card">
 {`update public.profiles set role = 'admin' where id = '${user.id}';`}
           </pre>
         </div>
@@ -64,7 +64,7 @@ export default async function WhoAmI({
       {!error && profile?.role !== "admin" && (
         <form action={adminSelfPromote} className="card p-5 mb-4">
           <p className="eyebrow mb-2">Bootstrap</p>
-          <p className="text-sm text-ash mb-3">
+          <p className="text-[14px] text-ash mb-3">
             {(adminCount ?? 0) === 0
               ? `No admin exists yet. Click below to make this account (${user.email}) the admin.`
               : `An admin already exists, but you can still try to self-promote (will be blocked by RLS unless you're already permitted).`}
@@ -75,13 +75,13 @@ export default async function WhoAmI({
 
       {profile?.role === "admin" && (
         <div className="card p-5 mb-4 border-emerald-300">
-          <p className="text-sm">
+          <p className="text-[14px]">
             This account is admin. Go to <Link href="/admin" className="underline text-gold">/admin</Link>.
           </p>
         </div>
       )}
 
-      <p className="text-xs text-ash mt-6">
+      <p className="text-[12px] text-ash mt-6">
         Remove this page (app/whoami) once admin access is confirmed working — it's a temporary diagnostic tool.
       </p>
     </main>

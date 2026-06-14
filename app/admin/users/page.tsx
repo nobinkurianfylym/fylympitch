@@ -36,7 +36,7 @@ export default async function AdminUsers({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">User management</p>
-          <h1 className="font-display text-3xl font-light mt-1">Users</h1>
+          <h1 className="font-display text-[30px] font-normal mt-1">Users</h1>
         </div>
         <div className="flex gap-2">
           <a href="/admin/users" className={`btn-ghost ${!filter ? "border-gold text-ink" : ""}`}>All</a>
@@ -50,11 +50,11 @@ export default async function AdminUsers({
         {(users ?? []).map((u) => (
           <div key={u.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="font-light text-ink">
+              <p className="font-normal text-ink">
                 {u.full_name ?? "Unnamed"}{" "}
-                <span className="text-xs text-ash">· {ROLE_LABEL[u.role] ?? u.role}</span>
+                <span className="text-[12px] text-ash">· {ROLE_LABEL[u.role] ?? u.role}</span>
               </p>
-              <p className="text-xs text-ash font-light mt-0.5">
+              <p className="text-[12px] text-ash font-normal mt-0.5">
                 {[u.company, u.country].filter(Boolean).join(" · ") || "No company details"}
                 {u.imdb_url && (
                   <> · <a className="underline hover:text-gold" href={u.imdb_url} target="_blank" rel="noreferrer">IMDb</a></>
@@ -63,7 +63,7 @@ export default async function AdminUsers({
             </div>
             <div className="flex items-center gap-3">
               <span
-                className={`text-xs uppercase tracking-[0.14em] font-light ${
+                className={`text-[12px] uppercase tracking-[0.14em] font-normal ${
                   u.approval_status === "approved"
                     ? "text-emerald-700"
                     : u.approval_status === "rejected"
@@ -77,21 +77,21 @@ export default async function AdminUsers({
                 <form action={adminSetApproval}>
                   <input type="hidden" name="user_id" value={u.id} />
                   <input type="hidden" name="decision" value="approved" />
-                  <button className="btn-gold !py-1.5 !px-4 text-sm">Approve</button>
+                  <button className="btn-gold !py-1.5 !px-4 text-[14px]">Approve</button>
                 </form>
               )}
               {u.role !== "filmmaker" && u.role !== "admin" && u.approval_status !== "rejected" && (
                 <form action={adminSetApproval}>
                   <input type="hidden" name="user_id" value={u.id} />
                   <input type="hidden" name="decision" value="rejected" />
-                  <button className="btn-ghost !py-1.5 !px-4 text-sm">Reject</button>
+                  <button className="btn-ghost !py-1.5 !px-4 text-[14px]">Reject</button>
                 </form>
               )}
             </div>
           </div>
         ))}
         {(!users || users.length === 0) && (
-          <p className="px-5 py-6 text-sm text-ash font-light">No users found.</p>
+          <p className="px-5 py-6 text-[14px] text-ash font-normal">No users found.</p>
         )}
       </div>
     </div>

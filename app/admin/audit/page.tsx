@@ -13,8 +13,8 @@ export default async function AdminAudit() {
   return (
     <div>
       <p className="eyebrow">Accountability</p>
-      <h1 className="font-display text-3xl font-light mt-1">Audit log</h1>
-      <p className="mt-2 text-sm text-ash font-light">
+      <h1 className="font-display text-[30px] font-normal mt-1">Audit log</h1>
+      <p className="mt-2 text-[14px] text-ash font-normal">
         Every administrative action is recorded here and cannot be edited.
       </p>
 
@@ -24,14 +24,14 @@ export default async function AdminAudit() {
           return (
             <div key={l.id} className="px-5 py-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-light text-ink">
+                <p className="text-[14px] font-normal text-ink">
                   <span className="text-gold">{admin?.full_name ?? "Admin"}</span>{" "}
                   · {l.action.replaceAll("_", " ")} · {l.target_table}
                 </p>
-                <p className="text-xs text-ash font-light">{new Date(l.created_at).toLocaleString()}</p>
+                <p className="text-[12px] text-ash font-normal">{new Date(l.created_at).toLocaleString()}</p>
               </div>
               {l.detail && (
-                <p className="mt-1 text-xs text-ash font-light break-all">
+                <p className="mt-1 text-[12px] text-ash font-normal break-all">
                   {typeof l.detail === "string" ? l.detail : JSON.stringify(l.detail)}
                 </p>
               )}
@@ -39,7 +39,7 @@ export default async function AdminAudit() {
           );
         })}
         {(!logs || logs.length === 0) && (
-          <p className="px-5 py-6 text-sm text-ash font-light">No audit entries yet.</p>
+          <p className="px-5 py-6 text-[14px] text-ash font-normal">No audit entries yet.</p>
         )}
       </div>
     </div>

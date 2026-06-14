@@ -40,7 +40,7 @@ export default async function AdminCertificates({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">Certificate management</p>
-          <h1 className="font-display text-3xl font-light mt-1">Certificates</h1>
+          <h1 className="font-display text-[30px] font-normal mt-1">Certificates</h1>
         </div>
         <div className="flex gap-2">
           <a href="/admin/certificates" className={`btn-ghost ${!filter || filter === "pending" ? "border-gold text-ink" : ""}`}>
@@ -68,16 +68,16 @@ export default async function AdminCertificates({
             return (
               <div key={c.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="font-light text-ink">
-                    {c.label} <span className="text-xs text-ash">· {TYPE_LABEL[c.cert_type] ?? c.cert_type}</span>
+                  <p className="font-normal text-ink">
+                    {c.label} <span className="text-[12px] text-ash">· {TYPE_LABEL[c.cert_type] ?? c.cert_type}</span>
                   </p>
-                  <p className="text-xs text-ash font-light mt-0.5">
+                  <p className="text-[12px] text-ash font-normal mt-0.5">
                     {[owner?.full_name ?? "Unknown", owner?.company, owner?.role].filter(Boolean).join(" · ")}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className={`text-xs uppercase tracking-[0.14em] font-light ${
+                    className={`text-[12px] uppercase tracking-[0.14em] font-normal ${
                       c.status === "approved" ? "text-emerald-700" : c.status === "rejected" ? "text-red-700" : "text-gold"
                     }`}
                   >
@@ -87,14 +87,14 @@ export default async function AdminCertificates({
                     <form action={adminSetCertificateStatus}>
                       <input type="hidden" name="certificate_id" value={c.id} />
                       <input type="hidden" name="status" value="approved" />
-                      <button className="btn-gold !py-1.5 !px-4 text-sm">Approve</button>
+                      <button className="btn-gold !py-1.5 !px-4 text-[14px]">Approve</button>
                     </form>
                   )}
                   {c.status !== "rejected" && (
                     <form action={adminSetCertificateStatus}>
                       <input type="hidden" name="certificate_id" value={c.id} />
                       <input type="hidden" name="status" value="rejected" />
-                      <button className="btn-ghost !py-1.5 !px-4 text-sm">Reject</button>
+                      <button className="btn-ghost !py-1.5 !px-4 text-[14px]">Reject</button>
                     </form>
                   )}
                 </div>
@@ -102,7 +102,7 @@ export default async function AdminCertificates({
             );
           })}
           {(!certs || certs.length === 0) && (
-            <p className="px-5 py-6 text-sm text-ash font-light">
+            <p className="px-5 py-6 text-[14px] text-ash font-normal">
               {!filter || filter === "pending" ? "Nothing pending review." : "No certificates submitted yet."}
             </p>
           )}

@@ -27,8 +27,8 @@ export default async function DiscoverPage({
   if (!isIndustry && me?.role !== "admin") {
     return (
       <div className="max-w-2xl">
-        <h1 className="font-display text-3xl font-light">Discover</h1>
-        <p className="mt-4 text-ash font-light">
+        <h1 className="font-display text-[30px] font-normal">Discover</h1>
+        <p className="mt-4 text-ash font-normal">
           Project discovery is available to producer, investor, and organization accounts.
         </p>
       </div>
@@ -38,12 +38,12 @@ export default async function DiscoverPage({
   if (!approved) {
     return (
       <div className="max-w-2xl">
-        <h1 className="font-display text-3xl font-light">Discover projects</h1>
+        <h1 className="font-display text-[30px] font-normal">Discover projects</h1>
         <div className="card mt-6 p-6">
-          <p className="font-light text-ink">
+          <p className="font-normal text-ink">
             Your account is pending verification by the FYLYMPITCH team.
           </p>
-          <p className="mt-2 text-sm text-ash font-light">
+          <p className="mt-2 text-[14px] text-ash font-normal">
             Once approved, you will be able to browse projects, read scripts and pitch decks,
             and send offers directly to filmmakers. We verify every industry account to keep
             the platform safe for creators.
@@ -87,7 +87,7 @@ export default async function DiscoverPage({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow">For producers &amp; investors</p>
-          <h1 className="font-display text-3xl font-light mt-1">Discover projects</h1>
+          <h1 className="font-display text-[30px] font-normal mt-1">Discover projects</h1>
         </div>
         <form className="flex gap-2" method="GET">
           <input
@@ -109,7 +109,7 @@ export default async function DiscoverPage({
       <div className="mt-8 space-y-6">
         {withLinks.length === 0 && (
           <div className="card p-8 text-center">
-            <p className="text-ash font-light">No public projects match your filters yet.</p>
+            <p className="text-ash font-normal">No public projects match your filters yet.</p>
           </div>
         )}
 
@@ -119,28 +119,28 @@ export default async function DiscoverPage({
             <article key={p.id} className="card p-6 sm:p-8">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <h2 className="font-display text-2xl font-light">{p.title}</h2>
-                  <p className="mt-1 text-sm text-ash font-light">
+                  <h2 className="font-display text-[24px] font-normal">{p.title}</h2>
+                  <p className="mt-1 text-[14px] text-ash font-normal">
                     {p.genre} · {p.format} · {p.language} · {p.country}
                     {owner?.full_name ? <> · by {owner.full_name}</> : null}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="eyebrow">Seeking</p>
-                  <p className="text-lg font-light text-ink">{usd(p.funding_needed_usd)}</p>
-                  <p className="text-xs text-ash font-light">
+                  <p className="text-[18px] font-normal text-ink">{usd(p.funding_needed_usd)}</p>
+                  <p className="text-[12px] text-ash font-normal">
                     of {usd(p.budget_usd)} budget · {STAGE_LABEL[p.stage] ?? p.stage}
                   </p>
                 </div>
               </div>
 
               {p.logline && (
-                <p className="mt-4 font-display italic text-lg font-light text-ink/90 border-l-2 border-gold pl-4">
+                <p className="mt-4 font-display italic text-[18px] font-normal text-ink border-l-2 border-gold pl-4">
                   {p.logline}
                 </p>
               )}
               {p.synopsis && (
-                <p className="mt-3 text-sm text-ash font-light leading-relaxed line-clamp-4">
+                <p className="mt-3 text-[14px] text-ash font-normal leading-relaxed line-clamp-4">
                   {p.synopsis}
                 </p>
               )}

@@ -111,7 +111,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       {/* ── PROJECT HEADER ── */}
       <p className="eyebrow mb-3">{project.genre} · {project.format} · {STAGE_LABEL[project.stage]}</p>
       <h1 className="font-display text-[34px]">{project.title}</h1>
-      <p className="mt-4 text-[16px] leading-relaxed max-w-2xl font-display italic text-ink/80">"{project.logline}"</p>
+      <p className="mt-4 text-[16px] leading-relaxed max-w-2xl font-display italic text-ink">"{project.logline}"</p>
 
       <div className="mt-6 flex flex-wrap gap-x-10 gap-y-3 text-[13px] text-ash">
         <span>Country — <span className="text-ink">{project.country}</span></span>
@@ -304,19 +304,19 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       {project.synopsis && (
         <section className="mt-14 max-w-2xl">
           <h2 className="eyebrow mb-3">Synopsis</h2>
-          <p className="text-[21px] leading-[1.7] text-ink/85 whitespace-pre-line">{project.synopsis}</p>
+          <p className="text-[21px] leading-[1.7] text-ink whitespace-pre-line">{project.synopsis}</p>
         </section>
       )}
       {project.director_statement && (
         <section className="mt-10 max-w-2xl">
           <h2 className="eyebrow mb-3">Director's statement</h2>
-          <p className="text-[21px] leading-[1.7] text-ink/85 whitespace-pre-line">{project.director_statement}</p>
+          <p className="text-[21px] leading-[1.7] text-ink whitespace-pre-line">{project.director_statement}</p>
         </section>
       )}
       {project.producer_info && (
         <section className="mt-10 max-w-2xl">
           <h2 className="eyebrow mb-3">Producers</h2>
-          <p className="text-[21px] leading-[1.7] text-ink/85 whitespace-pre-line">{project.producer_info}</p>
+          <p className="text-[21px] leading-[1.7] text-ink whitespace-pre-line">{project.producer_info}</p>
         </section>
       )}
 

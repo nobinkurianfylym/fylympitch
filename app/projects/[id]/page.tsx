@@ -70,7 +70,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
         <h1 className="font-display text-[38px] font-[400]">{p.title}</h1>
 
         {p.logline && (
-          <p className="font-display italic text-[18px] leading-[1.6] mt-5 text-ink/80">"{p.logline}"</p>
+          <p className="font-display italic text-[18px] leading-[1.6] mt-5 text-ink">"{p.logline}"</p>
         )}
 
         <div className="mt-7 flex flex-wrap gap-6 text-[13px] text-ash">
@@ -85,19 +85,19 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
         {p.synopsis && (
           <section className="mb-10">
             <p className="eyebrow mb-4">Synopsis</p>
-            <p className="text-[21px] leading-[1.7] text-ink/85 whitespace-pre-line">{p.synopsis}</p>
+            <p className="text-[21px] leading-[1.7] text-ink whitespace-pre-line">{p.synopsis}</p>
           </section>
         )}
         {p.director_statement && (
           <section className="mb-10">
             <p className="eyebrow mb-4">Director's statement</p>
-            <p className="text-[21px] leading-[1.7] text-ink/85 whitespace-pre-line">{p.director_statement}</p>
+            <p className="text-[21px] leading-[1.7] text-ink whitespace-pre-line">{p.director_statement}</p>
           </section>
         )}
         {p.producer_info && (
           <section className="mb-10">
             <p className="eyebrow mb-4">Producers</p>
-            <p className="text-[21px] leading-[1.7] text-ink/85 whitespace-pre-line">{p.producer_info}</p>
+            <p className="text-[21px] leading-[1.7] text-ink whitespace-pre-line">{p.producer_info}</p>
           </section>
         )}
 
