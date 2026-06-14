@@ -10,6 +10,7 @@
     "test:engine": "node --experimental-strip-types tests/fylympitch-engine.test.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.1",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.48.0",
     "next": "^15.3.0",
