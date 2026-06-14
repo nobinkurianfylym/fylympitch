@@ -63,7 +63,7 @@ export async function createProject(formData: FormData) {
       pitch_deck_path: str(formData, "pitch_deck_path") || null,
       script_path: str(formData, "script_path") || null,
       career_stage: str(formData, "career_stage") || null,
-      is_public: formData.get("is_public") === "on",
+      is_public: formData.get("is_public") !== "false",
     })
     .select("id")
     .single();

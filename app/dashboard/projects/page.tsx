@@ -32,7 +32,7 @@ export default async function ProjectsPage() {
                 {p.funding_needed_usd ? ` · seeking ${usd(p.funding_needed_usd)}` : ""}
               </div>
             </div>
-            <span className="text-[12px] tracking-[0.16em] uppercase text-ash">{p.is_public ? "Visible to industry" : "Private"}</span>
+            <span className="text-[12px] tracking-[0.16em] uppercase text-ash">{p.is_public ? "Public · on Projects" : "Private"}</span>
           </Link>
         ))}
         {(!projects || projects.length === 0) && (

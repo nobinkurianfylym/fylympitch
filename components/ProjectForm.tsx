@@ -12,6 +12,7 @@ export default function ProjectForm() {
   const [uploading, setUploading] = useState<string | null>(null);
   const [deckPath, setDeckPath] = useState("");
   const [scriptPath, setScriptPath] = useState("");
+  const [visibility, setVisibility] = useState<"true" | "false">("true");
 
   async function uploadFile(file: File, bucket: "pitch-decks" | "scripts"): Promise<string | null> {
     const supabase = createClient();
@@ -131,10 +132,29 @@ export default function ProjectForm() {
         </div>
       </div>
 
-      <label className="flex items-center gap-3 text-[14px]">
-        <input type="checkbox" name="is_public" defaultChecked className="accent-[#BF9953] h-4 w-4" />
-        Visible to verified producers and investors
-      </label>
+      <div>
+        <label className="field-label">Visibility</label>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <label className={`flex flex-col gap-2 p-5 rounded-card border bg-white/70 cursor-pointer transition-colors ${visibility === "true" ? "border-gold bg-gold/5" : "border-line"}`}>
+            <input type="radio" name="is_public" value="true" checked={visibility === "true"}
+              onChange={() => setVisibility("true")} className="sr-only" />
+            <span className="flex items-center gap-2 font-display text-[17px]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z" /></svg>
+              Public
+            </span>
+            <span className="text-[13px] text-ash">Shown on the Projects showcase to other members.</span>
+          </label>
+          <label className={`flex flex-col gap-2 p-5 rounded-card border bg-white/70 cursor-pointer transition-colors ${visibility === "false" ? "border-gold bg-gold/5" : "border-line"}`}>
+            <input type="radio" name="is_public" value="false" checked={visibility === "false"}
+              onChange={() => setVisibility("false")} className="sr-only" />
+            <span className="flex items-center gap-2 font-display text-[17px]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="4" y="11" width="16" height="9" rx="1.5" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+              Private
+            </span>
+            <span className="text-[13px] text-ash">Only visible to you.</span>
+          </label>
+        </div>
+      </div>
 
       {error && <p className="text-[13px] text-red-700 border border-red-200 bg-red-50 rounded-card px-4 py-3">{error}</p>}
 
