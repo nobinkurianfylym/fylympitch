@@ -1,19 +1,14 @@
+export const dynamic = "force-dynamic"; // never cache — code exchange must run fresh
+
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { sanitizeNext } from "@/lib/sanitizeNext";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-
-  const rawNext = searchParams.get("next") ?? "/dashboard";
-  const next =
-    rawNext.startsWith("/") &&
-    !rawNext.startsWith("/login") &&
-    !rawNext.startsWith("/signup") &&
-    !rawNext.startsWith("/auth")
-      ? rawNext
-      : "/dashboard";
+  const next = sanitizeNext(searchParams.get("next"));
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=cancelled`);
@@ -26,14 +21,10 @@ export async function GET(request: Request) {
     {
       cookies: {
         getAll() { return cookieStore.getAll(); },
-       setAll(
-  cookiesToSet: {
-    name: string;
-    value: string;
-    options?: any;
-  }[]
-) {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
         },
       },
     }
@@ -53,9 +44,10 @@ export async function GET(request: Request) {
 
   // New user — send through onboarding
   if (!profile || !profile.onboarded_at) {
-    const dest = next !== "/dashboard"
-      ? `${origin}/onboarding?next=${encodeURIComponent(next)}`
-      : `${origin}/onboarding`;
+    const dest =
+      next !== "/dashboard"
+        ? `${origin}/onboarding?next=${encodeURIComponent(next)}`
+        : `${origin}/onboarding`;
     return NextResponse.redirect(dest);
   }
 

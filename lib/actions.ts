@@ -325,25 +325,25 @@ export async function adminSetApproval(formData: FormData) {
     return;
   }
 
-  // Fetch producer's profile for email + notification
-  const { data: producerProfile } = await supabase
-    .from("profiles")
-    .select("full_name, company, email")
-    .eq("id", target)
-    .single();
+  // Email column is revoked from `authenticated` role (migration 013).
+  // Use the profile_email() SECURITY DEFINER function to access it
+  // only when the caller is the profile owner or an admin.
+  const [{ data: producerProfile }, { data: producerEmail }] = await Promise.all([
+    supabase.from("profiles").select("full_name, company").eq("id", target).single(),
+    supabase.rpc("profile_email", { target_id: target }),
+  ]);
 
-  // Send email if we have their address
-  if (producerProfile?.email) {
+  if (producerEmail) {
     if (status === "approved") {
       await sendProducerApprovedEmail(
-        producerProfile.email,
-        producerProfile.full_name ?? "there",
-        producerProfile.company ?? ""
+        producerEmail as string,
+        producerProfile?.full_name ?? "there",
+        producerProfile?.company ?? ""
       );
     } else {
       await sendProducerDeclinedEmail(
-        producerProfile.email,
-        producerProfile.full_name ?? "there"
+        producerEmail as string,
+        producerProfile?.full_name ?? "there"
       );
     }
   }
@@ -531,9 +531,9 @@ export async function completeOnboarding(formData: FormData) {
     }
 
     // Send confirmation email to the producer
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (authUser?.email) {
-      await sendProducerApplicationEmail(authUser.email, full_name, company ?? "");
+    // user.email is already available from requireUser() — no second getUser() needed
+    if (user.email) {
+      await sendProducerApplicationEmail(user.email, full_name, company ?? "");
     }
   }
 

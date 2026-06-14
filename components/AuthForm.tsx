@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import Wordmark from "@/components/Wordmark";
+import { sanitizeNext } from "@/lib/sanitizeNext";
 
 function GoogleIcon() {
   return (
