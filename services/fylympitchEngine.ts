@@ -506,7 +506,7 @@ export interface ExecutiveProducerBrief {
     action_label: string;
   };
   summary: string;
-  generated_by: "openai" | "heuristic";
+  generated_by: "groq" | "openai" | "heuristic";
 }
 
 function fundingRangeLabel(opp: Opportunity): string {

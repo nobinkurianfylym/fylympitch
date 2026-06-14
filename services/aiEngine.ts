@@ -88,7 +88,7 @@ export interface EnhancedEPBrief {
   six_month_roadmap: string;
   key_relationships: string[];
   market_positioning: string;
-  generated_by: "openai" | "heuristic";
+  generated_by: "groq" | "openai" | "heuristic";
 }
 
 export interface AIObstacle {
@@ -510,23 +510,41 @@ Return ONLY valid JSON:
   "market_positioning": "one paragraph on the exact market positioning strategy — which festivals to target first and why, framed as a co-production opportunity"
 }`;
 
-  let raw: string;
-  if (useWebSearch && keys.openai) {
-    raw = await callWithWebSearch(prompt, keys.openai);
-  } else {
-    raw = await callLLM(
-      [
-        { role: "system", content: "You are a senior Executive Producer with 20 years of international film financing experience. Be specific, direct and actionable." },
-        { role: "user", content: prompt },
-      ],
-      keys,
-      2500
-    );
+  // ── Provider waterfall for the EP brief ─────────────────────
+  // 1. Groq  — fast LPU inference (~400 tok/s), no web search
+  // 2. OpenAI WITH web search — if Groq unavailable/failed and web search is enabled
+  // 3. OpenAI plain — if Groq failed and web search is off/unavailable
+  // 4. Heuristic — if neither key is set
+
+  let raw = "";
+  let usedProvider: "groq" | "openai" | "heuristic" = "heuristic";
+
+  const systemMsg = {
+    role: "system" as const,
+    content: "You are a senior Executive Producer with 20 years of international film financing experience. Be specific, direct and actionable.",
+  };
+
+  // Step 1: try Groq
+  if (keys.groq) {
+    raw = await callLLM([systemMsg, { role: "user", content: prompt }], { groq: keys.groq }, 2500);
+    if (raw) usedProvider = "groq";
+  }
+
+  // Step 2: Groq failed or not set → try OpenAI (with web search if enabled)
+  if (!raw && keys.openai) {
+    if (useWebSearch) {
+      raw = await callWithWebSearch(prompt, keys.openai);
+    }
+    if (!raw) {
+      // Plain OpenAI fallback (web search failed or disabled)
+      raw = await callLLM([systemMsg, { role: "user", content: prompt }], { openai: keys.openai }, 2500);
+    }
+    if (raw) usedProvider = "openai";
   }
 
   if (!raw) {
     return {
-      strategic_summary: "Unable to generate brief. Please check your OpenAI API key.",
+      strategic_summary: "Unable to generate brief. Add a GROQ_API_KEY or OPENAI_API_KEY in Netlify environment variables.",
       immediate_actions: [],
       six_month_roadmap: "",
       key_relationships: [],
@@ -543,7 +561,7 @@ Return ONLY valid JSON:
     market_positioning: "",
   });
 
-  return { ...parsed, generated_by: "openai" };
+  return { ...parsed, generated_by: usedProvider };
 }
 
 // ── Heuristic fallbacks ──────────────────────────────────────
