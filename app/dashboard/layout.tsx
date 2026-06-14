@@ -42,22 +42,28 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/producer/pending");
   }
 
+  // Primary nav — kept deliberately short so filmmakers can focus
   const nav = [
-    { href: "/dashboard", label: "Overview" },
+    { href: "/dashboard", label: "Home" },
     ...(!isIndustry ? [
-      { href: "/dashboard/projects", label: "My projects" },
       { href: "/dashboard/opportunities", label: "Opportunities" },
       { href: "/dashboard/applications", label: "Applications" },
-      { href: "/dashboard/saved", label: "Saved" },
     ] : [
       { href: "/dashboard/discover", label: "Discover projects" },
       { href: "/dashboard/opportunities", label: "Opportunities" },
     ]),
-    { href: "/projects", label: "Projects showcase" },
     { href: "/dashboard/messages", label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}` },
-    { href: "/dashboard/notifications", label: `Notifications${unread ? ` (${unread})` : ""}` },
     { href: "/dashboard/profile", label: "Profile" },
     ...(role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
+  ];
+
+  // Secondary links — shown smaller below main nav
+  const secondaryNav = [
+    ...(!isIndustry ? [
+      { href: "/dashboard/saved", label: "Saved" },
+      { href: "/projects", label: "Film showcase" },
+    ] : []),
+    { href: "/dashboard/notifications", label: `Notifications${unread ? ` (${unread})` : ""}` },
   ];
 
   return (
@@ -67,6 +73,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <nav className="flex md:flex-col gap-5 md:gap-0 md:mt-12 md:space-y-5 text-[12px] tracking-[0.16em] uppercase whitespace-nowrap">
           {nav.map((n) => (
             <Link key={n.href} href={n.href} className="text-ash hover:text-ink transition-colors">
+              {n.label}
+            </Link>
+          ))}
+        </nav>
+        {/* Secondary nav — smaller, quieter */}
+        <nav className="hidden md:flex md:flex-col md:mt-8 md:space-y-4 text-[11px] tracking-[0.16em] uppercase whitespace-nowrap">
+          {secondaryNav.map((n) => (
+            <Link key={n.href} href={n.href} className="text-ash/60 hover:text-ash transition-colors">
               {n.label}
             </Link>
           ))}

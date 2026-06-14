@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import MatchBadge from "@/components/MatchBadge";
-import { usd, timeAgo, TYPE_LABEL } from "@/lib/format";
+import OpportunitiesExpand from "@/components/OpportunitiesExpand";
+import { usd, STAGE_LABEL, TYPE_LABEL } from "@/lib/format";
 import { tierOf } from "@/services/matching";
 import { respondToOffer } from "@/lib/actions";
 import type { Profile } from "@/types";
@@ -13,37 +14,67 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single<Profile>();
+  const { data: profile } = await supabase
+    .from("profiles").select("*").eq("id", user.id).single<Profile>();
   const isIndustry = profile && ["producer", "investor", "organization"].includes(profile.role);
 
   // Profile completion
-  const fields = [profile?.full_name, profile?.country, profile?.bio, profile?.company, profile?.website || profile?.imdb_url];
-  const completion = Math.round((fields.filter(Boolean).length / fields.length) * 100);
+  const completionFields = [
+    profile?.full_name,
+    profile?.country,
+    profile?.bio,
+    profile?.company,
+    profile?.website || profile?.imdb_url,
+  ];
+  const completion = Math.round((completionFields.filter(Boolean).length / completionFields.length) * 100);
 
+  // Projects
   const { data: projects } = await supabase
-    .from("projects").select("id, title, stage, genre").eq("owner_id", user.id)
+    .from("projects")
+    .select("id, title, stage, genre, format, country, funding_needed_usd, is_public, created_at")
+    .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
   const projectIds = (projects ?? []).map((p) => p.id);
 
-  const { data: topMatches } = projectIds.length
+  // Matches — fetch enough for deduplicated opportunity list
+  const { data: allMatches } = projectIds.length
     ? await supabase
         .from("matches")
-        .select("score, confidence, project_id, opportunities!inner(id, title, opp_type, deadline, max_award_usd)")
+        .select("score, project_id, opportunities!inner(id, title, opp_type, deadline, max_award_usd)")
         .in("project_id", projectIds)
         .order("score", { ascending: false })
-        .limit(5)
+        .limit(50)
     : { data: [] as any[] };
 
+  // Derive: best score and match count per project
+  const bestScoreByProject: Record<string, number> = {};
+  const matchCountByProject: Record<string, number> = {};
+  for (const m of allMatches ?? []) {
+    const pid = m.project_id;
+    if (bestScoreByProject[pid] == null || m.score > bestScoreByProject[pid]) {
+      bestScoreByProject[pid] = m.score;
+    }
+    matchCountByProject[pid] = (matchCountByProject[pid] ?? 0) + 1;
+  }
+
+  // Deduplicate by opportunity ID for the opportunities section
+  const seenOppIds = new Set<string>();
+  const dedupedMatches: any[] = [];
+  for (const m of allMatches ?? []) {
+    if (!seenOppIds.has(m.opportunities.id)) {
+      seenOppIds.add(m.opportunities.id);
+      dedupedMatches.push(m);
+    }
+  }
+
+  // Counts
   const { count: appCount } = await supabase
     .from("applications").select("id", { count: "exact", head: true }).eq("applicant_id", user.id);
   const { count: savedCount } = await supabase
     .from("saved_opportunities").select("opportunity_id", { count: "exact", head: true }).eq("user_id", user.id);
 
-  const { data: notifications } = await supabase
-    .from("notifications").select("*").eq("user_id", user.id)
-    .order("created_at", { ascending: false }).limit(4);
-
+  // Pending offers
   const { data: offers } = projectIds.length
     ? await supabase
         .from("offers")
@@ -53,45 +84,72 @@ export default async function DashboardPage() {
         .order("created_at", { ascending: false })
     : { data: [] as any[] };
 
-  const bestScore = topMatches?.[0]?.score ?? null;
   const firstName = (profile?.full_name ?? "").split(" ")[0] || "there";
+  const hasProjects = (projects?.length ?? 0) > 0;
 
   return (
     <div>
-      <p className="eyebrow mb-3">Overview</p>
-      <h1 className="font-display text-[34px]">Good to see you, {firstName}.</h1>
 
-      {/* Stat strip */}
-      <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          ["Profile complete", `${completion}%`, "/dashboard/profile"],
-          ["Top match score", bestScore != null ? `${bestScore}` : "—", "/dashboard/opportunities"],
-          ["Applications", `${appCount ?? 0}`, "/dashboard/applications"],
-          ["Saved", `${savedCount ?? 0}`, "/dashboard/saved"],
-        ].map(([label, value, href]) => (
-          <Link key={label} href={href} className="card p-5 hover:border-gold transition-colors">
-            <div className="font-display text-[30px]">{value}</div>
-            <div className="eyebrow mt-1">{label}</div>
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="eyebrow mb-3">Home</p>
+          <h1 className="font-display text-[34px] leading-tight">
+            Good to see you, {firstName}.
+          </h1>
+        </div>
+        {!isIndustry && (
+          <Link href="/dashboard/projects/new" className="btn-gold shrink-0 mt-1">
+            + New project
           </Link>
-        ))}
+        )}
       </div>
 
-      {/* Pending offers — the moment that matters most */}
+      {/* ── Profile completion bar — shown only when incomplete ── */}
+      {!isIndustry && completion < 70 && (
+        <Link
+          href="/dashboard/profile"
+          className="mt-7 flex items-center gap-4 py-4 px-5 card hover:border-gold transition-colors"
+        >
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] text-ink" style={{ fontWeight: 500 }}>
+              Complete your profile
+            </div>
+            <div className="text-[12px] text-ash mt-0.5">
+              A fuller profile unlocks better matches — you're {completion}% there.
+            </div>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="w-20 h-[3px] bg-line rounded-full overflow-hidden">
+              <div className="h-full bg-gold rounded-full transition-all" style={{ width: `${completion}%` }} />
+            </div>
+            <span className="text-[11px] tracking-[0.2em] uppercase text-ash">{completion}%</span>
+          </div>
+        </Link>
+      )}
+
+      {/* ── Pending offers ───────────────────────────────────────── */}
       {(offers?.length ?? 0) > 0 && (
-        <section className="mt-14">
-          <h2 className="font-display text-[22px] mb-6">Offers awaiting your reply</h2>
+        <section className="mt-12">
+          <h2 className="font-display text-[22px] mb-5">
+            {offers!.length === 1 ? "An offer awaits your reply" : `${offers!.length} offers await your reply`}
+          </h2>
           <div className="space-y-4">
             {offers!.map((o: any) => (
               <div key={o.id} className="card p-6">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <div className="font-normal text-[15px]">
+                  <div className="text-[15px]">
                     {o.profiles?.full_name}
-                    {o.profiles?.company ? <span className="text-ash"> · {o.profiles.company}</span> : null}
+                    {o.profiles?.company && (
+                      <span className="text-ash"> · {o.profiles.company}</span>
+                    )}
                     <span className="eyebrow ml-3">{o.offer_type.replace("_", "-")}</span>
                   </div>
                   <div className="font-display text-[20px] text-gold">{usd(o.amount_usd)}</div>
                 </div>
-                <p className="mt-3 text-[14px] text-ash leading-relaxed">{o.message}</p>
+                {o.message && (
+                  <p className="mt-3 text-[14px] text-ash leading-relaxed">{o.message}</p>
+                )}
                 <div className="mt-5 flex gap-3">
                   <form action={respondToOffer}>
                     <input type="hidden" name="offer_id" value={o.id} />
@@ -110,69 +168,156 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {/* Recommended opportunities */}
+      {/* ── Your slate ───────────────────────────────────────────── */}
       {!isIndustry && (
-        <section className="mt-14">
+        <section className="mt-12">
           <div className="flex items-baseline justify-between">
-            <h2 className="font-display text-[22px]">Recommended for your projects</h2>
-            <Link href="/dashboard/opportunities" className="text-[12px] tracking-[0.16em] uppercase text-ash hover:text-gold">View all</Link>
+            <h2 className="font-display text-[22px]">Your slate</h2>
+            {hasProjects && (
+              <span className="text-[12px] tracking-[0.16em] uppercase text-ash">
+                {projects!.length} {projects!.length === 1 ? "project" : "projects"}
+              </span>
+            )}
           </div>
-          <div className="mt-6 space-y-px">
-            {(topMatches ?? []).map((m: any) => (
-              <Link key={`${m.project_id}-${m.opportunities.id}`} href={`/dashboard/opportunities/${m.opportunities.id}`}
-                className="hairline py-5 flex items-center justify-between gap-6 hover:bg-parchment/60 transition-colors px-2 -mx-2">
-                <div>
-                  <div className="font-normal text-[15px]">{m.opportunities.title}</div>
-                  <div className="mt-1 text-[12px] tracking-[0.14em] uppercase text-ash">
-                    {TYPE_LABEL[m.opportunities.opp_type]} {m.opportunities.max_award_usd ? `· up to ${usd(m.opportunities.max_award_usd)}` : ""}
-                    {m.opportunities.deadline ? ` · deadline ${m.opportunities.deadline}` : ""}
+
+          <div className="mt-6">
+            {(projects ?? []).map((p) => {
+              const best = bestScoreByProject[p.id];
+              const matchCount = matchCountByProject[p.id] ?? 0;
+              return (
+                <div
+                  key={p.id}
+                  className="hairline py-6 flex items-start justify-between gap-6"
+                >
+                  <div className="flex-1 min-w-0">
+                    <Link
+                      href={`/dashboard/projects/${p.id}`}
+                      className="font-display text-[22px] hover:text-gold transition-colors"
+                    >
+                      {p.title}
+                    </Link>
+                    <div className="mt-1.5 text-[12px] tracking-[0.14em] uppercase text-ash">
+                      {[
+                        p.genre,
+                        p.format,
+                        STAGE_LABEL[p.stage] ?? p.stage,
+                        p.country,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                      {p.funding_needed_usd
+                        ? ` · seeking ${usd(p.funding_needed_usd)}`
+                        : ""}
+                    </div>
+                    {matchCount > 0 && (
+                      <Link
+                        href="/dashboard/opportunities"
+                        className="mt-3 inline-flex items-center gap-1 text-[12px] tracking-[0.14em] uppercase text-gold hover:text-ink transition-colors"
+                      >
+                        {matchCount} funding {matchCount === 1 ? "match" : "matches"} →
+                      </Link>
+                    )}
                   </div>
+                  {best != null && (
+                    <div className="shrink-0 pt-1">
+                      <MatchBadge score={best} tier={tierOf(best)} />
+                    </div>
+                  )}
                 </div>
-                <MatchBadge score={m.score} tier={tierOf(m.score)} />
-              </Link>
-            ))}
-            {(!topMatches || topMatches.length === 0) && (
-              <div className="hairline py-10 text-[14px] text-ash">
-                {(projects?.length ?? 0) === 0 ? (
-                  <>No matches yet — <Link className="text-ink underline underline-offset-4 hover:text-gold" href="/dashboard/projects/new">submit your first project</Link> and the engine will rank every live opportunity for you.</>
-                ) : (
-                  <>Matches are being computed. Open an opportunity to see its score for your project.</>
-                )}
+              );
+            })}
+
+            {!hasProjects && (
+              <div className="hairline py-10 text-[14px] text-ash leading-relaxed">
+                Your slate is empty.{" "}
+                <Link
+                  href="/dashboard/projects/new"
+                  className="text-ink underline underline-offset-4 hover:text-gold"
+                >
+                  Submit your first project
+                </Link>{" "}
+                and the engine will match every live funding opportunity to it.
               </div>
             )}
           </div>
-        </section>
-      )}
 
-      {isIndustry && (
-        <section className="mt-14">
-          <h2 className="font-display text-[22px] mb-4">Find your next project</h2>
-          <p className="text-[14px] text-ash max-w-lg">Browse verified filmmaker projects with loglines, synopses, decks and scripts — and send an offer when something fits your slate.</p>
-          <Link href="/dashboard/discover" className="btn-gold mt-6">Discover projects</Link>
-        </section>
-      )}
-
-      {/* Recent notifications */}
-      <section className="mt-14">
-        <div className="flex items-baseline justify-between">
-          <h2 className="font-display text-[22px]">Recent activity</h2>
-          <Link href="/dashboard/notifications" className="text-[12px] tracking-[0.16em] uppercase text-ash hover:text-gold">All notifications</Link>
-        </div>
-        <div className="mt-6">
-          {(notifications ?? []).map((n) => (
-            <div key={n.id} className="hairline py-4 flex justify-between gap-6">
-              <div className="text-[14px]">
-                <span className={n.read ? "text-ash" : "font-normal"}>{n.title}</span>
-                {n.body && <span className="text-ash"> — {n.body}</span>}
-              </div>
-              <span className="text-[12px] text-ash shrink-0">{timeAgo(n.created_at)}</span>
+          {hasProjects && (
+            <div className="pt-4">
+              <Link
+                href="/dashboard/projects/new"
+                className="text-[12px] tracking-[0.16em] uppercase text-ash hover:text-gold transition-colors"
+              >
+                + Add another project
+              </Link>
             </div>
-          ))}
-          {(!notifications || notifications.length === 0) && (
-            <p className="hairline py-6 text-[14px] text-ash">Nothing yet. Activity on your projects and applications will appear here.</p>
           )}
+        </section>
+      )}
+
+      {/* ── Industry: discover ───────────────────────────────────── */}
+      {isIndustry && (
+        <section className="mt-12">
+          <h2 className="font-display text-[22px] mb-4">Find your next project</h2>
+          <p className="text-[14px] text-ash max-w-lg">
+            Browse verified filmmaker projects with loglines, synopses, decks and scripts — and send an offer when something fits your slate.
+          </p>
+          <Link href="/dashboard/discover" className="btn-gold mt-6">
+            Discover projects
+          </Link>
+        </section>
+      )}
+
+      {/* ── Funding opportunities ────────────────────────────────── */}
+      {!isIndustry && dedupedMatches.length > 0 && (
+        <section className="mt-14">
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="font-display text-[22px]">Funding opportunities</h2>
+            <Link
+              href="/dashboard/opportunities"
+              className="text-[12px] tracking-[0.16em] uppercase text-ash hover:text-gold transition-colors"
+            >
+              All →
+            </Link>
+          </div>
+          <p className="text-[13px] text-ash mb-6">
+            Matched to your {projects!.length === 1 ? "project" : "projects"} by the FYLYMPITCH engine.
+          </p>
+          <OpportunitiesExpand matches={dedupedMatches} />
+        </section>
+      )}
+
+      {/* Empty opportunities state — has projects but no matches yet */}
+      {!isIndustry && hasProjects && dedupedMatches.length === 0 && (
+        <section className="mt-14">
+          <h2 className="font-display text-[22px] mb-4">Funding opportunities</h2>
+          <p className="hairline pt-6 text-[14px] text-ash leading-relaxed">
+            Matches are being computed. Check back shortly — the engine scores every live opportunity against your project.
+          </p>
+        </section>
+      )}
+
+      {/* ── Status strip ────────────────────────────────────────── */}
+      {!isIndustry && (
+        <div className="mt-14 pt-7 border-t border-line flex flex-wrap gap-8">
+          <Link
+            href="/dashboard/applications"
+            className="group flex items-baseline gap-2 text-ash hover:text-ink transition-colors"
+          >
+            <span className="font-display text-[24px] text-ink">{appCount ?? 0}</span>
+            <span className="text-[12px] tracking-[0.16em] uppercase">
+              Application{(appCount ?? 0) !== 1 ? "s" : ""}
+            </span>
+          </Link>
+          <Link
+            href="/dashboard/saved"
+            className="group flex items-baseline gap-2 text-ash hover:text-ink transition-colors"
+          >
+            <span className="font-display text-[24px] text-ink">{savedCount ?? 0}</span>
+            <span className="text-[12px] tracking-[0.16em] uppercase">Saved</span>
+          </Link>
         </div>
-      </section>
+      )}
+
     </div>
   );
 }
