@@ -231,6 +231,7 @@ export function computeFundingDiscovery(
     co_producers: equity.count,
   },
 };
+}
 
 // ============================================================
 // 4. FUNDING OBSTACLES
