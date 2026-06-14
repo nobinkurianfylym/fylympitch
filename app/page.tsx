@@ -95,6 +95,124 @@ export default function Home() {
         <EngineDemo />
       </section>
 
+      {/* FOR FILMMAKERS */}
+      <section className="bg-parchment">
+        <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">
+          <div className="grid md:grid-cols-2 gap-16 md:gap-28 items-start">
+
+            {/* Left — copy */}
+            <div>
+              <p className="eyebrow text-gold mb-4">For filmmakers</p>
+              <h2 className="font-display text-[32px] md:text-[44px] leading-tight mb-6">
+                Find the funding your film deserves.
+              </h2>
+              <p className="text-[17px] leading-relaxed text-ash mb-10">
+                Submit your project once. The engine scores every live grant, fund, lab,
+                co-production and market worldwide against it — and tells you exactly
+                why each one fits and what to strengthen when it doesn't.
+              </p>
+              <div className="mb-10">
+                {[
+                  "Match scores across 1,000+ verified opportunities",
+                  "Filter by budget, stage, territory and deadline",
+                  "Apply in two clicks and track every submission",
+                  "Field direct offers from approved producers and investors",
+                ].map((item) => (
+                  <div key={item} className="hairline pt-4 pb-1 text-[14px] text-ash">{item}</div>
+                ))}
+              </div>
+              <Link href="/signup" className="btn-gold">Submit your project</Link>
+            </div>
+
+            {/* Right — opportunity preview */}
+            <div>
+              <p className="eyebrow mb-8">Matched opportunities</p>
+              {[
+                { title: "3 MEDIA / Creative Europe",  meta: "Development Lab · Deadline 30 Jun",  score: 85 },
+                { title: "Torino FilmLab",              meta: "Production Grant · Deadline 1 Dec",  score: 79 },
+                { title: "Hubert Bals Fund",            meta: "Film Fund · Deadline TBA 2026",      score: 78 },
+              ].map((opp) => (
+                <div key={opp.title} className="hairline py-5 flex items-center justify-between gap-6">
+                  <div className="min-w-0">
+                    <p className="text-[15px] mb-1.5">{opp.title}</p>
+                    <p className="text-[12px] tracking-[0.13em] uppercase text-ash">{opp.meta}</p>
+                  </div>
+                  <div
+                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-[13px] text-gold"
+                    style={{ border: "1px solid rgba(191,153,83,0.35)" }}
+                  >
+                    {opp.score}
+                  </div>
+                </div>
+              ))}
+              <p className="mt-6 text-[11px] tracking-[0.18em] uppercase text-ash/50">
+                Full access requires filmmaker verification
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* FOR PRODUCERS */}
+      <section>
+        <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">
+          <div className="grid md:grid-cols-2 gap-16 md:gap-28 items-start">
+
+            {/* Left — copy */}
+            <div>
+              <p className="eyebrow text-gold mb-4">For producers</p>
+              <h2 className="font-display text-[32px] md:text-[44px] leading-tight mb-6">
+                Discover projects that fit your slate.
+              </h2>
+              <p className="text-[17px] leading-relaxed text-ash mb-10">
+                Browse verified filmmaker projects by genre, stage, language and
+                territory. Approval-only access means every filmmaker you contact
+                is serious, working, and ready to pitch.
+              </p>
+              <div className="mb-10">
+                {[
+                  "Filter the project showcase by genre, format and territory",
+                  "Request scripts and pitch decks through access control",
+                  "Send structured co-production, investment or acquisition offers",
+                  "Every project submitted through the FYLYMPITCH engine",
+                ].map((item) => (
+                  <div key={item} className="hairline pt-4 pb-1 text-[14px] text-ash">{item}</div>
+                ))}
+              </div>
+              <Link href="/signup" className="btn-ghost">Apply for producer access</Link>
+            </div>
+
+            {/* Right — project showcase preview */}
+            <div>
+              <p className="eyebrow mb-8">Project showcase</p>
+              {[
+                { title: "The Monsoon Letters", meta: "Drama · Hindi · Development",           score: 94 },
+                { title: "Neon Shadows",         meta: "Thriller · Japanese · Post-production", score: 87 },
+                { title: "Soil & Sky",           meta: "Documentary · Swahili · Production",    score: 82 },
+              ].map((proj) => (
+                <div key={proj.title} className="hairline py-5 flex items-center justify-between gap-6">
+                  <div className="min-w-0">
+                    <p className="font-display text-[18px] mb-1.5">{proj.title}</p>
+                    <p className="text-[12px] tracking-[0.13em] uppercase text-ash">{proj.meta}</p>
+                  </div>
+                  <div
+                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-[13px] text-gold"
+                    style={{ border: "1px solid rgba(191,153,83,0.35)" }}
+                  >
+                    {proj.score}
+                  </div>
+                </div>
+              ))}
+              <p className="mt-6 text-[11px] tracking-[0.18em] uppercase text-ash/50">
+                Full access requires producer verification
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       {/* TESTIMONIALS */}
       <section className="bg-deep text-ivory">
         <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">
