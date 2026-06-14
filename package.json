@@ -10,16 +10,17 @@
     "test:engine": "node --experimental-strip-types tests/fylympitch-engine.test.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.104.1",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.48.0",
     "next": "^15.3.0",
+    "pdf-parse": "^2.4.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "resend": "^6.12.4"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.20",

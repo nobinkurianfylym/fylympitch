@@ -1,80 +1,96 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/lib/supabase/server";
+// @ts-ignore — pdf-parse has no bundled types
+import pdfParse from "pdf-parse/lib/pdf-parse.js";
 
 const GENRES = ["Drama","Comedy","Thriller","Horror","Romance","Action","Documentary","Family","Crime","Sci-Fi","Fantasy","Musical"];
 
 export async function POST(req: NextRequest) {
-  // Auth check — only signed-in users
+  // Auth check
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: "AI extraction not configured" }, { status: 503 });
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!openaiKey) return NextResponse.json({ error: "AI extraction not configured" }, { status: 503 });
 
   const body = await req.json();
   const { pdf } = body as { pdf?: string };
   if (!pdf) return NextResponse.json({ error: "No PDF data" }, { status: 400 });
 
   try {
-    const client = new Anthropic({ apiKey });
+    // Decode base64 → Buffer → extract text with pdf-parse
+    const buffer = Buffer.from(pdf, "base64");
+    const parsed = await pdfParse(buffer, { max: 10 }); // first 10 pages is plenty
+    const text = parsed.text?.slice(0, 12000) ?? ""; // cap at ~3k tokens
 
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "document",
-              source: {
-                type: "base64",
-                media_type: "application/pdf",
-                data: pdf,
-              },
-            },
-            {
-              type: "text",
-              text: `You are extracting structured data from a film pitch deck. Return ONLY a valid JSON object — no markdown, no explanation, no preamble.
+    if (!text.trim()) {
+      return NextResponse.json({ error: "Could not extract text from PDF — try a text-based PDF rather than a scanned image." }, { status: 422 });
+    }
 
-Extract and return:
+    // Send extracted text to OpenAI
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openaiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        max_tokens: 1024,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: "You are a film project data extractor. Extract structured information from pitch deck text and return ONLY a JSON object — no markdown, no explanation.",
+          },
+          {
+            role: "user",
+            content: `Extract film project information from this pitch deck text and return a JSON object with exactly these fields:
+
 {
-  "title": "film title (string)",
+  "title": "film title",
   "genre": "exactly one of: ${GENRES.join(", ")}",
   "format": "exactly one of: feature, short, documentary, series, animation",
   "language": "primary language of the film",
   "country": "primary country of production",
-  "budget_usd": number or null (total budget converted to USD — approximate if needed),
-  "funding_needed_usd": number or null (funding gap / amount still needed, in USD),
+  "budget_usd": number or null (total budget in USD),
+  "funding_needed_usd": number or null (funding gap in USD),
   "stage": "exactly one of: development, pre_production, production, post_production, completed",
-  "logline": "one sentence that captures the story — max 480 characters",
+  "logline": "one sentence logline, max 480 characters",
   "synopsis": "2–4 paragraph story synopsis",
-  "director_statement": "director's artistic vision statement if present, else empty string",
-  "producer_info": "producer names, production company, prior credits if present, else empty string"
+  "director_statement": "director vision statement if present, else empty string",
+  "producer_info": "producer and production company info if present, else empty string"
 }
 
 Rules:
 - Every key must be present. Use null for missing numbers, "" for missing strings.
 - logline must be under 480 characters.
-- genre and format and stage must be exactly one of the listed values.
-- Return ONLY the JSON object.`,
-            },
-          ],
-        },
-      ],
+- genre, format, stage must be exactly one of the listed values.
+- For budget, convert to USD if in another currency (approximate).
+
+PITCH DECK TEXT:
+${text}`,
+          },
+        ],
+      }),
     });
 
-    const raw = message.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as Anthropic.TextBlock).text)
-      .join("");
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("[ai-extract] OpenAI error:", err);
+      return NextResponse.json({ error: "AI extraction failed" }, { status: 500 });
+    }
 
-    const clean = raw.replace(/```json|```/g, "").trim();
-    const data = JSON.parse(clean);
+    const data = await res.json();
+    const raw = data.choices?.[0]?.message?.content ?? "{}";
 
-    return NextResponse.json(data);
+    try {
+      const extracted = JSON.parse(raw);
+      return NextResponse.json(extracted);
+    } catch {
+      return NextResponse.json({ error: "Failed to parse AI response" }, { status: 500 });
+    }
   } catch (err: unknown) {
     console.error("[ai-extract]", err);
     return NextResponse.json(
