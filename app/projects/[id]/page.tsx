@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { usd, STAGE_LABEL } from "@/lib/format";
@@ -14,9 +14,8 @@ export default async function PublicProjectPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  // Require sign-in
+  // No auth gate — public to all visitors
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect(`/login?next=/projects/${id}`);
 
   const { data: p } = await supabase
     .from("projects")
@@ -37,10 +36,24 @@ export default async function PublicProjectPage({
             <Link href="/#features" className="hover:text-ink transition-colors">Platform</Link>
             <Link href="/projects" className="text-ink">Projects</Link>
             <Link href="/#how" className="hover:text-ink transition-colors">How it works</Link>
+            <Link href="/#pricing" className="hover:text-ink transition-colors">Pricing</Link>
           </nav>
-          <Link href="/dashboard" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
-            Dashboard
-          </Link>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <Link href="/dashboard" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
+                  Sign in
+                </Link>
+                <Link href="/signup" className="btn-gold !px-5 !py-2.5 text-[12px]">
+                  Join
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -101,15 +114,30 @@ export default async function PublicProjectPage({
           </section>
         )}
 
-        {/* CTA */}
+        {/* CTA — context-aware */}
         <div className="mt-14 border border-line rounded-card bg-white/70 p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
           <div>
             <p className="text-[16px]">Interested in this project?</p>
-            <p className="mt-1 text-[13px] text-ash">Message the filmmaker or send a financing offer.</p>
+            <p className="mt-1 text-[13px] text-ash">
+              {user
+                ? "Go to your dashboard to send a financing offer or message."
+                : "Join FYLYMPITCH to connect with this filmmaker, send an offer, or co-produce."}
+            </p>
           </div>
-          <Link href="/dashboard" className="btn-gold shrink-0 whitespace-nowrap">
-            Go to dashboard
-          </Link>
+          {user ? (
+            <Link href="/dashboard" className="btn-gold shrink-0 whitespace-nowrap">
+              Go to dashboard
+            </Link>
+          ) : (
+            <div className="flex gap-3 shrink-0">
+              <Link href={`/login?next=/projects/${p.id}`} className="btn-ghost whitespace-nowrap">
+                Sign in
+              </Link>
+              <Link href="/signup" className="btn-gold whitespace-nowrap">
+                Join free
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Back link */}

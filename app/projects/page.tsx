@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { usd, STAGE_LABEL } from "@/lib/format";
@@ -16,9 +15,8 @@ export default async function ProjectsPage({
   const { format } = await searchParams;
   const supabase = await createClient();
 
-  // Require sign-in — public projects are readable by any authenticated user.
+  // No auth gate — public to all visitors
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login?next=/projects");
 
   let query = supabase
     .from("projects")
@@ -41,11 +39,23 @@ export default async function ProjectsPage({
             <Link href="/#features" className="hover:text-ink transition-colors">Platform</Link>
             <Link href="/projects" className="text-ink">Projects</Link>
             <Link href="/#how" className="hover:text-ink transition-colors">How it works</Link>
+            <Link href="/#pricing" className="hover:text-ink transition-colors">Pricing</Link>
           </nav>
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
-              Dashboard
-            </Link>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <Link href="/dashboard" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
+                Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
+                  Sign in
+                </Link>
+                <Link href="/signup" className="btn-gold !px-5 !py-2.5 text-[12px]">
+                  Join
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -56,7 +66,7 @@ export default async function ProjectsPage({
           <p className="eyebrow mb-3">Discover</p>
           <h1 className="font-display text-[38px] font-[400]">Projects</h1>
           <p className="mt-3 text-[15px] text-ash max-w-lg">
-            Pitches submitted by filmmakers on FYLYMPITCH. Sign in to message a filmmaker or send a financing offer.
+            Pitches submitted by filmmakers on FYLYMPITCH — open for producers, investors and collaborators to discover.
           </p>
 
           {/* Format filters */}
@@ -120,6 +130,19 @@ export default async function ProjectsPage({
           </div>
         )}
       </main>
+
+      {/* Footer CTA for guests */}
+      {!user && (
+        <div className="border-t border-line mt-16">
+          <div className="max-w-6xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div>
+              <p className="font-display text-[22px]">Ready to pitch your film?</p>
+              <p className="mt-1 text-[14px] text-ash">Submit your project and get matched with funds, labs and co-producers.</p>
+            </div>
+            <Link href="/signup" className="btn-gold shrink-0">Submit your project</Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
