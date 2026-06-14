@@ -90,9 +90,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           </p>
           <div className="mt-6 flex flex-wrap gap-4">
             {discovery.breakdown?.slice(0, 4).map((item: any) => (
-              <div key={item.type} className="bg-white/10 rounded-xl px-4 py-3 text-center min-w-[100px]">
+              <div key={item.label} className="bg-white/10 rounded-xl px-4 py-3 text-center min-w-[100px]">
                 <div className="text-[18px] font-display text-gold">{usd(item.amount_usd)}</div>
-                <div className="text-[10px] tracking-[0.18em] uppercase text-ivory/50 mt-1">{item.type.replace(/_/g, " ")}</div>
+                <div className="text-[10px] tracking-[0.18em] uppercase text-ivory/50 mt-1">{item.label}</div>
               </div>
             ))}
           </div>
@@ -191,7 +191,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     </span>
                     <span className="font-normal text-[15px]">{ob.label}</span>
                   </div>
-                  <p className="text-[13px] text-ash">{ob.description}</p>
                 </div>
                 {ob.action_href && (
                   <Link href={ob.action_href} className="btn-ghost !px-4 !py-2 text-[12px] whitespace-nowrap shrink-0">
@@ -241,12 +240,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           <h2 className="font-display text-[22px] mb-6">Producer matches</h2>
           <div className="space-y-4">
             {producerMatches.slice(0, 3).map((pm: ProducerMatch, i: number) => (
-              <div key={pm.profile.profile_id} className={`card p-6 ${i === 0 ? "border-gold/50" : ""}`}>
+              <div key={pm.profile.id} className={`card p-6 ${i === 0 ? "border-gold/50" : ""}`}>
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <div className="font-normal text-[16px]">{pm.profile.name}</div>
+                    <div className="font-normal text-[16px]">{pm.profile.full_name}{pm.profile.company ? <span className="text-ash"> · {pm.profile.company}</span> : null}</div>
                     <div className="mt-1 text-[12px] tracking-[0.14em] uppercase text-ash">
-                      {pm.profile.country}{pm.profile.available_funding_usd ? ` · up to ${usd(pm.profile.available_funding_usd)}` : ""}
+                      {pm.profile.countries?.[0] ?? ""}{pm.profile.available_funding_usd ? ` · up to ${usd(pm.profile.available_funding_usd)}` : ""}
                     </div>
                   </div>
                   <div className="text-right shrink-0">
@@ -254,9 +253,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     <div className="text-[10px] uppercase tracking-[0.16em] text-ash">match</div>
                   </div>
                 </div>
-                {pm.matchReasons.length > 0 && (
+                {pm.reasons.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {pm.matchReasons.map((r: string) => (
+                    {pm.reasons.map((r: string) => (
                       <span key={r} className="text-[11px] tracking-[0.12em] uppercase bg-parchment text-ash px-3 py-1 rounded-full">
                         {r}
                       </span>
