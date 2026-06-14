@@ -25,7 +25,6 @@ export async function middleware(request: NextRequest) {
   const isProtected =
     path.startsWith("/dashboard") ||
     path.startsWith("/admin") ||
-    path.startsWith("/onboarding") ||
     path.startsWith("/producer");
 
   const isAuthPage = path === "/login" || path === "/signup";
@@ -35,7 +34,7 @@ export async function middleware(request: NextRequest) {
   if (isProtected && (!user || error)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", path.startsWith("/onboarding") ? "/dashboard" : path);
+    url.searchParams.set("next", path);
     return NextResponse.redirect(url);
   }
 
@@ -68,8 +67,6 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/admin/:path*",
-    "/onboarding/:path*",
-    "/onboarding",
     "/producer/:path*",
     "/producer",
     "/login",

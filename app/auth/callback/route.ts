@@ -38,29 +38,20 @@ export async function GET(request: Request) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("onboarded_at, role, approval_status")
+    .select("role, approval_status")
     .eq("id", data.user.id)
     .single();
 
-  // New user — send through onboarding
-  if (!profile || !profile.onboarded_at) {
-    const dest =
-      next !== "/dashboard"
-        ? `${origin}/onboarding?next=${encodeURIComponent(next)}`
-        : `${origin}/onboarding`;
-    return NextResponse.redirect(dest);
-  }
-
   // Approved producer → Producer Studio
-  if (profile.role === "producer" && profile.approval_status === "approved") {
+  if (profile?.role === "producer" && profile.approval_status === "approved") {
     return NextResponse.redirect(`${origin}/producer`);
   }
 
   // Pending producer → waiting room
-  if (profile.role === "producer" && profile.approval_status === "pending") {
+  if (profile?.role === "producer" && profile.approval_status === "pending") {
     return NextResponse.redirect(`${origin}/producer/pending`);
   }
 
-  // Filmmaker / admin → requested destination or dashboard
+  // Everyone else (filmmaker, admin, new user) → dashboard
   return NextResponse.redirect(`${origin}${next}`);
 }

@@ -27,11 +27,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const totalMsgUnread = (msgUnread ?? []).reduce((s: number, r: any) => s + (r.unread_count ?? 0), 0);
 
-  // Guard: if onboarding was never completed, redirect now.
-  if (profile && profile.onboarded_at === null) {
-    redirect("/onboarding");
-  }
-
   // Safe fallback if profile row is missing (trigger race or DB error).
   const role = profile?.role ?? "filmmaker";
   const isIndustry = role === "producer" || role === "investor" || role === "organization";
