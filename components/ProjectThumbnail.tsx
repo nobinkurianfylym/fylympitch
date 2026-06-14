@@ -93,8 +93,8 @@ export default function ProjectThumbnail({ posterPath, deckPath, title, genre, s
           "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
         // Get signed URL for the deck (private bucket)
-        const res = await fetch(`/api/deck-url?path=${encodeURIComponent(deckPath)}`);
-        if (!res.ok) throw new Error("no url");
+        const res = await fetch(`/api/deck-url?path=${encodeURIComponent(deckPath ?? "")}`);
+        if (!res.ok || !deckPath) throw new Error("no url");
         const { url } = await res.json();
 
         const pdf = await pdfjsLib.getDocument(url).promise;

@@ -486,16 +486,15 @@ export async function upsertProducerProject(formData: FormData) {
   const status = str(formData, "status") ?? "saved";
   const rating = formData.get("rating") ? Number(formData.get("rating")) : null;
   const notes = str(formData, "notes") ?? null;
-  if (!project_id) return { error: "Missing project." };
+  if (!project_id) return;
 
   const VALID_STATUS = ["saved","shortlisted","in_review","meeting_set","deal_active","passed"];
-  if (!VALID_STATUS.includes(status)) return { error: "Invalid status." };
+  if (!VALID_STATUS.includes(status)) return;
 
-  const { error } = await supabase.from("producer_projects").upsert(
+  await supabase.from("producer_projects").upsert(
     { producer_id: user.id, project_id, status, rating, notes, updated_at: new Date().toISOString() },
     { onConflict: "producer_id,project_id" }
   );
-  if (error) return { error: error.message };
   revalidatePath("/producer");
   revalidatePath(`/producer/projects/${project_id}`);
 }
@@ -505,20 +504,17 @@ export async function requestMeeting(formData: FormData) {
   const project_id = str(formData, "project_id");
   const filmmaker_id = str(formData, "filmmaker_id");
   const message = str(formData, "message") ?? null;
-  if (!project_id || !filmmaker_id) return { error: "Missing required fields." };
+  if (!project_id || !filmmaker_id) return;
 
   const { error } = await supabase.from("meeting_requests").insert({
     producer_id: user.id, filmmaker_id, project_id, message,
   });
-  if (error) {
-    if (error.code === "23505") return { error: "You already have a meeting request for this project." };
-    return { error: error.message };
+  if (!error) {
+    await supabase.from("producer_projects").upsert(
+      { producer_id: user.id, project_id, status: "meeting_set", updated_at: new Date().toISOString() },
+      { onConflict: "producer_id,project_id" }
+    );
   }
-  // Also move project to meeting_set stage in CRM
-  await supabase.from("producer_projects").upsert(
-    { producer_id: user.id, project_id, status: "meeting_set", updated_at: new Date().toISOString() },
-    { onConflict: "producer_id,project_id" }
-  );
   revalidatePath("/producer/meetings");
   revalidatePath(`/producer/projects/${project_id}`);
 }
@@ -528,14 +524,13 @@ export async function updateMeetingStatus(formData: FormData) {
   const meeting_id = str(formData, "meeting_id");
   const status = str(formData, "status");
   const meeting_notes = str(formData, "meeting_notes") ?? null;
-  if (!meeting_id || !status) return { error: "Missing fields." };
+  if (!meeting_id || !status) return;
 
-  const { error } = await supabase
+  await supabase
     .from("meeting_requests")
     .update({ status, meeting_notes, updated_at: new Date().toISOString() })
     .eq("id", meeting_id)
     .or(`producer_id.eq.${user.id},filmmaker_id.eq.${user.id}`);
-  if (error) return { error: error.message };
   revalidatePath("/producer/meetings");
 }
 
@@ -580,8 +575,7 @@ export async function blockUser(formData: FormData) {
   if (!blockedId) return;
   await supabase
     .from("user_blocks")
-    .insert({ blocker_id: user.id, blocked_id: blockedId })
-    .onConflict("blocker_id,blocked_id").ignore();
+    .upsert({ blocker_id: user.id, blocked_id: blockedId }, { onConflict: "blocker_id,blocked_id" });
   // Archive all conversations with this user
   const { data: convs } = await supabase
     .from("conversation_participants")

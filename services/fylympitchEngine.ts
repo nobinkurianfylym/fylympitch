@@ -184,6 +184,12 @@ export interface FundingSourceCounts {
   co_producers: number;
 }
 
+export interface FundingDiscovery {
+  total_usd: number;
+  breakdown: FundingDiscoveryItem[];
+  source_counts: FundingSourceCounts;
+}
+
 function sumByType(
   matches: { opportunity: Opportunity; match: MatchResult }[],
   types: OpportunityType[]
