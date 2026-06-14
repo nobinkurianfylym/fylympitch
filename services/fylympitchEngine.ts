@@ -217,16 +217,20 @@ export function computeFundingDiscovery(
   const total_usd = breakdown.reduce((s, b) => s + b.amount_usd, 0);
 
   return {
-    total_usd,
-    breakdown,
-    source_counts: {
-      producers: producers.length,
-      investors: investors.length,
-      grants: grants.count,
-      co_producers: equity.count,
-    },
-  };
-}
+  total_usd,
+  breakdown,
+  source_counts: {
+    total:
+      producers.length +
+      investors.length +
+      grants.count +
+      equity.count,
+    producers: producers.length,
+    investors: investors.length,
+    grants: grants.count,
+    co_producers: equity.count,
+  },
+};
 
 // ============================================================
 // 4. FUNDING OBSTACLES
