@@ -31,33 +31,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const role = profile?.role ?? "filmmaker";
   const isIndustry = role === "producer" || role === "investor" || role === "organization";
 
-  // Guard: producers have their own workspace — route them to the right place.
-  if (role === "producer") {
-    if (profile?.approval_status === "approved") redirect("/producer");
-    redirect("/producer/pending");
-  }
 
-  // Primary nav — kept deliberately short so filmmakers can focus
+
+  // Primary nav — filmmaker + producer studio for all users
   const nav = [
     { href: "/dashboard", label: "Home" },
-    ...(!isIndustry ? [
-      { href: "/dashboard/opportunities", label: "Opportunities" },
-      { href: "/dashboard/applications", label: "Applications" },
-    ] : [
-      { href: "/dashboard/discover", label: "Discover projects" },
-      { href: "/dashboard/opportunities", label: "Opportunities" },
-    ]),
+    { href: "/dashboard/opportunities", label: "Opportunities" },
+    { href: "/dashboard/applications", label: "Applications" },
+    { href: "/producer", label: "Producer Studio" },
     { href: "/dashboard/messages", label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}` },
     { href: "/dashboard/profile", label: "Profile" },
     ...(role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 
-  // Secondary links — shown smaller below main nav
+  // Secondary links — available to all users
   const secondaryNav = [
-    ...(!isIndustry ? [
-      { href: "/dashboard/saved", label: "Saved" },
-      { href: "/projects", label: "Film showcase" },
-    ] : []),
+    { href: "/dashboard/saved", label: "Saved" },
+    { href: "/projects", label: "Film showcase" },
     { href: "/dashboard/notifications", label: `Notifications${unread ? ` (${unread})` : ""}` },
   ];
 
@@ -85,12 +75,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </form>
       </aside>
       <main className="flex-1 px-6 md:px-12 py-10 max-w-5xl">
-        {isIndustry && profile?.approval_status === "pending" && (
-          <div className="mb-8 card border-gold/50 bg-gold/5 px-5 py-4 text-[14px]">
-            <span className="font-normal">Verification in progress.</span>{" "}
-            <span className="text-ash">Your {role} account is being reviewed. You'll be able to view projects and send offers once approved — usually within 48 hours.</span>
-          </div>
-        )}
+
         {children}
       </main>
     </div>

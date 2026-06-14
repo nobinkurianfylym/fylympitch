@@ -5,7 +5,7 @@ import HeroToggle from "@/components/HeroToggle";
 
 const FEATURES = [
   ["Intelligent matching", "Every project is scored against 1,000+ grants, funds, labs, markets and investors on eight weighted criteria — genre, stage, territory, budget, format, funding gap, language and track record."],
-  ["Verified industry access", "Producers, investors and distributors are individually approved before they can read a single script. Your material is never public."],
+  ["Dual-role access", "One account gives you both sides of the table — submit your own projects as a filmmaker, and discover projects as a producer or investor. No separate approval needed."],
   ["Direct offers", "Approved producers and investors can send offers straight to your project — investment, co-production, distribution or acquisition."],
   ["One pitch, many doors", "Submit your project once. FYLYMPITCH keeps it matched against new opportunities as deadlines open worldwide."],
 ];
@@ -20,7 +20,7 @@ const FAQS = [
   ["Who can see my script and pitch deck?", "Only you, FYLYMPITCH administrators, and industry accounts that have been individually verified and approved. Files live in private storage with row-level access control — there are no public links."],
   ["How is the match score calculated?", "Eight weighted criteria totalling 100 points: genre (20), stage (20), territory (15), budget (15), format (10), funding gap (10), language (5) and historical success (5). Anything under 60 is hidden so you only see real prospects."],
   ["Is FYLYMPITCH free for filmmakers?", "Creating a profile, submitting one project and viewing your matches is free. Unlimited projects and priority matching are part of the Pro plan."],
-  ["How do producers and investors join?", "Sign up with a producer or investor account. Our team verifies your credits and company before granting access to projects — usually within 48 hours."],
+  ["How do producers and investors join?", "Sign up with a single Google account — you automatically get access to both the filmmaker dashboard and the producer studio. One login, both sides of the table."],
 ];
 
 export default function Home() {
@@ -164,7 +164,7 @@ export default function Home() {
                   <div key={item} className="hairline pt-4 pb-1 text-[14px] text-ash">{item}</div>
                 ))}
               </div>
-              <Link href="/login" className="btn-ghost">Apply for producer access</Link>
+              <Link href="/login" className="btn-ghost">Join as producer</Link>
             </div>
 
             {/* Right — project showcase preview */}
@@ -189,7 +189,7 @@ export default function Home() {
                 </div>
               ))}
               <p className="mt-6 text-[11px] tracking-[0.18em] uppercase text-ash/50">
-                Full access requires producer verification
+                Full producer access — no approval needed
               </p>
             </div>
 

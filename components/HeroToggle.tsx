@@ -24,8 +24,8 @@ const CONTENT = {
         <span className="italic text-gold">their next project.</span>
       </>
     ),
-    body: "Browse a curated slate of verified filmmaker projects matched to your mandate. Read scripts, send offers, co-produce — directly, with no middlemen.",
-    primary: { label: "Apply for access", href: "/login" },
+    body: "One account, two roles. Browse filmmaker projects by genre, stage and territory. Read scripts, send offers, co-produce — no approval needed.",
+    primary: { label: "Join free", href: "/login" },
     secondary: { label: "Browse projects", href: "/projects" },
   },
 };

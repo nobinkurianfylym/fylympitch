@@ -18,14 +18,8 @@ export default async function ProducerLayout({ children }: { children: React.Rea
     .eq("id", user.id)
     .single<Profile>();
 
-  // Must be onboarded
-  if (!profile || !profile.onboarded_at) redirect("/onboarding");
-
-  // Must be a producer
-  if (profile.role !== "producer" && profile.role !== "admin") redirect("/dashboard");
-
-  // Pending approval — only /producer/pending is accessible
-  const isPending = profile.approval_status === "pending";
+  // Any signed-in user can access the Producer Studio (dual roles)
+  if (!profile) redirect("/dashboard");
 
   const nav = [
     { href: "/producer", label: "Pipeline", icon: "ti-layout-kanban" },
@@ -43,24 +37,20 @@ export default async function ProducerLayout({ children }: { children: React.Rea
           <span className="text-[10px] tracking-[0.22em] uppercase text-ash mt-1">Producer Studio</span>
         </div>
 
-        {!isPending && (
-          <nav className="flex md:flex-col gap-4 md:gap-0 md:mt-10 md:space-y-1 w-full">
-            {nav.map((n) => (
-              <Link key={n.href} href={n.href}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-card text-[13px] text-ash hover:text-ink hover:bg-parchment transition-colors">
-                <i className={`ti ${n.icon}`} style={{ fontSize: 16 }} aria-hidden="true" />
-                {n.label}
-              </Link>
-            ))}
-          </nav>
-        )}
+        <nav className="flex md:flex-col gap-4 md:gap-0 md:mt-10 md:space-y-1 w-full">
+          {nav.map((n) => (
+            <Link key={n.href} href={n.href}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-card text-[13px] text-ash hover:text-ink hover:bg-parchment transition-colors">
+              <i className={`ti ${n.icon}`} style={{ fontSize: 16 }} aria-hidden="true" />
+              {n.label}
+            </Link>
+          ))}
+        </nav>
 
         <div className="md:mt-auto md:pt-8 ml-auto md:ml-0 flex flex-col gap-3 w-full">
-          {!isPending && (
-            <Link href="/dashboard" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors px-3">
-              Filmmaker view
-            </Link>
-          )}
+          <Link href="/dashboard" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors px-3">
+            Filmmaker view
+          </Link>
           <form action={signOut} className="px-3">
             <button className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-gold">Sign out</button>
           </form>

@@ -36,22 +36,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=auth`);
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, approval_status")
-    .eq("id", data.user.id)
-    .single();
-
-  // Approved producer → Producer Studio
-  if (profile?.role === "producer" && profile.approval_status === "approved") {
-    return NextResponse.redirect(`${origin}/producer`);
-  }
-
-  // Pending producer → waiting room
-  if (profile?.role === "producer" && profile.approval_status === "pending") {
-    return NextResponse.redirect(`${origin}/producer/pending`);
-  }
-
-  // Everyone else (filmmaker, admin, new user) → dashboard
+  // Everyone goes to dashboard — dual roles, no approval gate
   return NextResponse.redirect(`${origin}${next}`);
 }
