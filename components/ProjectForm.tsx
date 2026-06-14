@@ -1,19 +1,137 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { createProject } from "@/lib/actions";
 
 const GENRES = ["Drama", "Comedy", "Thriller", "Horror", "Romance", "Action", "Documentary", "Family", "Crime", "Sci-Fi", "Fantasy", "Musical"];
 
+// Steps mirror what the FYLYMPITCH engine actually does, in order.
+// Durations are calibrated so the animation tracks the real work:
+// fast DB ops up front, longer wait at the AI EP brief, then hold
+// at "Finalising" until the server redirect fires.
+const ENGINE_STEPS: { label: string; duration: number }[] = [
+  { label: "Saving your project",                                duration: 400  },
+  { label: "Loading active opportunities",                       duration: 700  },
+  { label: "Scoring matches across funds, grants and labs",      duration: 1200 },
+  { label: "Calculating your funding readiness score",           duration: 900  },
+  { label: "Mapping funding sources for your budget",            duration: 900  },
+  { label: "Identifying financing obstacles",                    duration: 800  },
+  { label: "Building your roadmap to production",                duration: 800  },
+  { label: "Matching producers and investors",                   duration: 700  },
+  { label: "Generating your Executive Producer brief",           duration: 5000 },
+  { label: "Finalising your intelligence report",                duration: 99999 }, // holds until redirect
+];
+
+function EngineLoader({ step }: { step: number }) {
+  const progress = Math.min(96, Math.round((step / (ENGINE_STEPS.length - 1)) * 100));
+
+  return (
+    <div className="py-8 max-w-2xl">
+      {/* Header */}
+      <p className="eyebrow mb-4 text-gold">FYLYMPITCH ENGINE</p>
+      <h2 className="font-display text-[30px] leading-tight mb-2">
+        Analysing your project
+      </h2>
+      <p className="text-[13px] text-ash mb-10">
+        This takes 10–20 seconds. The engine scores every live opportunity against your film.
+      </p>
+
+      {/* Progress bar */}
+      <div className="h-[2px] bg-line rounded-full mb-10 overflow-hidden">
+        <div
+          className="h-full bg-gold rounded-full"
+          style={{
+            width: `${progress}%`,
+            transition: "width 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        />
+      </div>
+
+      {/* Steps */}
+      <div className="space-y-[18px]">
+        {ENGINE_STEPS.map(({ label }, i) => {
+          const done    = i < step;
+          const active  = i === step;
+          const pending = i > step;
+
+          return (
+            <div
+              key={label}
+              className="flex items-center gap-4"
+              style={{
+                opacity: pending ? 0.25 : 1,
+                transition: "opacity 0.4s ease",
+              }}
+            >
+              {/* Status icon */}
+              <span
+                className="shrink-0 w-4 text-center text-[13px]"
+                style={{ color: done ? "#8A857C" : active ? "#BF9953" : "transparent" }}
+              >
+                {done ? "✓" : active ? "›" : "·"}
+              </span>
+
+              {/* Label */}
+              <span
+                className="text-[13px] tracking-[0.01em]"
+                style={{
+                  color: done ? "#8A857C" : active ? "#1A1815" : "#8A857C",
+                  fontWeight: active ? 500 : 400,
+                }}
+              >
+                {label}
+                {active && <BlinkingDots />}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function BlinkingDots() {
+  const [dots, setDots] = useState(1);
+  useEffect(() => {
+    const id = setInterval(() => setDots((d) => (d % 3) + 1), 450);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <span className="text-ash" style={{ fontWeight: 400 }}>
+      {".".repeat(dots)}
+    </span>
+  );
+}
+
 export default function ProjectForm() {
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+  const [busy, setBusy]           = useState(false);
+  const [engineStep, setEngineStep] = useState(0);
   const [uploading, setUploading] = useState<string | null>(null);
-  const [deckPath, setDeckPath] = useState("");
+  const [deckPath, setDeckPath]   = useState("");
   const [scriptPath, setScriptPath] = useState("");
   const [posterPath, setPosterPath] = useState("");
   const [visibility, setVisibility] = useState<"true" | "false">("true");
+
+  // Advance through engine steps while the server action runs
+  useEffect(() => {
+    if (!busy) return;
+    setEngineStep(0);
+    let i = 0;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const advance = () => {
+      i++;
+      if (i < ENGINE_STEPS.length) {
+        setEngineStep(i);
+        timer = setTimeout(advance, ENGINE_STEPS[i].duration);
+      }
+    };
+
+    timer = setTimeout(advance, ENGINE_STEPS[0].duration);
+    return () => clearTimeout(timer);
+  }, [busy]);
 
   async function uploadPoster(file: File): Promise<string | null> {
     const supabase = createClient();
@@ -59,13 +177,23 @@ export default function ProjectForm() {
   }
 
   async function action(formData: FormData) {
-    setBusy(true);
     setError(null);
+    setBusy(true); // triggers engine loader immediately
     const result = await createProject(formData);
-    if (result?.error) { setError(result.error); setBusy(false); }
-    // success path redirects server-side
+    if (result?.error) {
+      setError(result.error);
+      setBusy(false);
+      setEngineStep(0);
+    }
+    // success: server redirects to /dashboard/projects/:id
   }
 
+  // ── Engine running: show animated loader in place of the form ──
+  if (busy) {
+    return <EngineLoader step={engineStep} />;
+  }
+
+  // ── Normal form ────────────────────────────────────────────────
   return (
     <form action={action} className="space-y-7 max-w-2xl">
       <input type="hidden" name="pitch_deck_path" value={deckPath} />
@@ -192,10 +320,18 @@ export default function ProjectForm() {
         </div>
       </div>
 
-      {error && <p className="text-[13px] text-red-700 border border-red-200 bg-red-50 rounded-card px-4 py-3">{error}</p>}
+      {error && (
+        <p className="text-[13px] text-red-700 border border-red-200 bg-red-50 rounded-card px-4 py-3">
+          {error}
+        </p>
+      )}
 
-      <button type="submit" disabled={busy || uploading !== null} className="btn-gold disabled:opacity-50">
-        {busy ? "Creating…" : "Create project & compute matches"}
+      <button
+        type="submit"
+        disabled={busy || uploading !== null}
+        className="btn-gold disabled:opacity-50"
+      >
+        Create project & compute matches
       </button>
     </form>
   );
