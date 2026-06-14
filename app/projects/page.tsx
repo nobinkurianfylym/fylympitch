@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
+import ProjectThumbnail from "@/components/ProjectThumbnail";
 import { usd, STAGE_LABEL } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -14,24 +15,22 @@ export default async function ProjectsPage({
 }) {
   const { format } = await searchParams;
   const supabase = await createClient();
-
-  // No auth gate — public to all visitors
   const { data: { user } } = await supabase.auth.getUser();
 
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, language, country, logline, funding_needed_usd")
+    .select("id, title, genre, format, stage, language, country, logline, funding_needed_usd, poster_path, pitch_deck_path")
     .eq("is_public", true)
     .order("created_at", { ascending: false })
     .limit(60);
 
   if (format) query = query.eq("format", format.toLowerCase());
-
   const { data: projects } = await query;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
   return (
     <div className="min-h-screen bg-ivory">
-      {/* Header */}
       <header className="border-b border-line">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <Wordmark />
@@ -48,12 +47,8 @@ export default async function ProjectsPage({
               </Link>
             ) : (
               <>
-                <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
-                  Sign in
-                </Link>
-                <Link href="/signup" className="btn-gold !px-5 !py-2.5 text-[12px]">
-                  Join
-                </Link>
+                <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Sign in</Link>
+                <Link href="/signup" className="btn-gold !px-5 !py-2.5 text-[12px]">Join</Link>
               </>
             )}
           </div>
@@ -61,41 +56,26 @@ export default async function ProjectsPage({
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-12">
-        {/* Page header */}
         <div className="mb-10">
           <p className="eyebrow mb-3">Discover</p>
           <h1 className="font-display text-[38px] font-[400]">Projects</h1>
           <p className="mt-3 text-[15px] text-ash max-w-lg">
             Pitches submitted by filmmakers on FYLYMPITCH — open for producers, investors and collaborators to discover.
           </p>
-
-          {/* Format filters */}
           <div className="mt-7 flex flex-wrap gap-2">
-            <Link
-              href="/projects"
-              className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-4 py-2 border transition-colors ${
-                !format ? "bg-ink text-ivory border-ink" : "border-line text-ash hover:border-ink hover:text-ink"
-              }`}
-            >
+            <Link href="/projects"
+              className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-4 py-2 border transition-colors ${!format ? "bg-ink text-ivory border-ink" : "border-line text-ash hover:border-ink hover:text-ink"}`}>
               All formats
             </Link>
             {FORMATS.map((f) => (
-              <Link
-                key={f}
-                href={`/projects?format=${f.toLowerCase()}`}
-                className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-4 py-2 border transition-colors ${
-                  format?.toLowerCase() === f.toLowerCase()
-                    ? "bg-ink text-ivory border-ink"
-                    : "border-line text-ash hover:border-ink hover:text-ink"
-                }`}
-              >
+              <Link key={f} href={`/projects?format=${f.toLowerCase()}`}
+                className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-4 py-2 border transition-colors ${format?.toLowerCase() === f.toLowerCase() ? "bg-ink text-ivory border-ink" : "border-line text-ash hover:border-ink hover:text-ink"}`}>
                 {f}
               </Link>
             ))}
           </div>
         </div>
 
-        {/* Tile grid */}
         {(!projects || projects.length === 0) ? (
           <div className="py-24 text-center text-ash text-[15px]">
             No public projects yet{format ? ` in ${format}` : ""}.
@@ -103,27 +83,34 @@ export default async function ProjectsPage({
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {projects.map((p) => (
-              <Link
-                key={p.id}
-                href={`/projects/${p.id}`}
-                className="group flex flex-col bg-white/70 border border-line rounded-card p-6 hover:border-gold hover:shadow-sm transition-all"
-              >
-                <p className="text-[11px] tracking-[0.24em] uppercase text-ash mb-2">
-                  {p.genre} · {p.format.charAt(0).toUpperCase() + p.format.slice(1)} · {STAGE_LABEL[p.stage] ?? p.stage}
-                </p>
-                <h2 className="font-display text-[21px] font-[400] mb-3 group-hover:text-gold transition-colors">
-                  {p.title}
-                </h2>
-                {p.logline && (
-                  <p className="font-display italic text-[14px] leading-[1.55] text-ink/70 line-clamp-3 flex-1">
-                    "{p.logline}"
+              <Link key={p.id} href={`/projects/${p.id}`}
+                className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all">
+                <ProjectThumbnail
+                  posterPath={p.poster_path}
+                  deckPath={p.pitch_deck_path}
+                  title={p.title}
+                  genre={p.genre}
+                  supabaseUrl={supabaseUrl}
+                  className="rounded-t-card"
+                />
+                <div className="p-6 flex flex-col flex-1">
+                  <p className="text-[11px] tracking-[0.24em] uppercase text-ash mb-2">
+                    {p.genre} · {p.format.charAt(0).toUpperCase() + p.format.slice(1)} · {STAGE_LABEL[p.stage] ?? p.stage}
                   </p>
-                )}
-                <div className="mt-5 pt-4 border-t border-line flex items-baseline justify-between text-[12px] text-ash">
-                  <span>{p.country}{p.language ? ` · ${p.language}` : ""}</span>
-                  {p.funding_needed_usd && (
-                    <span className="text-gold font-[400]">Seeking {usd(p.funding_needed_usd)}</span>
+                  <h2 className="font-display text-[21px] font-[400] mb-3 group-hover:text-gold transition-colors leading-snug">
+                    {p.title}
+                  </h2>
+                  {p.logline && (
+                    <p className="font-display italic text-[14px] leading-[1.55] text-ink/70 line-clamp-2 flex-1">
+                      "{p.logline}"
+                    </p>
                   )}
+                  <div className="mt-4 pt-4 border-t border-line flex items-baseline justify-between text-[12px] text-ash">
+                    <span>{p.country}{p.language ? ` · ${p.language}` : ""}</span>
+                    {p.funding_needed_usd && (
+                      <span className="text-gold font-[400]">Seeking {usd(p.funding_needed_usd)}</span>
+                    )}
+                  </div>
                 </div>
               </Link>
             ))}
@@ -131,7 +118,6 @@ export default async function ProjectsPage({
         )}
       </main>
 
-      {/* Footer CTA for guests */}
       {!user && (
         <div className="border-t border-line mt-16">
           <div className="max-w-6xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6">

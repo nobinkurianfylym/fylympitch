@@ -12,7 +12,30 @@ export default function ProjectForm() {
   const [uploading, setUploading] = useState<string | null>(null);
   const [deckPath, setDeckPath] = useState("");
   const [scriptPath, setScriptPath] = useState("");
+  const [posterPath, setPosterPath] = useState("");
   const [visibility, setVisibility] = useState<"true" | "false">("true");
+
+  async function uploadPoster(file: File): Promise<string | null> {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setError("Your session expired — sign in again."); return null; }
+    if (file.size > 10 * 1024 * 1024) { setError("Poster must be under 10 MB."); return null; }
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+    const path = `${user.id}/${Date.now()}-poster.${ext}`;
+    const { error } = await supabase.storage.from("thumbnails").upload(path, file, { contentType: file.type });
+    if (error) { setError(`Poster upload failed: ${error.message}`); return null; }
+    return path;
+  }
+
+  async function handlePoster(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setUploading("thumbnails");
+    const path = await uploadPoster(file);
+    if (path) setPosterPath(path);
+    setUploading(null);
+  }
 
   async function uploadFile(file: File, bucket: "pitch-decks" | "scripts"): Promise<string | null> {
     const supabase = createClient();
@@ -47,6 +70,7 @@ export default function ProjectForm() {
     <form action={action} className="space-y-7 max-w-2xl">
       <input type="hidden" name="pitch_deck_path" value={deckPath} />
       <input type="hidden" name="script_path" value={scriptPath} />
+      <input type="hidden" name="poster_path" value={posterPath} />
 
       <div>
         <label className="field-label" htmlFor="title">Title *</label>
@@ -113,6 +137,18 @@ export default function ProjectForm() {
       <div>
         <label className="field-label" htmlFor="producer_info">Producer information</label>
         <textarea id="producer_info" name="producer_info" className="field" rows={3} placeholder="Attached producers, production company, prior credits" />
+      </div>
+
+      <div>
+        <label className="field-label" htmlFor="poster">
+          Project poster / thumbnail{" "}
+          <span className="normal-case tracking-normal font-normal">(JPG, PNG or WebP — optional)</span>
+        </label>
+        <input id="poster" type="file" accept="image/jpeg,image/png,image/webp" className="field !py-2.5 text-[13px]"
+          onChange={handlePoster} />
+        {uploading === "thumbnails" && <p className="mt-2 text-[12px] text-ash">Uploading…</p>}
+        {posterPath && <p className="mt-2 text-[12px] text-[#8A6F3E]">Poster uploaded ✓</p>}
+        {!posterPath && <p className="mt-2 text-[12px] text-ash">No poster? We'll use your deck's first page, or auto-generate a title card.</p>}
       </div>
 
       <div className="grid sm:grid-cols-2 gap-5">
