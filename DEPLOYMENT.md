@@ -64,7 +64,7 @@ netlify deploy --build --prod
 ## STEP 3 — Smoke test (≈5 min)
 
 1. **Landing page** loads with the FYLYMPITCH wordmark, pricing, FAQ.
-2. **Sign up** as a Filmmaker (email) → confirm email → log in → land on dashboard.
+2. **Sign up** as a Filmmaker (Google sign-in → onboarding → select Filmmaker) → land on dashboard.
 3. **Submit a project** (Dashboard → Projects → New) with a PDF deck/script → see live-ranked matched opportunities on the project page.
 4. **Browse opportunities** → save one → apply with the project → it appears in Applications.
 5. **Sign up** a second account as Producer → it shows "pending verification".
