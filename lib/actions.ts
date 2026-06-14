@@ -427,6 +427,44 @@ export async function adminSelfPromote() {
   redirect("/admin");
 }
 
+// ---------- ONBOARDING ----------
+export async function completeOnboarding(formData: FormData) {
+  const { supabase, user } = await requireUser();
+
+  const role = str(formData, "role");
+  const full_name = str(formData, "full_name")?.trim();
+  const company = str(formData, "company")?.trim() || null;
+
+  const VALID_ROLES = ["filmmaker", "producer", "investor", "organization"];
+  if (!role || !VALID_ROLES.includes(role)) return { error: "Please select your role." };
+  if (!full_name) return { error: "Please enter your name." };
+
+  const isIndustry = ["producer", "investor", "organization"].includes(role);
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      role,
+      full_name,
+      company,
+      approval_status: isIndustry ? "pending" : "approved",
+      onboarded_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+
+  await supabase.from("activity_logs").insert({
+    user_id: user.id,
+    action: "onboarding_completed",
+    entity: "profile",
+    entity_id: user.id,
+  }).maybeSingle(); // log is best-effort
+
+  revalidatePath("/dashboard");
+  redirect("/dashboard");
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();

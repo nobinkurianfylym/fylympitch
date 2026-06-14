@@ -52,7 +52,7 @@ export default function Home() {
         </p>
         <div className="mt-12 flex flex-wrap gap-4">
           <Link href="/signup" className="btn-gold">Submit your project</Link>
-          <Link href="/signup?role=producer" className="btn-ghost">I'm a producer / investor</Link>
+          <Link href="/signup" className="btn-ghost">I'm a producer / investor</Link>
         </div>
         <div className="mt-24 hairline-gold pt-6 flex flex-wrap gap-x-14 gap-y-4 text-[12px] tracking-[0.18em] uppercase text-ash">
           <span>Grants</span><span>Film funds</span><span>Labs</span><span>Co-productions</span>
@@ -195,8 +195,8 @@ export default function Home() {
               <div>
                 <p className="eyebrow !text-ivory/40 mb-4">For industry</p>
                 <ul className="space-y-3 text-ivory/70">
-                  <li><Link href="/signup?role=producer" className="hover:text-gold">Producers</Link></li>
-                  <li><Link href="/signup?role=investor" className="hover:text-gold">Investors</Link></li>
+                  <li><Link href="/signup" className="hover:text-gold">Producers</Link></li>
+                  <li><Link href="/signup" className="hover:text-gold">Investors</Link></li>
                   <li><a href="#contact" className="hover:text-gold">List a fund</a></li>
                 </ul>
               </div>

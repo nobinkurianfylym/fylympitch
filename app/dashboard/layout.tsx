@@ -9,10 +9,22 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (!user || authError) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single<Profile>();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single<Profile>();
+
+  // Guard: if onboarding was never completed (e.g. user bookmarked /dashboard
+  // directly before finishing), send them through onboarding now.
+  if (profile && profile.onboarded_at === null) {
+    redirect("/onboarding");
+  }
+
+  // Safe fallback if profile row is missing (trigger race or DB error).
   const role = profile?.role ?? "filmmaker";
   const isIndustry = role === "producer" || role === "investor" || role === "organization";
 

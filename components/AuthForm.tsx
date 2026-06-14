@@ -6,12 +6,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import Wordmark from "@/components/Wordmark";
 
-const ROLE_LABEL: Record<string, string> = {
-  producer: "as a producer",
-  investor: "as an investor",
-  organization: "as an organization",
-};
-
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
@@ -28,20 +22,26 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const next = params.get("next") ?? "/dashboard";
-  const role = params.get("role");
-  const roleQuery = role ? `?role=${encodeURIComponent(role)}` : "";
+  // Sanitise the ?next= param — must be a relative path, and must not loop back to auth pages.
+  const rawNext = params.get("next") ?? "/dashboard";
+  const next =
+    rawNext.startsWith("/") &&
+    !rawNext.startsWith("/login") &&
+    !rawNext.startsWith("/signup") &&
+    !rawNext.startsWith("/auth")
+      ? rawNext
+      : "/dashboard";
+
+  const authError = params.get("error");
 
   async function handleGoogle() {
     setError(null);
     setBusy(true);
     const supabase = createClient();
-    const callbackParams = new URLSearchParams({ next });
-    if (role) callbackParams.set("role", role);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?${callbackParams.toString()}`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
         queryParams: mode === "signup" ? { prompt: "select_account" } : {},
       },
     });
@@ -63,9 +63,18 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </h1>
           <p className="mt-3 text-[21px] leading-[1.7] text-ash">
             {mode === "signup"
-              ? `Continue with Google${role ? ` ${ROLE_LABEL[role] ?? ""}` : ""}. Filmmaker accounts get instant access — producer, investor and organization accounts are verified within 48 hours.`
+              ? "Filmmaker accounts get instant access. Producer, investor and organisation accounts are verified within 48 hours."
               : "Sign in with Google to see your matches, applications and offers."}
           </p>
+
+          {/* Auth error from callback */}
+          {authError && (
+            <p className="mt-6 text-[13px] text-red-700 border border-red-200 bg-red-50 rounded-card px-4 py-3 text-left">
+              {authError === "cancelled"
+                ? "Sign-in was cancelled. Try again when you're ready."
+                : "Something went wrong with sign-in. Please try again."}
+            </p>
+          )}
 
           {error && (
             <p className="mt-6 text-[13px] text-red-700 border border-red-200 bg-red-50 rounded-card px-4 py-3 text-left">
@@ -86,7 +95,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
             {mode === "signup" ? (
               <>
                 Already a member?{" "}
-                <Link href={`/login${roleQuery}`} className="text-ink underline underline-offset-4 hover:text-gold">
+                <Link href="/login" className="text-ink underline underline-offset-4 hover:text-gold">
                   Sign in
                 </Link>
               </>

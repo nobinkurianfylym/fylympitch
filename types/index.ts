@@ -10,6 +10,7 @@ export interface Profile {
   id: string;
   role: UserRole;
   approval_status: ApprovalStatus;
+  onboarded_at: string | null;
   full_name: string;
   company: string | null;
   country: string | null;
