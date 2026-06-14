@@ -19,9 +19,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (me?.role !== "admin") redirect("/dashboard");
 
+  // Pending producer count for the sidebar badge
+  const { count: pendingProducers } = await supabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "producer")
+    .eq("approval_status", "pending");
+
   const nav = [
     { href: "/admin", label: "Analytics" },
     { href: "/admin/users", label: "User management" },
+    { href: "/admin/producers", label: "Producers", badge: pendingProducers },
     { href: "/admin/projects", label: "Project management" },
     { href: "/admin/opportunities", label: "Fund management" },
     { href: "/admin/certificates", label: "Certificates" },
@@ -38,8 +46,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
         <nav className="flex md:flex-col gap-5 md:gap-0 md:mt-10 md:space-y-4 text-[12px] tracking-[0.16em] uppercase whitespace-nowrap">
           {nav.map((n) => (
-            <Link key={n.href} href={n.href} className="text-ash hover:text-ink transition-colors">
+            <Link key={n.href} href={n.href} className="text-ash hover:text-ink transition-colors flex items-center gap-2">
               {n.label}
+              {(n as any).badge ? (
+                <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">
+                  {(n as any).badge}
+                </span>
+              ) : null}
             </Link>
           ))}
         </nav>

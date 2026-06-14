@@ -9,63 +9,48 @@ export async function middleware(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
+        getAll() { return request.cookies.getAll(); },
         setAll(cookiesToSet) {
-          // Write cookies to the request first (makes them readable in SSR)
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          // Then rebuild the response and set on it so the browser receives them
           response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
+          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         },
       },
     }
   );
 
-  // Refresh the session (extends expiry, rotates token if needed).
-  // getUser() is the authoritative check — never rely on the session object alone.
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-
-  // Routes that require a valid session
   const isProtected =
     path.startsWith("/dashboard") ||
     path.startsWith("/admin") ||
-    path.startsWith("/onboarding");
+    path.startsWith("/onboarding") ||
+    path.startsWith("/producer");
 
-  // Routes that authenticated users shouldn't linger on
   const isAuthPage = path === "/login" || path === "/signup";
+  const isProducerPending = path === "/producer/pending";
 
-  // If session is broken / expired and we're on a protected route,
-  // redirect to login and carry the attempted path so we can return after re-auth.
+  // Not logged in → login
   if (isProtected && (!user || error)) {
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    // Don't propagate /onboarding as a ?next= target — that causes a loop
-    // where a stale-session user keeps bouncing back to onboarding.
-    loginUrl.searchParams.set(
-      "next",
-      path.startsWith("/onboarding") ? "/dashboard" : path
-    );
-    loginUrl.search = loginUrl.search; // keep existing params
-    return NextResponse.redirect(loginUrl);
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("next", path.startsWith("/onboarding") ? "/dashboard" : path);
+    return NextResponse.redirect(url);
   }
 
-  // Authenticated users don't need to see login/signup — send them home.
-  // Exception: if they're mid-onboarding they're already handled above.
+  // Logged-in user on auth pages → home
   if (isAuthPage && user && !error) {
-    const dashUrl = request.nextUrl.clone();
-    dashUrl.pathname = "/dashboard";
-    dashUrl.search = "";
-    return NextResponse.redirect(dashUrl);
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    url.search = "";
+    return NextResponse.redirect(url);
   }
+
+  // Producer studio: check approval status inline (fast, no extra DB call needed
+  // since Supabase session contains user id — we gate at the page/layout level
+  // to keep middleware lightweight). The layout handles the pending → /producer/pending
+  // redirect; middleware just ensures session exists.
 
   return response;
 }
@@ -76,6 +61,8 @@ export const config = {
     "/admin/:path*",
     "/onboarding/:path*",
     "/onboarding",
+    "/producer/:path*",
+    "/producer",
     "/login",
     "/signup",
   ],

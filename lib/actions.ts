@@ -296,18 +296,23 @@ export async function markAllRead() {
 export async function adminSetApproval(formData: FormData) {
   const { supabase, user } = await requireAdmin();
   const target = str(formData, "user_id");
-  const status = str(formData, "status") === "approved" ? "approved" : "rejected";
+  const decision = str(formData, "decision");
+  const status = decision === "approved" ? "approved" : "rejected";
+  if (!target) return;
   await supabase.from("profiles").update({ approval_status: status }).eq("id", target);
   await supabase.from("audit_logs").insert({
     actor_id: user.id, action: `user_${status}`, target: "profile", target_id: target,
   });
   await supabase.from("notifications").insert({
     user_id: target, kind: "system",
-    title: status === "approved" ? "Your industry account is approved" : "Your account application was declined",
-    body: status === "approved" ? "You can now browse projects and send offers." : "Contact support for details.",
-    link: "/dashboard",
+    title: status === "approved" ? "Your producer account is approved" : "Your account application was declined",
+    body: status === "approved"
+      ? "You can now access the Producer Studio, browse all projects and send offers."
+      : "Contact support if you believe this was a mistake.",
+    link: status === "approved" ? "/producer" : "/",
   });
   revalidatePath("/admin/users");
+  revalidatePath("/admin/producers");
 }
 
 export async function adminToggleOpportunity(formData: FormData) {
@@ -435,11 +440,10 @@ export async function completeOnboarding(formData: FormData) {
   const full_name = str(formData, "full_name")?.trim();
   const company = str(formData, "company")?.trim() || null;
 
-  const VALID_ROLES = ["filmmaker", "producer", "investor", "organization"];
+  const VALID_ROLES = ["filmmaker", "producer"];
   if (!role || !VALID_ROLES.includes(role)) return { error: "Please select your role." };
   if (!full_name) return { error: "Please enter your name." };
-
-  const isIndustry = ["producer", "investor", "organization"].includes(role);
+  if (role === "producer" && !company) return { error: "Please enter your company name." };
 
   const { error } = await supabase
     .from("profiles")
@@ -447,22 +451,82 @@ export async function completeOnboarding(formData: FormData) {
       role,
       full_name,
       company,
-      approval_status: isIndustry ? "pending" : "approved",
+      // Producers need admin approval; filmmakers get instant access
+      approval_status: role === "producer" ? "pending" : "approved",
       onboarded_at: new Date().toISOString(),
     })
     .eq("id", user.id);
 
   if (error) return { error: error.message };
 
-  await supabase.from("activity_logs").insert({
-    user_id: user.id,
-    action: "onboarding_completed",
-    entity: "profile",
-    entity_id: user.id,
-  }).maybeSingle(); // log is best-effort
-
   revalidatePath("/dashboard");
+  revalidatePath("/producer");
+
+  // Route to the correct workspace
+  if (role === "producer") {
+    redirect("/producer/pending");
+  }
   redirect("/dashboard");
+}
+
+// ---------- PRODUCER CRM ----------
+export async function upsertProducerProject(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const project_id = str(formData, "project_id");
+  const status = str(formData, "status") ?? "saved";
+  const rating = formData.get("rating") ? Number(formData.get("rating")) : null;
+  const notes = str(formData, "notes") ?? null;
+  if (!project_id) return { error: "Missing project." };
+
+  const VALID_STATUS = ["saved","shortlisted","in_review","meeting_set","deal_active","passed"];
+  if (!VALID_STATUS.includes(status)) return { error: "Invalid status." };
+
+  const { error } = await supabase.from("producer_projects").upsert(
+    { producer_id: user.id, project_id, status, rating, notes, updated_at: new Date().toISOString() },
+    { onConflict: "producer_id,project_id" }
+  );
+  if (error) return { error: error.message };
+  revalidatePath("/producer");
+  revalidatePath(`/producer/projects/${project_id}`);
+}
+
+export async function requestMeeting(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const project_id = str(formData, "project_id");
+  const filmmaker_id = str(formData, "filmmaker_id");
+  const message = str(formData, "message") ?? null;
+  if (!project_id || !filmmaker_id) return { error: "Missing required fields." };
+
+  const { error } = await supabase.from("meeting_requests").insert({
+    producer_id: user.id, filmmaker_id, project_id, message,
+  });
+  if (error) {
+    if (error.code === "23505") return { error: "You already have a meeting request for this project." };
+    return { error: error.message };
+  }
+  // Also move project to meeting_set stage in CRM
+  await supabase.from("producer_projects").upsert(
+    { producer_id: user.id, project_id, status: "meeting_set", updated_at: new Date().toISOString() },
+    { onConflict: "producer_id,project_id" }
+  );
+  revalidatePath("/producer/meetings");
+  revalidatePath(`/producer/projects/${project_id}`);
+}
+
+export async function updateMeetingStatus(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const meeting_id = str(formData, "meeting_id");
+  const status = str(formData, "status");
+  const meeting_notes = str(formData, "meeting_notes") ?? null;
+  if (!meeting_id || !status) return { error: "Missing fields." };
+
+  const { error } = await supabase
+    .from("meeting_requests")
+    .update({ status, meeting_notes, updated_at: new Date().toISOString() })
+    .eq("id", meeting_id)
+    .or(`producer_id.eq.${user.id},filmmaker_id.eq.${user.id}`);
+  if (error) return { error: error.message };
+  revalidatePath("/producer/meetings");
 }
 
 export async function signOut() {
