@@ -37,7 +37,7 @@ export default function Home() {
         </nav>
         <div className="flex items-center gap-3">
           <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase text-ink hover:text-gold transition-colors px-3 py-2">Sign in</Link>
-          <Link href="/signup" className="btn-gold !px-5 !py-2.5">Join</Link>
+          <Link href="/login" className="btn-gold !px-5 !py-2.5">Join</Link>
         </div>
       </header>
 
@@ -52,8 +52,8 @@ export default function Home() {
           markets and investors most likely to say yes — and tells you exactly why.
         </p>
         <div className="mt-12 flex flex-wrap gap-4">
-          <Link href="/signup" className="btn-gold">Submit your project</Link>
-          <Link href="/signup" className="btn-ghost">I'm a producer / investor</Link>
+          <Link href="/login" className="btn-gold">Submit your project</Link>
+          <Link href="/login" className="btn-ghost">I'm a producer / investor</Link>
         </div>
         <div className="mt-24 hairline-gold pt-6 flex flex-wrap gap-x-14 gap-y-4 text-[12px] tracking-[0.18em] uppercase text-ash">
           <span>Grants</span><span>Film funds</span><span>Labs</span><span>Co-productions</span>
@@ -121,7 +121,7 @@ export default function Home() {
                   <div key={item} className="hairline pt-4 pb-1 text-[14px] text-ash">{item}</div>
                 ))}
               </div>
-              <Link href="/signup" className="btn-gold">Submit your project</Link>
+              <Link href="/login" className="btn-gold">Submit your project</Link>
             </div>
 
             {/* Right — opportunity preview */}
@@ -180,7 +180,7 @@ export default function Home() {
                   <div key={item} className="hairline pt-4 pb-1 text-[14px] text-ash">{item}</div>
                 ))}
               </div>
-              <Link href="/signup" className="btn-ghost">Apply for producer access</Link>
+              <Link href="/login" className="btn-ghost">Apply for producer access</Link>
             </div>
 
             {/* Right — project showcase preview */}
@@ -309,14 +309,14 @@ export default function Home() {
                 <ul className="space-y-3 text-ivory/70">
                   <li><a href="#features" className="hover:text-gold">Features</a></li>
                   <li><a href="#pricing" className="hover:text-gold">Pricing</a></li>
-                  <li><Link href="/signup" className="hover:text-gold">Join</Link></li>
+                  <li><Link href="/login" className="hover:text-gold">Join</Link></li>
                 </ul>
               </div>
               <div>
                 <p className="eyebrow !text-ivory/40 mb-4">For industry</p>
                 <ul className="space-y-3 text-ivory/70">
-                  <li><Link href="/signup" className="hover:text-gold">Producers</Link></li>
-                  <li><Link href="/signup" className="hover:text-gold">Investors</Link></li>
+                  <li><Link href="/login" className="hover:text-gold">Producers</Link></li>
+                  <li><Link href="/login" className="hover:text-gold">Investors</Link></li>
                   <li><a href="#contact" className="hover:text-gold">List a fund</a></li>
                 </ul>
               </div>
