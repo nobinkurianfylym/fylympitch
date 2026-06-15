@@ -12,36 +12,14 @@ export async function POST(req: NextRequest) {
   if (!openaiKey) return NextResponse.json({ error: "AI extraction not configured" }, { status: 503 });
 
   const body = await req.json();
-  const { pdf } = body as { pdf?: string };
-  if (!pdf) return NextResponse.json({ error: "No PDF data" }, { status: 400 });
+  // Accept pre-extracted text (extracted client-side via pdfjs-dist in the browser).
+  // This avoids running pdfjs-dist server-side on Cloudflare Workers where canvas is unavailable.
+  const { text } = body as { text?: string };
+  if (!text?.trim()) return NextResponse.json({ error: "No PDF text content" }, { status: 400 });
+
+  const truncated = text.slice(0, 12000);
 
   try {
-    // Dynamic import avoids bundling pdfjs-dist into the client bundle
-    const { PDFParse } = await import("pdf-parse");
-
-    // Convert base64 → Uint8Array (pdfjs-dist requires TypedArray, not Buffer)
-    const binary = atob(pdf);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-
-    const parser = new PDFParse({
-      data: bytes,
-      verbosity: 0,              // suppress pdfjs console noise
-      disableFontFace: true,     // required in Node.js / serverless
-      isEvalSupported: false,    // security: no eval in Lambda
-    });
-
-    const textResult = await parser.getText({ first: 10 });
-    const text = textResult.text?.slice(0, 12000) ?? "";
-
-    if (!text.trim()) {
-      return NextResponse.json(
-        { error: "Could not extract text — try a text-based PDF rather than a scanned image." },
-        { status: 422 }
-      );
-    }
-
-    // Send extracted text to OpenAI
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
@@ -76,7 +54,7 @@ export async function POST(req: NextRequest) {
 Every key must be present. Use null for missing numbers, empty string for missing text.
 
 PITCH DECK TEXT:
-${text}`,
+${truncated}`,
           },
         ],
       }),

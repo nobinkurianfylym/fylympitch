@@ -7,11 +7,9 @@ const SUPABASE_HOSTNAME = process.env.NEXT_PUBLIC_SUPABASE_URL
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
-  // ── Keep Node-only packages out of the client bundle ─────────
-  // pdf-parse uses Node.js fs/crypto — never belongs in the browser.
-  serverExternalPackages: ["pdf-parse"],
-
   // ── Tree-shake large server packages ─────────────────────────
+  // Note: pdf-parse is now used CLIENT-SIDE only via pdfjs-dist in the browser.
+  // Cloudflare Workers lacks canvas, so PDF parsing must happen in the browser.
   experimental: {
     optimizePackageImports: ["resend", "@supabase/ssr", "@supabase/supabase-js"],
   },

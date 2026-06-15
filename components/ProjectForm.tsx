@@ -165,13 +165,36 @@ export default function ProjectForm() {
     return () => clearTimeout(timer);
   }, [busy]);
 
-  async function toBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve((reader.result as string).split(",")[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+  // ── Client-side PDF text extraction ──────────────────────────────────────
+  // pdfjs-dist runs in the browser where canvas is always available.
+  // This avoids the Cloudflare Workers canvas limitation that broke server-side PDF parsing.
+  async function extractPDFText(file: File): Promise<string> {
+    const pdfjsLib = await import("pdfjs-dist");
+    // Load the PDF.js worker from CDN — avoids bundling a 1 MB worker file into the app
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({
+      data: arrayBuffer,
+      isEvalSupported: false,   // no eval — security
+      disableFontFace: true,    // not rendering, skip font loading
+      useWorkerFetch: false,    // worker fetches handled by CDN script above
+    }).promise;
+
+    const maxPages = Math.min(pdf.numPages, 10); // first 10 pages is plenty for a pitch deck
+    const parts: string[] = [];
+
+    for (let i = 1; i <= maxPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items
+        .map((item) => ("str" in item ? (item as { str: string }).str : ""))
+        .join(" ");
+      parts.push(pageText);
+    }
+
+    return parts.join("\n\n").slice(0, 12000);
   }
 
   async function uploadFile(file: File, bucket: "pitch-decks" | "scripts"): Promise<string | null> {
@@ -205,15 +228,25 @@ export default function ProjectForm() {
     setUploading("pitch-decks");
     setAiLoading(true);
 
-    const [path, base64] = await Promise.all([uploadFile(file, "pitch-decks"), toBase64(file)]);
+    // Upload to storage + extract text in parallel
+    const [path, text] = await Promise.all([
+      uploadFile(file, "pitch-decks"),
+      extractPDFText(file).catch(() => ""),
+    ]);
     if (path) setDeckPath(path);
     setUploading(null);
+
+    if (!text.trim()) {
+      setAiError("Could not extract text from this PDF — it may be a scanned image. Fill the fields manually.");
+      setAiLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/ai-extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pdf: base64 }),
+        body: JSON.stringify({ text }),
       });
       if (res.ok) {
         const data = await res.json();
