@@ -140,6 +140,7 @@ export default function ProjectForm() {
   const [scriptPath, setScriptPath] = useState("");
   const [posterPath, setPosterPath] = useState("");
   const [visibility, setVisibility] = useState<"true" | "false">("true");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // useTransition — the correct Next.js pattern for server actions that call redirect()
   const [, startTransition] = useTransition();
@@ -310,6 +311,12 @@ export default function ProjectForm() {
           return next;
         });
         setAiFilled(filled);
+        // Auto-expand advanced section if AI filled any advanced fields
+        const advancedKeys: (keyof Fields)[] = [
+          "format","stage","language","country","budget_usd",
+          "funding_needed_usd","synopsis","director_statement","producer_info"
+        ];
+        if (advancedKeys.some((k) => filled[k])) setShowAdvanced(true);
       } else {
         const err = await res.json().catch(() => ({}));
         setAiError(err.error ?? "AI extraction failed — fill the fields manually.");
@@ -437,62 +444,11 @@ export default function ProjectForm() {
         )}
       </div>
 
-      {/* ── 2. PROJECT DETAILS ── */}
+      {/* ── 2. ESSENTIAL FIELDS (always visible) ── */}
       <div>
         <label className="field-label" htmlFor="title">{label("Title *", "title")}</label>
         <input id="title" name="title" className="field" required maxLength={200}
           value={fields.title} onChange={set("title")} />
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-5">
-        <div>
-          <label className="field-label" htmlFor="genre">{label("Genre *", "genre")}</label>
-          <select id="genre" name="genre" className="field" value={fields.genre} onChange={set("genre")}>
-            {GENRES.map((g) => <option key={g}>{g}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="field-label" htmlFor="format">{label("Format *", "format")}</label>
-          <select id="format" name="format" className="field" value={fields.format} onChange={set("format")}>
-            <option value="feature">Feature</option>
-            <option value="short">Short</option>
-            <option value="documentary">Documentary</option>
-            <option value="series">Series</option>
-            <option value="animation">Animation</option>
-          </select>
-        </div>
-        <div>
-          <label className="field-label" htmlFor="language">{label("Language *", "language")}</label>
-          <input id="language" name="language" className="field" required
-            value={fields.language} onChange={set("language")} />
-        </div>
-        <div>
-          <label className="field-label" htmlFor="country">{label("Country *", "country")}</label>
-          <input id="country" name="country" className="field" required
-            value={fields.country} onChange={set("country")} />
-        </div>
-        <div>
-          <label className="field-label" htmlFor="budget_usd">{label("Total budget (USD)", "budget_usd")}</label>
-          <input id="budget_usd" name="budget_usd" type="number" min="0" step="1000"
-            className="field" placeholder="400000"
-            value={fields.budget_usd} onChange={set("budget_usd")} />
-        </div>
-        <div>
-          <label className="field-label" htmlFor="funding_needed_usd">{label("Funding needed (USD)", "funding_needed_usd")}</label>
-          <input id="funding_needed_usd" name="funding_needed_usd" type="number" min="0" step="1000"
-            className="field" placeholder="150000"
-            value={fields.funding_needed_usd} onChange={set("funding_needed_usd")} />
-        </div>
-        <div>
-          <label className="field-label" htmlFor="stage">{label("Stage *", "stage")}</label>
-          <select id="stage" name="stage" className="field" value={fields.stage} onChange={set("stage")}>
-            <option value="development">Development</option>
-            <option value="pre_production">Pre-Production</option>
-            <option value="production">Production</option>
-            <option value="post_production">Post-Production</option>
-            <option value="completed">Completed</option>
-          </select>
-        </div>
       </div>
 
       <div>
@@ -506,62 +462,152 @@ export default function ProjectForm() {
       </div>
 
       <div>
-        <label className="field-label" htmlFor="synopsis">{label("Synopsis", "synopsis")}</label>
-        <textarea id="synopsis" name="synopsis" className="field" rows={5}
-          value={fields.synopsis} onChange={set("synopsis")} />
+        <label className="field-label" htmlFor="genre">{label("Genre *", "genre")}</label>
+        <select id="genre" name="genre" className="field" value={fields.genre} onChange={set("genre")}>
+          {GENRES.map((g) => <option key={g}>{g}</option>)}
+        </select>
       </div>
 
-      <div>
-        <label className="field-label" htmlFor="director_statement">{label("Director's statement", "director_statement")}</label>
-        <textarea id="director_statement" name="director_statement" className="field" rows={4}
-          value={fields.director_statement} onChange={set("director_statement")} />
-      </div>
+      {/* ── ADVANCED TOGGLE ── */}
+      <div className="border border-line rounded-card overflow-hidden">
+        <button type="button"
+          onClick={() => setShowAdvanced((v) => !v)}
+          className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-parchment/40 transition-colors">
+          <span className="text-[13px] font-medium tracking-[0.04em]">
+            Advanced details
+            {!showAdvanced && (
+              <span className="ml-2 text-[11px] text-ash normal-case font-normal tracking-normal">
+                {[
+                  fields.format !== "feature" ? fields.format : "Feature",
+                  fields.language,
+                  fields.country,
+                  fields.stage !== "development" ? fields.stage.replace("_", " ") : "Development",
+                ].filter(Boolean).join(" · ")}
+              </span>
+            )}
+          </span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+            className={`text-ash transition-transform ${showAdvanced ? "rotate-180" : ""}`}>
+            <path d="M2 4.5l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
 
-      <div>
-        <label className="field-label" htmlFor="producer_info">{label("Producer information", "producer_info")}</label>
-        <textarea id="producer_info" name="producer_info" className="field" rows={3}
-          placeholder="Attached producers, production company, prior credits"
-          value={fields.producer_info} onChange={set("producer_info")} />
-      </div>
+        {showAdvanced && (
+          <div className="px-5 pb-5 space-y-5 border-t border-line pt-5">
+            <div className="grid sm:grid-cols-2 gap-5">
+              <div>
+                <label className="field-label" htmlFor="format">{label("Format", "format")}</label>
+                <select id="format" name="format" className="field" value={fields.format} onChange={set("format")}>
+                  <option value="feature">Feature</option>
+                  <option value="short">Short</option>
+                  <option value="documentary">Documentary</option>
+                  <option value="series">Series</option>
+                  <option value="animation">Animation</option>
+                </select>
+              </div>
+              <div>
+                <label className="field-label" htmlFor="stage">{label("Stage", "stage")}</label>
+                <select id="stage" name="stage" className="field" value={fields.stage} onChange={set("stage")}>
+                  <option value="development">Development</option>
+                  <option value="pre_production">Pre-Production</option>
+                  <option value="production">Production</option>
+                  <option value="post_production">Post-Production</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <div>
+                <label className="field-label" htmlFor="language">{label("Language", "language")}</label>
+                <input id="language" name="language" className="field" required
+                  value={fields.language} onChange={set("language")} />
+              </div>
+              <div>
+                <label className="field-label" htmlFor="country">{label("Country", "country")}</label>
+                <input id="country" name="country" className="field" required
+                  value={fields.country} onChange={set("country")} />
+              </div>
+              <div>
+                <label className="field-label" htmlFor="budget_usd">{label("Total budget (USD)", "budget_usd")}</label>
+                <input id="budget_usd" name="budget_usd" type="number" min="0" step="1000"
+                  className="field" placeholder="400000"
+                  value={fields.budget_usd} onChange={set("budget_usd")} />
+              </div>
+              <div>
+                <label className="field-label" htmlFor="funding_needed_usd">{label("Funding needed (USD)", "funding_needed_usd")}</label>
+                <input id="funding_needed_usd" name="funding_needed_usd" type="number" min="0" step="1000"
+                  className="field" placeholder="150000"
+                  value={fields.funding_needed_usd} onChange={set("funding_needed_usd")} />
+              </div>
+            </div>
 
-      <div>
-        <label className="field-label" htmlFor="poster">
-          Poster / thumbnail{" "}
-          <span className="normal-case tracking-normal font-normal">(JPG, PNG or WebP — optional)</span>
-        </label>
-        <input id="poster" type="file" accept="image/jpeg,image/png,image/webp"
-          className="field !py-2.5 text-[13px]" onChange={handlePoster} />
-        {uploading === "thumbnails" && <p className="mt-2 text-[12px] text-ash">Uploading…</p>}
-        {posterPath && <p className="mt-2 text-[12px] text-[#8A6F3E]">Poster uploaded ✓</p>}
-      </div>
+            <div>
+              <label className="field-label" htmlFor="synopsis">{label("Synopsis", "synopsis")}</label>
+              <textarea id="synopsis" name="synopsis" className="field" rows={5}
+                value={fields.synopsis} onChange={set("synopsis")} />
+            </div>
 
-      {/* Visibility */}
-      <div>
-        <label className="field-label">Visibility</label>
-        <div className="grid sm:grid-cols-2 gap-4">
-          <label className={`flex flex-col gap-2 p-5 rounded-card border bg-white/70 cursor-pointer transition-colors ${visibility === "true" ? "border-gold bg-gold/5" : "border-line"}`}>
-            <input type="radio" name="is_public" value="true" checked={visibility === "true"}
-              onChange={() => setVisibility("true")} className="sr-only" />
-            <span className="flex items-center gap-2 font-display text-[17px]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                <circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z" />
-              </svg>
-              Public
-            </span>
-            <span className="text-[13px] text-ash">Shown on the Projects showcase.</span>
-          </label>
-          <label className={`flex flex-col gap-2 p-5 rounded-card border bg-white/70 cursor-pointer transition-colors ${visibility === "false" ? "border-gold bg-gold/5" : "border-line"}`}>
-            <input type="radio" name="is_public" value="false" checked={visibility === "false"}
-              onChange={() => setVisibility("false")} className="sr-only" />
-            <span className="flex items-center gap-2 font-display text-[17px]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                <rect x="4" y="11" width="16" height="9" rx="1.5" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
-              </svg>
-              Private
-            </span>
-            <span className="text-[13px] text-ash">Only visible to you.</span>
-          </label>
-        </div>
+            <div>
+              <label className="field-label" htmlFor="director_statement">{label("Director's statement", "director_statement")}</label>
+              <textarea id="director_statement" name="director_statement" className="field" rows={4}
+                value={fields.director_statement} onChange={set("director_statement")} />
+            </div>
+
+            <div>
+              <label className="field-label" htmlFor="producer_info">{label("Producer information", "producer_info")}</label>
+              <textarea id="producer_info" name="producer_info" className="field" rows={3}
+                placeholder="Attached producers, production company, prior credits"
+                value={fields.producer_info} onChange={set("producer_info")} />
+            </div>
+
+            <div>
+              <label className="field-label" htmlFor="script">
+                Script (PDF) <span className="normal-case tracking-normal font-normal">— optional</span>
+              </label>
+              <input id="script" type="file" accept=".pdf" className="field !py-2.5 text-[13px]" onChange={handleScript} />
+              {uploading === "scripts" && <p className="mt-2 text-[12px] text-ash">Uploading…</p>}
+              {scriptPath && <p className="mt-2 text-[12px] text-[#8A6F3E]">Script uploaded ✓</p>}
+            </div>
+
+            <div>
+              <label className="field-label" htmlFor="poster">
+                Poster / thumbnail{" "}
+                <span className="normal-case tracking-normal font-normal">(JPG, PNG or WebP — optional)</span>
+              </label>
+              <input id="poster" type="file" accept="image/jpeg,image/png,image/webp"
+                className="field !py-2.5 text-[13px]" onChange={handlePoster} />
+              {uploading === "thumbnails" && <p className="mt-2 text-[12px] text-ash">Uploading…</p>}
+              {posterPath && <p className="mt-2 text-[12px] text-[#8A6F3E]">Poster uploaded ✓</p>}
+            </div>
+
+            {/* Visibility */}
+            <div>
+              <label className="field-label">Visibility</label>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <label className={`flex flex-col gap-2 p-5 rounded-card border bg-white/70 cursor-pointer transition-colors ${visibility === "true" ? "border-gold bg-gold/5" : "border-line"}`}>
+                  <input type="radio" name="is_public" value="true" checked={visibility === "true"}
+                    onChange={() => setVisibility("true")} className="sr-only" />
+                  <span className="flex items-center gap-2 font-display text-[17px]">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z" />
+                    </svg>
+                    Public
+                  </span>
+                  <span className="text-[13px] text-ash">Shown on the Projects showcase.</span>
+                </label>
+                <label className={`flex flex-col gap-2 p-5 rounded-card border bg-white/70 cursor-pointer transition-colors ${visibility === "false" ? "border-gold bg-gold/5" : "border-line"}`}>
+                  <input type="radio" name="is_public" value="false" checked={visibility === "false"}
+                    onChange={() => setVisibility("false")} className="sr-only" />
+                  <span className="flex items-center gap-2 font-display text-[17px]">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <rect x="4" y="11" width="16" height="9" rx="1.5" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                    </svg>
+                    Private
+                  </span>
+                  <span className="text-[13px] text-ash">Only visible to you.</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (
