@@ -3,38 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const GENRES = ["Drama","Comedy","Thriller","Horror","Romance","Action","Documentary","Family","Crime","Sci-Fi","Fantasy","Musical"];
 
-export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (!openaiKey) return NextResponse.json({ error: "AI extraction not configured" }, { status: 503 });
-
-  const body = await req.json();
-  // Accept pre-extracted text (extracted client-side via pdfjs-dist in the browser).
-  // This avoids running pdfjs-dist server-side on Cloudflare Workers where canvas is unavailable.
-  const { text } = body as { text?: string };
-  if (!text?.trim()) return NextResponse.json({ error: "No PDF text content" }, { status: 400 });
-
-  const truncated = text.slice(0, 12000);
-
-  try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        max_tokens: 1024,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content: "You are a film project data extractor. Extract structured information from pitch deck text and return ONLY a JSON object.",
-          },
-          {
-            role: "user",
-            content: `Extract film project information and return a JSON object with exactly these fields:
+const EXTRACTION_PROMPT = `Extract film project information and return a JSON object with exactly these fields:
 
 {
   "title": "film title",
@@ -51,12 +20,68 @@ export async function POST(req: NextRequest) {
   "producer_info": "producer and production company info if present, else empty string"
 }
 
-Every key must be present. Use null for missing numbers, empty string for missing text.
+Every key must be present. Use null for missing numbers, empty string for missing text.`;
 
-PITCH DECK TEXT:
-${truncated}`,
-          },
-        ],
+export async function POST(req: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!openaiKey) return NextResponse.json({ error: "AI extraction not configured" }, { status: 503 });
+
+  const body = await req.json();
+  const { text, images } = body as { text?: string; images?: string[] };
+
+  if (!text?.trim() && (!images || images.length === 0)) {
+    return NextResponse.json({ error: "No PDF content provided" }, { status: 400 });
+  }
+
+  try {
+    let messages: object[];
+
+    if (text?.trim()) {
+      // ── Text-based PDF: fast, cheap ───────────────────────────────────────
+      messages = [
+        {
+          role: "system",
+          content: "You are a film project data extractor. Extract structured information from pitch deck text and return ONLY a JSON object.",
+        },
+        {
+          role: "user",
+          content: `${EXTRACTION_PROMPT}\n\nPITCH DECK TEXT:\n${text.slice(0, 12000)}`,
+        },
+      ];
+    } else {
+      // ── Scanned / image-based PDF: vision fallback ────────────────────────
+      // gpt-4o-mini reads text from rendered page images (OCR via vision).
+      const imageContent = (images as string[]).map((b64) => ({
+        type: "image_url",
+        image_url: { url: `data:image/jpeg;base64,${b64}`, detail: "high" },
+      }));
+
+      messages = [
+        {
+          role: "user",
+          content: [
+            ...imageContent,
+            {
+              type: "text",
+              text: `These are pages from a film pitch deck (scanned or image-based PDF). ${EXTRACTION_PROMPT}`,
+            },
+          ],
+        },
+      ];
+    }
+
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        max_tokens: 1024,
+        response_format: { type: "json_object" },
+        messages,
       }),
     });
 

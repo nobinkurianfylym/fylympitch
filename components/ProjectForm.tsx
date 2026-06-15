@@ -197,6 +197,38 @@ export default function ProjectForm() {
     return parts.join("\n\n").slice(0, 12000);
   }
 
+  // ── Vision fallback for scanned / image-based PDFs ────────────────────────
+  // Renders the first 5 pages to JPEG via canvas, sends to OpenAI vision.
+  // gpt-4o-mini reads text from images natively — no OCR library needed.
+  async function renderPDFPages(file: File): Promise<string[]> {
+    const pdfjsLib = await import("pdfjs-dist");
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({
+      data: arrayBuffer,
+      isEvalSupported: false,
+    }).promise;
+
+    const maxPages = Math.min(pdf.numPages, 5); // 5 pages max for vision
+    const images: string[] = [];
+
+    for (let i = 1; i <= maxPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 1.5 }); // 1.5x for legibility
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext("2d")!;
+      await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+      // Convert to base64 JPEG (0.85 quality — sharp enough for OCR, small enough for API)
+      images.push(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
+    }
+
+    return images;
+  }
+
   async function uploadFile(file: File, bucket: "pitch-decks" | "scripts"): Promise<string | null> {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -236,17 +268,27 @@ export default function ProjectForm() {
     if (path) setDeckPath(path);
     setUploading(null);
 
-    if (!text.trim()) {
-      setAiError("Could not extract text from this PDF — it may be a scanned image. Fill the fields manually.");
-      setAiLoading(false);
-      return;
-    }
-
     try {
+      let body: Record<string, unknown>;
+
+      if (text.trim()) {
+        // Text-based PDF — fast path
+        body = { text };
+      } else {
+        // Scanned / image-based PDF — render pages and send to vision API
+        const images = await renderPDFPages(file).catch(() => [] as string[]);
+        if (!images.length) {
+          setAiError("Could not read this PDF — try exporting it as a text-based PDF.");
+          setAiLoading(false);
+          return;
+        }
+        body = { images };
+      }
+
       const res = await fetch("/api/ai-extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         const data = await res.json();
