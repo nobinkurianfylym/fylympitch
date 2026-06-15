@@ -30,20 +30,13 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
 
-      - name: Verify Cloudflare auth & list workers
-        run: |
-          npx wrangler whoami
-          echo "---"
-          npx wrangler workers list
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
       - name: Deploy to Cloudflare Workers
+        # Rename open-next.config.ts so wrangler uses standard deploy
+        # instead of auto-redirecting to opennextjs-cloudflare deploy
+        # (which has a 7003 API incompatibility with API tokens)
         run: |
           mv open-next.config.ts open-next.config.ts.bak
           npx wrangler deploy
-          mv open-next.config.ts.bak open-next.config.ts
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
