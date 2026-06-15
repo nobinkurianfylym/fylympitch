@@ -139,7 +139,7 @@ export async function createProject(formData: FormData) {
     }));
 
     // Hard timeout: engine must finish within 20s so redirect() always fires
-    // before Netlify's 26s function limit kills the response.
+    // before Cloudflare's function limit kills the response.
     const ENGINE_TIMEOUT_MS = 20_000;
 
     try {

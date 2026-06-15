@@ -1,6 +1,6 @@
 # FYLYMPITCH — Go-Live Guide (≈20 minutes)
 
-Stack: Next.js 15 · TypeScript · Tailwind · Supabase (Postgres + Auth + Storage) · Netlify
+Stack: Next.js 15 · TypeScript · Tailwind · Supabase (Postgres + Auth + Storage) · Cloudflare Workers
 
 ---
 
@@ -26,38 +26,53 @@ Stack: Next.js 15 · TypeScript · Tailwind · Supabase (Postgres + Auth + Stora
 
 ### Auth URLs (required)
 **Authentication → URL Configuration**:
-- Site URL: `https://pitch.fylym.com` (or your domain)
+- Site URL: `https://pitch.fylym.com`
 - Redirect URLs: add `https://pitch.fylym.com/auth/callback` and `http://localhost:3000/auth/callback`
 
 ---
 
-## STEP 2 — Netlify (≈7 min)
+## STEP 2 — Cloudflare Workers (≈7 min)
 
-### Option A — Git (recommended)
-1. Push this folder to a GitHub repo.
-2. Netlify → **Add new site → Import from Git** → pick the repo.
-3. Build settings are auto-read from `netlify.toml` (build `npm run build`, the official `@netlify/plugin-nextjs` handles everything).
-4. **Site settings → Environment variables**, add:
+This app uses [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) to run Next.js 15 on Cloudflare Workers. The `wrangler.jsonc` and `open-next.config.ts` files are already configured.
+
+### Option A — Cloudflare Dashboard (recommended)
+1. Push this repo to GitHub.
+2. Cloudflare Dashboard → **Workers & Pages → Create → Pages → Connect to Git** → pick the repo.
+3. Build settings:
+   - Build command: `npm run build`
+   - Build output directory: `.open-next/assets`
+4. **Settings → Environment variables**, add:
 
 | Key | Value |
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | from Step 1.4 |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | from Step 1.4 |
 | `NEXT_PUBLIC_SITE_URL` | `https://pitch.fylym.com` |
+| `RESEND_API_KEY` | from resend.com |
+| `GROQ_API_KEY` | from console.groq.com |
+| `OPENAI_API_KEY` | from platform.openai.com (optional) |
+| `CEREBERAS_API` | from cloud.cerebras.ai (optional) |
 
-5. **Deploy site**.
+5. **Save and deploy**.
 
-### Option B — CLI
+### Option B — Wrangler CLI
 ```bash
-npm i -g netlify-cli
-cd fylympitch
 npm install
-netlify init        # create & link site
-netlify env:set NEXT_PUBLIC_SUPABASE_URL "https://xxxx.supabase.co"
-netlify env:set NEXT_PUBLIC_SUPABASE_ANON_KEY "eyJ..."
-netlify env:set NEXT_PUBLIC_SITE_URL "https://pitch.fylym.com"
-netlify deploy --build --prod
+npm run deploy   # runs: opennextjs-cloudflare build && opennextjs-cloudflare deploy
 ```
+
+Set secrets via CLI:
+```bash
+wrangler secret put NEXT_PUBLIC_SUPABASE_URL
+wrangler secret put NEXT_PUBLIC_SUPABASE_ANON_KEY
+wrangler secret put NEXT_PUBLIC_SITE_URL
+wrangler secret put RESEND_API_KEY
+wrangler secret put GROQ_API_KEY
+```
+
+### Custom domain
+Cloudflare Dashboard → Workers & Pages → `fylympitch` → **Custom Domains** → add `pitch.fylym.com`.
+(DNS is managed by Cloudflare automatically if `fylym.com` is on Cloudflare.)
 
 ---
 
@@ -95,18 +110,24 @@ npm run dev                  # http://localhost:3000
 npm run test:matching        # 15 unit tests on the matching engine
 ```
 
+Preview on Cloudflare Workers locally:
+```bash
+npm run preview              # runs opennextjs-cloudflare build && preview
+```
+
 ## Project map
 
 ```
-app/                landing, login/signup, auth callback, dashboard/*, admin/*
-components/         AuthForm, ProjectForm, ProfileForm, OfferForm, MatchBadge, Wordmark
-lib/                supabase clients (browser/server), server actions, formatters
+app/                  landing, login/signup, auth callback, dashboard/*, admin/*
+components/           AuthForm, ProjectForm, ProfileForm, OfferForm, MatchBadge, Wordmark
+lib/                  supabase clients (browser/server), server actions, formatters
 services/matching.ts  weighted engine — calculateMatchScore / tierOf / rankOpportunities
-types/              all TypeScript interfaces
-tests/              matching engine unit tests (15)
-supabase/schema.sql one-shot database: tables, indexes, RLS, triggers, buckets, seed
-middleware.ts       session refresh + route protection
-netlify.toml        Netlify + Next.js plugin config
+types/                all TypeScript interfaces
+tests/                matching engine unit tests (15)
+supabase/schema.sql   one-shot database: tables, indexes, RLS, triggers, buckets, seed
+middleware.ts         session refresh + route protection
+wrangler.jsonc        Cloudflare Workers config
+open-next.config.ts   OpenNext adapter config for Cloudflare
 ```
 
 ## Matching engine (services/matching.ts)

@@ -375,6 +375,6 @@ insert into public.opportunities (title, opp_type, description, country, region,
 -- AFTER RUNNING:
 -- 1) Create your own account via the app, then promote it:
 --    update public.profiles set role='admin' where id = 'YOUR-USER-UUID';
--- 2) Auth > URL Configuration: add your Netlify URL + /auth/callback
+-- 2) Auth > URL Configuration: add your Cloudflare domain + /auth/callback
 -- 3) Auth > Providers: enable Google (paste OAuth client ID/secret)
 -- ============================================================

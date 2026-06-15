@@ -3,7 +3,7 @@
 //
 // Setup:
 //   1. Sign up at resend.com, create an API key.
-//   2. Add RESEND_API_KEY to Netlify environment variables.
+//   2. Add RESEND_API_KEY to Cloudflare environment variables.
 //   3. Verify your sending domain at resend.com/domains (once verified,
 //      change FROM_ADDRESS to noreply@yourdomain.com).
 //      Until then, Resend allows sending from onboarding@resend.dev

@@ -573,7 +573,7 @@ Return ONLY valid JSON:
 
   if (!raw) {
     return {
-      strategic_summary: "Unable to generate brief. Add a GROQ_API_KEY or OPENAI_API_KEY in Netlify environment variables.",
+      strategic_summary: "Unable to generate brief. Add a GROQ_API_KEY or OPENAI_API_KEY in Cloudflare environment variables.",
       immediate_actions: [],
       six_month_roadmap: "",
       key_relationships: [],
