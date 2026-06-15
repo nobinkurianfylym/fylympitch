@@ -9,20 +9,16 @@ const nextConfig: NextConfig = {
 
   // ── Keep Node-only packages out of the client bundle ─────────
   // pdf-parse uses Node.js fs/crypto — never belongs in the browser.
-  // Without this, Next.js tries to polyfill it → bloated client JS.
   serverExternalPackages: ["pdf-parse"],
 
   // ── Tree-shake large server packages ─────────────────────────
-  // Tells the bundler which packages to analyse for used-only imports,
-  // avoiding the full package weight even when partially used.
   experimental: {
     optimizePackageImports: ["resend", "@supabase/ssr", "@supabase/supabase-js"],
   },
 
   // ── Compiler optimisations ────────────────────────────────────
   compiler: {
-    // Strip console.log in production — saves a few KB and speeds up V8.
-    // Errors and warnings are preserved for debugging.
+    // Strip console.log in production — preserves errors and warnings.
     removeConsole: {
       exclude: ["error", "warn"],
     },
@@ -45,8 +41,6 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Preconnect to Supabase on every page load — saves ~150ms RTT
-        // on first API/auth call by establishing the TCP+TLS handshake early.
         source: "/:path*",
         headers: [
           {
@@ -56,7 +50,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Public project pages — cache at edge for 60s, revalidate in background
         source: "/projects/:path*",
         headers: [
           {
@@ -66,7 +59,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Public film showcase — same edge cache
         source: "/projects",
         headers: [
           {
@@ -76,7 +68,6 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        // Static assets — immutable CDN cache (hash in filename = safe forever)
         source: "/_next/static/:path*",
         headers: [
           {
