@@ -44,8 +44,10 @@ export default function Home() {
       </header>
 
       {/* HERO */}
-      <IntelligenceTicker />
       <HeroToggle />
+
+      {/* INTELLIGENCE TICKER — below hero */}
+      <IntelligenceTicker />
 
       {/* FEATURES */}
       <section id="features" className="bg-parchment">
