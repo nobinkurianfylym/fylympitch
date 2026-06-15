@@ -138,11 +138,34 @@ export async function createProject(formData: FormData) {
       festival_track_record: !!p.festival_track_record,
     }));
 
-    // Hard timeout: engine must finish within 20s so redirect() always fires
-    // before Cloudflare's function limit kills the response.
-    const ENGINE_TIMEOUT_MS = 20_000;
+  // ── STEP 1: Basic matching — always fast, always works ───────────────────
+  // Write opportunity scores to the DB immediately so the dashboard
+  // always shows results even if the AI engine times out or fails.
+  if (opps?.length) {
+    const basicMatches = (opps as Opportunity[])
+      .map((opp) => ({
+        project_id: data.id,
+        opportunity_id: opp.id,
+        score: calculateMatchScore(project as Project, opp).score,
+        tier: calculateMatchScore(project as Project, opp).tier ?? "possible",
+        confidence: "medium",
+        reasons: calculateMatchScore(project as Project, opp).reasons ?? [],
+      }))
+      .filter((m) => m.score > 0);
 
-    try {
+    if (basicMatches.length) {
+      await supabase.from("matches").upsert(basicMatches, {
+        onConflict: "project_id,opportunity_id",
+      });
+    }
+  }
+
+  // ── STEP 2: Full AI engine — enhances scores, adds intelligence ──────────
+  // Runs after basic matches are already saved. Timeout at 20s.
+  // On any failure the basic matches from Step 1 remain on the dashboard.
+  const ENGINE_TIMEOUT_MS = 20_000;
+
+  try {
       const enginePromise = runAIEnhancedEngine({
         project: project as Project,
         opportunities: (opps ?? []) as Opportunity[],
