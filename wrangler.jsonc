@@ -6,6 +6,12 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  // Workers Standard plan — required for SSR apps with AI inference.
+  // Free tier allows only 10ms CPU time; Standard allows up to 30s.
+  // Upgrade at: dash.cloudflare.com → Workers & Pages → your plan
+  "limits": {
+    "cpu_ms": 30000
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"

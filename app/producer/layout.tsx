@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Wordmark from "@/components/Wordmark";
-import { signOut } from "@/lib/actions";
+import { signOut } from "@/lib/auth-actions";
 import type { Profile } from "@/types";
 
 export const dynamic = "force-dynamic";

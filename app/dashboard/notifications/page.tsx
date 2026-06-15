@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
-import { markAllRead } from "@/lib/actions";
+import { markAllRead } from "@/lib/auth-actions";
 
 export const dynamic = "force-dynamic";
 
