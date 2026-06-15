@@ -26,8 +26,8 @@ Stack: Next.js 15 · TypeScript · Tailwind · Supabase (Postgres + Auth + Stora
 
 ### Auth URLs (required)
 **Authentication → URL Configuration**:
-- Site URL: `https://fylympitch.netlify.app` (or your domain)
-- Redirect URLs: add `https://fylympitch.netlify.app/auth/callback` and `http://localhost:3000/auth/callback`
+- Site URL: `https://pitch.fylym.com` (or your domain)
+- Redirect URLs: add `https://pitch.fylym.com/auth/callback` and `http://localhost:3000/auth/callback`
 
 ---
 
@@ -43,7 +43,7 @@ Stack: Next.js 15 · TypeScript · Tailwind · Supabase (Postgres + Auth + Stora
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | from Step 1.4 |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | from Step 1.4 |
-| `NEXT_PUBLIC_SITE_URL` | `https://fylympitch.netlify.app` |
+| `NEXT_PUBLIC_SITE_URL` | `https://pitch.fylym.com` |
 
 5. **Deploy site**.
 
@@ -55,7 +55,7 @@ npm install
 netlify init        # create & link site
 netlify env:set NEXT_PUBLIC_SUPABASE_URL "https://xxxx.supabase.co"
 netlify env:set NEXT_PUBLIC_SUPABASE_ANON_KEY "eyJ..."
-netlify env:set NEXT_PUBLIC_SITE_URL "https://fylympitch.netlify.app"
+netlify env:set NEXT_PUBLIC_SITE_URL "https://pitch.fylym.com"
 netlify deploy --build --prod
 ```
 
