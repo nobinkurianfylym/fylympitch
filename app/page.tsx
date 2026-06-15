@@ -2,6 +2,7 @@ import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import EngineDemo from "@/components/EngineDemo";
 import HeroToggle from "@/components/HeroToggle";
+import IntelligenceTicker from "@/components/IntelligenceTicker";
 
 const FEATURES = [
   ["Intelligent matching", "Every project is scored against 1,000+ grants, funds, labs, markets and investors on eight weighted criteria — genre, stage, territory, budget, format, funding gap, language and track record."],
@@ -43,6 +44,7 @@ export default function Home() {
       </header>
 
       {/* HERO */}
+      <IntelligenceTicker />
       <HeroToggle />
 
       {/* FEATURES */}
