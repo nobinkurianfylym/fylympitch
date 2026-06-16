@@ -60,7 +60,6 @@ export default function Home() {
                 fontSize:10,
                 letterSpacing:"0.18em",
                 textTransform:"uppercase",
-                color:"#8A857C",
                 padding:"13px 16px",
                 cursor:"pointer",
                 flexShrink:0,
