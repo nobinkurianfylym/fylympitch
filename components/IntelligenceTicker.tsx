@@ -208,7 +208,7 @@ export default function IntelligenceTicker() {
   return (
     <section
       aria-label="Film industry intelligence"
-      style={{ background: "transparent", overflow: "hidden", borderTop: "1px solid #E5E0D5" }}
+      style={{ background: "transparent", overflow: "hidden" }}
     >
       {/* Carousel */}
       <div
@@ -237,7 +237,6 @@ export default function IntelligenceTicker() {
 
       {/* Stats bar */}
       <div style={{
-        borderTop: "1px solid #E5E0D5",
         display: "flex",
         gap: 24,
         alignItems: "center",
