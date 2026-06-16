@@ -37,7 +37,7 @@ export default function HeroToggle() {
   const c = CONTENT[role];
 
   return (
-    <section className="max-w-6xl mx-auto px-6 pt-20 pb-28 md:pt-28 md:pb-36">
+    <section className="max-w-6xl mx-auto px-6 pt-20 pb-10 md:pt-28 md:pb-14">
 
       {/* ── Toggle ── */}
       <div className="inline-flex items-center gap-0 mb-10 relative">
