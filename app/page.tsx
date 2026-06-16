@@ -49,29 +49,6 @@ export default function Home() {
       {/* INTELLIGENCE TICKER */}
       <IntelligenceTicker />
 
-      {/* CATEGORY NAV */}
-      <div style={{ borderBottom:"1px solid #E5E0D5", overflowX:"auto", scrollbarWidth:"none" as const }}>
-        <div style={{ display:"flex", alignItems:"center", padding:"0 24px", whiteSpace:"nowrap" }}>
-          {["Grants","Film Funds","Labs","Co-productions","Markets","Producers","Production Companies","Distribution","Investors","Streamers"].map((cat) => (
-            <span
-              key={cat}
-              style={{
-                fontFamily:"var(--font-sans)" as const,
-                fontSize:8,
-                letterSpacing:"0.16em",
-                textTransform:"uppercase" as const,
-                color:"#8A857C",
-                padding:"11px 10px",
-                cursor:"pointer",
-                flexShrink:0,
-              }}
-            >
-              {cat}
-            </span>
-          ))}
-        </div>
-      </div>
-
       {/* FEATURES */}
       <section id="features" className="bg-parchment">
         <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">

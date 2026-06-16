@@ -210,6 +210,26 @@ export default function IntelligenceTicker() {
       aria-label="Film industry intelligence"
       style={{ background: "transparent", overflow: "hidden" }}
     >
+      {/* Category nav — above logos */}
+      <div style={{ borderBottom:"1px solid #E5E0D5", borderTop:"1px solid #E5E0D5", overflowX:"auto", scrollbarWidth:"none" }}>
+        <div style={{ display:"flex", alignItems:"center", padding:"0 20px", whiteSpace:"nowrap", maxWidth:"1400px" }}>
+          {["Grants","Film Funds","Labs","Co-productions","Markets","Producers","Production Companies","Distribution","Investors","Streamers"].map((cat) => (
+            <span key={cat} style={{
+              fontFamily:"var(--font-sans)",
+              fontSize:9,
+              letterSpacing:"0.14em",
+              textTransform:"uppercase",
+              color:"#8A857C",
+              padding:"10px 11px",
+              cursor:"pointer",
+              flexShrink:0,
+            }}>
+              {cat}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Carousel */}
       <div
         style={{ overflow: "hidden" }}
