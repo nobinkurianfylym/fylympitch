@@ -44,16 +44,6 @@ const LOGOS: Record<string, string> = {
     <text x="22" y="28" text-anchor="middle" fill="#fff" font-size="13" font-weight="900" font-family="system-ui,sans-serif" letter-spacing="1">arte</text>
   </svg>`,
 
-  "BBC Film": `<svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-    <rect width="44" height="44" rx="6" fill="#1A1A1A"/>
-    <rect x="6" y="16" width="9" height="12" rx="1" fill="#fff"/>
-    <text x="10.5" y="25" text-anchor="middle" fill="#1A1A1A" font-size="6" font-weight="900" font-family="system-ui,sans-serif">B</text>
-    <rect x="17" y="16" width="9" height="12" rx="1" fill="#fff"/>
-    <text x="21.5" y="25" text-anchor="middle" fill="#1A1A1A" font-size="6" font-weight="900" font-family="system-ui,sans-serif">B</text>
-    <rect x="28" y="16" width="9" height="12" rx="1" fill="#fff"/>
-    <text x="32.5" y="25" text-anchor="middle" fill="#1A1A1A" font-size="6" font-weight="900" font-family="system-ui,sans-serif">C</text>
-  </svg>`,
-
   "Canal+": `<svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
     <rect width="44" height="44" rx="6" fill="#1A1A1A"/>
     <text x="22" y="27" text-anchor="middle" fill="#fff" font-size="10" font-weight="800" font-family="system-ui,sans-serif" letter-spacing="0.5">CANAL+</text>
