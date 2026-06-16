@@ -37,10 +37,10 @@ export default function HeroToggle() {
   const c = CONTENT[role];
 
   return (
-    <section className="max-w-6xl mx-auto px-6 pt-20 pb-10 md:pt-28 md:pb-14">
+    <section className="max-w-6xl mx-auto px-6 pt-8 pb-3 md:pt-10 md:pb-4">
 
       {/* ── Toggle ── */}
-      <div className="inline-flex items-center gap-0 mb-10 relative">
+      <div className="inline-flex items-center gap-0 mb-6 relative">
         {(["filmmaker", "producer"] as Role[]).map((r, i) => (
           <button
             key={r}
@@ -65,14 +65,14 @@ export default function HeroToggle() {
         key={role}
         style={{ animation: "heroFadeIn 0.35s ease both" }}
       >
-        <p className="eyebrow mb-8">{c.eyebrow}</p>
-        <h1 className="font-display font-normal text-[44px] leading-[1.08] md:text-[76px] max-w-4xl">
+        <p className="eyebrow mb-5">{c.eyebrow}</p>
+        <h1 className="font-display font-normal text-[36px] leading-[1.08] md:text-[52px] max-w-4xl">
           {c.headline}
         </h1>
-        <p className="mt-9 max-w-xl text-[17px] leading-relaxed text-ash">
+        <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-ash">
           {c.body}
         </p>
-        <div className="mt-12 flex flex-wrap gap-4">
+        <div className="mt-7 flex flex-wrap gap-4">
           <Link href={c.primary.href} className="btn-gold">
             {c.primary.label}
           </Link>

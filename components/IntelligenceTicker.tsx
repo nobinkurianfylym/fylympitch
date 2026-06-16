@@ -121,19 +121,19 @@ function EntityCardEl({ card }: { card: EntityCard }) {
         flexDirection: "column",
         alignItems: "center",
         gap: 6,
-        padding: "0 20px",
+        padding: "0 8px",
         textAlign: "center",
       }}
     >
       {/* Logo */}
-      <div style={{ width: 56, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ width: 112, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <img
           src={`/logos/${card.logoFile}.png`}
           alt={card.name}
           loading="lazy"
           style={{
-            maxWidth: 56,
-            maxHeight: 40,
+            maxWidth: 112,
+            maxHeight: 80,
             width: "auto",
             height: "auto",
             objectFit: "contain",
@@ -186,7 +186,7 @@ function InsightCardEl({ card }: { card: InsightCard }) {
         flexDirection: "column",
         justifyContent: "center",
         gap: 6,
-        padding: "0 22px",
+        padding: "0 14px",
         textAlign: "center",
         borderLeft: "1px solid rgba(191,153,83,0.2)",
         borderRight: "1px solid rgba(191,153,83,0.2)",
@@ -221,7 +221,7 @@ export default function IntelligenceTicker() {
         <div style={{
           display: "flex",
           alignItems: "center",
-          padding: "18px 0 16px",
+          padding: "12px 0 10px",
           width: "max-content",
           animation: "fylym-ticker 120s linear infinite",
           animationPlayState: paused ? "paused" : "running",

@@ -49,30 +49,6 @@ export default function Home() {
       {/* INTELLIGENCE TICKER */}
       <IntelligenceTicker />
 
-      {/* CATEGORY PILLS */}
-      <div style={{ borderBottom:"1px solid #E5E0D5", overflowX:"auto", scrollbarWidth:"none" }}>
-        <div style={{ display:"flex", gap:0, padding:"0 24px", whiteSpace:"nowrap", maxWidth:"1152px", margin:"0 auto" }}>
-          {["All","Grants","Film Funds","Labs","Co-productions","Markets","Distribution","Investors","Streamers"].map((cat) => (
-            <span
-              key={cat}
-              style={{
-                fontFamily:"var(--font-sans)",
-                fontSize:10,
-                letterSpacing:"0.18em",
-                textTransform:"uppercase",
-                padding:"13px 16px",
-                cursor:"pointer",
-                flexShrink:0,
-                borderBottom: cat === "All" ? "1.5px solid #1A1815" : "1.5px solid transparent",
-                color: cat === "All" ? "#1A1815" : "#8A857C",
-              } as React.CSSProperties}
-            >
-              {cat}
-            </span>
-          ))}
-        </div>
-      </div>
-
       {/* FEATURES */}
       <section id="features" className="bg-parchment">
         <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">
