@@ -106,13 +106,7 @@ function AiLoader() {
   );
 }
 
-function AiBadge() {
-  return (
-    <span className="inline-flex items-center gap-1 ml-2 px-1.5 py-0.5 rounded text-[10px] tracking-[0.08em] uppercase font-medium bg-gold/10 text-[#8A6F3E] border border-gold/20">
-      ✦ AI
-    </span>
-  );
-}
+
 
 type Fields = {
   title: string; genre: string; format: string; language: string; country: string;
@@ -140,7 +134,7 @@ export default function ProjectForm() {
   const [scriptPath, setScriptPath] = useState("");
   const [posterPath, setPosterPath] = useState("");
   const [visibility, setVisibility] = useState<"true" | "false">("true");
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(true);  // open by default — title/logline live here
 
   // useTransition — the correct Next.js pattern for server actions that call redirect()
   const [, startTransition] = useTransition();
@@ -391,12 +385,7 @@ export default function ProjectForm() {
 
   if (busy) return <EngineLoader step={engineStep} />;
 
-  const label = (text: string, field?: keyof Fields) => (
-    <span>
-      {text}
-      {field && aiFilled[field] && <AiBadge />}
-    </span>
-  );
+  const label = (text: string) => <span>{text}</span>;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-7 max-w-2xl">
@@ -422,67 +411,25 @@ export default function ProjectForm() {
           {deckPath && !aiLoading && <p className="mt-2 text-[12px] text-[#8A6F3E]">Deck uploaded ✓</p>}
         </div>
 
-        <div>
-          <label className="field-label" htmlFor="script">
-            Script (PDF) <span className="normal-case tracking-normal font-normal">— optional</span>
-          </label>
-          <input id="script" type="file" accept=".pdf" className="field !py-2.5 text-[13px]" onChange={handleScript} />
-          {uploading === "scripts" && <p className="mt-2 text-[12px] text-ash">Uploading…</p>}
-          {scriptPath && <p className="mt-2 text-[12px] text-[#8A6F3E]">Script uploaded ✓</p>}
-        </div>
-
         {aiLoading && <AiLoader />}
         {aiError && (
           <p className="text-[12px] text-amber-700 bg-amber-50 border border-amber-200 rounded-card px-4 py-3">
             {aiError}
           </p>
         )}
-        {Object.values(aiFilled).some(Boolean) && !aiLoading && (
-          <p className="text-[12px] text-[#8A6F3E] bg-gold/5 border border-gold/20 rounded-card px-4 py-3">
-            ✦ AI filled {Object.values(aiFilled).filter(Boolean).length} fields — review and edit before submitting.
-          </p>
-        )}
+
       </div>
 
-      {/* ── 2. ESSENTIAL FIELDS (always visible) ── */}
-      <div>
-        <label className="field-label" htmlFor="title">{label("Title *", "title")}</label>
-        <input id="title" name="title" className="field" required maxLength={200}
-          value={fields.title} onChange={set("title")} />
-      </div>
-
-      <div>
-        <label className="field-label" htmlFor="logline">
-          {label("Logline *", "logline")}{" "}
-          <span className="normal-case tracking-normal font-normal">(max 500 characters)</span>
-        </label>
-        <textarea id="logline" name="logline" className="field" rows={2} required maxLength={500}
-          value={fields.logline} onChange={set("logline")} />
-        <p className="mt-1 text-[11px] text-ash text-right">{fields.logline.length}/500</p>
-      </div>
-
-      <div>
-        <label className="field-label" htmlFor="genre">{label("Genre *", "genre")}</label>
-        <select id="genre" name="genre" className="field" value={fields.genre} onChange={set("genre")}>
-          {GENRES.map((g) => <option key={g}>{g}</option>)}
-        </select>
-      </div>
-
-      {/* ── ADVANCED TOGGLE ── */}
+      {/* ── ADVANCED TOGGLE (includes Title, Logline, Genre) ── */}
       <div className="border border-line rounded-card overflow-hidden">
         <button type="button"
           onClick={() => setShowAdvanced((v) => !v)}
           className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-parchment/40 transition-colors">
           <span className="text-[13px] font-medium tracking-[0.04em]">
             Advanced details
-            {!showAdvanced && (
+            {!showAdvanced && fields.title && (
               <span className="ml-2 text-[11px] text-ash normal-case font-normal tracking-normal">
-                {[
-                  fields.format !== "feature" ? fields.format : "Feature",
-                  fields.language,
-                  fields.country,
-                  fields.stage !== "development" ? fields.stage.replace("_", " ") : "Development",
-                ].filter(Boolean).join(" · ")}
+                {fields.title}
               </span>
             )}
           </span>
@@ -494,9 +441,34 @@ export default function ProjectForm() {
 
         {showAdvanced && (
           <div className="px-5 pb-5 space-y-5 border-t border-line pt-5">
+
+            {/* Title, Logline, Genre — AI fills these from pitch deck */}
+            <div>
+              <label className="field-label" htmlFor="title">{label("Title *")}</label>
+              <input id="title" name="title" className="field" required maxLength={200}
+                value={fields.title} onChange={set("title")} />
+            </div>
+
+            <div>
+              <label className="field-label" htmlFor="logline">
+                {label("Logline *")}{" "}
+                <span className="normal-case tracking-normal font-normal">(max 500 characters)</span>
+              </label>
+              <textarea id="logline" name="logline" className="field" rows={2} required maxLength={500}
+                value={fields.logline} onChange={set("logline")} />
+              <p className="mt-1 text-[11px] text-ash text-right">{fields.logline.length}/500</p>
+            </div>
+
+            <div>
+              <label className="field-label" htmlFor="genre">{label("Genre *")}</label>
+              <select id="genre" name="genre" className="field" value={fields.genre} onChange={set("genre")}>
+                {GENRES.map((g) => <option key={g}>{g}</option>)}
+              </select>
+            </div>
+
             <div className="grid sm:grid-cols-2 gap-5">
               <div>
-                <label className="field-label" htmlFor="format">{label("Format", "format")}</label>
+                <label className="field-label" htmlFor="format">{label("Format")}</label>
                 <select id="format" name="format" className="field" value={fields.format} onChange={set("format")}>
                   <option value="feature">Feature</option>
                   <option value="short">Short</option>
@@ -506,7 +478,7 @@ export default function ProjectForm() {
                 </select>
               </div>
               <div>
-                <label className="field-label" htmlFor="stage">{label("Stage", "stage")}</label>
+                <label className="field-label" htmlFor="stage">{label("Stage")}</label>
                 <select id="stage" name="stage" className="field" value={fields.stage} onChange={set("stage")}>
                   <option value="development">Development</option>
                   <option value="pre_production">Pre-Production</option>
@@ -516,23 +488,23 @@ export default function ProjectForm() {
                 </select>
               </div>
               <div>
-                <label className="field-label" htmlFor="language">{label("Language", "language")}</label>
+                <label className="field-label" htmlFor="language">{label("Language")}</label>
                 <input id="language" name="language" className="field" required
                   value={fields.language} onChange={set("language")} />
               </div>
               <div>
-                <label className="field-label" htmlFor="country">{label("Country", "country")}</label>
+                <label className="field-label" htmlFor="country">{label("Country")}</label>
                 <input id="country" name="country" className="field" required
                   value={fields.country} onChange={set("country")} />
               </div>
               <div>
-                <label className="field-label" htmlFor="budget_usd">{label("Total budget (USD)", "budget_usd")}</label>
+                <label className="field-label" htmlFor="budget_usd">{label("Total budget (USD)")}</label>
                 <input id="budget_usd" name="budget_usd" type="number" min="0" step="1000"
                   className="field" placeholder="400000"
                   value={fields.budget_usd} onChange={set("budget_usd")} />
               </div>
               <div>
-                <label className="field-label" htmlFor="funding_needed_usd">{label("Funding needed (USD)", "funding_needed_usd")}</label>
+                <label className="field-label" htmlFor="funding_needed_usd">{label("Funding needed (USD)")}</label>
                 <input id="funding_needed_usd" name="funding_needed_usd" type="number" min="0" step="1000"
                   className="field" placeholder="150000"
                   value={fields.funding_needed_usd} onChange={set("funding_needed_usd")} />
@@ -540,19 +512,19 @@ export default function ProjectForm() {
             </div>
 
             <div>
-              <label className="field-label" htmlFor="synopsis">{label("Synopsis", "synopsis")}</label>
+              <label className="field-label" htmlFor="synopsis">{label("Synopsis")}</label>
               <textarea id="synopsis" name="synopsis" className="field" rows={5}
                 value={fields.synopsis} onChange={set("synopsis")} />
             </div>
 
             <div>
-              <label className="field-label" htmlFor="director_statement">{label("Director's statement", "director_statement")}</label>
+              <label className="field-label" htmlFor="director_statement">{label("Director's statement")}</label>
               <textarea id="director_statement" name="director_statement" className="field" rows={4}
                 value={fields.director_statement} onChange={set("director_statement")} />
             </div>
 
             <div>
-              <label className="field-label" htmlFor="producer_info">{label("Producer information", "producer_info")}</label>
+              <label className="field-label" htmlFor="producer_info">{label("Producer information")}</label>
               <textarea id="producer_info" name="producer_info" className="field" rows={3}
                 placeholder="Attached producers, production company, prior credits"
                 value={fields.producer_info} onChange={set("producer_info")} />
