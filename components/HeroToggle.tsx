@@ -89,7 +89,7 @@ export default function HeroToggle() {
       </div>
 
       {/* ── Category bar ── */}
-      <div className="mt-10 hairline-gold pt-5 flex flex-nowrap gap-x-6 overflow-x-auto text-[9px] tracking-[0.14em] uppercase text-ash" style={{ scrollbarWidth:"none" }}>
+      <div className="mt-10 pt-3 flex flex-nowrap gap-x-6 overflow-x-auto text-[9px] tracking-[0.14em] uppercase text-ash" style={{ scrollbarWidth:"none" }}>
         <span className="shrink-0">Grants</span>
         <span className="shrink-0">Film Funds</span>
         <span className="shrink-0">Labs</span>
