@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
-import EngineDemo from "@/components/EngineDemo";
+import HomepageDemo from "@/components/HomepageDemo";
 import HeroToggle from "@/components/HeroToggle";
 import IntelligenceTicker from "@/components/IntelligenceTicker";
 
@@ -9,12 +9,6 @@ const FEATURES = [
   ["Dual-role access", "One account gives you both sides of the table — submit your own projects as a filmmaker, and discover projects as a producer or investor. No separate approval needed."],
   ["Direct offers", "Approved producers and investors can send offers straight to your project — investment, co-production, distribution or acquisition."],
   ["One pitch, many doors", "Submit your project once. FYLYMPITCH keeps it matched against new opportunities as deadlines open worldwide."],
-];
-
-const STEPS = [
-  ["Create your project", "Logline, synopsis, stage, budget, territory — plus your script and pitch deck in private, access-controlled storage."],
-  ["Receive your matches", "The engine ranks every live opportunity for your project and tells you why each one fits — and what to fix when it doesn't."],
-  ["Apply and connect", "Apply to funds and labs in two clicks, track every application, and field offers from verified producers and investors."],
 ];
 
 const FAQS = [
@@ -67,20 +61,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
+      {/* LIVE DEMO */}
       <section id="how" className="max-w-6xl mx-auto px-6 py-24 md:py-32">
-        <p className="eyebrow mb-4">How it works</p>
-        <h2 className="font-display text-[32px] md:text-[44px] leading-tight">From logline to letter of intent.</h2>
-        <div className="mt-16 grid md:grid-cols-3 gap-12">
-          {STEPS.map(([title, body], i) => (
-            <div key={title}>
-              <div className="font-display italic text-gold text-[34px] mb-4">{i + 1}</div>
-              <h3 className="font-display text-[20px] mb-3">{title}</h3>
-              <p className="text-[21px] leading-[1.7] text-ash">{body}</p>
-            </div>
-          ))}
-        </div>
-        <EngineDemo />
+        <HomepageDemo />
       </section>
 
       {/* FOR FILMMAKERS */}
