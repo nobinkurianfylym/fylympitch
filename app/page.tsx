@@ -27,6 +27,7 @@ export default function Home() {
         <nav className="hidden md:flex items-center gap-10 text-[12px] tracking-[0.18em] uppercase text-ash">
           <a href="#features" className="hover:text-ink transition-colors">Platform</a>
           <Link href="/projects" className="hover:text-ink transition-colors">Projects</Link>
+          <Link href="/funds"    className="hover:text-ink transition-colors">Funds</Link>
           <a href="#how" className="hover:text-ink transition-colors">How it works</a>
           <a href="#pricing" className="hover:text-ink transition-colors">Pricing</a>
           <a href="#faq" className="hover:text-ink transition-colors">FAQ</a>

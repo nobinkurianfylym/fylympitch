@@ -38,6 +38,7 @@ export default async function ProjectsPage({
           <nav className="hidden md:flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase font-[400] text-ash">
             <Link href="/#features" className="hover:text-ink transition-colors">Platform</Link>
             <Link href="/projects" className="text-ink">Projects</Link>
+            <Link href="/funds"    className="hover:text-ink transition-colors">Funds</Link>
             <Link href="/#how" className="hover:text-ink transition-colors">How it works</Link>
             <Link href="/#pricing" className="hover:text-ink transition-colors">Pricing</Link>
           </nav>
