@@ -4,7 +4,7 @@ import MatchBadge from "@/components/MatchBadge";
 import OpportunitiesExpand from "@/components/OpportunitiesExpand";
 import { usd, STAGE_LABEL } from "@/lib/format";
 import { tierOf } from "@/services/matching";
-import { respondToOffer } from "@/lib/actions";
+import { respondToOffer } from "@/lib/project-actions";
 import type { Profile } from "@/types";
 
 export const dynamic = "force-dynamic";

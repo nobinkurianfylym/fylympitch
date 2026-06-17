@@ -4,12 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { calculateMatchScore } from "@/services/matching";
-import {
-  runFylympitchEngine,
-  type OpportunityIntelligenceExtras,
-  type ProducerMatchProfile,
-} from "@/services/fylympitchEngine";
-import { runAIEnhancedEngine } from "@/services/aiEngine";
+import type { OpportunityIntelligenceExtras, ProducerMatchProfile } from "@/services/fylympitchEngine";
 import {
   sendProducerApplicationEmail,
   sendProducerApprovedEmail,
@@ -203,6 +198,7 @@ export async function createProject(formData: FormData) {
   const ENGINE_TIMEOUT_MS = 20_000;
 
   try {
+      const { runAIEnhancedEngine } = await import("@/services/aiEngine");
       const enginePromise = runAIEnhancedEngine({
         project: project as Project,
         opportunities: (opps ?? []) as Opportunity[],
