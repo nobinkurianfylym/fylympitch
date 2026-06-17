@@ -171,11 +171,26 @@ export function calculateMatchScore(
   const l = languageScore(project, opportunity);
   const h = historicalScore(historicalSuccessRate);
 
-  const parts = [
-    { ...g, w: WEIGHTS.genre }, { ...st, w: WEIGHTS.stage }, { ...c, w: WEIGHTS.country },
-    { ...b, w: WEIGHTS.budget }, { ...f, w: WEIGHTS.format }, { ...fu, w: WEIGHTS.funding },
-    { ...l, w: WEIGHTS.language }, { ...h, w: WEIGHTS.historical },
-  ];
+  // Production partners: score on creative fit (genre, territory, format, budget range).
+  // Funding coverage is irrelevant — they are co-production partners, not funders.
+  // Redistribute the funding weight across genre + country + format.
+  const isProducer = opportunity.opp_type === "producer";
+  const parts = isProducer
+    ? [
+        { ...g,  w: WEIGHTS.genre + 4 },
+        { ...st, w: WEIGHTS.stage },
+        { ...c,  w: WEIGHTS.country + 3 },
+        { ...b,  w: WEIGHTS.budget },
+        { ...f,  w: WEIGHTS.format + 3 },
+        { pts: 0, reason: null as string | null, warning: null as string | null, w: 0 },
+        { ...l,  w: WEIGHTS.language },
+        { ...h,  w: WEIGHTS.historical },
+      ]
+    : [
+        { ...g, w: WEIGHTS.genre }, { ...st, w: WEIGHTS.stage }, { ...c, w: WEIGHTS.country },
+        { ...b, w: WEIGHTS.budget }, { ...f, w: WEIGHTS.format }, { ...fu, w: WEIGHTS.funding },
+        { ...l, w: WEIGHTS.language }, { ...h, w: WEIGHTS.historical },
+      ];
 
   let score = 0;
   let dataPoints = 0;

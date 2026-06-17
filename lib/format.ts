@@ -24,6 +24,7 @@ export const TYPE_LABEL: Record<string, string> = {
   broadcaster: "Broadcaster",
   streamer: "Streaming",
   sales_agent: "Sales Agent",
+  producer: "Production Partner",
 };
 
 export function timeAgo(iso: string): string {

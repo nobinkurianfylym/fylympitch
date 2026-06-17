@@ -2,7 +2,7 @@ export type UserRole = "filmmaker" | "producer" | "investor" | "organization" | 
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 export type ProjectStage = "development" | "pre_production" | "production" | "post_production" | "completed";
 export type ProjectFormat = "feature" | "short" | "documentary" | "series" | "animation";
-export type OpportunityType = "grant" | "fund" | "lab" | "co_production" | "market" | "distribution" | "investor" | "broadcaster" | "streamer" | "sales_agent";
+export type OpportunityType = "grant" | "fund" | "lab" | "co_production" | "market" | "distribution" | "investor" | "broadcaster" | "streamer" | "sales_agent" | "producer";
 export type ApplicationStatus = "draft" | "submitted" | "under_review" | "shortlisted" | "accepted" | "rejected" | "withdrawn";
 export type OfferStatus = "pending" | "accepted" | "declined" | "withdrawn";
 

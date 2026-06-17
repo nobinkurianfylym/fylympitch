@@ -23,7 +23,7 @@ const STAGE_DEFS = [
   { id: "script_labs",        label: "Script Labs",           types: ["lab"],                isPrimary: false, order: 1  },
   { id: "development_labs",   label: "Development Labs",      types: ["lab"],                isPrimary: true,  order: 2  },
   { id: "development_grants", label: "Development Grants",    types: ["grant"],              isPrimary: true,  order: 3  },
-  { id: "project_packaging",  label: "Project Packaging",     types: ["market"],             isPrimary: false, order: 4  },
+  { id: "project_packaging",  label: "Project Packaging",     types: ["producer"],           isPrimary: true,  order: 4  },
   { id: "coproduction",       label: "Co-Production Markets", types: ["market"],             isPrimary: true,  order: 5  },
   { id: "film_markets",       label: "Film Markets",          types: ["market"],             isPrimary: false, order: 6  },
   { id: "production_funds",   label: "Production Funds",      types: ["fund"],               isPrimary: true,  order: 7  },
