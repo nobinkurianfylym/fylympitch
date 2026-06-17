@@ -140,7 +140,7 @@ export interface AIEngineResult extends FylympitchEngineResult {
 // model name differ — the request/response shape is identical.
 
 const CEREBRAS_URL   = "https://api.cerebras.ai/v1/chat/completions";
-const CEREBRAS_MODEL = "llama3.1-70b";                   // Cerebras — primary, ultra-fast
+const CEREBRAS_MODEL = "gpt-oss-120b";                   // Cerebras — primary, ultra-fast
 
 const GROQ_URL       = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL     = "llama-3.1-8b-instant";               // Groq LPU — secondary, high rate limit
