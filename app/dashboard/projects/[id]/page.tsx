@@ -17,6 +17,7 @@ import type {
 } from "@/services/fylympitchEngine";
 import MatchList from "@/components/MatchList";
 import type { MatchRow } from "@/components/MatchList";
+import RerunEngineButton from "@/components/RerunEngineButton";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="max-w-4xl">
+
+      {/* ── RERUN ENGINE ── */}
+      {isOwner && !discovery && (
+        <RerunEngineButton projectId={project.id} hasData={false} />
+      )}
 
       {/* ── HERO: FUNDING HEADLINE ── */}
       {discovery && (
@@ -351,6 +357,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             ))}
           </div>
         </section>
+      )}
+
+      {/* ── RE-RUN ENGINE (compact, data exists) ── */}
+      {isOwner && !!discovery && (
+        <div className="mt-12 mb-4">
+          <RerunEngineButton projectId={project.id} hasData={true} />
+        </div>
       )}
 
       {/* ── DELETE ── */}
