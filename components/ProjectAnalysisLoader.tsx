@@ -83,7 +83,6 @@ export default function ProjectAnalysisLoader({
       <style>{`
         @keyframes fylym-spin { to { transform: rotate(360deg); } }
         @keyframes fylym-fade { 0%,100% { opacity: 1 } 50% { opacity: 0.4 } }
-        @keyframes fylym-bar { from { width: 4% } to { width: 92% } }
       `}</style>
       <div style={{
         background: "#1A1815",
@@ -124,18 +123,7 @@ export default function ProjectAnalysisLoader({
           {STEPS[stepIndex]}
         </p>
 
-        {/* Progress bar */}
-        <div style={{
-          width: "100%", maxWidth: "320px", margin: "0 auto",
-          height: "3px", background: "rgba(255,255,255,0.1)", borderRadius: "2px",
-        }}>
-          <div style={{
-            height: "3px", borderRadius: "2px", background: "#BF9953",
-            animation: "fylym-bar 30s linear forwards",
-          }} />
-        </div>
-
-        <p style={{ fontSize: "11px", color: "rgba(248,245,240,0.3)", marginTop: "16px" }}>
+        <p style={{ fontSize: "11px", color: "rgba(248,245,240,0.3)", marginTop: "4px" }}>
           This takes about 20–30 seconds
         </p>
       </div>

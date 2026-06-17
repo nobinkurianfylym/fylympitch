@@ -19,6 +19,7 @@ import MatchList from "@/components/MatchList";
 import type { MatchRow } from "@/components/MatchList";
 import RerunEngineButton from "@/components/RerunEngineButton";
 import ProjectAnalysisLoader from "@/components/ProjectAnalysisLoader";
+import FundingJourney, { type JourneyOpp } from "@/components/FundingJourney";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,22 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     .filter((r) => r.m.tier !== "hidden")
     .sort((a, b) => b.m.score - a.m.score)
     .slice(0, 10);
+
+  const journeyOpps: JourneyOpp[] = (opps as Opportunity[] ?? [])
+    .map((o) => ({
+      id: o.id,
+      title: o.title,
+      country: o.country ?? null,
+      opp_type: o.opp_type,
+      max_award_usd: o.max_award_usd ?? null,
+      deadline: o.deadline ?? null,
+      deadline_note: (o as any).deadline_note ?? null,
+      score: calculateMatchScore(project, o).score,
+      url: o.url ?? null,
+      app_link: (o as any).app_link ?? null,
+    }))
+    .filter((o) => o.score > 0)
+    .sort((a, b) => b.score - a.score);
 
   const { data: offers } = isOwner
     ? await supabase
@@ -115,6 +132,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </div>
           )}
         </div>
+      )}
+
+      {/* ── FUNDING JOURNEY ── */}
+      {isOwner && (
+        <FundingJourney
+          projectId={project.id}
+          opportunities={journeyOpps}
+          roadmap={roadmap}
+          readiness={readiness}
+        />
       )}
 
       {/* ── PROJECT HEADER ── */}
