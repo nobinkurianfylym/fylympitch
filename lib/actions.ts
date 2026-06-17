@@ -191,6 +191,7 @@ export async function createProject(formData: FormData) {
       });
     }
   }
+  }  // end if (project)
 
   // ── AI engine runs client-side on the project page after redirect ──────────
   // ProjectAnalysisLoader auto-triggers rerunEngine() on mount, showing a
