@@ -72,6 +72,20 @@ export default async function DashboardPage() {
         .order("created_at", { ascending: false })
     : { data: [] as any[] };
 
+  // Deadlines this month from matched opportunities
+  const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: upcomingDeadlines } = projectIds.length
+    ? await supabase
+        .from("matches")
+        .select("score, opportunities!inner(id, title, deadline, opp_type, max_award_usd)")
+        .in("project_id", projectIds)
+        .gte("opportunities.deadline", new Date().toISOString())
+        .lte("opportunities.deadline", thirtyDaysFromNow)
+        .gte("score", 65)
+        .order("opportunities.deadline")
+        .limit(5)
+    : { data: [] as any[] };
+
   const firstName = (profile?.full_name ?? "").split(" ")[0] || "there";
   const hasProjects = (projects?.length ?? 0) > 0;
 
@@ -144,6 +158,29 @@ export default async function DashboardPage() {
       )}
 
       {/* ── Filmmaker slate ───────────────────────────────────── */}
+      {/* ── Deadline strip ──────────────────────────────────── */}
+      {(upcomingDeadlines?.length ?? 0) > 0 && (
+        <section className="mt-10">
+          <p className="eyebrow mb-3">Deadlines this month</p>
+          <div className="flex flex-wrap gap-3">
+            {(upcomingDeadlines ?? []).map((m: any) => {
+              const opp = m.opportunities;
+              const days = Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86_400_000);
+              return (
+                <Link key={opp.id} href={`/dashboard/opportunities/${opp.id}`}
+                  className="flex items-center gap-3 rounded-card border border-line bg-white/60 px-4 py-3 hover:border-gold transition-colors">
+                  <span className={`text-[11px] font-medium tabular-nums ${days <= 7 ? "text-red-600" : "text-gold"}`}>
+                    {days}d
+                  </span>
+                  <span className="text-[13px] text-ink truncate max-w-[180px]">{opp.title}</span>
+                  <span className="text-[11px] text-ash ml-auto">{m.score}/100</span>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <section className="mt-10">
         <div className="flex items-baseline justify-between mb-6">
           <div>
@@ -188,12 +225,16 @@ export default async function DashboardPage() {
         })}
 
         {!hasProjects && (
-          <div className="hairline py-10 text-[14px] text-ash leading-relaxed">
-            Your slate is empty.{" "}
-            <Link href="/dashboard/projects/new" className="text-ink underline underline-offset-4 hover:text-gold">
-              Submit your first project
-            </Link>{" "}
-            and the FYLYMPITCH engine will score every live funding opportunity against it.
+          <div className="mt-6 rounded-card border border-line bg-white/50 p-8 text-center">
+            <p className="font-display text-[22px] mb-2">Your slate is empty</p>
+            <p className="text-[14px] text-ash max-w-sm mx-auto mb-6 leading-relaxed">
+              Submit your first project and the FYLYMPITCH engine will score every live
+              funding opportunity, build your financing roadmap, and generate an EP brief.
+            </p>
+            <Link href="/dashboard/projects/new" className="btn-gold inline-flex">
+              Submit your first project →
+            </Link>
+            <p className="mt-4 text-[12px] text-ash">Takes 15–20 seconds. Upload a pitch deck or fill manually.</p>
           </div>
         )}
 

@@ -33,35 +33,22 @@ function BlinkingDots() {
 
 function EngineLoader({ step }: { step: number }) {
   const progress = Math.min(96, Math.round((step / (ENGINE_STEPS.length - 1)) * 100));
+  const activeLabel = ENGINE_STEPS[Math.min(step, ENGINE_STEPS.length - 1)]?.label ?? "Processing…";
   return (
-    <div className="py-8 max-w-2xl">
-      <p className="eyebrow mb-4 text-gold">FYLYMPITCH ENGINE</p>
-      <h2 className="font-display text-[30px] leading-tight mb-2">Analysing your project</h2>
-      <p className="text-[13px] text-ash mb-10">
-        This takes 10–20 seconds. The engine scores every live opportunity against your film.
+    <div className="py-10 max-w-2xl">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="h-[2px] flex-1 bg-line rounded-full overflow-hidden">
+          <div className="h-full bg-gold rounded-full transition-all duration-700"
+            style={{ width: `${progress}%` }} />
+        </div>
+        <span className="text-[11px] tracking-[0.15em] uppercase text-gold shrink-0 font-medium">
+          {progress}%
+        </span>
+      </div>
+      <p className="text-[13px] text-ash">
+        <span className="text-gold font-medium">FYLYMPITCH ENGINE</span>
+        {" · "}{activeLabel}<BlinkingDots />
       </p>
-      <div className="h-[2px] bg-line rounded-full mb-10 overflow-hidden">
-        <div className="h-full bg-gold rounded-full"
-          style={{ width: `${progress}%`, transition: "width 0.8s cubic-bezier(0.4,0,0.2,1)" }} />
-      </div>
-      <div className="space-y-[18px]">
-        {ENGINE_STEPS.map(({ label }, i) => {
-          const done = i < step; const active = i === step; const pending = i > step;
-          return (
-            <div key={label} className="flex items-center gap-4"
-              style={{ opacity: pending ? 0.25 : 1, transition: "opacity 0.4s ease" }}>
-              <span className="shrink-0 w-4 text-center text-[13px]"
-                style={{ color: done ? "#8A857C" : active ? "#BF9953" : "transparent" }}>
-                {done ? "✓" : active ? "›" : "·"}
-              </span>
-              <span className="text-[13px] tracking-[0.01em]"
-                style={{ color: done ? "#8A857C" : active ? "#1A1815" : "#8A857C", fontWeight: active ? 500 : 400 }}>
-                {label}{active && <BlinkingDots />}
-              </span>
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
@@ -134,7 +121,7 @@ export default function ProjectForm() {
   const [scriptPath, setScriptPath] = useState("");
   const [posterPath, setPosterPath] = useState("");
   const [visibility, setVisibility] = useState<"true" | "false">("true");
-  const [showAdvanced, setShowAdvanced] = useState(true);  // open by default — title/logline live here
+  const [showAdvanced, setShowAdvanced] = useState(false);  // closed until AI fills OR user opens
 
   // useTransition — the correct Next.js pattern for server actions that call redirect()
   const [, startTransition] = useTransition();
@@ -305,12 +292,8 @@ export default function ProjectForm() {
           return next;
         });
         setAiFilled(filled);
-        // Auto-expand advanced section if AI filled any advanced fields
-        const advancedKeys: (keyof Fields)[] = [
-          "format","stage","language","country","budget_usd",
-          "funding_needed_usd","synopsis","director_statement","producer_info"
-        ];
-        if (advancedKeys.some((k) => filled[k])) setShowAdvanced(true);
+        // Auto-expand advanced section when AI fills ANY fields (title/logline now live there)
+        if (Object.values(filled).some(Boolean)) setShowAdvanced(true);
       } else {
         const err = await res.json().catch(() => ({}));
         setAiError(err.error ?? "AI extraction failed — fill the fields manually.");

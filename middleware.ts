@@ -36,6 +36,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Logged in but profile not completed → onboarding
+  // (except if they're already on /onboarding or a nested path)
+  if (user && !error && isProtected && !path.startsWith("/onboarding")) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("profile_completed")
+      .eq("id", user.id)
+      .single();
+    if (profile && profile.profile_completed === false) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding";
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Logged-in user on auth page → send them to their intended destination.
   // This handles the homepage toggle: /login?next=/producer goes to /producer,
   // plain /login goes to /dashboard.
@@ -66,6 +81,7 @@ export const config = {
     "/admin/:path*",
     "/producer/:path*",
     "/producer",
+    "/onboarding",
     "/login",
     "/signup",
   ],

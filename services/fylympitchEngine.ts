@@ -140,16 +140,38 @@ const FRS_CHECKS: { ok: (p: Project) => boolean; weight: number; label: string }
 export interface FundingReadiness {
   score: number;
   missing: string[];
+  fund_requirements?: string[];  // specific requirements from top matched funds
 }
 
-export function computeFundingReadiness(project: Project): FundingReadiness {
+export function computeFundingReadiness(
+  project: Project,
+  topMatches?: { opportunity: Opportunity; match: MatchResult }[]
+): FundingReadiness {
   let score = 0;
   const missing: string[] = [];
   for (const c of FRS_CHECKS) {
     if (c.ok(project)) score += c.weight;
     else missing.push(c.label);
   }
-  return { score, missing };
+
+  // Requirement-aware: check what the top 3 matched funds specifically need
+  const fund_requirements: string[] = [];
+  if (topMatches?.length) {
+    const top3 = topMatches.slice(0, 3);
+    for (const { opportunity: opp } of top3) {
+      if (opp.copro_required && !project.producer_info?.toLowerCase().includes("co-produc")) {
+        fund_requirements.push(`${opp.title} requires a confirmed co-producer`);
+      }
+      if (opp.gender_focus && !project.director_statement) {
+        fund_requirements.push(`${opp.title} expects a director's statement addressing gender perspective`);
+      }
+      if (opp.career_stages?.includes("First-time") && !project.producer_info) {
+        fund_requirements.push(`${opp.title} prioritises debut directors with an attached producer`);
+      }
+    }
+  }
+
+  return { score, missing, fund_requirements };
 }
 
 // ============================================================
@@ -330,6 +352,7 @@ export interface RoadmapStageInfo {
   key: RoadmapStageKey;
   label: string;
   status: "done" | "current" | "upcoming";
+  live_count?: number;  // active matched opportunities in this stage
 }
 
 export interface Roadmap {
@@ -365,6 +388,16 @@ function currentRoadmapStage(project: Project): RoadmapStageKey {
   }
 }
 
+// Map roadmap stage keys to opportunity types for live counts
+const ROADMAP_TYPE_MAP: Record<RoadmapStageKey, string[]> = {
+  script:        ["development"],
+  labs:          ["lab", "residency", "workshop"],
+  co_production: ["co_production"],
+  grants:        ["grant", "fund"],
+  investors:     ["investor", "equity"],
+  production:    ["distribution", "sales_agent", "market"],
+};
+
 export function computeRoadmap(
   project: Project,
   matches: { opportunity: Opportunity; match: MatchResult }[],
@@ -373,23 +406,39 @@ export function computeRoadmap(
   const current = currentRoadmapStage(project);
   const currentIdx = ROADMAP_ORDER.findIndex((s) => s.key === current);
 
+  // Count live matched opportunities per roadmap stage
+  const countsByStage: Record<string, number> = {};
+  for (const { key } of ROADMAP_ORDER) {
+    const types = ROADMAP_TYPE_MAP[key];
+    countsByStage[key] = matches.filter(
+      (m) => types.some((t) => m.opportunity.opp_type?.includes(t)) && m.match.score >= 60
+    ).length;
+  }
+
   const stages: RoadmapStageInfo[] = ROADMAP_ORDER.map((s, i) => ({
     ...s,
     status: i < currentIdx ? "done" : i === currentIdx ? "current" : "upcoming",
+    live_count: countsByStage[s.key] ?? 0,
   }));
 
   const top3 = matches.slice(0, 3);
   const top3Avg = top3.length ? top3.reduce((s, m) => s + m.match.score, 0) / top3.length : 0;
   const success_probability = Math.max(0, Math.min(100, Math.round(0.6 * top3Avg + 0.4 * frsScore)));
 
+  const currentStageCount = countsByStage[current] ?? 0;
   let recommendation: string;
   if (current === "production") {
     recommendation = "Your project is in active production — focus on closing financing for post-production and delivery.";
   } else {
     const nextLabel = ROADMAP_ORDER[Math.min(currentIdx + 1, ROADMAP_ORDER.length - 1)].label;
-    recommendation = matches.length
-      ? `Next step is moving toward ${nextLabel.toLowerCase()} — start with "${matches[0].opportunity.title}".`
-      : `Next step is moving toward ${nextLabel.toLowerCase()} — complete more project details to surface matches.`;
+    const bestMatch = matches[0];
+    if (currentStageCount > 0) {
+      recommendation = `${currentStageCount} live ${current} opportunit${currentStageCount === 1 ? "y" : "ies"} match your project right now. Start with "${bestMatch?.opportunity.title ?? "your top match"}".`;
+    } else {
+      recommendation = matches.length
+        ? `Next step is moving toward ${nextLabel.toLowerCase()} — start with "${bestMatch.opportunity.title}".`
+        : `Next step is moving toward ${nextLabel.toLowerCase()} — complete more project details to surface matches.`;
+    }
   }
 
   return { stages, current, recommendation, success_probability };
@@ -736,7 +785,7 @@ export async function runFylympitchEngine(input: FylympitchEngineInput): Promise
 
   const matches = rankHybridMatches(project, opportunities, opportunityExtras);
   const producer_matches = rankProducerMatches(project, producerProfiles);
-  const funding_readiness = computeFundingReadiness(project);
+  const funding_readiness = computeFundingReadiness(project, matches.slice(0, 3));
   const funding_discovery = computeFundingDiscovery(matches, producer_matches);
   const obstacles = computeFundingObstacles(project, matches);
   const roadmap = computeRoadmap(project, matches, funding_readiness.score);

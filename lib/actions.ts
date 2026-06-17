@@ -42,6 +42,43 @@ function num(fd: FormData, key: string): number | null {
 }
 
 // ---------- PROJECTS ----------
+export async function completeFilmmakerOnboarding(formData: FormData) {
+  const { supabase, user } = await requireUser();
+
+  const full_name      = str(formData, "full_name")?.trim();
+  const country        = str(formData, "country")?.trim();
+  const imdb_url       = str(formData, "imdb_url")?.trim() || null;
+  const career_stage   = str(formData, "career_stage");
+  const next           = str(formData, "next") || "/dashboard";
+
+  let filmmaker_formats: string[] = [];
+  try {
+    const raw = str(formData, "filmmaker_formats");
+    if (raw) filmmaker_formats = JSON.parse(raw);
+  } catch {}
+
+  if (!full_name)    return { error: "Please enter your name." };
+  if (!country)      return { error: "Please enter your country." };
+  if (!career_stage) return { error: "Please select your career stage." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      full_name,
+      country,
+      imdb_url,
+      career_stage,
+      filmmaker_formats,
+      profile_completed: true,
+      onboarded_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+
+  redirect(next);
+}
+
 export async function createProject(formData: FormData) {
   const { supabase, user } = await requireUser();
 
@@ -223,10 +260,34 @@ export async function createProject(formData: FormData) {
     }
   }
 
+  // ── EP Brief: fire-and-forget to Supabase Edge Function ───────────────────
+  // The base engine has already saved matches + core intelligence above.
+  // The EP Brief (OpenAI call) runs asynchronously so the user hits the
+  // results page immediately. The page polls ep_brief_status until 'done'.
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (supabaseUrl && serviceKey) {
+    // Mark EP brief as pending first
+    await supabase
+      .from("project_intelligence")
+      .update({ ep_brief_status: "pending" })
+      .eq("project_id", data.id);
+
+    // Fire-and-forget — don't await, don't block the redirect
+    fetch(`${supabaseUrl}/functions/v1/ep-brief`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ project_id: data.id }),
+    }).catch((err) => console.error("[createProject] EP Brief edge fn failed:", err));
+  }
+
   revalidatePath("/dashboard");
-  revalidatePath("/projects");          // refresh public showcase
+  revalidatePath("/projects");
   revalidatePath("/dashboard/projects");
-  redirect(`/dashboard/projects/${data.id}`);  // Go straight to engine results page
+  redirect(`/dashboard/projects/${data.id}`);
 }
 
 export async function deleteProject(formData: FormData) {
