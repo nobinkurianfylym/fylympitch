@@ -1,8 +1,11 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import HomepageDemo from "@/components/HomepageDemo";
 import HeroToggle from "@/components/HeroToggle";
 import IntelligenceTicker from "@/components/IntelligenceTicker";
+import { RoleProvider, type Role } from "@/components/RoleProvider";
+import HeaderRoleToggle from "@/components/HeaderRoleToggle";
 
 const FEATURES = [
   ["Intelligent matching", "Every project is scored against 1,000+ grants, funds, labs, markets and investors on eight weighted criteria — genre, stage, territory, budget, format, funding gap, language and track record."],
@@ -18,8 +21,12 @@ const FAQS = [
   ["How do producers and investors join?", "Sign up with a single Google account — you automatically get access to both the filmmaker dashboard and the producer studio. One login, both sides of the table."],
 ];
 
-export default function Home() {
+export default async function Home() {
+  const cookieStore = await cookies();
+  const rawRole = cookieStore.get("fyp_role")?.value;
+  const initialRole: Role = rawRole === "producer" ? "producer" : "filmmaker";
   return (
+    <RoleProvider initialRole={initialRole}>
     <main>
       {/* NAV */}
       <header className="max-w-6xl mx-auto px-6 py-7 flex items-center justify-between">
@@ -33,9 +40,10 @@ export default function Home() {
           <a href="#faq" className="hover:text-ink transition-colors">FAQ</a>
         </nav>
         <div className="flex items-center gap-3">
-          <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase text-ink hover:text-gold transition-colors px-3 py-2">Sign in</Link>
-          <Link href="/login" className="btn-gold !px-5 !py-2.5">Join</Link>
-        </div>
+            <HeaderRoleToggle />
+            <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase text-ink hover:text-gold transition-colors px-3 py-2">Sign in</Link>
+            <Link href="/login" className="btn-gold !px-5 !py-2.5">Join</Link>
+          </div>
       </header>
 
       {/* HERO */}
@@ -307,5 +315,6 @@ export default function Home() {
         </div>
       </footer>
     </main>
+    </RoleProvider>
   );
 }

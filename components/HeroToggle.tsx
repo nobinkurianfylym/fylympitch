@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useRole } from "./RoleProvider";
 
 const CONTENT = {
   filmmaker: {
@@ -30,41 +30,15 @@ const CONTENT = {
   },
 };
 
-type Role = "filmmaker" | "producer";
-
 export default function HeroToggle() {
-  const [role, setRole] = useState<Role>("filmmaker");
+  const { role } = useRole();
   const c = CONTENT[role];
 
   return (
     <section className="max-w-6xl mx-auto px-6 pt-8 pb-3 md:pt-10 md:pb-4">
 
-      {/* ── Toggle ── */}
-      <div className="inline-flex items-center gap-0 mb-6 relative">
-        {(["filmmaker", "producer"] as Role[]).map((r, i) => (
-          <button
-            key={r}
-            onClick={() => setRole(r)}
-            className="relative px-5 py-2 text-[11px] tracking-[0.18em] uppercase transition-colors duration-200"
-            style={{ color: role === r ? "var(--color-ink)" : "var(--color-ash)" }}
-          >
-            {r === "filmmaker" ? "Filmmaker" : "Producer"}
-            {/* active underline */}
-            <span
-              className="absolute bottom-0 left-5 right-5 h-[1.5px] bg-gold transition-opacity duration-300"
-              style={{ opacity: role === r ? 1 : 0 }}
-            />
-          </button>
-        ))}
-        {/* divider */}
-        <span className="absolute left-1/2 -translate-x-1/2 h-3 w-[1px] bg-line" />
-      </div>
-
       {/* ── Content — fades on role change ── */}
-      <div
-        key={role}
-        style={{ animation: "heroFadeIn 0.35s ease both" }}
-      >
+      <div key={role} style={{ animation: "heroFadeIn 0.35s ease both" }}>
         <p className="eyebrow mb-5">{c.eyebrow}</p>
         <h1 className="font-display font-normal text-[36px] leading-[1.08] md:text-[52px] max-w-4xl">
           {c.headline}
@@ -89,7 +63,10 @@ export default function HeroToggle() {
       </div>
 
       {/* ── Category bar ── */}
-      <div className="mt-10 hairline-gold pt-5 flex flex-nowrap gap-x-6 overflow-x-auto text-[9px] tracking-[0.14em] uppercase text-ash" style={{ scrollbarWidth:"none" }}>
+      <div
+        className="mt-10 hairline-gold pt-5 flex flex-nowrap gap-x-6 overflow-x-auto text-[9px] tracking-[0.14em] uppercase text-ash"
+        style={{ scrollbarWidth: "none" }}
+      >
         <span className="shrink-0">Grants</span>
         <span className="shrink-0">Film Funds</span>
         <span className="shrink-0">Labs</span>

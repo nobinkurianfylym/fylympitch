@@ -8,7 +8,7 @@ export default function WelcomePage() {
 
   function choose(role: 'filmmaker' | 'producer') {
     document.cookie = `fyp_role=${role}; path=/; max-age=31536000; SameSite=Lax`
-    router.push(role === 'filmmaker' ? '/' : '/producer/register')
+    router.push('/')
   }
 
   return (
