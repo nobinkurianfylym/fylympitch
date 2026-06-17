@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { TYPE_LABEL } from "@/lib/format";
+import FundCard from "@/components/FundCard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -68,7 +69,7 @@ export default async function FundsPage({
 
   let query = supabase
     .from("opportunities")
-    .select("id, title, opp_type, description, country, region, deadline, deadline_note, languages, max_award_usd, url")
+    .select("id, title, opp_type, description, country, region, deadline, deadline_note, languages, max_award_usd, url, app_link")
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(60);
@@ -153,14 +154,11 @@ export default async function FundsPage({
               const location = o.country || o.region || "Worldwide";
               const bandLabel = BAND_LABEL[o.opp_type] ?? o.opp_type.toUpperCase();
               const langs   = (o.languages as string[] | null) ?? [];
+              const link    = (o.app_link as string | null) || (o.url as string | null) || null;
 
               return (
-                <a key={o.id}
-                  href={o.url ?? undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all cursor-pointer"
-                  style={{ textDecoration: "none" }}>
+                <FundCard key={o.id} link={link}
+                  className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all">
 
                   {/* ── Top coloured section (mirrors ProjectThumbnail) ── */}
                   <div style={{
@@ -216,7 +214,7 @@ export default async function FundsPage({
                     </div>
                   </div>
 
-                </a>
+                </FundCard>
               );
             })}
           </div>
