@@ -288,17 +288,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           <p className="text-[13px] text-ash mb-6">Ranked live against every active opportunity.</p>
           <MatchList
             projectId={project.id}
-            matches={ranked.map(({ o, m }): MatchRow => ({
-              id: o.id,
-              title: o.title,
-              opp_type: o.opp_type,
-              max_award_usd: o.max_award_usd ?? null,
-              deadline_note: (o as any).deadline_note ?? null,
-              deadline: o.deadline ?? null,
-              score: m.score,
-              tier: m.tier,
-              warnings: m.warnings,
-            }))}
+            matches={ranked}
           />
         </section>
       )}
