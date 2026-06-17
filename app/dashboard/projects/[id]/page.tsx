@@ -56,30 +56,64 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const dream: DreamScenario | null = intel?.dream_scenario ?? null;
   const producerMatches: ProducerMatch[] = intel?.producer_matches ?? [];
 
-  // Live-rank against active opportunities (fresh, not cached — for the matches list)
-  const { data: opps } = await supabase.from("opportunities").select("*").eq("is_active", true);
-  const { calculateMatchScore } = await import("@/services/matching");
-  const ranked = (opps as Opportunity[] | null ?? [])
-    .map((o) => ({ o, m: calculateMatchScore(project, o) }))
-    .filter((r) => r.m.tier !== "hidden")
-    .sort((a, b) => b.m.score - a.m.score)
-    .slice(0, 10);
+  // Read pre-computed match scores from DB — zero live scoring on page load.
+  // Scores are written by the engine at project creation and re-run.
+  // Falls back to a limited live score only when matches table is empty.
+  type MatchDbRow = {
+    score: number; tier: string; reasons: string[];
+    opportunity: { id: string; title: string; opp_type: string; country: string | null;
+      max_award_usd: number | null; deadline: string | null; deadline_note: string | null;
+      url: string | null; app_link: string | null; } | null;
+  };
+  const { data: matchRows } = await supabase
+    .from("matches")
+    .select("score, tier, reasons, opportunity:opportunities(id,title,opp_type,country,max_award_usd,deadline,deadline_note,url,app_link)")
+    .eq("project_id", id)
+    .order("score", { ascending: false }) as { data: MatchDbRow[] | null };
 
-  const journeyOpps: JourneyOpp[] = (opps as Opportunity[] ?? [])
-    .map((o) => ({
-      id: o.id,
-      title: o.title,
-      country: o.country ?? null,
-      opp_type: o.opp_type,
-      max_award_usd: o.max_award_usd ?? null,
-      deadline: o.deadline ?? null,
-      deadline_note: (o as any).deadline_note ?? null,
-      score: calculateMatchScore(project, o).score,
-      url: o.url ?? null,
-      app_link: (o as any).app_link ?? null,
-    }))
-    .filter((o) => o.score > 0)
-    .sort((a, b) => b.score - a.score);
+  let ranked: import("@/components/MatchList").MatchRow[] = [];
+  let journeyOpps: JourneyOpp[] = [];
+
+  if (matchRows && matchRows.length > 0) {
+    ranked = matchRows
+      .filter((m) => m.tier !== "hidden" && m.opportunity)
+      .slice(0, 10)
+      .map((m) => ({
+        id: m.opportunity!.id, title: m.opportunity!.title, opp_type: m.opportunity!.opp_type,
+        max_award_usd: m.opportunity!.max_award_usd, deadline_note: m.opportunity!.deadline_note,
+        deadline: m.opportunity!.deadline, score: m.score, tier: m.tier, warnings: [],
+      }));
+    journeyOpps = matchRows
+      .filter((m) => m.score > 0 && m.opportunity)
+      .map((m) => ({
+        id: m.opportunity!.id, title: m.opportunity!.title, country: m.opportunity!.country,
+        opp_type: m.opportunity!.opp_type, max_award_usd: m.opportunity!.max_award_usd,
+        deadline: m.opportunity!.deadline, deadline_note: m.opportunity!.deadline_note,
+        score: m.score, url: m.opportunity!.url, app_link: m.opportunity!.app_link,
+      }));
+  } else {
+    // Fallback: live scoring limited to 80 highest-weight opps (CPU-safe)
+    const { data: opps } = await supabase.from("opportunities").select("*")
+      .eq("is_active", true).not("match_weight", "is", null)
+      .order("match_weight", { ascending: false }).limit(80);
+    const { calculateMatchScore } = await import("@/services/matching");
+    const scoredOpps = (opps ?? []).map((o: Opportunity) => ({ o, m: calculateMatchScore(project, o) }));
+    ranked = scoredOpps.filter((r) => r.m.tier !== "hidden")
+      .sort((a, b) => b.m.score - a.m.score).slice(0, 10)
+      .map(({ o, m }) => ({
+        id: o.id, title: o.title, opp_type: o.opp_type, max_award_usd: o.max_award_usd,
+        deadline_note: (o as any).deadline_note, deadline: o.deadline,
+        score: m.score, tier: m.tier, warnings: m.warnings,
+      }));
+    journeyOpps = scoredOpps.filter(({ m }) => m.score > 0)
+      .sort((a, b) => b.m.score - a.m.score)
+      .map(({ o, m }) => ({
+        id: o.id, title: o.title, country: o.country ?? null, opp_type: o.opp_type,
+        max_award_usd: o.max_award_usd ?? null, deadline: o.deadline ?? null,
+        deadline_note: (o as any).deadline_note ?? null,
+        score: m.score, url: o.url ?? null, app_link: (o as any).app_link ?? null,
+      }));
+  }
 
   const { data: offers } = isOwner
     ? await supabase

@@ -84,12 +84,11 @@ export async function rerunEngine(
   if (opps?.length) {
     const basicMatches = (opps as Opportunity[])
       .map((opp) => ({
-        project_id: projectId,
-        opportunity_id: opp.id,
-        score: calculateMatchScore(project as Project, opp).score,
-        tier: calculateMatchScore(project as Project, opp).tier ?? "possible",
-        confidence: "medium" as const,
-        reasons: calculateMatchScore(project as Project, opp).reasons ?? [],
+        ...(() => { const m = calculateMatchScore(project as Project, opp); return {
+          project_id: projectId, opportunity_id: opp.id,
+          score: m.score, tier: m.tier ?? "possible",
+          confidence: "medium" as const, reasons: m.reasons ?? [],
+        }; })(),
       }))
       .filter((m) => m.score > 0);
 
