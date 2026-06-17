@@ -2,6 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+
+  // ── Role gate: redirect first-time visitors on / to /welcome ──────────
+  if (path === "/" && !request.cookies.get("fyp_role")) {
+    return NextResponse.redirect(new URL("/welcome", request.url));
+  }
+  // ──────────────────────────────────────────────────────────────────────
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -21,7 +29,6 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user }, error } = await supabase.auth.getUser();
 
-  const path = request.nextUrl.pathname;
   const isProtected =
     path.startsWith("/dashboard") ||
     path.startsWith("/admin") ||
@@ -77,6 +84,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
     "/admin/:path*",
     "/producer/:path*",
