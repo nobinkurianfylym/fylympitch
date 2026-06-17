@@ -1,22 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Playfair_Display, Montserrat } from 'next/font/google'
 import styles from './page.module.css'
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  variable: '--font-welcome-serif',
-  display: 'swap',
-})
-
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  variable: '--font-welcome-sans',
-  display: 'swap',
-})
 
 export default function WelcomePage() {
   const router = useRouter()
@@ -27,23 +12,29 @@ export default function WelcomePage() {
   }
 
   return (
-    <main className={`${styles.page} ${playfair.variable} ${montserrat.variable}`}>
-      <h1 className={styles.headline}>
-        Every Great Film<br />
-        Starts With The Right<br />
-        <span className={styles.gold}>Discovery.</span>
-      </h1>
+    <>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Montserrat:wght@400;500&display=swap"
+      />
+      <main className={styles.page}>
+        <h1 className={styles.headline}>
+          Every Great Film<br />
+          Starts With The Right<br />
+          <span className={styles.gold}>Discovery.</span>
+        </h1>
 
-      <div className={styles.rule} />
+        <div className={styles.rule} />
 
-      <div className={styles.choices}>
-        <button className={styles.btn} onClick={() => choose('filmmaker')}>
-          I&apos;m a<br />Filmmaker
-        </button>
-        <button className={styles.btn} onClick={() => choose('producer')}>
-          I&apos;m a Producer<br />or Investor
-        </button>
-      </div>
-    </main>
+        <div className={styles.choices}>
+          <button className={styles.btn} onClick={() => choose('filmmaker')}>
+            I&apos;m a<br />Filmmaker
+          </button>
+          <button className={styles.btn} onClick={() => choose('producer')}>
+            I&apos;m a Producer<br />or Investor
+          </button>
+        </div>
+      </main>
+    </>
   )
 }
