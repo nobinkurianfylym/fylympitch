@@ -68,7 +68,7 @@ export default async function FundsPage({
 
   let query = supabase
     .from("opportunities")
-    .select("id, title, opp_type, description, country, region, deadline, deadline_note, languages, max_award_usd")
+    .select("id, title, opp_type, description, country, region, deadline, deadline_note, languages, max_award_usd, url")
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(60);
@@ -155,8 +155,12 @@ export default async function FundsPage({
               const langs   = (o.languages as string[] | null) ?? [];
 
               return (
-                <div key={o.id}
-                  className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all cursor-pointer">
+                <a key={o.id}
+                  href={o.url ?? undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all cursor-pointer"
+                  style={{ textDecoration: "none" }}>
 
                   {/* ── Top coloured section (mirrors ProjectThumbnail) ── */}
                   <div style={{
@@ -212,7 +216,7 @@ export default async function FundsPage({
                     </div>
                   </div>
 
-                </div>
+                </a>
               );
             })}
           </div>
