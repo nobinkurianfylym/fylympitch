@@ -672,19 +672,13 @@ export async function runAIEnhancedEngine(input: AIEngineInput): Promise<AIEngin
   const AI_WEIGHT   = narrativeRich ? 0.5 : 0.4;
   const RULE_WEIGHT = 1 - AI_WEIGHT;
 
-  // ── Step 1: Analyse the project ──
-  console.log(`[aiEngine] Analysing project narrative via ${provider}…`);
-  const projectProfile = await analyzeProject(project, keys);
-
-  // ── Step 2: Filter to top rule-based matches (≥60) for AI pass ──
+  // ── Steps 1 + 3: Parallelised — project analysis and opportunity batch are independent ──
   const ruleMatches = base.matches.filter((m) => m.match.score >= 60).slice(0, 20);
-
-  // ── Step 3: Analyse top opportunities in batches ──
-  console.log(`[aiEngine] Analysing ${ruleMatches.length} shortlisted opportunities via ${provider}…`);
-  const opportunityProfiles = await analyzeOpportunitiesBatch(
-    ruleMatches.map((m) => m.opportunity),
-    keys
-  );
+  console.log(`[aiEngine] Analysing project + ${ruleMatches.length} opportunities in parallel via ${provider}…`);
+  const [projectProfile, opportunityProfiles] = await Promise.all([
+    analyzeProject(project, keys),
+    analyzeOpportunitiesBatch(ruleMatches.map((m) => m.opportunity), keys),
+  ]);
 
   // ── Step 4: Semantic scoring ──
   console.log(`[aiEngine] Computing semantic match scores via ${provider}…`);
@@ -707,30 +701,28 @@ export async function runAIEnhancedEngine(input: AIEngineInput): Promise<AIEngin
     return { ...m, semantic, hybrid_score };
   }).sort((a, b) => b.hybrid_score - a.hybrid_score);
 
-  // ── Step 6: AI obstacle detection ──
-  console.log(`[aiEngine] Detecting narrative obstacles via ${provider}…`);
-  const aiObstacles = await detectAIObstacles(
-    project,
-    projectProfile,
-    enhancedMatches.map((m) => ({ opportunity: m.opportunity, hybridScore: m.hybrid_score })),
-    keys
-  );
+  // ── Steps 6 + 7: Parallelised — obstacle detection and market intel are independent ──
+  console.log(`[aiEngine] Detecting obstacles + market intel in parallel via ${provider}…`);
+  const [aiObstacles, marketIntelligence] = await Promise.all([
+    detectAIObstacles(
+      project,
+      projectProfile,
+      enhancedMatches.map((m) => ({ opportunity: m.opportunity, hybridScore: m.hybrid_score })),
+      keys
+    ),
+    generateMarketIntelligence(project, projectProfile, keys),
+  ]);
 
-  // ── Step 7: Market intelligence ──
-  console.log(`[aiEngine] Generating market intelligence via ${provider}…`);
-  const marketIntelligence = await generateMarketIntelligence(project, projectProfile, keys);
-
-  // ── Step 8: Enhanced EP brief (web search requires OpenAI key) ──
-  const canWebSearch = useWebSearch && !!openaiApiKey;
-  console.log(`[aiEngine] Generating enhanced EP brief (provider: ${provider}, web search: ${canWebSearch})…`);
-  const enhancedEPBrief = await generateEnhancedEPBrief(
-    project,
-    projectProfile,
-    enhancedMatches,
-    aiObstacles,
-    keys,
-    canWebSearch
-  );
+  // ── Step 8: EP brief runs separately via ep-brief Edge Function — skip here ──
+  // Saves ~8-12s. The Edge Function upserts enhanced_ep_brief after we return.
+  const enhancedEPBrief: EnhancedEPBrief = {
+    strategic_summary: base.executive_producer.summary,
+    immediate_actions: [],
+    six_month_roadmap: base.roadmap.recommendation,
+    key_relationships: [],
+    market_positioning: base.roadmap.recommendation,
+    generated_by: "heuristic",
+  };
 
   // ── Merge AI obstacles with rule-based obstacles ──
   // AI obstacles take precedence; keep any rule-based ones not already covered

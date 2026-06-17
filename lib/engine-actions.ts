@@ -116,7 +116,7 @@ export async function rerunEngine(
         useWebSearch: process.env.OPENAI_WEB_SEARCH === "true",
       }),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Engine timeout")), 25_000)
+        setTimeout(() => reject(new Error("Engine timeout")), 40_000)
       ),
     ]);
 

@@ -195,7 +195,7 @@ export async function createProject(formData: FormData) {
   // ── STEP 2: Full AI engine — enhances scores, adds intelligence ──────────
   // Runs after basic matches are already saved. Timeout at 20s.
   // On any failure the basic matches from Step 1 remain on the dashboard.
-  const ENGINE_TIMEOUT_MS = 20_000;
+  const ENGINE_TIMEOUT_MS = 40_000;
 
   try {
       const { runAIEnhancedEngine } = await import("@/services/aiEngine");
