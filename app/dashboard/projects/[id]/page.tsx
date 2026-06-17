@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import MatchBadge from "@/components/MatchBadge";
 import MessageButton from "@/components/MessageButton";
 import { usd, STAGE_LABEL, TYPE_LABEL, timeAgo } from "@/lib/format";
-import { deleteProject, respondToOffer } from "@/lib/actions";
+import { deleteProject, respondToOffer } from "@/lib/project-actions";
 import type { Opportunity, Project } from "@/types";
 import type {
   FundingDiscovery,
