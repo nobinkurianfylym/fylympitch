@@ -18,6 +18,7 @@ import type {
 import MatchList from "@/components/MatchList";
 import type { MatchRow } from "@/components/MatchList";
 import RerunEngineButton from "@/components/RerunEngineButton";
+import ProjectAnalysisLoader from "@/components/ProjectAnalysisLoader";
 
 export const dynamic = "force-dynamic";
 
@@ -81,9 +82,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   return (
     <div className="max-w-4xl">
 
-      {/* ── RERUN ENGINE ── */}
+      {/* ── ANALYSIS LOADER (auto-triggers engine when no intel exists) ── */}
       {isOwner && !discovery && (
-        <RerunEngineButton projectId={project.id} hasData={false} />
+        <ProjectAnalysisLoader projectId={project.id} />
       )}
 
       {/* ── HERO: FUNDING HEADLINE ── */}

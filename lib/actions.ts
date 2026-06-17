@@ -192,93 +192,9 @@ export async function createProject(formData: FormData) {
     }
   }
 
-  // ── STEP 2: Full AI engine — enhances scores, adds intelligence ──────────
-  // Runs after basic matches are already saved. Timeout at 20s.
-  // On any failure the basic matches from Step 1 remain on the dashboard.
-  const ENGINE_TIMEOUT_MS = 40_000;
-
-  try {
-      const { runAIEnhancedEngine } = await import("@/services/aiEngine");
-      const enginePromise = runAIEnhancedEngine({
-        project: project as Project,
-        opportunities: (opps ?? []) as Opportunity[],
-        opportunityExtras,
-        producerProfiles,
-        cerebrasApiKey: process.env.CEREBERAS_API,
-        groqApiKey: process.env.GROQ_API_KEY,
-        openaiApiKey: process.env.OPENAI_API_KEY,
-        useWebSearch: process.env.OPENAI_WEB_SEARCH === "true",
-      });
-
-      const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Engine timeout after 20s")), ENGINE_TIMEOUT_MS)
-      );
-
-      const engine = await Promise.race([enginePromise, timeoutPromise]);
-
-      if (engine.matches.length) {
-        await supabase.from("matches").upsert(
-          engine.matches.map((m) => ({
-            project_id: data.id,
-            opportunity_id: m.opportunity.id,
-            score: m.match.score,
-            tier: m.match.tier,
-            confidence: m.match.confidence,
-            reasons: m.match.reasons,
-          })),
-          { onConflict: "project_id,opportunity_id" }
-        );
-      }
-
-      await supabase.from("project_intelligence").upsert({
-        project_id: data.id,
-        funding_readiness: engine.funding_readiness,
-        funding_discovery: engine.funding_discovery,
-        obstacles: engine.obstacles,
-        roadmap: engine.roadmap,
-        producer_matches: engine.producer_matches,
-        executive_producer: engine.executive_producer,
-        dream_scenario: engine.dream_scenario,
-        project_profile: (engine as any).project_profile ?? {},
-        semantic_matches: (engine as any).semantic_matches ?? [],
-        ai_obstacles: (engine as any).ai_obstacles ?? [],
-        market_intelligence: (engine as any).market_intelligence ?? {},
-        enhanced_ep_brief: (engine as any).enhanced_ep_brief ?? {},
-        engine_version: (engine as any).engine_version ?? "v1_hybrid",
-        generated_by: engine.executive_producer.generated_by,
-        generated_at: engine.generated_at,
-      });
-    } catch (engineErr) {
-      // Engine failure or timeout must never block project creation.
-      // Project is saved — dashboard shows it immediately, matches arrive
-      // if engine completed before the timeout.
-      console.error("[createProject] Engine failed/timed out:", engineErr);
-    }
-  }
-
-  // ── EP Brief: fire-and-forget to Supabase Edge Function ───────────────────
-  // The base engine has already saved matches + core intelligence above.
-  // The EP Brief (OpenAI call) runs asynchronously so the user hits the
-  // results page immediately. The page polls ep_brief_status until 'done'.
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (supabaseUrl && serviceKey) {
-    // Mark EP brief as pending first
-    await supabase
-      .from("project_intelligence")
-      .update({ ep_brief_status: "pending" })
-      .eq("project_id", data.id);
-
-    // Fire-and-forget — don't await, don't block the redirect
-    fetch(`${supabaseUrl}/functions/v1/ep-brief`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify({ project_id: data.id }),
-    }).catch((err) => console.error("[createProject] EP Brief edge fn failed:", err));
-  }
+  // ── AI engine runs client-side on the project page after redirect ──────────
+  // ProjectAnalysisLoader auto-triggers rerunEngine() on mount, showing a
+  // live "Analysing…" state. This keeps form submit instant (<1s).
 
   revalidatePath("/dashboard");
   revalidatePath("/projects");
