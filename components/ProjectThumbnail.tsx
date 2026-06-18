@@ -1,3 +1,94 @@
+// ProjectThumbnail — poster image or pastel SVG title card fallback.
+//
+// Priority:
+//   1. poster_path → Supabase public storage URL
+//   2. No poster   → Generated pastel title card (inline, instant, no network)
+
+const PALETTES = [
+  { bg: "#F0E8FF", accent: "#C4A8E8", text: "#4A1D96" },  // lavender
+  { bg: "#E8F8F0", accent: "#A8E8C4", text: "#1A5C3A" },  // sage
+  { bg: "#FFF0E8", accent: "#F5C4A0", text: "#8B3A0F" },  // peach
+  { bg: "#E8F0FF", accent: "#A8C0F0", text: "#1A2E7A" },  // periwinkle
+  { bg: "#FFF0F5", accent: "#F0B0C8", text: "#7A1A3C" },  // rose
+  { bg: "#F5FFE8", accent: "#C0E888", text: "#2A5C0A" },  // lime
+  { bg: "#FFFCE8", accent: "#F0DCA0", text: "#6B4A00" },  // butter
+  { bg: "#E8FFFD", accent: "#A0E8E4", text: "#0A4A48" },  // aqua
+];
+
+function hashTitle(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+function PastelCard({ title, genre, className }: { title: string; genre: string | null; className?: string }) {
+  const p = PALETTES[hashTitle(title) % PALETTES.length];
+
+  const words = title.split(" ");
+  const lines: string[] = [];
+  let cur = "";
+  for (const w of words) {
+    if ((cur + " " + w).trim().length > 16 && cur) { lines.push(cur.trim()); cur = w; }
+    else { cur = (cur + " " + w).trim(); }
+  }
+  if (cur) lines.push(cur.trim());
+  const display = lines.slice(0, 2);
+  if (lines.length > 2) display[1] = display[1].slice(0, 13) + "…";
+  const y0 = display.length === 1 ? 88 : 72;
+
+  return (
+    <div
+      className={className}
+      style={{
+        background: p.bg,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* Bottom accent band */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "22%", background: p.accent, opacity: 0.4 }} />
+      {/* Corner dots */}
+      {([["top", "left"], ["top", "right"], ["bottom", "left"], ["bottom", "right"]] as const).map(([v, h], i) => (
+        <div key={i} style={{
+          position: "absolute",
+          [v]: 8, [h]: 8,
+          width: 6, height: 6, borderRadius: 2,
+          background: p.accent,
+        }} />
+      ))}
+      <svg viewBox="0 0 300 200" style={{ width: "90%", height: "90%", position: "relative" }}>
+        {display.map((line, i) => (
+          <text
+            key={i}
+            x="150" y={y0 + i * 42}
+            textAnchor="middle"
+            fontFamily="Georgia, serif"
+            fontSize="28"
+            fontWeight="400"
+            fill={p.text}
+          >
+            {line}
+          </text>
+        ))}
+        <text
+          x="150" y="180"
+          textAnchor="middle"
+          fontFamily="Arial, sans-serif"
+          fontSize="10"
+          letterSpacing="3"
+          fill={p.text}
+          opacity="0.55"
+        >
+          {(genre ?? "").toUpperCase()}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
 interface Props {
   posterPath?: string | null;
   title: string;
@@ -7,38 +98,16 @@ interface Props {
 }
 
 export default function ProjectThumbnail({ posterPath, title, genre, supabaseUrl, className = "" }: Props) {
-  if (posterPath) {
-    return (
-      <img
-        src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`}
-        alt={title}
-        className={`object-cover ${className}`}
-      />
-    );
+  if (!posterPath) {
+    return <PastelCard title={title} genre={genre ?? ""} className={`${className} rounded-card`} />;
   }
 
-  const words = title.trim().split(/\s+/);
-  const line1 = words.slice(0, 3).join(" ");
-  const line2 = words.slice(3, 6).join(" ");
-  const genreLabel = (genre ?? "").toUpperCase().slice(0, 12);
-
   return (
-    <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" className={className} aria-label={title}>
-      <rect width="160" height="100" fill="#1A1815" />
-      <rect x="0" y="0" width="3" height="100" fill="#BF9953" />
-      <rect x="0" y="88" width="160" height="12" fill="#BF9953" opacity="0.12" />
-      {genreLabel && (
-        <text x="12" y="22" fill="#BF9953" fontSize="7" fontFamily="monospace" letterSpacing="1.8">{genreLabel}</text>
-      )}
-      <text x="12" y="54" fill="#F5F5F0" fontSize="12" fontFamily="Georgia, serif">
-        {line1.length > 16 ? line1.slice(0, 16) + "…" : line1}
-      </text>
-      {line2 && (
-        <text x="12" y="70" fill="#F5F5F0" fontSize="12" fontFamily="Georgia, serif" opacity="0.7">
-          {line2.length > 16 ? line2.slice(0, 16) + "…" : line2}
-        </text>
-      )}
-      <text x="12" y="95" fill="#BF9953" fontSize="5.5" fontFamily="monospace" letterSpacing="2" opacity="0.7">FYLYMPITCH</text>
-    </svg>
+    <img
+      src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`}
+      alt={`${title} poster`}
+      className={`${className} object-cover`}
+      loading="lazy"
+    />
   );
 }
