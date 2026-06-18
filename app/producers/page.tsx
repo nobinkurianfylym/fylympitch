@@ -1,139 +1,224 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import Wordmark from "@/components/Wordmark";
 import Link from "next/link";
+import type { Metadata } from "next";
+import ProducerProjectTicker from "@/components/ProducerProjectTicker";
 
 export const dynamic = "force-dynamic";
 
-const ROLE_LABEL: Record<string, string> = {
-  independent_producer: "Independent Producer",
-  studio_exec:          "Studio Executive",
-  sales_agent:          "Sales Agent",
-  distributor:          "Distributor",
-  ep:                   "Executive Producer",
-  coproduction_partner: "Co-Production Partner",
+export const metadata: Metadata = {
+  title: "Discover Projects — FYLYMPITCH",
+  description:
+    "Browse verified filmmaker projects by genre, format and stage. Co-produce, invest or acquire.",
 };
 
-export default async function ProducersDirectoryPage() {
-  const supabase = await createClient();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+function formatBudget(usd: number | null): string {
+  if (!usd) return "TBC";
+  if (usd >= 1_000_000)
+    return `$${(usd / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (usd >= 1_000) return `$${Math.round(usd / 1_000)}K`;
+  return `$${Math.round(usd).toLocaleString()}`;
+}
 
-  const { data: producers } = await supabase
-    .from("producer_profiles")
-    .select(`
-      user_id, country, role_type, genres, formats, territories,
-      open_to_coproduction, open_to_ep, bringing_territory_funding, imdb_url,
-      profiles!producer_profiles_user_id_fkey(full_name, company, avatar_url)
-    `)
+function seekingLabel(stage: string): string {
+  const MAP: Record<string, string> = {
+    development:     "Co-Producer",
+    pre_production:  "Producer",
+    production:      "Line Producer",
+    post_production: "Sales Agent",
+    completed:       "Distribution",
+  };
+  return MAP[stage] ?? "Producer";
+}
+
+export default async function ProducersDiscoveryPage() {
+  const supabase = createAdminClient();
+
+  const { data: raw } = await supabase
+    .from("projects")
+    .select("id, title, genre, format, stage, country, budget_usd, created_at")
     .eq("is_public", true)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  const projects = (raw ?? []).map((p: any) => ({
+    id:      p.id as string,
+    title:   p.title as string,
+    genre:   p.genre as string,
+    format:  p.format as string,
+    stage:   p.stage as string,
+    country: (p.country as string) ?? "International",
+    budget:  formatBudget(p.budget_usd as number | null),
+    seeking: seekingLabel(p.stage as string),
+  }));
 
   return (
     <div className="min-h-screen bg-ivory">
-      <div className="max-w-5xl mx-auto px-6 py-16">
 
-        <p className="eyebrow mb-3">FYLYMPITCH Network</p>
-        <h1 className="font-display text-[40px] mb-3">Producers</h1>
-        <p className="text-ash text-[16px] mb-12 max-w-xl">
-          Industry professionals looking for their next project. Each producer's interests are matched against filmmaker submissions in the FYLYMPITCH engine.
-        </p>
-
-        {(!producers || producers.length === 0) ? (
-          <div className="card py-20 text-center">
-            <p className="font-display text-[22px] mb-3">Coming soon</p>
-            <p className="text-ash text-[15px]">Producers are joining the network. Check back soon.</p>
+      {/* ── NAV ── */}
+      <header className="border-b border-line bg-ivory/95 backdrop-blur-sm sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+          <Wordmark />
+          <nav className="hidden md:flex items-center gap-8 text-[11px] tracking-[0.18em] uppercase text-ash">
+            <span className="text-ink border-b border-ink pb-0.5 cursor-default">
+              Browse Projects
+            </span>
+            <Link href="/funds"    className="hover:text-ink transition-colors">Funds</Link>
+            <Link href="/#pricing" className="hover:text-ink transition-colors">Pricing</Link>
+            <Link href="/"         className="hover:text-ink transition-colors">Platform</Link>
+          </nav>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="text-[12px] tracking-[0.18em] uppercase text-ink hover:text-gold transition-colors px-3 py-2"
+            >
+              Sign in
+            </Link>
+            <Link href="/login" className="btn-gold !px-5 !py-2.5">Join</Link>
           </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {producers.map((p: any) => {
-              const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
-              const avatarUrl = profile?.avatar_url;
-              const initials = profile?.full_name
-                ? profile.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()
-                : "?";
+        </div>
+      </header>
 
-              const tags = [
-                p.open_to_coproduction && "Co-Production",
-                p.open_to_ep && "EP",
-                p.bringing_territory_funding && "Territory Funding",
-              ].filter(Boolean);
-
-              return (
-                <div key={p.user_id} className="card p-6">
-                  {/* Avatar + name */}
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className="w-14 h-14 rounded-full overflow-hidden bg-parchment border border-line shrink-0 flex items-center justify-center">
-                      {avatarUrl ? (
-                        <img src={avatarUrl} alt={profile?.full_name ?? ""} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="font-display text-[18px] text-ash">{initials}</span>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-display text-[17px] leading-snug truncate">{profile?.full_name ?? "—"}</p>
-                      {profile?.company && (
-                        <p className="text-[12px] text-ash truncate">{profile.company}</p>
-                      )}
-                      <p className="text-[11px] tracking-[0.12em] uppercase text-ash mt-0.5">
-                        {ROLE_LABEL[p.role_type] ?? p.role_type}
-                        {p.country ? ` · ${p.country}` : ""}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Genres */}
-                  {p.genres?.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {p.genres.slice(0, 4).map((g: string) => (
-                        <span key={g} className="text-[10px] tracking-[0.1em] uppercase bg-parchment text-ash px-2.5 py-1 rounded-full border border-line">
-                          {g}
-                        </span>
-                      ))}
-                      {p.genres.length > 4 && (
-                        <span className="text-[10px] text-ash px-2 py-1">+{p.genres.length - 4}</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Tags */}
-                  {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {tags.map((t) => (
-                        <span key={t as string} className="text-[10px] tracking-[0.1em] uppercase bg-gold/10 text-gold px-2.5 py-1 rounded-full border border-gold/30">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {p.formats?.length > 0 && (
-                    <p className="text-[12px] text-ash mb-1">
-                      <span className="text-ink">Format: </span>{p.formats.join(", ")}
-                    </p>
-                  )}
-                  {p.territories?.length > 0 && (
-                    <p className="text-[12px] text-ash">
-                      <span className="text-ink">Territories: </span>
-                      {p.territories.slice(0, 3).join(", ")}
-                      {p.territories.length > 3 ? ` +${p.territories.length - 3}` : ""}
-                    </p>
-                  )}
-
-                  {p.imdb_url && (
-                    <a href={p.imdb_url} target="_blank" rel="noopener noreferrer"
-                      className="mt-4 block text-[11px] tracking-[0.14em] uppercase text-ash hover:text-gold transition-colors">
-                      IMDb →
-                    </a>
-                  )}
-                </div>
-              );
-            })}
+      {/* ── HERO ── */}
+      <section className="max-w-6xl mx-auto px-6 pt-16 pb-12">
+        <p className="eyebrow text-gold mb-5">For Producers &amp; Investors</p>
+        <div className="md:flex items-end justify-between gap-16">
+          <div className="max-w-3xl">
+            <h1 className="font-display text-[48px] md:text-[62px] leading-[1.05] mb-6">
+              Discover curated film projects{" "}
+              <em className="text-gold">ready for production.</em>
+            </h1>
+            <p className="text-[16px] leading-relaxed text-ash max-w-xl">
+              Every project on FYLYMPITCH is submitted through our intelligence
+              engine. Browse by genre, format and stage — then request scripts,
+              send offers, or co-produce. No approval needed.
+            </p>
           </div>
-        )}
+          <div className="mt-8 md:mt-0 shrink-0 flex flex-col items-start md:items-end gap-3">
+            <Link href="/login" className="btn-gold">Get Started</Link>
+            <Link href="/login" className="btn-ghost">Browse as Producer</Link>
+          </div>
+        </div>
+      </section>
 
-        <div className="mt-16 text-center">
-          <p className="text-[13px] text-ash mb-4">Are you a producer? Join the network.</p>
-          <Link href="/login?next=/producer" className="btn-gold">Join as Producer</Link>
+      {/* ── CATEGORY STRIP ── */}
+      <div className="border-t border-b border-line overflow-x-auto no-scrollbar">
+        <div className="flex items-center max-w-6xl mx-auto px-6" style={{ whiteSpace: "nowrap" }}>
+          {[
+            "Grants", "Film Funds", "Labs", "Co-Productions",
+            "Markets", "Producers", "Production Companies",
+            "Distribution", "Investors", "Streamers",
+          ].map((cat) => (
+            <span
+              key={cat}
+              className="eyebrow text-[10px] px-5 py-4 border-r border-line last:border-r-0"
+            >
+              {cat}
+            </span>
+          ))}
         </div>
       </div>
+
+      {/* ── LIVE PROJECT TICKER (client) ── */}
+      <ProducerProjectTicker projects={projects} />
+
+      {/* ── HOW IT WORKS ── */}
+      <section className="bg-parchment">
+        <div className="max-w-6xl mx-auto px-6 py-20 md:py-28">
+          <p className="eyebrow mb-10">For producers &amp; investors</p>
+          <div className="grid md:grid-cols-3 gap-12">
+            {(
+              [
+                [
+                  "Browse",
+                  "Filter verified filmmaker projects by genre, format, stage and territory. Every project has passed through the FYLYMPITCH intelligence engine.",
+                ],
+                [
+                  "Request",
+                  "Access scripts and pitch decks through our access-control system. Every filmmaker you contact is serious, working, and ready to pitch.",
+                ],
+                [
+                  "Connect",
+                  "Send structured co-production, investment or acquisition offers directly. No gatekeepers, no approval queue, no noise.",
+                ],
+              ] as [string, string][]
+            ).map(([title, body]) => (
+              <div key={title} className="hairline pt-6">
+                <h3 className="font-display text-[21px] mb-3">{title}</h3>
+                <p className="text-[15px] leading-relaxed text-ash">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIAL ── */}
+      <section className="bg-deep text-ivory">
+        <div className="max-w-6xl mx-auto px-6 py-20">
+          <blockquote>
+            <p className="font-display italic text-[22px] md:text-[28px] leading-snug max-w-2xl">
+              &ldquo;As a producer I only see projects that fit my slate. No noise,
+              verified filmmakers, scripts behind access control. That&rsquo;s rare.&rdquo;
+            </p>
+            <footer className="mt-6 text-[12px] tracking-[0.2em] uppercase text-gold">
+              Co-production executive — Europe
+            </footer>
+          </blockquote>
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
+      <section className="max-w-6xl mx-auto px-6 py-20 md:py-24">
+        <div className="hairline-gold pt-10 md:flex items-center justify-between gap-12">
+          <div>
+            <p className="eyebrow mb-3">Join the network</p>
+            <h2 className="font-display text-[28px] md:text-[38px] leading-tight max-w-lg">
+              One account. Browse projects as a producer, or submit your own as a
+              filmmaker.
+            </h2>
+          </div>
+          <div className="flex gap-3 mt-8 md:mt-0 shrink-0">
+            <Link href="/login" className="btn-gold">Join free</Link>
+            <Link href="/"      className="btn-ghost">Learn more</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="bg-deep text-ivory">
+        <div className="max-w-6xl mx-auto px-6 py-14">
+          <div className="md:flex justify-between gap-12">
+            <div className="max-w-xs">
+              <Wordmark light />
+              <p className="mt-5 text-[13px] leading-relaxed text-ivory/50">
+                Intelligent matchmaking between film projects and the people who
+                finance them. A FYLYM company.
+              </p>
+            </div>
+            <div className="mt-10 md:mt-0 grid grid-cols-2 gap-12 text-[13px]">
+              <div>
+                <p className="eyebrow !text-ivory/40 mb-4">Discover</p>
+                <ul className="space-y-3 text-ivory/70">
+                  <li><Link href="/producers" className="hover:text-gold">Browse Projects</Link></li>
+                  <li><Link href="/funds"     className="hover:text-gold">Browse Funds</Link></li>
+                  <li><Link href="/login"     className="hover:text-gold">Join</Link></li>
+                </ul>
+              </div>
+              <div>
+                <p className="eyebrow !text-ivory/40 mb-4">Company</p>
+                <ul className="space-y-3 text-ivory/70">
+                  <li><Link href="/"                    className="hover:text-gold">Platform</Link></li>
+                  <li><a href="mailto:hello@fylym.com"  className="hover:text-gold">Contact</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div className="hairline-gold mt-12 pt-6 text-[11px] tracking-[0.2em] uppercase text-ivory/40">
+            © {new Date().getFullYear()} FYLYMPITCH · A FYLYM Company · Ernakulam, Kerala
+          </div>
+        </div>
+      </footer>
+
     </div>
   );
 }

@@ -114,6 +114,18 @@ section[aria-label="Global Film Industry Intelligence Ticker"] div::-webkit-scro
   }
 }
 
+/* ── Scrollbar utilities ──────────────────────────────────── */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ── Producer project ticker ──────────────────────────────── */
+.proj-card-thumb svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 /* ── Typography scale ─────────────────────────────────────── */
 /* Use these instead of font-light / font-thin anywhere: */
 /* .text-primary   → text-ink  font-weight:400 */
