@@ -49,11 +49,6 @@ export async function respondToOffer(formData: FormData) {
 }
 
 export async function updateProject(formData: FormData) {
-  "use server";
-  const { createClient } = await import("@/lib/supabase/server");
-  const { redirect } = await import("next/navigation");
-  const { revalidatePath } = await import("next/cache");
-
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");

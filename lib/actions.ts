@@ -753,10 +753,11 @@ export async function requestProducerIntroduction(formData: FormData) {
     if (proj?.owner_id && proj.owner_id !== user.id) {
       await supabase.from("notifications").insert({
         user_id: proj.owner_id,
-        title: "Producer interest",
-        body: `${producer?.full_name ?? "A producer"}${producer?.company ? ` (${producer.company})` : ""} requested an introduction for "${proj.title}".`,
-        href: `/dashboard/projects/${project_id}`,
-        read: false,
+        kind:    "producer_interest",
+        title:   "Producer interest",
+        body:    `${producer?.full_name ?? "A producer"}${producer?.company ? ` (${producer.company})` : ""} requested an introduction for "${proj.title}".`,
+        link:    `/dashboard/projects/${project_id}`,
+        read:    false,
       });
     }
   } catch (e) {

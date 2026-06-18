@@ -209,10 +209,11 @@ export async function rerunEngine(
   try {
     await supabase.from("notifications").insert({
       user_id: user.id,
-      title: "Intelligence report ready",
-      body: `Your FYLYMPITCH report for "${(project as Project).title}" is ready.`,
-      href: `/dashboard/projects/${projectId}`,
-      read: false,
+      kind:    "match_found",
+      title:   "Intelligence report ready",
+      body:    `Your FYLYMPITCH report for "${(project as Project).title}" is ready.`,
+      link:    `/dashboard/projects/${projectId}`,
+      read:    false,
     });
   } catch (e) {
     console.error("[engine] notification failed:", e);
