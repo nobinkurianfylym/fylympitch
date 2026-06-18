@@ -41,6 +41,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     { href: "/producer", label: "Producer Studio" },
     { href: "/dashboard/messages", label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}` },
     { href: "/dashboard/profile", label: "Profile" },
+    { href: "/dashboard/credits", label: "Credits" },
     ...(role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 

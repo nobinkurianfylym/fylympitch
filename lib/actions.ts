@@ -783,3 +783,70 @@ export async function requestProducerIntroduction(formData: FormData) {
 
   revalidatePath(`/dashboard/projects/${project_id}`);
 }
+
+// ---------- PROJECT LOVES ----------
+
+export async function toggleProjectLove(projectId: string) {
+  const { supabase, user } = await requireUser();
+
+  const { data: existing } = await supabase
+    .from("project_loves")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .eq("project_id", projectId)
+    .single();
+
+  if (existing) {
+    await supabase.from("project_loves").delete()
+      .eq("user_id", user.id).eq("project_id", projectId);
+  } else {
+    await supabase.from("project_loves").insert({ user_id: user.id, project_id: projectId });
+  }
+
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/projects");
+}
+
+// ---------- FILMMAKER CREDITS ----------
+
+export async function saveFilmmakerCredit(formData: FormData) {
+  const { supabase, user } = await requireUser();
+
+  const festivals = formData.getAll("festivals").map(String).filter(Boolean);
+  const awardsRaw = str(formData, "awards_text") ?? "";
+  const awards    = awardsRaw.split("\n").map(s => s.trim()).filter(Boolean);
+
+  const payload = {
+    user_id:     user.id,
+    title:       str(formData, "title") ?? "",
+    year:        formData.get("year") ? Number(formData.get("year")) : null,
+    format:      str(formData, "format") ?? null,
+    festivals,
+    awards,
+    is_featured: formData.get("is_featured") === "true",
+  };
+
+  const id = str(formData, "credit_id");
+  if (id) {
+    await supabase.from("filmmaker_credits").update(payload).eq("id", id).eq("user_id", user.id);
+  } else {
+    await supabase.from("filmmaker_credits").insert(payload);
+  }
+
+  revalidatePath("/dashboard/credits");
+}
+
+export async function deleteFilmmakerCredit(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const id = str(formData, "credit_id");
+  if (!id) return;
+  await supabase.from("filmmaker_credits").delete().eq("id", id).eq("user_id", user.id);
+  revalidatePath("/dashboard/credits");
+}
+
+export async function updateCareerStage(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const career_stage = str(formData, "career_stage");
+  await supabase.from("profiles").update({ career_stage }).eq("id", user.id);
+  revalidatePath("/dashboard/credits");
+}

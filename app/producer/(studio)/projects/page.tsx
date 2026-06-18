@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usd, STAGE_LABEL } from "@/lib/format";
 import { upsertProducerProject } from "@/lib/actions";
 
+import LoveButton from "@/components/LoveButton";
+import ShareButton from "@/components/ShareButton";
+
 export const dynamic = "force-dynamic";
 
 const FORMATS = ["Feature", "Documentary", "Series", "Animation", "Short"];
@@ -22,7 +25,7 @@ export default async function ProducerProjectsPage({
   // Fetch all projects — approved producers see everything (RLS updated in 009)
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, country, language, logline, synopsis, budget_usd, funding_needed_usd, poster_path, pitch_deck_path, is_public, created_at, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url)")
+    .select("id, title, genre, format, stage, country, language, logline, synopsis, budget_usd, funding_needed_usd, poster_path, pitch_deck_path, is_public, created_at, owner_id, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage)")
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -140,8 +143,20 @@ export default async function ProducerProjectsPage({
                       );
                     })()}
                     <span>{p.country}{p.language ? ` · ${p.language}` : ""}</span>
+                    {(() => {
+                      const fm = Array.isArray((p as any).filmmaker) ? (p as any).filmmaker[0] : (p as any).filmmaker;
+                      const CAREER: Record<string,string> = { debut:"Debut", second_film:"2nd Film", established:"Established", veteran:"Veteran" };
+                      return fm?.career_stage ? (
+                        <span className="text-[9px] tracking-[0.1em] uppercase bg-parchment text-ash px-1.5 py-0.5 rounded-full border border-line">
+                          {CAREER[fm.career_stage] ?? fm.career_stage}
+                        </span>
+                      ) : null;
+                    })()}
                   </div>
-                  {p.funding_needed_usd && <span className="text-gold">{usd(p.funding_needed_usd)}</span>}
+                  <div className="flex items-center gap-1.5">
+                    <LoveButton projectId={p.id} initialCount={(p as any).love_count ?? 0} initialLiked={false} isLoggedIn={true} size="sm" />
+                    <ShareButton projectId={p.id} title={p.title} genre={p.genre} country={p.country} size="sm" />
+                  </div>
                 </div>
 
                 {/* CRM quick actions */}

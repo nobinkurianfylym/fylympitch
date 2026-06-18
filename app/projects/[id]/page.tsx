@@ -1,26 +1,57 @@
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
+import LoveButton from "@/components/LoveButton";
+import ShareButton from "@/components/ShareButton";
 import { usd, STAGE_LABEL } from "@/lib/format";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+const CAREER_LABEL: Record<string, string> = {
+  debut: "Debut film", second_film: "2nd film", established: "Established filmmaker", veteran: "Veteran filmmaker",
+};
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: p } = await supabase
+    .from("projects").select("title, genre, logline, poster_path, country")
+    .eq("id", id).eq("is_public", true).single();
+  if (!p) return { title: "Project — FYLYMPITCH" };
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const image = p.poster_path ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${p.poster_path}` : null;
+  const desc = p.logline ?? `A ${p.genre} from ${p.country} — now pitching on FYLYMPITCH`;
+  return {
+    title: `${p.title} — FYLYMPITCH`,
+    description: desc,
+    openGraph: { title: p.title, description: desc, images: image ? [image] : [], type: "article" },
+    twitter: { card: "summary_large_image", title: p.title, description: desc, images: image ? [image] : [] },
+  };
+}
 
 export default async function PublicProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: p } = await supabase
-    .from("projects")
-    .select("id, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, budget_usd, funding_needed_usd, is_public, poster_path, pitch_deck_path")
-    .eq("id", id)
-    .eq("is_public", true)
-    .single();
+  // Auth gate — must be signed in to view full project detail
+  if (!user) redirect(`/login?next=/projects/${id}`);
+
+  const { data: p } = await supabase.from("projects")
+    .select("id, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, budget_usd, funding_needed_usd, is_public, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage)")
+    .eq("id", id).eq("is_public", true).single();
 
   if (!p) notFound();
 
+  const [{ data: filmmakerCredits }, { data: loved }] = await Promise.all([
+    supabase.from("filmmaker_credits").select("*").eq("user_id", p.owner_id).order("year", { ascending: false }),
+    supabase.from("project_loves").select("user_id").eq("user_id", user.id).eq("project_id", id).single(),
+  ]);
+
+  const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
   return (
@@ -31,19 +62,9 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           <nav className="hidden md:flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase font-[400] text-ash">
             <Link href="/#features" className="hover:text-ink transition-colors">Platform</Link>
             <Link href="/projects" className="text-ink">Projects</Link>
-            <Link href="/#how" className="hover:text-ink transition-colors">How it works</Link>
-            <Link href="/#pricing" className="hover:text-ink transition-colors">Pricing</Link>
+            <Link href="/funds" className="hover:text-ink transition-colors">Funds</Link>
           </nav>
-          <div className="flex items-center gap-3">
-            {user ? (
-              <Link href="/dashboard" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Dashboard</Link>
-            ) : (
-              <>
-                <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Sign in</Link>
-                <Link href="/signup" className="btn-gold !px-5 !py-2.5 text-[12px]">Join</Link>
-              </>
-            )}
-          </div>
+          <Link href="/dashboard" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Dashboard</Link>
         </div>
       </header>
 
@@ -54,20 +75,19 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           <span className="text-ink">{p.title}</span>
         </p>
 
-        {/* Poster / thumbnail — prominent at top */}
-        <ProjectThumbnail
-          posterPath={p.poster_path}
-          deckPath={p.pitch_deck_path}
-          title={p.title}
-          genre={p.genre}
-          supabaseUrl={supabaseUrl}
-          className="rounded-card mb-8 w-full max-h-[420px]"
-        />
+        <ProjectThumbnail posterPath={p.poster_path} title={p.title} genre={p.genre}
+          supabaseUrl={supabaseUrl} className="rounded-card mb-8 w-full max-h-[420px]" />
 
-        <p className="eyebrow mb-3">
-          {p.genre} · {p.format.charAt(0).toUpperCase() + p.format.slice(1)} · {STAGE_LABEL[p.stage] ?? p.stage}
-        </p>
-        <h1 className="font-display text-[38px] font-[400]">{p.title}</h1>
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <p className="eyebrow mb-3">{p.genre} · {p.format.charAt(0).toUpperCase() + p.format.slice(1)} · {STAGE_LABEL[p.stage] ?? p.stage}</p>
+            <h1 className="font-display text-[38px] font-[400]">{p.title}</h1>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 mt-3">
+            <LoveButton projectId={p.id} initialCount={p.love_count ?? 0} initialLiked={!!loved} isLoggedIn={true} />
+            <ShareButton projectId={p.id} title={p.title} genre={p.genre} country={p.country} />
+          </div>
+        </div>
 
         {p.logline && (
           <p className="font-display italic text-[18px] leading-[1.6] mt-5 text-ink">"{p.logline}"</p>
@@ -79,6 +99,46 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           {p.budget_usd && <span>Budget — <span className="text-ink">{usd(p.budget_usd)}</span></span>}
           {p.funding_needed_usd && <span>Seeking — <span className="text-gold font-[400]">{usd(p.funding_needed_usd)}</span></span>}
         </div>
+
+        {/* Filmmaker card */}
+        {filmmaker && (
+          <div className="mt-8 p-5 border border-line rounded-card bg-white/60 flex items-start gap-4">
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center shrink-0">
+              {filmmaker.avatar_url ? (
+                <img src={filmmaker.avatar_url} alt={filmmaker.full_name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-display text-[14px] text-ash">
+                  {filmmaker.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[15px] font-medium text-ink">{filmmaker.full_name}</p>
+              {filmmaker.career_stage && (
+                <p className="text-[12px] tracking-[0.12em] uppercase text-ash mt-0.5">
+                  {CAREER_LABEL[filmmaker.career_stage] ?? filmmaker.career_stage}
+                </p>
+              )}
+              {/* Top credits */}
+              {(filmmakerCredits ?? []).length > 0 && (
+                <div className="mt-3 space-y-1.5">
+                  {(filmmakerCredits ?? []).slice(0, 3).map((c: any) => (
+                    <div key={c.id} className="flex flex-wrap items-center gap-2">
+                      <span className="text-[13px] text-ink">{c.title}</span>
+                      {c.year && <span className="text-[12px] text-ash">{c.year}</span>}
+                      {c.festivals?.slice(0, 2).map((f: string) => (
+                        <span key={f} className="text-[10px] tracking-[0.1em] uppercase bg-parchment text-ash px-2 py-0.5 rounded-full border border-line">{f}</span>
+                      ))}
+                      {c.awards?.length > 0 && (
+                        <span className="text-[11px] text-gold">🏆 {c.awards[0]}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="hairline-gold mt-10 mb-10" />
 
@@ -104,18 +164,9 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
         <div className="mt-14 border border-line rounded-card bg-white/70 p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
           <div>
             <p className="text-[16px]">Interested in this project?</p>
-            <p className="mt-1 text-[13px] text-ash">
-              {user ? "Go to your dashboard to send a financing offer or message." : "Join FYLYMPITCH to connect with this filmmaker, send an offer, or co-produce."}
-            </p>
+            <p className="mt-1 text-[13px] text-ash">Go to your dashboard to send a financing offer or message.</p>
           </div>
-          {user ? (
-            <Link href="/dashboard" className="btn-gold shrink-0 whitespace-nowrap">Go to dashboard</Link>
-          ) : (
-            <div className="flex gap-3 shrink-0">
-              <Link href={`/login?next=/projects/${p.id}`} className="btn-ghost whitespace-nowrap">Sign in</Link>
-              <Link href="/signup" className="btn-gold whitespace-nowrap">Join free</Link>
-            </div>
-          )}
+          <Link href="/dashboard" className="btn-gold shrink-0 whitespace-nowrap">Go to dashboard</Link>
         </div>
 
         <Link href="/projects" className="mt-10 inline-block text-[12px] tracking-[0.16em] uppercase text-ash hover:text-ink transition-colors">
