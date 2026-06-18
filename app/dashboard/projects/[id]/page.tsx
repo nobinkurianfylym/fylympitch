@@ -177,9 +177,9 @@ export default async function ProjectDetailPage({
         {isOwner && (
           <Link
             href={`/dashboard/projects/${project.id}/edit`}
-            className="btn-ghost !py-2 !px-4 text-[12px] shrink-0 mt-2"
+            className="btn-ghost !py-2.5 !px-5 text-[11px] shrink-0 mt-2 flex items-center gap-1.5"
           >
-            Edit
+            Edit project ✎
           </Link>
         )}
       </div>
@@ -191,12 +191,44 @@ export default async function ProjectDetailPage({
       </p>
 
       {/* Metadata */}
-      <div className="flex flex-wrap gap-x-8 gap-y-2 text-[13px] text-ash mb-5">
+      <div className="flex flex-wrap gap-x-8 gap-y-2 text-[13px] text-ash mb-4">
         <span>Country — <span className="text-ink">{project.country}</span></span>
         <span>Language — <span className="text-ink">{project.language}</span></span>
         <span>Budget — <span className="text-ink">{usd(project.budget_usd)}</span></span>
         <span>Seeking — <span className="text-gold font-normal">{usd(project.funding_needed_usd)}</span></span>
       </div>
+
+      {/* Director / Writer names */}
+      {(project.director_name || project.writer_name) && (
+        <div className="flex flex-wrap gap-x-8 gap-y-1 text-[13px] text-ash mb-5">
+          {project.director_name && (
+            <span>Director — <span className="text-ink">{project.director_name}</span></span>
+          )}
+          {project.writer_name && (
+            <span>Writer — <span className="text-ink">{project.writer_name}</span></span>
+          )}
+        </div>
+      )}
+
+      {/* Director's statement */}
+      {project.director_statement && (
+        <div className="max-w-2xl mb-4">
+          <p className="eyebrow mb-2">Director&rsquo;s statement</p>
+          <p className="text-[15px] leading-[1.75] text-ink whitespace-pre-line">
+            {project.director_statement}
+          </p>
+        </div>
+      )}
+
+      {/* Producers */}
+      {project.producer_info && (
+        <div className="max-w-2xl mb-5">
+          <p className="eyebrow mb-2">Producers</p>
+          <p className="text-[15px] leading-[1.7] text-ink whitespace-pre-line">
+            {project.producer_info}
+          </p>
+        </div>
+      )}
 
       {/* Files */}
       {(deckUrl || scriptUrl) && (
@@ -306,30 +338,6 @@ export default async function ProjectDetailPage({
               </div>
             ))}
           </div>
-        </section>
-      )}
-
-      {/* ════════════════════════════════════════════════════════════
-          6. DIRECTOR'S STATEMENT
-      ════════════════════════════════════════════════════════════ */}
-      {project.director_statement && (
-        <section className="mt-10 max-w-2xl">
-          <h2 className="eyebrow mb-3">Director&rsquo;s statement</h2>
-          <p className="text-[18px] leading-[1.75] text-ink whitespace-pre-line">
-            {project.director_statement}
-          </p>
-        </section>
-      )}
-
-      {/* ════════════════════════════════════════════════════════════
-          7. PRODUCERS
-      ════════════════════════════════════════════════════════════ */}
-      {project.producer_info && (
-        <section className="mt-10 max-w-2xl">
-          <h2 className="eyebrow mb-3">Producers</h2>
-          <p className="text-[18px] leading-[1.75] text-ink whitespace-pre-line">
-            {project.producer_info}
-          </p>
         </section>
       )}
 

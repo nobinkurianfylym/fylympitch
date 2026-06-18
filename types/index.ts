@@ -45,6 +45,8 @@ export interface Project {
   synopsis: string | null;
   director_statement: string | null;
   producer_info: string | null;
+  director_name: string | null;
+  writer_name: string | null;
   pitch_deck_path: string | null;
   script_path: string | null;
   poster_path: string | null;

@@ -67,6 +67,8 @@ export async function updateProject(formData: FormData) {
     synopsis:           formData.get("synopsis") || null,
     director_statement: formData.get("director_statement") || null,
     producer_info:      formData.get("producer_info") || null,
+    director_name:      formData.get("director_name") || null,
+    writer_name:        formData.get("writer_name") || null,
     budget_usd:         formData.get("budget_usd") ? Number(formData.get("budget_usd")) : null,
     funding_needed_usd: formData.get("funding_needed_usd") ? Number(formData.get("funding_needed_usd")) : null,
     is_public:          formData.get("is_public") === "true",

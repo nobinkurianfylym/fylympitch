@@ -88,6 +88,17 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
           <textarea name="synopsis" rows={5} defaultValue={project.synopsis ?? ""} className="field w-full" />
         </div>
 
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="field-label mb-1 block">Director name</label>
+            <input name="director_name" defaultValue={(project as any).director_name ?? ""} className="field w-full" placeholder="e.g. Jane Smith" />
+          </div>
+          <div>
+            <label className="field-label mb-1 block">Writer name</label>
+            <input name="writer_name" defaultValue={(project as any).writer_name ?? ""} className="field w-full" placeholder="e.g. Jane Smith" />
+          </div>
+        </div>
+
         <div>
           <label className="field-label mb-1 block">Director's statement</label>
           <textarea name="director_statement" rows={4} defaultValue={project.director_statement ?? ""} className="field w-full" />

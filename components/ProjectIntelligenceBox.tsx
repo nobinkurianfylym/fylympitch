@@ -132,33 +132,67 @@ export default function ProjectIntelligenceBox({
           ranked.length === 0
             ? <p style={{ fontSize: 13, color: "rgba(245,245,240,0.45)" }}>No matches yet — run the engine to generate your funding matches.</p>
             : <>
-                {ranked.slice(0, 6).map((m) => (
-                  <Link
-                    key={m.id}
-                    href={`/dashboard/opportunities/${m.id}?project=${projectId}`}
-                    className="flex items-center justify-between py-3 group"
-                    style={{ borderBottom: "0.5px solid rgba(255,255,255,0.07)", textDecoration: "none" }}
-                  >
-                    <div className="min-w-0 flex-1 pr-4">
-                      <p className="truncate mb-0.5 group-hover:text-gold transition-colors" style={{ fontSize: 13, color: "#F5F5F0" }}>
-                        {m.title}
-                      </p>
-                      <p style={{ fontSize: 10, color: "rgba(245,245,240,0.38)" }}>
+                <div className="space-y-2">
+                  {ranked.slice(0, 6).map((m) => (
+                    <Link
+                      key={m.id}
+                      href={`/dashboard/opportunities/${m.id}?project=${projectId}`}
+                      className="group flex items-center gap-3 p-3 rounded-[10px] transition-all hover:border-white/25 hover:bg-white/[0.07]"
+                      style={{
+                        border: "0.5px solid rgba(255,255,255,0.12)",
+                        background: "rgba(255,255,255,0.04)",
+                        textDecoration: "none",
+                        display: "flex",
+                      }}
+                    >
+                      {/* Type badge */}
+                      <span
+                        className="shrink-0 rounded-md"
+                        style={{
+                          fontSize: 8, letterSpacing: "0.1em", textTransform: "uppercase",
+                          padding: "3px 7px", background: "rgba(255,255,255,0.08)",
+                          color: "rgba(245,245,240,0.55)", whiteSpace: "nowrap",
+                        }}
+                      >
                         {OPP_LABELS[m.opp_type] ?? m.opp_type}
-                        {m.max_award_usd ? ` · ${usd(m.max_award_usd)}` : ""}
-                        {m.deadline_note
-                          ? ` · ${m.deadline_note}`
-                          : m.deadline
-                          ? ` · ${new Date(m.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
-                          : ""}
-                      </p>
-                    </div>
-                    <div className="font-display shrink-0" style={{ fontSize: 20, color: "#BF9953" }}>{m.score}</div>
-                  </Link>
-                ))}
+                      </span>
+
+                      {/* Title + meta */}
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className="truncate group-hover:text-gold transition-colors"
+                          style={{ fontSize: 13, color: "#F5F5F0", marginBottom: 1 }}
+                        >
+                          {m.title}
+                        </p>
+                        <p style={{ fontSize: 10, color: "rgba(245,245,240,0.35)" }}>
+                          {m.max_award_usd ? usd(m.max_award_usd) : ""}
+                          {(m.max_award_usd && (m.deadline_note || m.deadline)) ? " · " : ""}
+                          {m.deadline_note
+                            ? m.deadline_note
+                            : m.deadline
+                            ? new Date(m.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+                            : ""}
+                        </p>
+                      </div>
+
+                      {/* Score */}
+                      <div
+                        className="font-display shrink-0"
+                        style={{ fontSize: 18, color: "#BF9953", minWidth: 28, textAlign: "right" }}
+                      >
+                        {m.score}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
                 <Link
                   href="/dashboard/opportunities"
-                  style={{ fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(191,153,83,0.7)", textDecoration: "none", display: "inline-block", marginTop: 14 }}
+                  style={{
+                    fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase",
+                    color: "rgba(191,153,83,0.7)", textDecoration: "none",
+                    display: "inline-block", marginTop: 14,
+                  }}
                 >
                   View all {ranked.length} matches →
                 </Link>
