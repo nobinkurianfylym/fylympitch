@@ -682,13 +682,27 @@ export async function signOut() {
 
 // ---------- PRODUCER PROFILES ----------
 
-export async function saveProducerProfile(formData: FormData) {
+export async function saveProducerProfile(_prevState: unknown, formData: FormData) {
   const { supabase, user } = await requireUser();
 
   const genres = formData.getAll("genres").map(String);
   const formats = formData.getAll("formats").map(String);
   const territories = formData.getAll("territories").map(String);
   const festivals = formData.getAll("festivals").map(String);
+
+  // Update identity on profiles table
+  const name = str(formData, "name");
+  const company = str(formData, "company");
+  const avatar_url = str(formData, "avatar_url");
+
+  const profileUpdate: Record<string, string> = {};
+  if (name)       profileUpdate.full_name  = name;
+  if (company !== null && company !== undefined) profileUpdate.company = company;
+  if (avatar_url) profileUpdate.avatar_url = avatar_url;
+
+  if (Object.keys(profileUpdate).length > 0) {
+    await supabase.from("profiles").update(profileUpdate).eq("id", user.id);
+  }
 
   const payload = {
     user_id: user.id,
@@ -713,7 +727,7 @@ export async function saveProducerProfile(formData: FormData) {
     .from("producer_profiles")
     .upsert(payload, { onConflict: "user_id" });
 
-  redirect("/producer");
+  return { ok: true as const };
 }
 
 export async function requestProducerIntroduction(formData: FormData) {

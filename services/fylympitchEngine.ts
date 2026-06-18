@@ -455,6 +455,7 @@ export interface ProducerMatchProfile {
   id: string;
   full_name: string;
   company: string | null;
+  avatar_url: string | null;
   role: "producer" | "investor" | "organization";
   genres: string[];
   formats: string[];

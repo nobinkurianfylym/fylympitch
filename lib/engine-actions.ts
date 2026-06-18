@@ -51,12 +51,12 @@ export async function rerunEngine(
     festivals: string[] | null;
     open_to_coproduction: boolean | null;
     open_to_ep: boolean | null;
-    profiles: { full_name: string; company: string | null } | null;
+    profiles: { full_name: string; company: string | null; avatar_url: string | null } | null;
   };
 
   const { data: ppRows } = await supabase
     .from("producer_profiles")
-    .select("user_id, genres, formats, territories, budget_range, festivals, open_to_coproduction, open_to_ep, profiles!producer_profiles_user_id_fkey(full_name, company)")
+    .select("user_id, genres, formats, territories, budget_range, festivals, open_to_coproduction, open_to_ep, profiles!producer_profiles_user_id_fkey(full_name, company, avatar_url)")
     .eq("is_public", true);
 
   const BUDGET_RANGES: Record<string, [number, number]> = {
@@ -75,6 +75,7 @@ export async function rerunEngine(
       id: p.user_id,
       full_name: profile?.full_name ?? "Unknown",
       company: profile?.company ?? null,
+      avatar_url: profile?.avatar_url ?? null,
       role: "producer" as const,
       genres: p.genres ?? [],
       formats: p.formats ?? [],

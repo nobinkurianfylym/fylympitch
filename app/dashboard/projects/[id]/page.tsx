@@ -313,13 +313,24 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               return (
                 <div key={pm.profile.id} className={`card p-6 ${i === 0 ? "border-gold/50" : ""}`}>
                   <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="font-normal text-[16px]">
-                        {pm.profile.full_name}
-                        {pm.profile.company ? <span className="text-ash"> · {pm.profile.company}</span> : null}
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-parchment border border-line shrink-0 flex items-center justify-center">
+                        {pm.profile.avatar_url ? (
+                          <img src={pm.profile.avatar_url} alt={pm.profile.full_name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="font-display text-[14px] text-ash">
+                            {pm.profile.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                          </span>
+                        )}
                       </div>
-                      <div className="mt-1 text-[12px] tracking-[0.14em] uppercase text-ash">
-                        {pm.profile.countries?.[0] ?? ""}
+                      <div>
+                        <div className="font-normal text-[16px]">
+                          {pm.profile.full_name}
+                          {pm.profile.company ? <span className="text-ash"> · {pm.profile.company}</span> : null}
+                        </div>
+                        <div className="mt-0.5 text-[12px] tracking-[0.14em] uppercase text-ash">
+                          {pm.profile.countries?.[0] ?? ""}
+                        </div>
                       </div>
                     </div>
                     <div className="text-right shrink-0">

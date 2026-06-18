@@ -1,96 +1,44 @@
-// ProjectThumbnail — three-tier image with instant render, no blocking.
-//
-// Priority:
-//   1. poster_path  → Supabase public storage URL → next/image (WebP, lazy, sized)
-//   2. No poster    → Generated SVG title card (inline, instant, no network)
-//
-// The PDF.js deck-extraction tier was removed: it loaded ~3 MB of JS
-// from CDN per tile, blocked the main thread, and caused visible delay
-// on every page that showed thumbnails without posters. Poster upload
-// is the intended path; the SVG card is the elegant permanent fallback.
-
-import Image from "next/image";
-
-const PALETTES = [
-  { bg: "#F0E8FF", accent: "#C4A8E8", text: "#4A1D96" },
-  { bg: "#E8F8F0", accent: "#A8E8C4", text: "#1A5C3A" },
-  { bg: "#FFF0E8", accent: "#F5C4A0", text: "#8B3A0F" },
-  { bg: "#E8F0FF", accent: "#A8C0F0", text: "#1A2E7A" },
-  { bg: "#FFF0F5", accent: "#F0B0C8", text: "#7A1A3C" },
-  { bg: "#F5FFE8", accent: "#C0E888", text: "#2A5C0A" },
-  { bg: "#FFFCE8", accent: "#F0DCA0", text: "#6B4A00" },
-  { bg: "#E8FFFD", accent: "#A0E8E4", text: "#0A4A48" },
-];
-
-function hashTitle(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
-function SVGCard({ title, genre, className }: { title: string; genre: string; className?: string }) {
-  const p = PALETTES[hashTitle(title) % PALETTES.length];
-  const words = title.split(" ");
-  const lines: string[] = [];
-  let cur = "";
-  for (const w of words) {
-    if ((cur + " " + w).trim().length > 16 && cur) { lines.push(cur.trim()); cur = w; }
-    else { cur = (cur + " " + w).trim(); }
-  }
-  if (cur) lines.push(cur.trim());
-  const display = lines.slice(0, 2);
-  if (lines.length > 2) display[1] = display[1].slice(0, 13) + "…";
-  const y0 = display.length === 1 ? 88 : 72;
-
-  return (
-    <div className={className} style={{ background: p.bg, aspectRatio: "3/2", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-      {/* Bottom accent band */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "22%", background: p.accent, opacity: 0.4 }} />
-      {/* Corner dots */}
-      {[[10, 10], [10, "auto"], ["auto", 10], ["auto", "auto"]].map(([t, r], i) => (
-        <div key={i} style={{ position: "absolute", top: t === "auto" ? undefined : 12, bottom: t === "auto" ? 12 : undefined, left: r === "auto" ? undefined : 12, right: r === "auto" ? 12 : undefined, width: 7, height: 7, borderRadius: 2, background: p.accent }} />
-      ))}
-      <svg viewBox="0 0 300 200" style={{ width: "90%", height: "90%", position: "relative" }}>
-        {display.map((line, i) => (
-          <text key={i} x="150" y={y0 + i * 42} textAnchor="middle" fontFamily="Georgia, serif" fontSize="28" fontWeight="400" fill={p.text}>
-            {line}
-          </text>
-        ))}
-        <text x="150" y="180" textAnchor="middle" fontFamily="Arial, sans-serif" fontSize="10" letterSpacing="3" fill={p.text} opacity="0.55">
-          {genre.toUpperCase()}
-        </text>
-      </svg>
-    </div>
-  );
-}
-
 interface Props {
-  posterPath: string | null;
-  deckPath?: string | null;  // kept for API compatibility, not used for extraction
+  posterPath?: string | null;
   title: string;
-  genre: string;
+  genre?: string | null;
   supabaseUrl: string;
   className?: string;
 }
 
 export default function ProjectThumbnail({ posterPath, title, genre, supabaseUrl, className = "" }: Props) {
-  if (!posterPath) {
-    return <SVGCard title={title} genre={genre} className={`${className} rounded-card`} />;
+  if (posterPath) {
+    return (
+      <img
+        src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`}
+        alt={title}
+        className={`object-cover ${className}`}
+      />
+    );
   }
 
-  const src = `${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`;
+  const words = title.trim().split(/\s+/);
+  const line1 = words.slice(0, 3).join(" ");
+  const line2 = words.slice(3, 6).join(" ");
+  const genreLabel = (genre ?? "").toUpperCase().slice(0, 12);
 
   return (
-    <div className={`${className} relative overflow-hidden`} style={{ aspectRatio: "3/2" }}>
-      <Image
-        src={src}
-        alt={`${title} poster`}
-        fill
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-        className="object-cover"
-        loading="lazy"
-        placeholder="empty"
-      />
-    </div>
+    <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" className={className} aria-label={title}>
+      <rect width="160" height="100" fill="#1A1815" />
+      <rect x="0" y="0" width="3" height="100" fill="#BF9953" />
+      <rect x="0" y="88" width="160" height="12" fill="#BF9953" opacity="0.12" />
+      {genreLabel && (
+        <text x="12" y="22" fill="#BF9953" fontSize="7" fontFamily="monospace" letterSpacing="1.8">{genreLabel}</text>
+      )}
+      <text x="12" y="54" fill="#F5F5F0" fontSize="12" fontFamily="Georgia, serif">
+        {line1.length > 16 ? line1.slice(0, 16) + "…" : line1}
+      </text>
+      {line2 && (
+        <text x="12" y="70" fill="#F5F5F0" fontSize="12" fontFamily="Georgia, serif" opacity="0.7">
+          {line2.length > 16 ? line2.slice(0, 16) + "…" : line2}
+        </text>
+      )}
+      <text x="12" y="95" fill="#BF9953" fontSize="5.5" fontFamily="monospace" letterSpacing="2" opacity="0.7">FYLYMPITCH</text>
+    </svg>
   );
 }

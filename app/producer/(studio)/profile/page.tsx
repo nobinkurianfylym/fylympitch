@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useActionState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saveProducerProfile } from "@/lib/actions";
+import AvatarUpload from "@/components/AvatarUpload";
 
 const ROLE_TYPES = [
   { key: "independent_producer", label: "Independent Producer" },
@@ -14,12 +16,12 @@ const ROLE_TYPES = [
 ];
 
 const GENRES = [
-  "Drama", "Documentary", "Thriller", "Horror", "Comedy",
-  "Animation", "Sci-Fi", "World Cinema", "Romance", "Action",
-  "Experimental", "Short Film",
+  "Drama","Documentary","Thriller","Horror","Comedy",
+  "Animation","Sci-Fi","World Cinema","Romance","Action",
+  "Experimental","Short Film",
 ];
 
-const FORMATS = ["Feature", "Short", "Series", "Documentary"];
+const FORMATS = ["Feature","Short","Series","Documentary"];
 
 const BUDGET_RANGES = [
   { key: "micro", label: "Micro", sub: "< $100K" },
@@ -29,8 +31,8 @@ const BUDGET_RANGES = [
 ];
 
 const FESTIVALS = [
-  "Cannes", "Berlin", "Venice", "Sundance", "TIFF",
-  "Rotterdam", "Tribeca", "IFFR", "Hot Docs",
+  "Cannes","Berlin","Venice","Sundance","TIFF",
+  "Rotterdam","Tribeca","IFFR","Hot Docs",
 ];
 
 const COUNTRIES = [
@@ -43,7 +45,18 @@ const COUNTRIES = [
 ];
 
 export default function ProducerProfilePage() {
+  const router = useRouter();
+  const [state, formAction, pending] = useActionState(saveProducerProfile, null);
   const [loading, setLoading]   = useState(true);
+  const [saved, setSaved]       = useState(false);
+
+  // Identity
+  const [userId, setUserId]     = useState("");
+  const [name, setName]         = useState("");
+  const [company, setCompany]   = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+
+  // Taste
   const [roleType, setRoleType] = useState("independent_producer");
   const [country, setCountry]   = useState("");
   const [genres, setGenres]     = useState<string[]>([]);
@@ -61,62 +74,103 @@ export default function ProducerProfilePage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
-      supabase.from("producer_profiles").select("*").eq("user_id", user.id).single().then(({ data }) => {
-        if (data) {
-          setRoleType(data.role_type ?? "independent_producer");
-          setCountry(data.country ?? "");
-          setGenres(data.genres ?? []);
-          setFormats(data.formats ?? []);
-          setBudget(data.budget_range ?? "");
-          setFestivals(data.festivals ?? []);
-          setTerritories(data.territories ?? []);
-          setCoproduction(!!data.open_to_coproduction);
-          setAttachEP(!!data.open_to_ep);
-          setBringFunding(!!data.bringing_territory_funding);
-          setIsPublic(!!data.is_public);
-          setImdb(data.imdb_url ?? "");
+      setUserId(user.id);
+      Promise.all([
+        supabase.from("profiles").select("full_name, company, avatar_url").eq("id", user.id).single(),
+        supabase.from("producer_profiles").select("*").eq("user_id", user.id).single(),
+      ]).then(([{ data: profile }, { data: pp }]) => {
+        if (profile) {
+          setName(profile.full_name ?? "");
+          setCompany(profile.company ?? "");
+          setAvatarUrl(profile.avatar_url ?? "");
+        }
+        if (pp) {
+          setRoleType(pp.role_type ?? "independent_producer");
+          setCountry(pp.country ?? "");
+          setGenres(pp.genres ?? []);
+          setFormats(pp.formats ?? []);
+          setBudget(pp.budget_range ?? "");
+          setFestivals(pp.festivals ?? []);
+          setTerritories(pp.territories ?? []);
+          setCoproduction(!!pp.open_to_coproduction);
+          setAttachEP(!!pp.open_to_ep);
+          setBringFunding(!!pp.bringing_territory_funding);
+          setIsPublic(!!pp.is_public);
+          setImdb(pp.imdb_url ?? "");
         }
         setLoading(false);
       });
     });
   }, []);
 
+  // Show saved state
+  useEffect(() => {
+    if (state?.ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    }
+  }, [state]);
+
   function toggle<T>(arr: T[], val: T): T[] {
     return arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
   }
 
-  if (loading) {
-    return (
-      <div className="p-10 flex items-center gap-3 text-ash">
-        <span className="text-[13px]">Loading profile…</span>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="p-10 text-ash text-[13px]">Loading profile…</div>
+  );
 
   return (
     <div className="p-6 md:p-10 max-w-2xl">
-      <p className="eyebrow mb-2">Producer Studio</p>
-      <h1 className="font-display text-[32px] mb-2">Taste Profile</h1>
-      <p className="text-ash text-[14px] mb-10">Update your preferences to keep your Discover feed relevant.</p>
+      <p className="eyebrow mb-2">Producer Profile</p>
+      <h1 className="font-display text-[36px] mb-1">{name || "Your Profile"}</h1>
+      <p className="text-ash text-[14px] mb-10">Update your profile and taste preferences.</p>
 
-      <form action={saveProducerProfile} className="space-y-10">
+      <form action={formAction} className="space-y-10">
+
+        {/* Hidden state */}
+        <input type="hidden" name="name" value={name} />
+        <input type="hidden" name="company" value={company} />
+        <input type="hidden" name="avatar_url" value={avatarUrl} />
         <input type="hidden" name="open_to_coproduction" value={coproduction ? "true" : "false"} />
         <input type="hidden" name="open_to_ep" value={attachEP ? "true" : "false"} />
         <input type="hidden" name="bringing_territory_funding" value={bringFunding ? "true" : "false"} />
         <input type="hidden" name="is_public" value={isPublic ? "true" : "false"} />
 
-        <section>
-          <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Location</p>
+        {/* Identity */}
+        <section className="card p-6">
+          <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-5">Identity</p>
+          <div className="mb-6">
+            <AvatarUpload currentUrl={avatarUrl || null} userId={userId} name={name} onUpload={setAvatarUrl} />
+          </div>
           <div className="grid sm:grid-cols-2 gap-4">
-            <select name="country" value={country} onChange={(e) => setCountry(e.target.value)} className="field w-full">
-              <option value="">Select country</option>
-              {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <input type="url" name="imdb_url" value={imdb} onChange={(e) => setImdb(e.target.value)}
-              placeholder="IMDb URL (optional)" className="field w-full" />
+            <div>
+              <label className="field-label mb-1 block">Full name</label>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                placeholder="Your name" className="field w-full" />
+            </div>
+            <div>
+              <label className="field-label mb-1 block">Company</label>
+              <input type="text" value={company} onChange={(e) => setCompany(e.target.value)}
+                placeholder="Optional" className="field w-full" />
+            </div>
+            <div>
+              <label className="field-label mb-1 block">IMDb URL</label>
+              <input type="url" name="imdb_url" value={imdb} onChange={(e) => setImdb(e.target.value)}
+                placeholder="Optional" className="field w-full" />
+            </div>
           </div>
         </section>
 
+        {/* Location */}
+        <section>
+          <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Base country</p>
+          <select name="country" value={country} onChange={(e) => setCountry(e.target.value)} className="field w-full max-w-xs">
+            <option value="">Select country</option>
+            {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </section>
+
+        {/* Role */}
         <section>
           <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Your role</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -131,6 +185,7 @@ export default function ProducerProfilePage() {
           <input type="hidden" name="role_type" value={roleType} />
         </section>
 
+        {/* Genres */}
         <section>
           <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Genre interests</p>
           <div className="flex flex-wrap gap-2">
@@ -145,6 +200,7 @@ export default function ProducerProfilePage() {
           {genres.map((g) => <input key={g} type="hidden" name="genres" value={g} />)}
         </section>
 
+        {/* Format */}
         <section>
           <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Format</p>
           <div className="flex flex-wrap gap-3">
@@ -159,6 +215,7 @@ export default function ProducerProfilePage() {
           {formats.map((f) => <input key={f} type="hidden" name="formats" value={f} />)}
         </section>
 
+        {/* Budget */}
         <section>
           <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Budget range</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -174,6 +231,7 @@ export default function ProducerProfilePage() {
           <input type="hidden" name="budget_range" value={budget} />
         </section>
 
+        {/* Territories */}
         <section>
           <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Territories of interest</p>
           <div className="flex flex-wrap gap-2">
@@ -188,6 +246,7 @@ export default function ProducerProfilePage() {
           {territories.map((t) => <input key={t} type="hidden" name="territories" value={t} />)}
         </section>
 
+        {/* Festivals */}
         <section>
           <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Festivals</p>
           <div className="flex flex-wrap gap-2">
@@ -202,6 +261,7 @@ export default function ProducerProfilePage() {
           {festivals.map((f) => <input key={f} type="hidden" name="festivals" value={f} />)}
         </section>
 
+        {/* What you bring */}
         <section>
           <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">What you bring</p>
           <div className="flex flex-wrap gap-3">
@@ -220,6 +280,7 @@ export default function ProducerProfilePage() {
           </div>
         </section>
 
+        {/* Public opt-in */}
         <section>
           <button type="button" onClick={() => setIsPublic(!isPublic)}
             className={`w-full text-left p-6 rounded-card border-2 transition-all
@@ -239,11 +300,14 @@ export default function ProducerProfilePage() {
           </button>
         </section>
 
-        <div className="pb-8">
-          <button type="submit" className="btn-gold w-full py-4 text-[14px] tracking-[0.16em]">
-            Save profile
+        <div className="pb-8 flex items-center gap-4">
+          <button type="submit" disabled={pending}
+            className="btn-gold py-4 px-10 text-[14px] tracking-[0.16em] disabled:opacity-60">
+            {pending ? "Saving…" : "Save profile"}
           </button>
+          {saved && <span className="text-[13px] text-emerald-600">✓ Saved</span>}
         </div>
+
       </form>
     </div>
   );
