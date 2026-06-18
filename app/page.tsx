@@ -71,12 +71,10 @@ export default async function Home() {
             <a href="#features" className="hover:text-ink transition-colors">Platform</a>
             <Link href="/projects" className="hover:text-ink transition-colors">Projects</Link>
             <Link href="/funds"    className="hover:text-ink transition-colors">Funds</Link>
-            <a href="#pricing" className="hover:text-ink transition-colors">Pricing</a>
           </nav>
           <div className="flex items-center gap-3">
             <HeaderRoleToggle />
-            <Link href="/login" className="text-[11px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors">Sign in</Link>
-            <Link href="/login" className="btn-gold !px-5 !py-2.5 !text-[11px]">Get started</Link>
+            <Link href="/login" className="btn-outline !px-5 !py-2.5 !text-[11px]">Get started</Link>
           </div>
         </header>
 

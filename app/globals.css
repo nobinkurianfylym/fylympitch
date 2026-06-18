@@ -67,6 +67,15 @@ nav { font-weight: 400; }
 }
 .btn-ghost:hover { border-color: var(--color-gold); color: #8A6F3E; }
 
+.btn-outline {
+  @apply inline-flex items-center justify-center rounded-card border
+         text-[13px] tracking-[0.12em] uppercase px-7 py-3.5 transition-colors bg-transparent;
+  border: 1px solid #1A1815;
+  color: #1A1815;
+  font-weight: 500;
+}
+.btn-outline:hover { background: #1A1815; color: #F5F5F0; }
+
 /* Cards */
 .card { @apply bg-white/70 border border-line rounded-card; }
 
