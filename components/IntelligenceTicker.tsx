@@ -128,9 +128,11 @@ function EntityCardEl({ card }: { card: EntityCard }) {
       {/* Logo */}
       <div style={{ width: 112, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <img
-          src={`/logos/${card.logoFile}.png`}
+          src={`/logos/${card.logoFile}.webp`}
           alt={card.name}
           loading="lazy"
+          width={112}
+          height={80}
           style={{
             maxWidth: 112,
             maxHeight: 80,
