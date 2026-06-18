@@ -33,15 +33,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
 
 
-  // Primary nav — filmmaker + producer studio for all users
+  // Primary nav
   const nav = [
-    { href: "/dashboard", label: "Home" },
-    { href: "/dashboard/opportunities", label: "Opportunities" },
+    { href: "/dashboard",              label: "Home" },
+    { href: "/dashboard/opportunities",label: "Opportunities" },
     { href: "/dashboard/applications", label: "Applications" },
-    { href: "/producer", label: "Producer Studio" },
-    { href: "/dashboard/messages", label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}` },
-    { href: "/dashboard/profile", label: "Profile" },
-    { href: "/dashboard/credits", label: "Credits" },
+    ...(isIndustry ? [{ href: "/producer", label: "Producer Studio" }] : []),
+    { href: "/dashboard/messages",     label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}` },
+    { href: "/dashboard/profile",      label: "Profile & Credits" },
     ...(role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
   ];
 

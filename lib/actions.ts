@@ -227,6 +227,7 @@ export async function applyToOpportunity(formData: FormData) {
     project_id, opportunity_id, applicant_id: user.id,
     cover_note: str(formData, "cover_note") || null,
     match_score: match.score,
+    filmmaker_stage: "qualified",
   });
   if (error) {
     if (error.code === "23505") return { error: "You have already applied to this opportunity with this project." };
@@ -238,6 +239,19 @@ export async function applyToOpportunity(formData: FormData) {
   });
   revalidatePath("/dashboard/applications");
   redirect("/dashboard/applications");
+}
+
+export async function updateFilmmakerStage(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const id    = str(formData, "application_id");
+  const stage = str(formData, "stage");
+  if (!id || !stage) return;
+  await supabase
+    .from("applications")
+    .update({ filmmaker_stage: stage, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("applicant_id", user.id);
+  revalidatePath("/dashboard/applications");
 }
 
 // ---------- SAVED ----------
