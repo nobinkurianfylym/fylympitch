@@ -3,13 +3,16 @@
 import { useState } from "react";
 import { updateProfile } from "@/lib/actions";
 import type { Profile } from "@/types";
+import AvatarUpload from "@/components/AvatarUpload";
 
 export default function ProfileForm({ profile }: { profile: Profile }) {
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved]       = useState(false);
+  const [error, setError]       = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url ?? "");
 
   async function action(formData: FormData) {
     setError(null); setSaved(false);
+    if (avatarUrl) formData.set("avatar_url", avatarUrl);
     const result = await updateProfile(formData);
     if (result?.error) setError(result.error);
     else setSaved(true);
@@ -17,6 +20,16 @@ export default function ProfileForm({ profile }: { profile: Profile }) {
 
   return (
     <form action={action} className="space-y-6 max-w-xl">
+      {/* Avatar */}
+      <div className="pb-2">
+        <AvatarUpload
+          currentUrl={avatarUrl || null}
+          userId={profile.id}
+          name={profile.full_name}
+          onUpload={setAvatarUrl}
+        />
+      </div>
+
       <div>
         <label className="field-label" htmlFor="full_name">Full name</label>
         <input id="full_name" name="full_name" className="field" defaultValue={profile.full_name} required />

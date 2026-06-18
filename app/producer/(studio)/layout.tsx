@@ -59,9 +59,23 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
           <Link href="/dashboard" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors px-3">
             Filmmaker view
           </Link>
-          <form action={signOut} className="px-3">
-            <button className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-gold">Sign out</button>
-          </form>
+          <div className="flex items-center gap-3 px-3">
+            {/* Avatar circle */}
+            <Link href="/producer/profile" className="shrink-0">
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center hover:border-gold transition-colors">
+                {(profile as any)?.avatar_url ? (
+                  <img src={(profile as any).avatar_url} alt={(profile as any).full_name ?? ""} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="font-display text-[11px] text-ash">
+                    {((profile as any)?.full_name ?? "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                  </span>
+                )}
+              </div>
+            </Link>
+            <form action={signOut}>
+              <button className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-gold">Sign out</button>
+            </form>
+          </div>
         </div>
       </aside>
 

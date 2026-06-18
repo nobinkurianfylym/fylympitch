@@ -19,13 +19,10 @@ export default async function ProducerProjectsPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase.from("profiles").select("approval_status").eq("id", user.id).single();
-  if (profile?.approval_status !== "approved") redirect("/producer/pending");
-
   // Fetch all projects — approved producers see everything (RLS updated in 009)
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, country, language, logline, synopsis, budget_usd, funding_needed_usd, poster_path, pitch_deck_path, is_public, created_at, owner_id")
+    .select("id, title, genre, format, stage, country, language, logline, synopsis, budget_usd, funding_needed_usd, poster_path, pitch_deck_path, is_public, created_at, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url)")
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -127,7 +124,23 @@ export default async function ProducerProjectsPage({
                 )}
 
                 <div className="flex items-center justify-between text-[12px] text-ash border-t border-line pt-3 mt-2">
-                  <span>{p.country}{p.language ? ` · ${p.language}` : ""}</span>
+                  <div className="flex items-center gap-2">
+                    {/* Filmmaker avatar */}
+                    {(() => {
+                      const fm = Array.isArray((p as any).filmmaker) ? (p as any).filmmaker[0] : (p as any).filmmaker;
+                      const initials = (fm?.full_name ?? "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                      return (
+                        <div className="w-6 h-6 rounded-full overflow-hidden bg-parchment border border-line shrink-0 flex items-center justify-center">
+                          {fm?.avatar_url ? (
+                            <img src={fm.avatar_url} alt={fm.full_name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="font-display text-[8px] text-ash">{initials}</span>
+                          )}
+                        </div>
+                      );
+                    })()}
+                    <span>{p.country}{p.language ? ` · ${p.language}` : ""}</span>
+                  </div>
                   {p.funding_needed_usd && <span className="text-gold">{usd(p.funding_needed_usd)}</span>}
                 </div>
 

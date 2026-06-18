@@ -18,7 +18,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     { count: unread },
     { data: msgUnread },
   ] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single<Profile>(),
+    supabase.from("profiles").select("id, full_name, avatar_url, role, approval_status, company").eq("id", user.id).single<Profile>(),
     supabase.from("notifications").select("id", { count: "exact", head: true })
       .eq("user_id", user.id).eq("read", false),
     supabase.from("conversation_participants").select("unread_count")
@@ -70,9 +70,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </Link>
           ))}
         </nav>
-        <form action={signOut} className="md:mt-auto md:pt-12 ml-auto md:ml-0">
-          <button className="text-[12px] tracking-[0.16em] uppercase text-ash hover:text-gold">Sign out</button>
-        </form>
+        <div className="md:mt-auto md:pt-12 ml-auto md:ml-0 flex items-center gap-3">
+          {/* Avatar circle */}
+          <Link href="/dashboard/profile" className="shrink-0">
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center hover:border-gold transition-colors">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-display text-[11px] text-ash">
+                  {(profile?.full_name ?? "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                </span>
+              )}
+            </div>
+          </Link>
+          <form action={signOut}>
+            <button className="text-[12px] tracking-[0.16em] uppercase text-ash hover:text-gold">Sign out</button>
+          </form>
+        </div>
       </aside>
       <main className="flex-1 px-6 md:px-12 py-10 max-w-5xl">
 

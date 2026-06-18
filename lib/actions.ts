@@ -302,13 +302,15 @@ export async function respondToOffer(formData: FormData) {
 // ---------- PROFILE ----------
 export async function updateProfile(formData: FormData) {
   const { supabase, user } = await requireUser();
+  const avatar_url = str(formData, "avatar_url");
   const { error } = await supabase.from("profiles").update({
-    full_name: str(formData, "full_name"),
-    company: str(formData, "company") || null,
-    country: str(formData, "country") || null,
-    bio: str(formData, "bio") || null,
-    website: str(formData, "website") || null,
-    imdb_url: str(formData, "imdb_url") || null,
+    full_name:  str(formData, "full_name"),
+    company:    str(formData, "company")  || null,
+    country:    str(formData, "country")  || null,
+    bio:        str(formData, "bio")      || null,
+    website:    str(formData, "website")  || null,
+    imdb_url:   str(formData, "imdb_url") || null,
+    ...(avatar_url ? { avatar_url } : {}),
   }).eq("id", user.id);
   if (error) return { error: error.message };
   revalidatePath("/dashboard/profile");
