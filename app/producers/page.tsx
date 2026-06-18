@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import Wordmark from "@/components/Wordmark";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -32,25 +32,31 @@ function seekingLabel(stage: string): string {
 }
 
 export default async function ProducersDiscoveryPage() {
-  const supabase = createAdminClient();
+  const supabase = await createClient();
 
-  const { data: raw } = await supabase
-    .from("projects")
-    .select("id, title, genre, format, stage, country, budget_usd, created_at")
-    .eq("is_public", true)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  let projects: { id: string; title: string; genre: string; format: string; stage: string; country: string; budget: string; seeking: string; }[] = [];
 
-  const projects = (raw ?? []).map((p: any) => ({
-    id:      p.id as string,
-    title:   p.title as string,
-    genre:   p.genre as string,
-    format:  p.format as string,
-    stage:   p.stage as string,
-    country: (p.country as string) ?? "International",
-    budget:  formatBudget(p.budget_usd as number | null),
-    seeking: seekingLabel(p.stage as string),
-  }));
+  try {
+    const { data: raw } = await supabase
+      .from("projects")
+      .select("id, title, genre, format, stage, country, budget_usd, created_at")
+      .eq("is_public", true)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    projects = (raw ?? []).map((p: any) => ({
+      id:      p.id as string,
+      title:   p.title as string,
+      genre:   p.genre as string,
+      format:  p.format as string,
+      stage:   p.stage as string,
+      country: (p.country as string) ?? "International",
+      budget:  formatBudget(p.budget_usd as number | null),
+      seeking: seekingLabel(p.stage as string),
+    }));
+  } catch {
+    // page renders with empty ticker if DB is unavailable
+  }
 
   return (
     <div className="min-h-screen bg-ivory">
