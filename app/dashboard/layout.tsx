@@ -58,7 +58,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <Wordmark href="/" />
         <nav className="flex md:flex-col gap-5 md:gap-0 md:mt-12 md:space-y-5 text-[12px] tracking-[0.16em] uppercase whitespace-nowrap">
           {nav.map((n) => (
-            <Link key={n.href} href={n.href} className="text-ash hover:text-ink transition-colors">
+            <Link key={n.href} href={n.href}
+              className={`hover:text-ink transition-colors ${
+                n.href === "/producer"
+                  ? "text-gold hover:text-gold/80 font-medium"
+                  : "text-ash"
+              }`}>
               {n.label}
             </Link>
           ))}

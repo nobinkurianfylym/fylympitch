@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useActionState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { saveProducerProfile } from "@/lib/actions";
 import AvatarUpload from "@/components/AvatarUpload";
@@ -97,7 +98,21 @@ export default function ProducerOnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-ivory flex items-start justify-center py-16 px-4">
+    <div className="min-h-screen bg-ivory">
+      {/* Minimal header — keeps the user oriented */}
+      <header className="border-b border-line bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] tracking-[0.28em] uppercase text-ash">FYLYMPITCH</p>
+            <p className="text-[12px] tracking-[0.18em] uppercase text-ink mt-0.5">Producer Studio</p>
+          </div>
+          <Link href="/dashboard" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors">
+            ← Back to dashboard
+          </Link>
+        </div>
+      </header>
+
+      <div className="flex items-start justify-center py-16 px-4">
       <div className="w-full max-w-2xl">
 
         <p className="eyebrow mb-3">Producer Studio</p>
@@ -326,6 +341,7 @@ export default function ProducerOnboardingPage() {
 
         </form>
       </div>
+    </div>
     </div>
   );
 }
