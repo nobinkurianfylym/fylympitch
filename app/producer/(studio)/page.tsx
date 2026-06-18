@@ -50,29 +50,27 @@ export default async function ProducerDiscoverPage() {
 
   if (!producerProfile) redirect("/producer/onboarding");
 
-  const [{ data: projects }, { data: pipelineRows }, { count: pipelineCount }] = await Promise.all([
+  const [{ data: projects }, { data: pipelineRows }] = await Promise.all([
     supabase
       .from("projects")
       .select("id, title, genre, format, country, budget_usd, funding_needed_usd, logline, poster_path")
       .eq("is_public", true)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(50),                             // cap data fetched — score all 50, render top 20
     supabase
       .from("producer_projects")
-      .select("project_id")
-      .eq("producer_id", user.id)
-      .neq("status", "passed"),
-    supabase
-      .from("producer_projects")
-      .select("id", { count: "exact", head: true })
+      .select("project_id")                   // one query — derive count from .length
       .eq("producer_id", user.id)
       .neq("status", "passed"),
   ]);
 
-  const pipelineSet = new Set((pipelineRows ?? []).map((r: any) => r.project_id));
+  const pipelineCount = pipelineRows?.length ?? 0;
+  const pipelineSet   = new Set((pipelineRows ?? []).map((r: any) => r.project_id));
 
   const scored = (projects ?? [])
     .map((p) => ({ ...p, _score: scoreProject(p, producerProfile) }))
-    .sort((a, b) => b._score - a._score);
+    .sort((a, b) => b._score - a._score)
+    .slice(0, 20);                            // render only top 20 — biggest React CPU saving
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 

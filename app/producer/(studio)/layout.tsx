@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Wordmark from "@/components/Wordmark";
 import { signOut } from "@/lib/auth-actions";
-import type { Profile } from "@/types";
 
 export const dynamic = "force-dynamic";
 
@@ -12,22 +11,21 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (!user || authError) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single<Profile>();
+  // Parallelise — saves one sequential round-trip on every producer page load
+  const [{ data: profile }, { data: producerProfile }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name, avatar_url")   // only what the sidebar needs
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("producer_profiles")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .single(),
+  ]);
 
   if (!profile) redirect("/dashboard");
-
-  // Gate: all (studio) routes require a completed producer profile
-  // Onboarding lives OUTSIDE this route group so no loop risk
-  const { data: producerProfile } = await supabase
-    .from("producer_profiles")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .single();
-
   if (!producerProfile) redirect("/producer/onboarding");
 
   const nav = [
