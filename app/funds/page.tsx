@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { TYPE_LABEL } from "@/lib/format";
+import SearchInput from "@/components/SearchInput";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -53,9 +54,9 @@ const TABS = [
 export default async function FundsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string; q?: string }>;
 }) {
-  const { type } = await searchParams;
+  const { type, q } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -71,6 +72,7 @@ export default async function FundsPage({
   } else if (type && type !== "") {
     query = query.eq("opp_type", type);
   }
+  if (q?.trim()) query = (query as any).or(`title.ilike.%${q.trim()}%,description.ilike.%${q.trim()}%`);
 
   const { data: opps } = await query;
 
@@ -84,8 +86,6 @@ export default async function FundsPage({
             <Link href="/#features" className="hover:text-ink transition-colors">Platform</Link>
             <Link href="/projects"  className="hover:text-ink transition-colors">Projects</Link>
             <Link href="/funds"     className="text-ink">Funds</Link>
-            <Link href="/#how"      className="hover:text-ink transition-colors">How it works</Link>
-            <Link href="/#pricing"  className="hover:text-ink transition-colors">Pricing</Link>
           </nav>
           <div className="flex items-center gap-3">
             {user ? (
@@ -109,10 +109,12 @@ export default async function FundsPage({
           <p className="mt-3 text-[15px] text-ash max-w-lg">
             Grants, funding programs and development initiatives from 38 countries — open for filmmakers to discover and apply.
           </p>
-          <div className="mt-7 flex flex-wrap gap-2">
+          <div className="mt-7 flex flex-wrap gap-2 items-center">
             {TABS.map((tab) => {
               const isActive = (!type && tab.value === "") || type === tab.value;
-              const href = tab.value ? `/funds?type=${tab.value}` : "/funds";
+              const href = tab.value
+                ? `/funds?type=${tab.value}${q ? `&q=${encodeURIComponent(q)}` : ""}`
+                : `/funds${q ? `?q=${encodeURIComponent(q)}` : ""}`;
               return (
                 <Link key={tab.value} href={href}
                   className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-5 py-2.5 border transition-colors ${
@@ -124,12 +126,21 @@ export default async function FundsPage({
                 </Link>
               );
             })}
+            {/* Search bar — right side */}
+            <div className="ml-auto">
+              <SearchInput placeholder="Search funds…" basePath="/funds" />
+            </div>
           </div>
+          {q && (
+            <p className="mt-4 text-[13px] text-ash">
+              {opps?.length ?? 0} result{opps?.length !== 1 ? "s" : ""} for &ldquo;{q}&rdquo;
+            </p>
+          )}
         </div>
 
         {(!opps || opps.length === 0) ? (
           <div className="py-24 text-center text-ash text-[15px]">
-            No opportunities found{type ? " in this category" : ""}.
+            {q ? `No funds found for "${q}".` : `No opportunities found${type ? " in this category" : ""}.`}
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">

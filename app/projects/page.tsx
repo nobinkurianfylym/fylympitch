@@ -4,69 +4,66 @@ import Wordmark from "@/components/Wordmark";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
-import { usd, STAGE_LABEL } from "@/lib/format";
+import SearchInput from "@/components/SearchInput";
+import { usd } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 const FORMATS = ["Feature", "Documentary", "Series", "Animation", "Short"];
-const SORTS   = [{ key: "recent", label: "Recent" }, { key: "loved", label: "Most loved" }];
 
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ format?: string; sort?: string }>;
+  searchParams: Promise<{ format?: string; q?: string }>;
 }) {
-  const { format, sort = "recent" } = await searchParams;
+  const { format, q } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, language, country, logline, funding_needed_usd, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+    .select("id, title, genre, format, stage, language, country, logline, funding_needed_usd, poster_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
     .eq("is_public", true)
+    .order("created_at", { ascending: false })
     .limit(60);
 
   if (format) query = query.eq("format", format.toLowerCase());
-  query = sort === "loved"
-    ? query.order("love_count", { ascending: false })
-    : query.order("created_at", { ascending: false });
+  if (q?.trim()) query = (query as any).or(`title.ilike.%${q.trim()}%,logline.ilike.%${q.trim()}%`);
 
   const { data: projects } = await query;
 
-  // Fetch which projects the current user has loved
   const lovedSet = new Set<string>();
   if (user && projects?.length) {
     const { data: loves } = await supabase
-      .from("project_loves")
-      .select("project_id")
+      .from("project_loves").select("project_id")
       .eq("user_id", user.id)
-      .in("project_id", projects.map(p => p.id));
+      .in("project_id", projects.map((p: any) => p.id));
     (loves ?? []).forEach((l: any) => lovedSet.add(l.project_id));
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-
   const CAREER_LABEL: Record<string, string> = {
     debut: "Debut", second_film: "2nd Film", established: "Established", veteran: "Veteran",
   };
 
   return (
     <div className="min-h-screen bg-ivory">
+
+      {/* ── NAV ── */}
       <header className="border-b border-line">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <Wordmark />
           <nav className="hidden md:flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase font-[400] text-ash">
             <Link href="/#features" className="hover:text-ink transition-colors">Platform</Link>
-            <Link href="/projects" className="text-ink">Projects</Link>
-            <Link href="/funds" className="hover:text-ink transition-colors">Funds</Link>
-            <Link href="/#how" className="hover:text-ink transition-colors">How it works</Link>
+            <Link href="/projects"  className="text-ink">Projects</Link>
+            <Link href="/funds"     className="hover:text-ink transition-colors">Funds</Link>
           </nav>
           <div className="flex items-center gap-3">
             {user ? (
               <Link href="/dashboard" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Dashboard</Link>
             ) : (
               <>
-                <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Sign in</Link>
+                <Link href="/login"  className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Sign in</Link>
                 <Link href="/signup" className="btn-gold !px-5 !py-2.5 text-[12px]">Join</Link>
               </>
             )}
@@ -82,31 +79,45 @@ export default async function ProjectsPage({
             Pitches submitted by filmmakers on FYLYMPITCH — open for producers, investors and collaborators to discover.
           </p>
 
-          {/* Format + sort filters */}
+          {/* Format filters + search bar */}
           <div className="mt-7 flex flex-wrap gap-2 items-center">
-            <Link href={`/projects${sort !== "recent" ? `?sort=${sort}` : ""}`}
-              className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-4 py-2 border transition-colors ${!format ? "bg-ink text-ivory border-ink" : "border-line text-ash hover:border-ink hover:text-ink"}`}>
+            <Link
+              href={`/projects${q ? `?q=${encodeURIComponent(q)}` : ""}`}
+              className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-4 py-2 border transition-colors ${
+                !format ? "bg-ink text-ivory border-ink" : "border-line text-ash hover:border-ink hover:text-ink"
+              }`}>
               All formats
             </Link>
             {FORMATS.map((f) => (
-              <Link key={f} href={`/projects?format=${f.toLowerCase()}${sort !== "recent" ? `&sort=${sort}` : ""}`}
-                className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-4 py-2 border transition-colors ${format?.toLowerCase() === f.toLowerCase() ? "bg-ink text-ivory border-ink" : "border-line text-ash hover:border-ink hover:text-ink"}`}>
+              <Link
+                key={f}
+                href={`/projects?format=${f.toLowerCase()}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+                className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-4 py-2 border transition-colors ${
+                  format?.toLowerCase() === f.toLowerCase()
+                    ? "bg-ink text-ivory border-ink"
+                    : "border-line text-ash hover:border-ink hover:text-ink"
+                }`}>
                 {f}
               </Link>
             ))}
-            <div className="ml-auto flex gap-2">
-              {SORTS.map((s) => (
-                <Link key={s.key} href={`/projects?sort=${s.key}${format ? `&format=${format}` : ""}`}
-                  className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-4 py-2 border transition-colors ${sort === s.key ? "bg-gold text-white border-gold" : "border-line text-ash hover:border-ink hover:text-ink"}`}>
-                  {s.label}
-                </Link>
-              ))}
+
+            {/* Search bar — right side */}
+            <div className="ml-auto">
+              <SearchInput placeholder="Search projects…" basePath="/projects" />
             </div>
           </div>
+
+          {q && (
+            <p className="mt-4 text-[13px] text-ash">
+              {projects?.length ?? 0} result{projects?.length !== 1 ? "s" : ""} for &ldquo;{q}&rdquo;
+            </p>
+          )}
         </div>
 
         {(!projects || projects.length === 0) ? (
-          <div className="py-24 text-center text-ash text-[15px]">No public projects yet{format ? ` in ${format}` : ""}.</div>
+          <div className="py-24 text-center text-ash text-[15px]">
+            {q ? `No projects found for "${q}".` : `No public projects yet${format ? ` in ${format}` : ""}.`}
+          </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {projects.map((p: any) => {
@@ -124,10 +135,8 @@ export default async function ProjectsPage({
                       <h2 className="font-display text-[20px] font-[400] mb-2 group-hover:text-gold transition-colors leading-snug">{p.title}</h2>
                     </Link>
                     {p.logline && (
-                      <p className="font-display italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">"{p.logline}"</p>
+                      <p className="font-display italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">&ldquo;{p.logline}&rdquo;</p>
                     )}
-
-                    {/* Filmmaker credit line */}
                     {filmmaker && (
                       <div className="mt-3 flex items-center gap-2 text-[12px] text-ash">
                         <span>{filmmaker.full_name}</span>
@@ -138,16 +147,9 @@ export default async function ProjectsPage({
                         )}
                       </div>
                     )}
-
                     <div className="mt-4 pt-4 border-t border-line flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <LoveButton
-                          projectId={p.id}
-                          initialCount={p.love_count ?? 0}
-                          initialLiked={lovedSet.has(p.id)}
-                          isLoggedIn={!!user}
-                          size="sm"
-                        />
+                        <LoveButton projectId={p.id} initialCount={p.love_count ?? 0} initialLiked={lovedSet.has(p.id)} isLoggedIn={!!user} size="sm" />
                         <ShareButton projectId={p.id} title={p.title} genre={p.genre} country={p.country} size="sm" />
                       </div>
                       {p.funding_needed_usd && (
