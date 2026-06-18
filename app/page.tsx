@@ -28,26 +28,27 @@ export default async function Home() {
   return (
     <RoleProvider initialRole={initialRole}>
     <main>
-      {/* NAV */}
-      <header className="max-w-6xl mx-auto px-6 py-7 flex items-center justify-between">
-        <Wordmark />
-        <nav className="hidden md:flex items-center gap-10 text-[12px] tracking-[0.18em] uppercase text-ash">
-          <a href="#features" className="hover:text-ink transition-colors">Platform</a>
-          <Link href="/projects" className="hover:text-ink transition-colors">Projects</Link>
-          <Link href="/funds"    className="hover:text-ink transition-colors">Funds</Link>
-          <a href="#how" className="hover:text-ink transition-colors">How it works</a>
-          <a href="#pricing" className="hover:text-ink transition-colors">Pricing</a>
-          <a href="#faq" className="hover:text-ink transition-colors">FAQ</a>
-        </nav>
-        <div className="flex items-center gap-3">
-            <HeaderRoleToggle />
-            <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase text-ink hover:text-gold transition-colors px-3 py-2">Sign in</Link>
-            <Link href="/login" className="btn-gold !px-5 !py-2.5">Join</Link>
-          </div>
-      </header>
+      {/* HERO VIEWPORT — fills full screen */}
+      <div className="flex flex-col w-full" style={{ minHeight: "100svh" }}>
+        {/* NAV */}
+        <header className="max-w-6xl mx-auto w-full px-6 py-7 flex items-center justify-between">
+          <Wordmark />
+          <nav className="hidden md:flex items-center gap-10 text-[12px] tracking-[0.18em] uppercase text-ash">
+            <a href="#features" className="hover:text-ink transition-colors">Platform</a>
+            <Link href="/projects" className="hover:text-ink transition-colors">Projects</Link>
+            <Link href="/funds"    className="hover:text-ink transition-colors">Funds</Link>
+            <a href="#pricing" className="hover:text-ink transition-colors">Pricing</a>
+          </nav>
+          <div className="flex items-center gap-3">
+              <HeaderRoleToggle />
+              <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase text-ink hover:text-gold transition-colors px-3 py-2">Sign in</Link>
+              <Link href="/login" className="btn-gold !px-5 !py-2.5">Join</Link>
+            </div>
+        </header>
 
-      {/* HERO */}
-      <HeroToggle />
+        {/* HERO — grows to fill remaining viewport */}
+        <HeroToggle />
+      </div>
 
       {/* INTELLIGENCE TICKER */}
       <IntelligenceTicker />

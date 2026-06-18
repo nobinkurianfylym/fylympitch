@@ -35,7 +35,7 @@ export default function HeroToggle() {
   const c = CONTENT[role];
 
   return (
-    <section className="max-w-6xl mx-auto px-6 pt-8 pb-3 md:pt-10 md:pb-4">
+    <section className="flex-1 flex flex-col justify-center max-w-6xl mx-auto w-full px-6 pb-16">
 
       {/* ── Content — fades on role change ── */}
       <div key={role} style={{ animation: "heroFadeIn 0.35s ease both" }}>
