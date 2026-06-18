@@ -6,6 +6,8 @@ import HeroToggle from "@/components/HeroToggle";
 import IntelligenceTicker from "@/components/IntelligenceTicker";
 import { RoleProvider, type Role } from "@/components/RoleProvider";
 import HeaderRoleToggle from "@/components/HeaderRoleToggle";
+import { createClient } from "@/lib/supabase/server";
+import ProducerProjectTicker from "@/components/ProducerProjectTicker";
 
 const FEATURES = [
   ["Intelligent matching", "Every project is scored against 1,000+ grants, funds, labs, markets and investors on eight weighted criteria — genre, stage, territory, budget, format, funding gap, language and track record."],
@@ -25,6 +27,38 @@ export default async function Home() {
   const cookieStore = await cookies();
   const rawRole = cookieStore.get("fyp_role")?.value;
   const initialRole: Role = rawRole === "producer" ? "producer" : "filmmaker";
+
+  // Fetch live public projects for the producer ticker
+  let trendingProjects: {
+    id: string; title: string; genre: string; format: string;
+    stage: string; country: string; budget: string; seeking: string;
+  }[] = [];
+  try {
+    const supabase = await createClient();
+    const { data: raw } = await supabase
+      .from("projects")
+      .select("id, title, genre, format, stage, country, budget_usd")
+      .eq("is_public", true)
+      .order("created_at", { ascending: false })
+      .limit(40);
+    trendingProjects = (raw ?? []).map((p: any) => {
+      const usd: number | null = p.budget_usd;
+      const budget = !usd ? "TBC"
+        : usd >= 1_000_000 ? `$${(usd / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`
+        : usd >= 1_000    ? `$${Math.round(usd / 1_000)}K`
+        : `$${Math.round(usd)}`;
+      const seeking: Record<string, string> = {
+        development: "Co-Producer", pre_production: "Producer",
+        production: "Line Producer", post_production: "Sales Agent", completed: "Distribution",
+      };
+      return {
+        id: p.id, title: p.title, genre: p.genre, format: p.format,
+        stage: p.stage, country: p.country ?? "International",
+        budget, seeking: seeking[p.stage] ?? "Producer",
+      };
+    });
+  } catch { /* ticker shows empty state gracefully */ }
+
   return (
     <RoleProvider initialRole={initialRole}>
     <main>
@@ -193,6 +227,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* TRENDING PROJECTS TICKER */}
+      <ProducerProjectTicker projects={trendingProjects} />
 
       {/* TESTIMONIALS */}
       <section className="bg-deep text-ivory">
