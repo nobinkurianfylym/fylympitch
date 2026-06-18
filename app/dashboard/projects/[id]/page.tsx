@@ -5,6 +5,7 @@ import MatchBadge from "@/components/MatchBadge";
 import MessageButton from "@/components/MessageButton";
 import { usd, STAGE_LABEL, TYPE_LABEL, timeAgo } from "@/lib/format";
 import { deleteProject, respondToOffer } from "@/lib/project-actions";
+import { requestProducerIntroduction } from "@/lib/actions";
 import type { Opportunity, Project } from "@/types";
 import type {
   FundingDiscovery,
@@ -55,6 +56,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const epBrief: ExecutiveProducerBrief | null = intel?.executive_producer ?? null;
   const dream: DreamScenario | null = intel?.dream_scenario ?? null;
   const producerMatches: ProducerMatch[] = intel?.producer_matches ?? [];
+
+  // Fetch which producers this filmmaker has already requested introductions to
+  const { data: introRequests } = await supabase
+    .from("introduction_requests")
+    .select("producer_user_id")
+    .eq("filmmaker_id", user!.id)
+    .eq("project_id", id);
+  const requestedProducerIds = new Set((introRequests ?? []).map((r: { producer_user_id: string }) => r.producer_user_id));
 
   // Read pre-computed match scores from DB — zero live scoring on page load.
   // Scores are written by the engine at project creation and re-run.
@@ -296,33 +305,53 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       {/* ── PRODUCER MATCHES ── */}
       {isOwner && producerMatches.length > 0 && (
         <section className="mt-12">
-          <h2 className="font-display text-[22px] mb-6">Producer matches</h2>
+          <h2 className="font-display text-[22px] mb-2">Producer matches</h2>
+          <p className="text-[13px] text-ash mb-6">Producers on FYLYMPITCH whose interests match your project.</p>
           <div className="space-y-4">
-            {producerMatches.slice(0, 3).map((pm: ProducerMatch, i: number) => (
-              <div key={pm.profile.id} className={`card p-6 ${i === 0 ? "border-gold/50" : ""}`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="font-normal text-[16px]">{pm.profile.full_name}{pm.profile.company ? <span className="text-ash"> · {pm.profile.company}</span> : null}</div>
-                    <div className="mt-1 text-[12px] tracking-[0.14em] uppercase text-ash">
-                      {pm.profile.countries?.[0] ?? ""}{pm.profile.available_funding_usd ? ` · up to ${usd(pm.profile.available_funding_usd)}` : ""}
+            {producerMatches.slice(0, 5).map((pm: ProducerMatch, i: number) => {
+              const alreadyRequested = requestedProducerIds.has(pm.profile.id);
+              return (
+                <div key={pm.profile.id} className={`card p-6 ${i === 0 ? "border-gold/50" : ""}`}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="font-normal text-[16px]">
+                        {pm.profile.full_name}
+                        {pm.profile.company ? <span className="text-ash"> · {pm.profile.company}</span> : null}
+                      </div>
+                      <div className="mt-1 text-[12px] tracking-[0.14em] uppercase text-ash">
+                        {pm.profile.countries?.[0] ?? ""}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-display text-[22px] text-gold">{pm.score}</div>
+                      <div className="text-[10px] uppercase tracking-[0.16em] text-ash">match</div>
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="font-display text-[22px] text-gold">{pm.score}</div>
-                    <div className="text-[10px] uppercase tracking-[0.16em] text-ash">match</div>
+                  {pm.reasons.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {pm.reasons.map((r: string) => (
+                        <span key={r} className="text-[11px] tracking-[0.12em] uppercase bg-parchment text-ash px-3 py-1 rounded-full">
+                          {r}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-4 pt-4 border-t border-line">
+                    {alreadyRequested ? (
+                      <span className="text-[12px] text-emerald-600 tracking-wide">✓ Introduction requested</span>
+                    ) : (
+                      <form action={requestProducerIntroduction}>
+                        <input type="hidden" name="producer_user_id" value={pm.profile.id} />
+                        <input type="hidden" name="project_id" value={project.id} />
+                        <button type="submit" className="btn-ghost !py-2 text-[13px]">
+                          Request Introduction →
+                        </button>
+                      </form>
+                    )}
                   </div>
                 </div>
-                {pm.reasons.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {pm.reasons.map((r: string) => (
-                      <span key={r} className="text-[11px] tracking-[0.12em] uppercase bg-parchment text-ash px-3 py-1 rounded-full">
-                        {r}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}

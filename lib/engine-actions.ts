@@ -41,44 +41,50 @@ export async function rerunEngine(
     }
   }
 
-  // Build producer profiles
-  type IndustryProfileRow = {
-    id: string;
-    full_name: string;
-    company: string | null;
-    role: "producer" | "investor" | "organization";
-    industry_genres: string[] | null;
-    industry_formats: string[] | null;
-    industry_countries: string[] | null;
-    min_budget_usd: number | null;
-    max_budget_usd: number | null;
-    available_funding_usd: number | null;
-    festival_track_record: boolean | null;
+  // Build producer profiles from producer_profiles table (new system)
+  type ProducerProfileRow = {
+    user_id: string;
+    genres: string[] | null;
+    formats: string[] | null;
+    territories: string[] | null;
+    budget_range: string | null;
+    festivals: string[] | null;
+    open_to_coproduction: boolean | null;
+    open_to_ep: boolean | null;
+    profiles: { full_name: string; company: string | null } | null;
   };
 
-  const { data: industryProfiles } = await supabase
-    .from("profiles")
-    .select(
-      "id, full_name, company, role, industry_genres, industry_formats, industry_countries, min_budget_usd, max_budget_usd, available_funding_usd, festival_track_record"
-    )
-    .in("role", ["producer", "investor", "organization"])
-    .eq("approval_status", "approved");
+  const { data: ppRows } = await supabase
+    .from("producer_profiles")
+    .select("user_id, genres, formats, territories, budget_range, festivals, open_to_coproduction, open_to_ep, profiles!producer_profiles_user_id_fkey(full_name, company)")
+    .eq("is_public", true);
+
+  const BUDGET_RANGES: Record<string, [number, number]> = {
+    micro: [0, 100_000],
+    low:   [100_000, 500_000],
+    mid:   [500_000, 2_000_000],
+    high:  [2_000_000, 50_000_000],
+  };
 
   const producerProfiles: ProducerMatchProfile[] = (
-    (industryProfiles ?? []) as IndustryProfileRow[]
-  ).map((p) => ({
-    id: p.id,
-    full_name: p.full_name,
-    company: p.company,
-    role: p.role,
-    genres: p.industry_genres ?? [],
-    formats: p.industry_formats ?? [],
-    countries: p.industry_countries ?? [],
-    min_budget_usd: p.min_budget_usd,
-    max_budget_usd: p.max_budget_usd,
-    available_funding_usd: p.available_funding_usd,
-    festival_track_record: !!p.festival_track_record,
-  }));
+    (ppRows ?? []) as ProducerProfileRow[]
+  ).map((p) => {
+    const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+    const [min, max] = p.budget_range ? (BUDGET_RANGES[p.budget_range] ?? [null, null]) : [null, null];
+    return {
+      id: p.user_id,
+      full_name: profile?.full_name ?? "Unknown",
+      company: profile?.company ?? null,
+      role: "producer" as const,
+      genres: p.genres ?? [],
+      formats: p.formats ?? [],
+      countries: p.territories ?? [],
+      min_budget_usd: min,
+      max_budget_usd: max,
+      available_funding_usd: null,
+      festival_track_record: (p.festivals?.length ?? 0) > 0,
+    };
+  });
 
   // ── STEP 1: Basic matching — written immediately ─────────────────────────
   if (opps?.length) {

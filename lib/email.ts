@@ -261,3 +261,68 @@ export async function sendProducerDeclinedEmail(
     console.error("[email] sendProducerDeclinedEmail exception:", e);
   }
 }
+
+// ── Introduction Request ──────────────────────────────────────
+export async function sendIntroductionRequest({
+  to,
+  filmmakerName,
+  filmmakerCompany,
+  projectTitle,
+  projectGenre,
+  projectCountry,
+}: {
+  to: string;
+  filmmakerName: string;
+  filmmakerCompany: string | null;
+  projectTitle: string;
+  projectGenre: string;
+  projectCountry: string;
+}) {
+  const resend = getResend();
+  if (!resend) return;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fylympitch.com";
+
+  const body = `
+    <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#1A1815;">
+      A filmmaker on FYLYMPITCH has requested an introduction — their project matches your interests.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0"
+      style="background:#F8F5F0;border:1px solid #E5E0D5;border-radius:10px;padding:24px;margin-bottom:28px;">
+      <tr><td>
+        <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A857C;">Project</p>
+        <p style="margin:0 0 16px;font-size:20px;font-family:Georgia,serif;color:#1A1815;">${projectTitle}</p>
+
+        <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A857C;">Genre · Country</p>
+        <p style="margin:0 0 16px;font-size:15px;color:#1A1815;">${projectGenre} · ${projectCountry}</p>
+
+        <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A857C;">From</p>
+        <p style="margin:0;font-size:15px;color:#1A1815;">${filmmakerName}${filmmakerCompany ? ` · ${filmmakerCompany}` : ""}</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 28px;font-size:15px;line-height:1.65;color:#8A857C;">
+      Log in to FYLYMPITCH to view the full project, review the filmmaker's pitch, and respond.
+    </p>
+
+    <a href="${siteUrl}/producer/projects"
+      style="display:inline-block;background:#BF9953;color:#ffffff;font-size:13px;
+             letter-spacing:0.16em;text-transform:uppercase;text-decoration:none;
+             padding:14px 28px;border-radius:8px;">
+      View project on FYLYMPITCH
+    </a>
+  `;
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: `Introduction request: ${projectTitle}`,
+      html: wrap(body),
+    });
+    if (error) console.error("[email] sendIntroductionRequest:", error);
+  } catch (e) {
+    console.error("[email] sendIntroductionRequest exception:", e);
+  }
+}

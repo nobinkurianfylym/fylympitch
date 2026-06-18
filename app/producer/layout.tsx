@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import Wordmark from "@/components/Wordmark";
 import { signOut } from "@/lib/auth-actions";
@@ -21,12 +22,28 @@ export default async function ProducerLayout({ children }: { children: React.Rea
   // Any signed-in user can access the Producer Studio (dual roles)
   if (!profile) redirect("/dashboard");
 
+  // Gate: require producer profile unless already heading to onboarding
+  // (checked via headers — layout receives the full request path)
+  const { data: producerProfile } = await supabase
+    .from("producer_profiles")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .single();
+
+  // Redirect to onboarding if no profile exists (but don't loop on /producer/onboarding itself)
+  const headersList = await headers();
+  const pathname = headersList.get("x-invoke-path") ?? headersList.get("next-url") ?? "";
+  if (!producerProfile && !pathname.includes("/producer/onboarding")) {
+    redirect("/producer/onboarding");
+  }
+
   const nav = [
-    { href: "/producer", label: "Pipeline", icon: "ti-layout-kanban" },
+    { href: "/producer", label: "Discover", icon: "ti-compass" },
+    { href: "/producer/pipeline", label: "Pipeline", icon: "ti-layout-kanban" },
     { href: "/producer/projects", label: "All projects", icon: "ti-stack-2" },
     { href: "/producer/meetings", label: "Meetings", icon: "ti-calendar" },
     { href: "/producer/notes", label: "Notes", icon: "ti-notes" },
-    { href: "/dashboard/messages", label: "Messages", icon: "ti-message-circle" },
+    { href: "/producer/profile", label: "My profile", icon: "ti-user" },
   ];
 
   return (

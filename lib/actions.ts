@@ -679,3 +679,91 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/");
 }
+
+// ---------- PRODUCER PROFILES ----------
+
+export async function saveProducerProfile(formData: FormData) {
+  const { supabase, user } = await requireUser();
+
+  const genres = formData.getAll("genres").map(String);
+  const formats = formData.getAll("formats").map(String);
+  const territories = formData.getAll("territories").map(String);
+  const festivals = formData.getAll("festivals").map(String);
+
+  const payload = {
+    user_id: user.id,
+    contact_email: user.email ?? null,
+    country: str(formData, "country") ?? "",
+    role_type: str(formData, "role_type") ?? "independent_producer",
+    imdb_url: str(formData, "imdb_url") ?? null,
+    credits: str(formData, "credits") ?? null,
+    genres,
+    formats,
+    territories,
+    budget_range: str(formData, "budget_range") ?? null,
+    festivals,
+    open_to_coproduction: formData.get("open_to_coproduction") === "true",
+    open_to_ep: formData.get("open_to_ep") === "true",
+    bringing_territory_funding: formData.get("bringing_territory_funding") === "true",
+    is_public: formData.get("is_public") === "true",
+    updated_at: new Date().toISOString(),
+  };
+
+  await supabase
+    .from("producer_profiles")
+    .upsert(payload, { onConflict: "user_id" });
+
+  redirect("/producer");
+}
+
+export async function requestProducerIntroduction(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const producer_user_id = str(formData, "producer_user_id");
+  const project_id = str(formData, "project_id");
+  if (!producer_user_id || !project_id) return;
+
+  // Record the request (ignore duplicate error via upsert)
+  await supabase.from("introduction_requests").upsert(
+    { filmmaker_id: user.id, producer_user_id, project_id, status: "sent" },
+    { onConflict: "filmmaker_id,producer_user_id,project_id" }
+  );
+
+  // Send email notification to producer — use admin client to read contact_email
+  try {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const admin = createAdminClient();
+    const { data: pp } = await admin
+      .from("producer_profiles")
+      .select("contact_email, country, genres")
+      .eq("user_id", producer_user_id)
+      .single();
+
+    const { data: filmmaker } = await supabase
+      .from("profiles")
+      .select("full_name, company")
+      .eq("id", user.id)
+      .single();
+
+    const { data: project } = await supabase
+      .from("projects")
+      .select("title, genre, format, country")
+      .eq("id", project_id)
+      .single();
+
+    if (pp?.contact_email && project) {
+      const { sendIntroductionRequest } = await import("@/lib/email");
+      await sendIntroductionRequest({
+        to: pp.contact_email,
+        filmmakerName: filmmaker?.full_name ?? "A filmmaker",
+        filmmakerCompany: filmmaker?.company ?? null,
+        projectTitle: project.title,
+        projectGenre: project.genre,
+        projectCountry: project.country,
+      });
+    }
+  } catch (e) {
+    console.error("[requestProducerIntroduction] email failed:", e);
+  }
+
+  revalidatePath(`/dashboard/projects/${project_id}`);
+}
