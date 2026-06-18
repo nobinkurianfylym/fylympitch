@@ -34,7 +34,10 @@ function seekingLabel(stage: string): string {
 export default async function ProducersDiscoveryPage() {
   const supabase = await createClient();
 
-  let projects: { id: string; title: string; genre: string; format: string; stage: string; country: string; budget: string; seeking: string; }[] = [];
+  let projects: {
+    id: string; title: string; genre: string; format: string;
+    stage: string; country: string; budget: string; seeking: string;
+  }[] = [];
 
   try {
     const { data: raw } = await supabase
@@ -85,47 +88,28 @@ export default async function ProducersDiscoveryPage() {
         </div>
       </header>
 
-      {/* ── HERO ── */}
-      <section className="max-w-6xl mx-auto px-6 pt-16 pb-12">
-        <p className="eyebrow text-gold mb-5">For Producers &amp; Investors</p>
-        <div className="md:flex items-end justify-between gap-16">
-          <div className="max-w-3xl">
-            <h1 className="font-display text-[48px] md:text-[62px] leading-[1.05] mb-6">
-              Discover curated film projects{" "}
-              <em className="text-gold">ready for production.</em>
-            </h1>
-            <p className="text-[16px] leading-relaxed text-ash max-w-xl">
-              Every project on FYLYMPITCH is submitted through our intelligence
-              engine. Browse by genre, format and stage — then request scripts,
-              send offers, or co-produce. No approval needed.
-            </p>
-          </div>
-          <div className="mt-8 md:mt-0 shrink-0 flex flex-col items-start md:items-end gap-3">
-            <Link href="/login" className="btn-gold">Get Started</Link>
-            <Link href="/login" className="btn-ghost">Browse as Producer</Link>
-          </div>
+      {/* ── HERO — matches HeroToggle layout exactly ── */}
+      <section className="max-w-6xl mx-auto w-full px-6 pt-16 pb-12">
+        <p className="eyebrow mb-5">For Producers &amp; Investors</p>
+        <h1 className="font-display font-normal text-[36px] leading-[1.08] md:text-[52px] max-w-4xl">
+          Where producers find{" "}
+          <span className="italic text-gold">their next project.</span>
+        </h1>
+        <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-ash">
+          One account, two roles. Browse filmmaker projects by genre, stage and
+          territory. Read scripts, send offers, co-produce — no approval needed.
+        </p>
+        <div className="mt-7 flex flex-wrap gap-4">
+          <Link href="/login?next=/producer" className="btn-gold">
+            Get started
+          </Link>
+          <Link href="/projects" className="btn-ghost">
+            Browse projects
+          </Link>
         </div>
       </section>
 
-      {/* ── CATEGORY STRIP ── */}
-      <div className="border-t border-b border-line overflow-x-auto no-scrollbar">
-        <div className="flex items-center max-w-6xl mx-auto px-6" style={{ whiteSpace: "nowrap" }}>
-          {[
-            "Grants", "Film Funds", "Labs", "Co-Productions",
-            "Markets", "Producers", "Production Companies",
-            "Distribution", "Investors", "Streamers",
-          ].map((cat) => (
-            <span
-              key={cat}
-              className="eyebrow text-[10px] px-5 py-4 border-r border-line last:border-r-0"
-            >
-              {cat}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* ── LIVE PROJECT TICKER (client) ── */}
+      {/* ── LIVE PROJECT MARQUEE ── */}
       <ProducerProjectTicker projects={projects} />
 
       {/* ── HOW IT WORKS ── */}
@@ -213,8 +197,8 @@ export default async function ProducersDiscoveryPage() {
               <div>
                 <p className="eyebrow !text-ivory/40 mb-4">Company</p>
                 <ul className="space-y-3 text-ivory/70">
-                  <li><Link href="/"                    className="hover:text-gold">Platform</Link></li>
-                  <li><a href="mailto:hello@fylym.com"  className="hover:text-gold">Contact</a></li>
+                  <li><Link href="/"                   className="hover:text-gold">Platform</Link></li>
+                  <li><a href="mailto:hello@fylym.com" className="hover:text-gold">Contact</a></li>
                 </ul>
               </div>
             </div>
