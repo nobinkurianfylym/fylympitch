@@ -117,10 +117,6 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
               value="true"
               defaultChecked={project.is_public}
               className="w-4 h-4 accent-[#BF9953]"
-              onChange={(e) => {
-                const hidden = e.target.closest("form")?.querySelector("input[name='is_public'][type='hidden']") as HTMLInputElement | null;
-                if (hidden) hidden.value = e.target.checked ? "true" : "false";
-              }}
             />
             Make this project publicly visible
           </label>
