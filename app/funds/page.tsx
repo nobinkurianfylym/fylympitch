@@ -2,12 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { TYPE_LABEL } from "@/lib/format";
-import FundCard from "@/components/FundCard";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// ── Palettes — deterministic per title hash, same family as ProjectThumbnail ──
 const PALETTES = [
   { bg: "#FDF5E4", band: "#F5E8C0", tx: "#7B5E1A" },
   { bg: "#E8F3EC", band: "#C8E4D0", tx: "#2A5E3A" },
@@ -27,17 +25,11 @@ function hashTitle(s: string): number {
 }
 
 const BAND_LABEL: Record<string, string> = {
-  grant:        "GRANT",
-  fund:         "FUND",
-  lab:          "LAB",
-  co_production:"CO-PROD",
-  market:       "MARKET",
-  distribution: "DISTRIBUTION",
-  investor:     "INVESTOR",
-  broadcaster:  "BROADCASTER",
-  streamer:     "STREAMING",
-  sales_agent:  "SALES AGENT",
-  producer:     "PRODUCER",
+  grant: "GRANT", fund: "FUND", lab: "LAB",
+  co_production: "CO-PROD", market: "MARKET",
+  distribution: "DISTRIBUTION", investor: "INVESTOR",
+  broadcaster: "BROADCASTER", streamer: "STREAMING",
+  sales_agent: "SALES AGENT", producer: "PRODUCER",
 };
 
 function formatDeadline(deadline: string | null, note: string | null): string {
@@ -50,12 +42,12 @@ function formatDeadline(deadline: string | null, note: string | null): string {
 }
 
 const TABS = [
-  { label: "All Funds",    value: ""             },
-  { label: "Grants",       value: "grants"       },
-  { label: "Labs",         value: "lab"          },
-  { label: "Co-Prod",      value: "co_production"},
-  { label: "Markets",      value: "market"       },
-  { label: "Producers",    value: "producer"     },
+  { label: "All Funds",  value: ""              },
+  { label: "Grants",     value: "grants"        },
+  { label: "Labs",       value: "lab"           },
+  { label: "Co-Prod",    value: "co_production" },
+  { label: "Markets",    value: "market"        },
+  { label: "Producers",  value: "producer"      },
 ];
 
 export default async function FundsPage({
@@ -69,12 +61,11 @@ export default async function FundsPage({
 
   let query = supabase
     .from("opportunities")
-    .select("id, title, opp_type, description, country, region, deadline, deadline_note, languages, max_award_usd, url, app_link")
+    .select("id, title, opp_type, description, country, region, deadline, deadline_note, languages, url, app_link")
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(60);
 
-  // "grants" tab covers both opp_type=grant and opp_type=fund (most funding bodies)
   if (type === "grants") {
     query = query.in("opp_type", ["grant", "fund"]);
   } else if (type && type !== "") {
@@ -86,7 +77,6 @@ export default async function FundsPage({
   return (
     <div className="min-h-screen bg-ivory">
 
-      {/* ── Header ────────────────────────────────────────────── */}
       <header className="border-b border-line">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <Wordmark />
@@ -112,18 +102,13 @@ export default async function FundsPage({
         </div>
       </header>
 
-      {/* ── Main ──────────────────────────────────────────────── */}
       <main className="max-w-6xl mx-auto px-6 py-12">
-
-        {/* Page heading */}
         <div className="mb-10">
           <p className="eyebrow mb-3">Grants · Support · Growth</p>
           <h1 className="font-display text-[38px] font-[400]">Funds</h1>
           <p className="mt-3 text-[15px] text-ash max-w-lg">
             Grants, funding programs and development initiatives from 38 countries — open for filmmakers to discover and apply.
           </p>
-
-          {/* Filter pills — matches Projects page style */}
           <div className="mt-7 flex flex-wrap gap-2">
             {TABS.map((tab) => {
               const isActive = (!type && tab.value === "") || type === tab.value;
@@ -142,7 +127,6 @@ export default async function FundsPage({
           </div>
         </div>
 
-        {/* Grid */}
         {(!opps || opps.length === 0) ? (
           <div className="py-24 text-center text-ash text-[15px]">
             No opportunities found{type ? " in this category" : ""}.
@@ -150,63 +134,56 @@ export default async function FundsPage({
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {opps.map((o) => {
-              const p       = PALETTES[hashTitle(o.title) % PALETTES.length];
-              const location = o.country || o.region || "Worldwide";
-              const bandLabel = BAND_LABEL[o.opp_type] ?? o.opp_type.toUpperCase();
-              const langs   = (o.languages as string[] | null) ?? [];
-              const link    = (o.app_link as string | null) || (o.url as string | null) || null;
+              const p         = PALETTES[hashTitle(o.title) % PALETTES.length];
+              const location  = o.country || o.region || "Worldwide";
+              const bandLabel = BAND_LABEL[o.opp_type] ?? (o.opp_type as string).toUpperCase();
+              const langs     = (o.languages as string[] | null) ?? [];
+              const link      = (o.app_link as string | null) || (o.url as string | null) || undefined;
 
               return (
-                <FundCard key={o.id} link={link}
-                  className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all">
+                <a key={o.id}
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all"
+                  style={{ textDecoration: "none", color: "inherit" }}>
 
-                  {/* ── Top coloured section (mirrors ProjectThumbnail) ── */}
                   <div style={{
-                    background: p.bg,
-                    aspectRatio: "3/2",
-                    position: "relative",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "24px",
+                    background: p.bg, aspectRatio: "3/2",
+                    position: "relative", display: "flex",
+                    alignItems: "center", justifyContent: "center", padding: "24px",
                   }}>
-                    {/* Corner dots — top */}
-                    <div style={{ position:"absolute", top:12, left:12,  width:7, height:7, borderRadius:2, background:p.band }} />
-                    <div style={{ position:"absolute", top:12, right:12, width:7, height:7, borderRadius:2, background:p.band }} />
-                    <p className="font-display text-[22px] font-[400] text-center leading-snug"
-                      style={{ color: p.tx }}>
+                    <div style={{ position:"absolute", top:12,   left:12,  width:7, height:7, borderRadius:2, background:p.band }} />
+                    <div style={{ position:"absolute", top:12,   right:12, width:7, height:7, borderRadius:2, background:p.band }} />
+                    <p className="font-display text-[22px] font-[400] text-center leading-snug" style={{ color: p.tx }}>
                       {o.title}
                     </p>
                   </div>
 
-                  {/* ── Type band ────────────────────────────────────── */}
                   <div style={{ background: p.band, position: "relative" }}
                     className="px-4 py-3 flex items-center justify-center">
-                    {/* Corner dots — bottom of band */}
                     <div style={{ position:"absolute", bottom:10, left:12,  width:7, height:7, borderRadius:2, background:p.bg }} />
                     <div style={{ position:"absolute", bottom:10, right:12, width:7, height:7, borderRadius:2, background:p.bg }} />
-                    <span className="text-[10px] tracking-[0.14em] uppercase font-[600]"
-                      style={{ color: p.tx }}>
+                    <span className="text-[10px] tracking-[0.14em] uppercase font-[600]" style={{ color: p.tx }}>
                       {bandLabel}
                     </span>
                   </div>
 
-                  {/* ── Info section ─────────────────────────────────── */}
                   <div className="p-6 flex flex-col flex-1">
                     <p className="text-[11px] tracking-[0.24em] uppercase text-ash mb-2">
-                      {TYPE_LABEL[o.opp_type] ?? o.opp_type} · {location}
+                      {TYPE_LABEL[o.opp_type as string] ?? o.opp_type} · {location}
                     </p>
                     <h2 className="font-display text-[21px] font-[400] mb-3 group-hover:text-gold transition-colors leading-snug">
                       {o.title}
                     </h2>
                     {o.description && (
                       <p className="font-display italic text-[14px] leading-[1.55] text-ash line-clamp-3 flex-1">
-                        &ldquo;{o.description}&rdquo;
+                        &ldquo;{o.description as string}&rdquo;
                       </p>
                     )}
                     <div className="mt-4 pt-4 border-t border-line flex flex-col gap-1 text-[12px]">
                       <span className="text-ink font-[500]">
-                        {formatDeadline(o.deadline, o.deadline_note)}
+                        {formatDeadline(o.deadline as string | null, o.deadline_note as string | null)}
                       </span>
                       <span className="text-ash">
                         {location}{langs.length > 0 ? ` · ${langs[0]}` : ""}
@@ -214,14 +191,13 @@ export default async function FundsPage({
                     </div>
                   </div>
 
-                </FundCard>
+                </a>
               );
             })}
           </div>
         )}
       </main>
 
-      {/* ── Footer CTA ────────────────────────────────────────── */}
       {!user && (
         <div className="border-t border-line mt-16">
           <div className="max-w-6xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6">
