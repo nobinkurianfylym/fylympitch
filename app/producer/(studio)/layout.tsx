@@ -29,12 +29,11 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
   if (!producerProfile) redirect("/producer/onboarding");
 
   const nav = [
-    { href: "/producer",          label: "Discover",     icon: "ti-compass" },
-    { href: "/producer/pipeline", label: "Pipeline",     icon: "ti-layout-kanban" },
-    { href: "/producer/projects", label: "All projects", icon: "ti-stack-2" },
-    { href: "/producer/meetings", label: "Meetings",     icon: "ti-calendar" },
-    { href: "/producer/notes",    label: "Notes",        icon: "ti-notes" },
-    { href: "/producer/profile",  label: "My profile",   icon: "ti-user" },
+    { href: "/producer",          label: "Discover",           icon: "ti-compass" },
+    { href: "/producer/pipeline", label: "Pipeline",           icon: "ti-layout-kanban" },
+    { href: "/producer/projects", label: "All projects",       icon: "ti-stack-2" },
+    { href: "/producer/meetings", label: "Meetings & Notes",   icon: "ti-calendar" },
+    { href: "/producer/profile",  label: "My profile",         icon: "ti-user" },
   ];
 
   return (

@@ -93,10 +93,7 @@ export default async function FundsPage({
                 Dashboard
               </Link>
             ) : (
-              <>
-                <Link href="/login"  className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Sign in</Link>
-                <Link href="/signup" className="btn-gold !px-5 !py-2.5 text-[12px]">Join</Link>
-              </>
+              <Link href="/login" className="btn-outline !px-5 !py-2.5 !text-[11px]">Get started</Link>
             )}
           </div>
         </div>

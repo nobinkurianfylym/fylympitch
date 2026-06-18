@@ -6,6 +6,7 @@ import HeroToggle from "@/components/HeroToggle";
 import IntelligenceTicker from "@/components/IntelligenceTicker";
 import { RoleProvider, type Role } from "@/components/RoleProvider";
 import HeaderRoleToggle from "@/components/HeaderRoleToggle";
+import HeaderCTA from "@/components/HeaderCTA";
 import { createClient } from "@/lib/supabase/server";
 import ProducerProjectTicker from "@/components/ProducerProjectTicker";
 
@@ -28,13 +29,16 @@ export default async function Home() {
   const rawRole = cookieStore.get("fyp_role")?.value;
   const initialRole: Role = rawRole === "producer" ? "producer" : "filmmaker";
 
+  // Auth + projects in parallel
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   // Fetch live public projects for the producer ticker
   let trendingProjects: {
     id: string; title: string; genre: string; format: string;
     stage: string; country: string; budget: string; seeking: string;
   }[] = [];
   try {
-    const supabase = await createClient();
     const { data: raw } = await supabase
       .from("projects")
       .select("id, title, genre, format, stage, country, budget_usd")
@@ -74,7 +78,7 @@ export default async function Home() {
           </nav>
           <div className="flex items-center gap-3">
             <HeaderRoleToggle />
-            <Link href="/login" className="btn-outline !px-5 !py-2.5 !text-[11px]">Get started</Link>
+            <HeaderCTA isLoggedIn={!!user} />
           </div>
         </header>
 
