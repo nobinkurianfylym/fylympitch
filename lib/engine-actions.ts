@@ -18,7 +18,7 @@ export async function rerunEngine(
   // Verify ownership
   const { data: project } = await supabase
     .from("projects")
-    .select("*")
+    .select("*, profiles!projects_owner_id_fkey(full_name)")
     .eq("id", projectId)
     .eq("owner_id", user.id)
     .single();
@@ -191,5 +191,32 @@ export async function rerunEngine(
 
   revalidatePath(`/dashboard/projects/${projectId}`);
   revalidatePath("/dashboard");
+
+  // Fire "engine ready" email — non-blocking
+  try {
+    const { sendEngineReady } = await import("@/lib/email");
+    await sendEngineReady({
+      to: user.email!,
+      filmmakerName: (project as any).profiles?.full_name ?? project.owner_id,
+      projectTitle: (project as Project).title,
+      projectId,
+    });
+  } catch (e) {
+    console.error("[engine] email failed:", e);
+  }
+
+  // Write in-app notification
+  try {
+    await supabase.from("notifications").insert({
+      user_id: user.id,
+      title: "Intelligence report ready",
+      body: `Your FYLYMPITCH report for "${(project as Project).title}" is ready.`,
+      href: `/dashboard/projects/${projectId}`,
+      read: false,
+    });
+  } catch (e) {
+    console.error("[engine] notification failed:", e);
+  }
+
   return { success: true };
 }

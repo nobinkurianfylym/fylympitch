@@ -326,3 +326,60 @@ export async function sendIntroductionRequest({
     console.error("[email] sendIntroductionRequest exception:", e);
   }
 }
+
+// ── Engine Ready ─────────────────────────────────────────────
+export async function sendEngineReady({
+  to,
+  filmmakerName,
+  projectTitle,
+  projectId,
+}: {
+  to: string;
+  filmmakerName: string;
+  projectTitle: string;
+  projectId: string;
+}) {
+  const resend = getResend();
+  if (!resend) return;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pitch.fylym.com";
+  const reportUrl = `${siteUrl}/dashboard/projects/${projectId}`;
+
+  const body = `
+    <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#1A1815;">
+      Hi ${filmmakerName} — your FYLYMPITCH intelligence report is ready.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0"
+      style="background:#F8F5F0;border:1px solid #E5E0D5;border-radius:10px;padding:24px;margin-bottom:28px;">
+      <tr><td>
+        <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A857C;">Project</p>
+        <p style="margin:0;font-size:22px;font-family:Georgia,serif;color:#1A1815;">${projectTitle}</p>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 28px;font-size:15px;line-height:1.65;color:#8A857C;">
+      Your report includes matched funding opportunities ranked by fit, a financing roadmap,
+      funding readiness score, and FYLYM Intelligence recommendations.
+    </p>
+
+    <a href="${reportUrl}"
+      style="display:inline-block;background:#BF9953;color:#ffffff;font-size:13px;
+             letter-spacing:0.16em;text-transform:uppercase;text-decoration:none;
+             padding:14px 28px;border-radius:8px;">
+      View your report
+    </a>
+  `;
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: `Your FYLYMPITCH report for "${projectTitle}" is ready`,
+      html: wrap(body),
+    });
+    if (error) console.error("[email] sendEngineReady:", error);
+  } catch (e) {
+    console.error("[email] sendEngineReady exception:", e);
+  }
+}

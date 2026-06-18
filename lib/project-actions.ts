@@ -47,3 +47,39 @@ export async function respondToOffer(formData: FormData) {
   });
   revalidatePath("/dashboard");
 }
+
+export async function updateProject(formData: FormData) {
+  "use server";
+  const { createClient } = await import("@/lib/supabase/server");
+  const { redirect } = await import("next/navigation");
+  const { revalidatePath } = await import("next/cache");
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const id = formData.get("project_id") as string;
+  if (!id) return;
+
+  const patch: Record<string, unknown> = {
+    title:              formData.get("title"),
+    logline:            formData.get("logline"),
+    genre:              formData.get("genre"),
+    format:             formData.get("format"),
+    stage:              formData.get("stage"),
+    country:            formData.get("country"),
+    language:           formData.get("language") || null,
+    synopsis:           formData.get("synopsis") || null,
+    director_statement: formData.get("director_statement") || null,
+    producer_info:      formData.get("producer_info") || null,
+    budget_usd:         formData.get("budget_usd") ? Number(formData.get("budget_usd")) : null,
+    funding_needed_usd: formData.get("funding_needed_usd") ? Number(formData.get("funding_needed_usd")) : null,
+    is_public:          formData.get("is_public") === "true",
+    updated_at:         new Date().toISOString(),
+  };
+
+  await supabase.from("projects").update(patch).eq("id", id).eq("owner_id", user.id);
+  revalidatePath(`/dashboard/projects/${id}`);
+  revalidatePath("/dashboard");
+  redirect(`/dashboard/projects/${id}`);
+}

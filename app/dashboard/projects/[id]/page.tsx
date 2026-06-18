@@ -187,9 +187,31 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         />
       )}
 
+      {/* ── MATCHED OPPORTUNITIES — shown first, most actionable ── */}
+      {isOwner && (
+        <section className="mt-10">
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="font-display text-[22px]">Matched opportunities</h2>
+            <Link href="/dashboard/opportunities" className="text-[11px] tracking-[0.14em] uppercase text-ash hover:text-gold transition-colors">
+              Browse all →
+            </Link>
+          </div>
+          <p className="text-[13px] text-ash mb-6">Ranked by fit against every active opportunity.</p>
+          <MatchList projectId={project.id} matches={ranked} />
+        </section>
+      )}
+
       {/* ── PROJECT HEADER ── */}
-      <p className="eyebrow mb-3">{project.genre} · {project.format} · {STAGE_LABEL[project.stage]}</p>
-      <h1 className="font-display text-[34px]">{project.title}</h1>
+      <p className="eyebrow mb-3 mt-12">{project.genre} · {project.format} · {STAGE_LABEL[project.stage]}</p>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="font-display text-[34px]">{project.title}</h1>
+        {isOwner && (
+          <Link href={`/dashboard/projects/${project.id}/edit`}
+            className="btn-ghost !py-2 !px-4 text-[12px] shrink-0 mt-1">
+            Edit project
+          </Link>
+        )}
+      </div>
 
       {project.synopsis && (
         <p className="mt-5 text-[16px] leading-[1.75] text-ash max-w-2xl whitespace-pre-line">
@@ -213,10 +235,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         </div>
       )}
 
-      {/* ── AI EXECUTIVE PRODUCER BRIEF ── */}
+      {/* ── FYLYM INTELLIGENCE BRIEF ── */}
       {isOwner && epBrief && (
         <section className="mt-12 border border-gold/40 rounded-card bg-gold/5 p-6">
-          <p className="eyebrow mb-3 text-gold">AI Executive Producer</p>
+          <p className="eyebrow mb-3 text-gold">FYLYM Intelligence</p>
           <h3 className="font-display text-[20px] mb-2">{epBrief.next_best_move?.title}</h3>
           <p className="text-[14px] text-ash leading-relaxed">{epBrief.summary}</p>
           {epBrief.next_best_move && (
@@ -287,18 +309,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               </div>
             ))}
           </div>
-        </section>
-      )}
-
-      {/* ── MATCHED OPPORTUNITIES ── */}
-      {isOwner && (
-        <section className="mt-12">
-          <h2 className="font-display text-[22px] mb-2">Matched opportunities</h2>
-          <p className="text-[13px] text-ash mb-6">Ranked live against every active opportunity.</p>
-          <MatchList
-            projectId={project.id}
-            matches={ranked}
-          />
         </section>
       )}
 

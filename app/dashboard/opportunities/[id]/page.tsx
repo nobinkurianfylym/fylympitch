@@ -93,17 +93,47 @@ export default async function OpportunityDetailPage({
           )}
 
           <div className="hairline mt-8 pt-7">
+            {/* Direct link to fund's official site — always shown */}
+            {(opp.url || opp.app_link) && (
+              <div className="mb-6 p-4 rounded-card bg-parchment border border-line">
+                <p className="text-[11px] tracking-[0.18em] uppercase text-ash mb-2">Official submission</p>
+                <a
+                  href={opp.app_link ?? opp.url ?? "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-gold inline-flex items-center gap-2"
+                >
+                  Apply directly at {opp.title} →
+                </a>
+                <p className="mt-3 text-[12px] text-ash leading-relaxed">
+                  You'll need to submit directly at the fund's official website.
+                  Use the form below to log this application in your FYLYMPITCH tracker.
+                </p>
+              </div>
+            )}
+
             {existing ? (
-              <p className="text-[14px] text-ash">Application already sent — status: <span className="text-ink uppercase tracking-[0.12em] text-[12px]">{existing.status}</span></p>
+              <p className="text-[14px] text-ash">
+                Logged in tracker — status:{" "}
+                <span className="text-ink uppercase tracking-[0.12em] text-[12px]">{existing.status}</span>
+              </p>
             ) : (
               <form action={async (fd: FormData) => { "use server"; await applyToOpportunity(fd); }} className="space-y-4">
                 <input type="hidden" name="project_id" value={selected.id} />
                 <input type="hidden" name="opportunity_id" value={opp.id} />
                 <div>
-                  <label className="field-label" htmlFor="cover_note">Cover note (optional)</label>
-                  <textarea id="cover_note" name="cover_note" rows={3} className="field" placeholder="One paragraph on why this project and this fund belong together." />
+                  <label className="field-label" htmlFor="cover_note">
+                    Cover note <span className="font-normal text-ash">(optional — saved to your tracker)</span>
+                  </label>
+                  <textarea
+                    id="cover_note"
+                    name="cover_note"
+                    rows={3}
+                    className="field"
+                    placeholder="One paragraph on why this project and this fund belong together."
+                  />
                 </div>
-                <button className="btn-gold">Apply with this project</button>
+                <button className="btn-ghost">Log this application →</button>
               </form>
             )}
           </div>

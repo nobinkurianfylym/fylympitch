@@ -744,6 +744,25 @@ export async function requestProducerIntroduction(formData: FormData) {
     { onConflict: "filmmaker_id,producer_user_id,project_id" }
   );
 
+  // Notify the filmmaker (project owner)
+  try {
+    const { data: proj } = await supabase
+      .from("projects").select("owner_id, title").eq("id", project_id).single();
+    const { data: producer } = await supabase
+      .from("profiles").select("full_name, company").eq("id", user.id).single();
+    if (proj?.owner_id && proj.owner_id !== user.id) {
+      await supabase.from("notifications").insert({
+        user_id: proj.owner_id,
+        title: "Producer interest",
+        body: `${producer?.full_name ?? "A producer"}${producer?.company ? ` (${producer.company})` : ""} requested an introduction for "${proj.title}".`,
+        href: `/dashboard/projects/${project_id}`,
+        read: false,
+      });
+    }
+  } catch (e) {
+    console.error("[intro] notification failed:", e);
+  }
+
   // Send email notification to producer — use admin client to read contact_email
   try {
     const { createAdminClient } = await import("@/lib/supabase/admin");
