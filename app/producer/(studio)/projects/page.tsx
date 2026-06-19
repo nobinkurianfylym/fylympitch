@@ -74,20 +74,20 @@ export default async function ProducerProjectsPage({
         <Link href="/producer" className="btn-ghost">← Pipeline</Link>
       </div>
 
-      {/* Filters */}
-      <form method="GET" className="flex flex-wrap gap-3 mb-8">
+      {/* Filters — compact single line */}
+      <form method="GET" className="flex flex-wrap items-center gap-2 mb-8">
         {filter && <input type="hidden" name="filter" value={filter} />}
         <input
           name="q"
           defaultValue={q ?? ""}
-          placeholder="Search title or logline"
-          className="field w-52"
+          placeholder="Search title or logline…"
+          className="field !w-52 !py-2 !text-[13px]"
         />
-        <select name="genre" defaultValue={genre ?? ""} className="field w-36">
+        <select name="genre" defaultValue={genre ?? ""} className="field !w-36 !py-2 !text-[13px]">
           <option value="">All genres</option>
           {GENRES.map((g) => <option key={g} value={g}>{g}</option>)}
         </select>
-        <select name="format" defaultValue={format ?? ""} className="field w-36">
+        <select name="format" defaultValue={format ?? ""} className="field !w-32 !py-2 !text-[13px]">
           <option value="">All formats</option>
           {FORMATS.map((f) => <option key={f} value={f.toLowerCase()}>{f}</option>)}
         </select>
@@ -95,16 +95,16 @@ export default async function ProducerProjectsPage({
           name="country"
           defaultValue={country ?? ""}
           placeholder="Country"
-          className="field w-36"
+          className="field !w-28 !py-2 !text-[13px]"
         />
         <input
           name="language"
           defaultValue={language ?? ""}
           placeholder="Language"
-          className="field w-36"
+          className="field !w-28 !py-2 !text-[13px]"
         />
-        <button className="btn-ghost">Filter</button>
-        {hasFilters && <a href={clearHref} className="btn-ghost text-ash">Clear</a>}
+        <button className="btn-ghost !py-2 !text-[12px]">Filter</button>
+        {hasFilters && <a href={clearHref} className="btn-ghost !py-2 !text-[12px] text-ash">Clear</a>}
       </form>
 
       {/* Project grid */}
