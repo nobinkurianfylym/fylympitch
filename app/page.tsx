@@ -33,6 +33,19 @@ export default async function Home() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Fetch profile role + producer status (parallel, skip if not logged in)
+  let accountRole = "FILMMAKER";
+  if (user) {
+    const [{ data: profile }, { count: producerCount }] = await Promise.all([
+      supabase.from("profiles").select("role").eq("id", user.id).single(),
+      supabase.from("producer_profiles").select("user_id", { count: "exact", head: true }).eq("user_id", user.id),
+    ]);
+    const dbRole = (profile as any)?.role ?? "filmmaker";
+    if (dbRole === "admin") accountRole = "ADMIN";
+    else if ((producerCount ?? 0) > 0) accountRole = "PRODUCER";
+    else accountRole = "FILMMAKER";
+  }
+
   // Fetch live public projects for the producer ticker
   let trendingProjects: {
     id: string; title: string; genre: string; format: string;
@@ -82,6 +95,7 @@ export default async function Home() {
               isLoggedIn={!!user}
               userName={user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? ""}
               avatarUrl={user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? ""}
+              accountRole={accountRole}
             />
           </div>
         </header>

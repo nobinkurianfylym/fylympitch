@@ -9,9 +9,10 @@ type Props = {
   isLoggedIn:  boolean;
   userName?:   string;
   avatarUrl?:  string;
+  accountRole?: string;
 };
 
-export default function HeaderCTA({ isLoggedIn, userName, avatarUrl }: Props) {
+export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole = "FILMMAKER" }: Props) {
   const { role } = useRole();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -65,10 +66,15 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl }: Props) {
             {initials}
           </span>
         )}
-        {/* Name */}
-        <span className="text-[11px] tracking-[0.1em] uppercase text-ink max-w-[96px] truncate">
-          {firstName}
-        </span>
+        {/* Name + account type */}
+        <div className="flex flex-col items-start gap-0">
+          <span className="text-[11px] tracking-[0.1em] uppercase text-ink max-w-[96px] truncate leading-tight">
+            {firstName}
+          </span>
+          <span className="text-[9px] tracking-[0.14em] uppercase text-ash/70 leading-tight">
+            {accountRole}
+          </span>
+        </div>
         <span style={{ fontSize: 9, color: "#8A857C", lineHeight: 1 }}>▾</span>
       </button>
 
