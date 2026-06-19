@@ -17,9 +17,10 @@ const CAREER_LABEL: Record<string, string> = {
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const supabase = await createClient();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   const { data: p } = await supabase
     .from("projects").select("title, genre, logline, poster_path, country")
-    .eq("id", id).eq("is_public", true).single();
+    .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
   if (!p) return { title: "Project — FYLYMPITCH" };
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const image = p.poster_path ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${p.poster_path}` : null;
@@ -37,12 +38,20 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Auth gate — must be signed in to view full project detail
   if (!user) redirect(`/login?next=/projects/${id}`);
 
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+  // UUID → redirect to slug-based URL (preserve old shared links)
+  if (isUuid) {
+    const { data: slugRow } = await supabase
+      .from("projects").select("slug").eq("id", id).eq("is_public", true).single();
+    if (slugRow?.slug) redirect(`/projects/${slugRow.slug}`);
+  }
+
   const { data: p } = await supabase.from("projects")
-    .select("id, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, budget_usd, funding_needed_usd, is_public, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage)")
-    .eq("id", id).eq("is_public", true).single();
+    .select("id, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, budget_usd, funding_needed_usd, is_public, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username)")
+    .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
 
   if (!p) notFound();
 

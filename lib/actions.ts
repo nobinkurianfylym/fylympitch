@@ -77,17 +77,18 @@ export async function completeFilmmakerOnboarding(formData: FormData) {
 export async function createProject(formData: FormData) {
   const { supabase, user } = await requireUser();
 
-  // Safety net: ensure profile row exists before inserting a project.
-  // Guards against trigger failures on new signups — without this,
-  // projects_owner_id_fkey throws if the profiles row is missing.
+  // Safety net: ensure profile row exists (with username) before inserting a project.
+  const displayName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "Filmmaker";
+  const { data: generatedUsername } = await supabase.rpc("generate_unique_username", { base_name: displayName });
   await supabase.from("profiles").upsert({
-    id:               user.id,
-    role:             "filmmaker" as const,
-    full_name:        user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "Filmmaker",
-    email:            user.email ?? null,
-    approval_status:  "approved" as const,
-    onboarded_at:     new Date().toISOString(),
+    id:                user.id,
+    role:              "filmmaker" as const,
+    full_name:         displayName,
+    email:             user.email ?? null,
+    approval_status:   "approved" as const,
+    onboarded_at:      new Date().toISOString(),
     profile_completed: false,
+    username:          generatedUsername ?? displayName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 25) || "user",
   }, { onConflict: "id", ignoreDuplicates: true });
 
   const title = str(formData, "title");
@@ -95,10 +96,15 @@ export async function createProject(formData: FormData) {
   if (!title || !logline) return { error: "Title and logline are required." };
   if (logline.length > 500) return { error: "Logline must be 500 characters or fewer." };
 
+  // Generate unique slug for clean public URL
+  const { data: generatedSlug } = await supabase.rpc("generate_unique_slug", { base_title: title });
+  const slug = generatedSlug ?? title.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "-").slice(0, 60);
+
   const { data, error } = await supabase
     .from("projects")
     .insert({
       owner_id: user.id,
+      slug,
       title,
       genre: str(formData, "genre") || "Drama",
       format: str(formData, "format") || "feature",
@@ -930,4 +936,33 @@ export async function updateCareerStage(formData: FormData) {
   const career_stage = str(formData, "career_stage");
   await supabase.from("profiles").update({ career_stage }).eq("id", user.id);
   revalidatePath("/dashboard/credits");
+}
+
+// ── Username update ────────────────────────────────────────────────────────────
+const RESERVED_USERNAMES = new Set([
+  "admin","api","dashboard","producer","projects","funds","login","signup",
+  "u","auth","support","help","about","terms","privacy","settings","me",
+  "home","fylympitch","pitch","fylym","discover","notifications","messages",
+]);
+
+export async function updateUsername(_prevState: unknown, formData: FormData) {
+  const { supabase, user } = await requireUser();
+
+  const raw = str(formData, "username") ?? "";
+  const username = raw.toLowerCase().replace(/[^a-z0-9_]/g, "");
+
+  if (username.length < 3)  return { error: "Username must be at least 3 characters." };
+  if (username.length > 30) return { error: "Username must be 30 characters or fewer." };
+  if (RESERVED_USERNAMES.has(username)) return { error: "That username is reserved." };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ username })
+    .eq("id", user.id);
+
+  if (error?.code === "23505") return { error: "Username already taken — try another." };
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/profile");
+  return { ok: true as const };
 }

@@ -13,6 +13,7 @@ export interface Profile {
   onboarded_at: string | null;
   email: string | null;
   full_name: string;
+  username: string;
   company: string | null;
   country: string | null;
   bio: string | null;
@@ -34,6 +35,7 @@ export interface Project {
   id: string;
   owner_id: string;
   title: string;
+  slug: string;
   genre: string;
   format: ProjectFormat;
   language: string;
