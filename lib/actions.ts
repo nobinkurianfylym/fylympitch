@@ -147,41 +147,39 @@ export async function createProject(formData: FormData) {
       }
     }
 
-    const { data: industryProfiles } = await supabase
-      .from("profiles")
-      .select(
-        "id, full_name, company, role, industry_genres, industry_formats, industry_countries, min_budget_usd, max_budget_usd, available_funding_usd, festival_track_record"
-      )
-      .in("role", ["producer", "investor", "organization"])
-      .eq("approval_status", "approved");
+    // Read from producer_profiles (authoritative source — migration 020).
+    // profiles.industry_* columns are never populated in the dual-role system
+    // (everyone has role='filmmaker') so querying profiles by role returns nothing.
+    const { data: ppRows } = await supabase
+      .from("producer_profiles")
+      .select("user_id, genres, formats, territories, budget_range, festivals, profile:profiles!producer_profiles_user_id_fkey(id, full_name, company)")
+      .eq("is_public", true);
 
-    type IndustryProfileRow = {
-      id: string;
-      full_name: string;
-      company: string | null;
-      role: "producer" | "investor" | "organization";
-      industry_genres: string[] | null;
-      industry_formats: string[] | null;
-      industry_countries: string[] | null;
-      min_budget_usd: number | null;
-      max_budget_usd: number | null;
-      available_funding_usd: number | null;
-      festival_track_record: boolean | null;
+    // Map budget_range string → numeric min/max for engine scoring
+    const BUDGET_MAP: Record<string, { min: number | null; max: number | null }> = {
+      micro: { min: null,        max: 100_000   },
+      low:   { min: 100_000,     max: 500_000   },
+      mid:   { min: 500_000,     max: 2_000_000 },
+      high:  { min: 2_000_000,   max: null      },
     };
 
-    const producerProfiles: ProducerMatchProfile[] = ((industryProfiles ?? []) as IndustryProfileRow[]).map((p) => ({
-      id: p.id,
-      full_name: p.full_name,
-      company: p.company,
-      role: p.role,
-      genres: p.industry_genres ?? [],
-      formats: p.industry_formats ?? [],
-      countries: p.industry_countries ?? [],
-      min_budget_usd: p.min_budget_usd,
-      max_budget_usd: p.max_budget_usd,
-      available_funding_usd: p.available_funding_usd,
-      festival_track_record: !!p.festival_track_record,
-    }));
+    const producerProfiles: ProducerMatchProfile[] = (ppRows ?? []).map((pp: any) => {
+      const p = Array.isArray(pp.profile) ? pp.profile[0] : pp.profile;
+      const b = BUDGET_MAP[pp.budget_range ?? ""] ?? { min: null, max: null };
+      return {
+        id:                    pp.user_id,
+        full_name:             p?.full_name ?? "Producer",
+        company:               p?.company   ?? null,
+        role:                  "producer" as const,
+        genres:                pp.genres      ?? [],
+        formats:               pp.formats     ?? [],
+        countries:             pp.territories ?? [],
+        min_budget_usd:        b.min,
+        max_budget_usd:        b.max,
+        available_funding_usd: null,
+        festival_track_record: (pp.festivals ?? []).length > 0,
+      };
+    });
 
   // ── STEP 1: Basic matching — always fast, always works ───────────────────
   // Write opportunity scores to the DB immediately so the dashboard
@@ -752,9 +750,45 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
     updated_at: new Date().toISOString(),
   };
 
+
+  // Sync matching fields to profiles.industry_* so the engine
+  // can score this producer against new project submissions.
+  const BUDGET_SYNC: Record<string, { min: number | null; max: number | null }> = {
+    micro: { min: null,      max: 100_000   },
+    low:   { min: 100_000,   max: 500_000   },
+    mid:   { min: 500_000,   max: 2_000_000 },
+    high:  { min: 2_000_000, max: null      },
+  };
+  const budgetKey = str(formData, "budget_range") ?? "";
+  const budgetSync = BUDGET_SYNC[budgetKey] ?? { min: null, max: null };
+
+  await supabase.from("profiles").update({
+    industry_genres:       genres,
+    industry_formats:      formats as any,
+    industry_countries:    territories,
+    min_budget_usd:        budgetSync.min,
+    max_budget_usd:        budgetSync.max,
+    festival_track_record: festivals.length > 0,
+  }).eq("id", user.id);
+
+  // Check previous is_public state BEFORE the upsert
+  const { data: prevPP } = await supabase
+    .from("producer_profiles")
+    .select("is_public")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const wasAlreadyPublic = prevPP?.is_public === true;
+
   await supabase
     .from("producer_profiles")
     .upsert(payload, { onConflict: "user_id" });
+
+  // When a producer goes public for the first time, log for retroactive
+  // rematch. New project submissions after this point will pick up this
+  // producer automatically via the fixed engine query.
+  if (payload.is_public && !wasAlreadyPublic) {
+    console.log(`[producer-match] user ${user.id} profile went public — future project submissions will match`);
+  }
 
   return { ok: true as const };
 }
