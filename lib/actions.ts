@@ -508,6 +508,38 @@ export async function adminCreateOpportunity(formData: FormData) {
   redirect("/admin/opportunities");
 }
 
+export async function adminUpdateOpportunity(formData: FormData) {
+  const { supabase, user } = await requireAdmin();
+  const id = str(formData, "opportunity_id");
+  if (!id) return { error: "Missing opportunity ID." };
+  const title = str(formData, "title");
+  if (!title) return { error: "Title is required." };
+  const list = (k: string) => str(formData, k) ? str(formData, k).split(",").map(s => s.trim()).filter(Boolean) : [];
+
+  const { error } = await supabase.from("opportunities").update({
+    title,
+    opp_type: str(formData, "opp_type") || "fund",
+    description: str(formData, "description") || null,
+    country: str(formData, "country") || null,
+    region: str(formData, "region") || null,
+    genres: list("genres"),
+    formats: list("formats"),
+    stages: list("stages"),
+    languages: list("languages"),
+    min_budget_usd: num(formData, "min_budget_usd"),
+    max_budget_usd: num(formData, "max_budget_usd"),
+    max_award_usd: num(formData, "max_award_usd"),
+    deadline: str(formData, "deadline") || null,
+    url: str(formData, "url") || null,
+  }).eq("id", id);
+
+  if (error) return { error: error.message };
+  await supabase.from("audit_logs").insert({
+    actor_id: user.id, action: "opportunity_updated", target: "opportunity", target_id: id,
+  });
+  revalidatePath("/admin/opportunities");
+}
+
 // ---------- BOOTSTRAP: SELF-PROMOTE FIRST ADMIN ----------
 export async function adminSelfPromote() {
   const { supabase, user } = await requireUser();

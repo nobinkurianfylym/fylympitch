@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { adminToggleOpportunity, adminCreateOpportunity } from "@/lib/actions";
-import { usd, TYPE_LABEL } from "@/lib/format";
+import { adminCreateOpportunity } from "@/lib/actions";
+import { OpportunityEditForm } from "./OpportunityEditForm";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +8,12 @@ export default async function AdminOpportunities() {
   const supabase = await createClient();
   const { data: opps } = await supabase
     .from("opportunities")
-    .select("id, title, opp_type, country, region, max_award_usd, deadline, is_active")
+    .select(`
+      id, title, opp_type, country, region,
+      genres, formats, stages, languages,
+      min_budget_usd, max_budget_usd, max_award_usd,
+      deadline, url, description, is_active
+    `)
     .order("created_at", { ascending: false })
     .limit(200);
 
@@ -19,28 +24,7 @@ export default async function AdminOpportunities() {
 
       <div className="card mt-8 divide-y divide-line">
         {(opps ?? []).map((o) => (
-          <div key={o.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="font-normal text-ink">{o.title}</p>
-              <p className="text-[12px] text-ash font-normal mt-0.5">
-                {[TYPE_LABEL[o.opp_type] ?? o.opp_type, o.country || o.region || "Worldwide"].filter(Boolean).join(" · ")}
-                {o.max_award_usd ? ` · up to ${usd(o.max_award_usd)}` : ""}
-                {o.deadline ? ` · deadline ${new Date(o.deadline).toLocaleDateString()}` : ""}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-[12px] uppercase tracking-[0.14em] font-normal ${o.is_active ? "text-emerald-700" : "text-ash"}`}>
-                {o.is_active ? "Active" : "Inactive"}
-              </span>
-              <form action={adminToggleOpportunity}>
-                <input type="hidden" name="opportunity_id" value={o.id} />
-                <input type="hidden" name="active" value={o.is_active ? "false" : "true"} />
-                <button className={o.is_active ? "btn-ghost !py-1.5 !px-4 text-[14px]" : "btn-gold !py-1.5 !px-4 text-[14px]"}>
-                  {o.is_active ? "Deactivate" : "Activate"}
-                </button>
-              </form>
-            </div>
-          </div>
+          <OpportunityEditForm key={o.id} opp={o} />
         ))}
         {(!opps || opps.length === 0) && (
           <p className="px-5 py-6 text-[14px] text-ash font-normal">No opportunities yet.</p>
