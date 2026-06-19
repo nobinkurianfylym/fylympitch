@@ -34,6 +34,38 @@ export const TYPE_LABEL: Record<string, string> = {
   tax_incentive: "Tax Incentive",
 };
 
+export const OPP_CATEGORY_MAP: Record<string, string> = {
+  lab:                "development",
+  grant:              "development",
+  fund:               "development",
+  crowdfunding:       "early_financing",
+  producer:           "project_attachment",
+  production_company: "project_attachment",
+  studio:             "project_attachment",
+  investor:           "private_financing",
+  sponsor:            "private_financing",
+  brand_integration:  "private_financing",
+  co_production:      "packaging_markets",
+  market:             "packaging_markets",
+  broadcaster:        "buyers_sales",
+  streamer:           "buyers_sales",
+  pre_sale:           "buyers_sales",
+  sales_agent:        "buyers_sales",
+  distribution:       "release",
+  tax_incentive:      "government_rebate",
+};
+
+export const CATEGORY_CONFIG: { key: string; label: string; sub: string }[] = [
+  { key: "development",        label: "Development",       sub: "Labs, Grants, Funds" },
+  { key: "early_financing",    label: "Early Financing",   sub: "Crowdfunding" },
+  { key: "project_attachment", label: "Project Attachment",sub: "Producers, Production Companies, Studios" },
+  { key: "private_financing",  label: "Private Financing", sub: "Investors, Sponsors, Brand Integration" },
+  { key: "packaging_markets",  label: "Packaging & Markets", sub: "Co-productions, Markets" },
+  { key: "buyers_sales",       label: "Buyers & Sales",    sub: "Broadcasters, Streamers, Pre-Sales, Sales Agents" },
+  { key: "release",            label: "Release",           sub: "Distribution" },
+  { key: "government_rebate",  label: "Government Rebate", sub: "Tax Incentives" },
+];
+
 export function timeAgo(iso: string): string {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (s < 60) return "just now";
