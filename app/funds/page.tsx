@@ -26,11 +26,24 @@ function hashTitle(s: string): number {
 }
 
 const BAND_LABEL: Record<string, string> = {
-  grant: "GRANT", fund: "FUND", lab: "LAB",
-  co_production: "CO-PROD", market: "MARKET",
-  distribution: "DISTRIBUTION", investor: "INVESTOR",
-  broadcaster: "BROADCASTER", streamer: "STREAMING",
-  sales_agent: "SALES AGENT", producer: "PRODUCER",
+  grant:              "GRANT",
+  fund:               "FUND",
+  lab:                "LAB",
+  co_production:      "CO-PROD",
+  market:             "MARKET",
+  distribution:       "DISTRIBUTION",
+  investor:           "INVESTOR",
+  broadcaster:        "BROADCASTER",
+  streamer:           "STREAMING",
+  sales_agent:        "SALES AGENT",
+  producer:           "PRODUCER",
+  production_company: "PRODUCTION CO",
+  studio:             "STUDIO",
+  brand_integration:  "BRAND",
+  crowdfunding:       "CROWDFUNDING",
+  sponsor:            "SPONSOR",
+  pre_sale:           "PRE-SALE",
+  tax_incentive:      "TAX INCENTIVE",
 };
 
 function formatDeadline(deadline: string | null, note: string | null): string {
@@ -43,12 +56,15 @@ function formatDeadline(deadline: string | null, note: string | null): string {
 }
 
 const TABS = [
-  { label: "All Funds",  value: ""              },
-  { label: "Grants",     value: "grants"        },
-  { label: "Labs",       value: "lab"           },
-  { label: "Co-Prod",    value: "co_production" },
-  { label: "Markets",    value: "market"        },
-  { label: "Producers",  value: "producer"      },
+  { label: "All",                  value: ""                   },
+  { label: "Development",          value: "development"        },
+  { label: "Early Financing",      value: "early_financing"    },
+  { label: "Production",           value: "production"         },
+  { label: "Private Financing",    value: "private_financing"  },
+  { label: "Packaging & Markets",  value: "packaging_markets"  },
+  { label: "Buyers & Sales",       value: "buyers_sales"       },
+  { label: "Release & Distribution", value: "release_distribution" },
+  { label: "Tax Incentives",       value: "tax_incentives"     },
 ];
 
 export default async function FundsPage({
@@ -60,17 +76,27 @@ export default async function FundsPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Map category key → opp_type values
+  const CATEGORY_TYPES: Record<string, string[]> = {
+    development:          ["lab", "grant", "fund"],
+    early_financing:      ["crowdfunding"],
+    production:           ["producer", "production_company", "studio"],
+    private_financing:    ["investor", "sponsor", "brand_integration"],
+    packaging_markets:    ["co_production", "market"],
+    buyers_sales:         ["broadcaster", "streamer", "pre_sale", "sales_agent"],
+    release_distribution: ["distribution"],
+    tax_incentives:       ["tax_incentive"],
+  };
+
   let query = supabase
     .from("opportunities")
     .select("id, title, opp_type, description, country, region, deadline, deadline_note, languages, url, app_link")
     .eq("is_active", true)
     .order("created_at", { ascending: false })
-    .limit(60);
+    .limit(200);
 
-  if (type === "grants") {
-    query = query.in("opp_type", ["grant", "fund"]);
-  } else if (type && type !== "") {
-    query = query.eq("opp_type", type);
+  if (type && CATEGORY_TYPES[type]) {
+    query = query.in("opp_type", CATEGORY_TYPES[type]);
   }
   if (q?.trim()) query = (query as any).or(`title.ilike.%${q.trim()}%,description.ilike.%${q.trim()}%`);
 
