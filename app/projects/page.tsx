@@ -9,7 +9,7 @@ import { usd } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const FORMATS = ["Feature", "Documentary", "Series", "Animation", "Short"];
+const FORMATS = ["Feature", "Documentary", "Series", "Animation"];
 
 export default async function ProjectsPage({
   searchParams,

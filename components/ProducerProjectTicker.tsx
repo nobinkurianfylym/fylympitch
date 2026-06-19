@@ -17,7 +17,6 @@ export type ProducerProject = {
 
 const FORMAT_LABELS: Record<string, string> = {
   feature:     "Feature Film",
-  short:       "Short Film",
   documentary: "Documentary",
   series:      "Series",
   animation:   "Animation",

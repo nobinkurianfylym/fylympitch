@@ -8,7 +8,7 @@ import type { Project } from "@/types";
 export const dynamic = "force-dynamic";
 
 const GENRES  = ["Drama","Comedy","Thriller","Horror","Romance","Action","Documentary","Family","Crime","Sci-Fi","Fantasy","Musical"];
-const FORMATS = ["feature","short","documentary","series","animation"];
+const FORMATS = ["feature","documentary","series","animation"];
 const STAGES  = Object.entries(STAGE_LABEL);
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {

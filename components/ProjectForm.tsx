@@ -452,7 +452,6 @@ export default function ProjectForm() {
                 <label className="field-label" htmlFor="format">"Format"</label>
                 <select id="format" name="format" className="field" value={fields.format} onChange={set("format")}>
                   <option value="feature">Feature</option>
-                  <option value="short">Short</option>
                   <option value="documentary">Documentary</option>
                   <option value="series">Series</option>
                   <option value="animation">Animation</option>

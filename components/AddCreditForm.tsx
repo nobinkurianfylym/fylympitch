@@ -8,7 +8,7 @@ const FESTIVALS = [
   "IFFR","Hot Docs","Locarno","San Sebastián","Busan","IDFA",
   "BFI London","Palm Springs","Frameline","AFI Fest",
 ];
-const FORMATS = ["Feature","Short","Series","Documentary","Animation"];
+const FORMATS = ["Feature","Series","Documentary","Animation"];
 
 export default function AddCreditForm() {
   const [open, setOpen] = useState(false);

@@ -8,7 +8,7 @@ const EXTRACTION_PROMPT = `Extract film project information and return a JSON ob
 {
   "title": "film title",
   "genre": "exactly one of: ${GENRES.join(", ")}",
-  "format": "exactly one of: feature, short, documentary, series, animation",
+  "format": "exactly one of: feature, documentary, series, animation",
   "language": "primary language of the film",
   "country": "primary country of production",
   "budget_usd": number or null,

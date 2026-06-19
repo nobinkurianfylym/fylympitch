@@ -9,7 +9,7 @@ import ShareButton from "@/components/ShareButton";
 
 export const dynamic = "force-dynamic";
 
-const FORMATS = ["Feature", "Documentary", "Series", "Animation", "Short"];
+const FORMATS = ["Feature", "Documentary", "Series", "Animation"];
 const GENRES  = ["Drama", "Thriller", "Comedy", "Documentary", "Horror", "Romance", "Action", "Animation", "Sci-Fi"];
 
 export default async function ProducerProjectsPage({

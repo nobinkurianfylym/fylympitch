@@ -13,7 +13,7 @@ const CAREER_STAGES = [
 
 const FORMATS = [
   { value: "documentary", label: "Documentary", sub: "Nonfiction, observational, essay film" },
-  { value: "narrative",   label: "Narrative",   sub: "Feature, short, series, animation" },
+  { value: "narrative",   label: "Narrative",   sub: "Feature, series, animation" },
 ];
 
 export default function OnboardingPage() {

@@ -18,10 +18,10 @@ const ROLE_TYPES = [
 const GENRES = [
   "Drama","Documentary","Thriller","Horror","Comedy",
   "Animation","Sci-Fi","World Cinema","Romance","Action",
-  "Experimental","Short Film",
+  "Experimental",
 ];
 
-const FORMATS = ["Feature","Short","Series","Documentary"];
+const FORMATS = ["Feature","Series","Documentary"];
 
 const BUDGET_RANGES = [
   { key: "micro", label: "Micro", sub: "< $100K" },

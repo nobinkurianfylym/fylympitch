@@ -37,7 +37,7 @@ const PROJECTS = [
   },
   {
     title: "Midnight Circuit",
-    genre: "Documentary", format: "Short", country: "India", budget: "$45K", seeking: "$35K",
+    genre: "Documentary", format: "Documentary", country: "India", budget: "$45K", seeking: "$35K",
     fundable: "$380K", sources: 18, readiness: 58,
     breakdown: [{ l: "Grants", a: "$160K" }, { l: "Labs", a: "$80K" }, { l: "Streamers", a: "$80K" }, { l: "Funds", a: "$60K" }],
     matches: [
