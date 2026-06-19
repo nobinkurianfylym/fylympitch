@@ -15,16 +15,23 @@ export const STAGE_LABEL: Record<string, string> = {
 
 export const TYPE_LABEL: Record<string, string> = {
   grant: "Grant",
-  fund: "Film Fund",
+  fund: "Fund",
   lab: "Lab",
   co_production: "Co-Production",
   market: "Market",
   distribution: "Distribution",
   investor: "Investor",
   broadcaster: "Broadcaster",
-  streamer: "Streaming",
+  streamer: "Streamer",
   sales_agent: "Sales Agent",
-  producer: "Production Partner",
+  brand_integration: "Brand Integration",
+  crowdfunding: "Crowdfunding",
+  producer: "Producer",
+  production_company: "Production Company",
+  studio: "Studio",
+  sponsor: "Sponsor",
+  pre_sale: "Pre-Sale",
+  tax_incentive: "Tax Incentive",
 };
 
 export function timeAgo(iso: string): string {

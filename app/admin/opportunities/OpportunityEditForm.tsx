@@ -13,7 +13,15 @@ const OPP_TYPES = [
   { value: "investor", label: "Investor" },
   { value: "broadcaster", label: "Broadcaster" },
   { value: "streamer", label: "Streamer" },
-  { value: "sales_agent", label: "Sales agent" },
+  { value: "sales_agent", label: "Sales Agent" },
+  { value: "brand_integration", label: "Brand Integration" },
+  { value: "crowdfunding", label: "Crowdfunding" },
+  { value: "producer", label: "Producer" },
+  { value: "production_company", label: "Production Company" },
+  { value: "studio", label: "Studio" },
+  { value: "sponsor", label: "Sponsor" },
+  { value: "pre_sale", label: "Pre-Sale" },
+  { value: "tax_incentive", label: "Tax Incentive" },
 ];
 
 type Opportunity = {

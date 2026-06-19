@@ -51,7 +51,15 @@ export default async function AdminOpportunities() {
               <option value="investor">Investor</option>
               <option value="broadcaster">Broadcaster</option>
               <option value="streamer">Streamer</option>
-              <option value="sales_agent">Sales agent</option>
+              <option value="sales_agent">Sales Agent</option>
+              <option value="brand_integration">Brand Integration</option>
+              <option value="crowdfunding">Crowdfunding</option>
+              <option value="producer">Producer</option>
+              <option value="production_company">Production Company</option>
+              <option value="studio">Studio</option>
+              <option value="sponsor">Sponsor</option>
+              <option value="pre_sale">Pre-Sale</option>
+              <option value="tax_incentive">Tax Incentive</option>
             </select>
           </label>
           <label className="block">
