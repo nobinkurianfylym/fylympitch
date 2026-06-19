@@ -12,11 +12,31 @@ import HeaderCTA from "@/components/HeaderCTA";
 import { createClient } from "@/lib/supabase/server";
 import ProducerProjectTicker from "@/components/ProducerProjectTicker";
 
-const FEATURES = [
-  ["Intelligent matching", "Every project is scored against 1,000+ grants, funds, labs, markets and investors on eight weighted criteria — genre, stage, territory, budget, format, funding gap, language and track record."],
-  ["Dual-role access", "One account gives you both sides of the table — submit your own projects as a filmmaker, and discover projects as a producer or investor. No separate approval needed."],
-  ["Direct offers", "Approved producers and investors can send offers straight to your project — investment, co-production, distribution or acquisition."],
-  ["One pitch, many doors", "Submit your project once. FYLYMPITCH keeps it matched against new opportunities as deadlines open worldwide."],
+const STEPS = [
+  {
+    num: "01",
+    icon: "ti-file-pencil",
+    title: "Create Your Project",
+    body: "Build a professional project profile — logline, synopsis, budget, pitch deck, cast and crew. Your film, presented at its best.",
+  },
+  {
+    num: "02",
+    icon: "ti-target",
+    title: "Match With Global Opportunities",
+    body: "The FYLYMPITCH ENGINE™ scores your project against 1,000+ grants, funds, labs, investors, studios and co-productions worldwide — and tells you exactly why each one fits.",
+  },
+  {
+    num: "03",
+    icon: "ti-eye",
+    title: "Get Discovered by Producers",
+    body: "Make your project visible to producers actively searching for their next film — whether they're seeking financing, co-production partners, or creative attachment.",
+  },
+  {
+    num: "04",
+    icon: "ti-movie",
+    title: "Turn Projects Into Productions",
+    body: "Connect with the right people, unlock funding, build lasting partnerships. Move your film from development to the screen.",
+  },
 ];
 
 const FAQS = [
@@ -117,21 +137,57 @@ export default async function Home() {
       {/* INTELLIGENCE TICKER */}
       <IntelligenceTicker />
 
-      {/* FEATURES */}
+      {/* PLATFORM */}
       <section id="features" className="bg-parchment">
         <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">
-          <p className="eyebrow mb-4">Platform</p>
-          <h2 className="font-display text-[32px] md:text-[44px] max-w-2xl leading-tight">
-            Built for the way films actually get financed.
-          </h2>
-          <div className="mt-16 grid md:grid-cols-2 gap-x-16 gap-y-14">
-            {FEATURES.map(([title, body]) => (
-              <div key={title} className="hairline pt-6">
-                <h3 className="font-display text-[21px] mb-3">{title}</h3>
-                <p className="text-[21px] leading-[1.7] text-ash">{body}</p>
+
+          {/* Opening */}
+          <div className="max-w-3xl mb-20">
+            <p className="eyebrow mb-5">Platform</p>
+            <h2 className="font-display text-[36px] md:text-[52px] leading-[1.08] font-normal">
+              Every great film starts with<br className="hidden md:block" />{" "}
+              <span className="italic text-gold">the right discovery.</span>
+            </h2>
+            <p className="mt-6 text-[18px] leading-[1.7] text-ash max-w-xl">
+              Every year, exceptional films go unmade — not for lack of vision,
+              but for lack of the right introduction.
+            </p>
+          </div>
+
+          {/* 4 Steps */}
+          <div className="grid md:grid-cols-2 gap-x-20 gap-y-0">
+            {STEPS.map((s) => (
+              <div key={s.num} className="hairline pt-8 pb-8">
+                <div className="flex items-start gap-5">
+                  {/* Icon circle */}
+                  <div
+                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center mt-0.5"
+                    style={{ border: "1px solid rgba(191,153,83,0.35)", background: "rgba(191,153,83,0.06)" }}
+                  >
+                    <i className={`ti ${s.icon} text-gold`} style={{ fontSize: 16 }} aria-hidden="true" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-ash/50 mb-2">{s.num}</p>
+                    <h3 className="font-display text-[22px] font-normal mb-3">{s.title}</h3>
+                    <p className="text-[16px] leading-[1.7] text-ash">{s.body}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
+
+          {/* Closing */}
+          <div className="mt-24 border-t border-line pt-16 text-center">
+            <p className="eyebrow mb-5">One Platform. Two Needs. One Mission.</p>
+            <p className="font-display text-[28px] md:text-[38px] leading-tight font-normal italic max-w-2xl mx-auto">
+              "Filmmakers need funding. Producers need stories.<br className="hidden md:block" />
+              FYLYMPITCH is where both discover each other."
+            </p>
+            <Link href="/signup" className="btn-gold mt-10 inline-block">
+              Create your free account
+            </Link>
+          </div>
+
         </div>
       </section>
 
