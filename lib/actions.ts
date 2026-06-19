@@ -77,6 +77,19 @@ export async function completeFilmmakerOnboarding(formData: FormData) {
 export async function createProject(formData: FormData) {
   const { supabase, user } = await requireUser();
 
+  // Safety net: ensure profile row exists before inserting a project.
+  // Guards against trigger failures on new signups — without this,
+  // projects_owner_id_fkey throws if the profiles row is missing.
+  await supabase.from("profiles").upsert({
+    id:               user.id,
+    role:             "filmmaker" as const,
+    full_name:        user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "Filmmaker",
+    email:            user.email ?? null,
+    approval_status:  "approved" as const,
+    onboarded_at:     new Date().toISOString(),
+    profile_completed: false,
+  }, { onConflict: "id", ignoreDuplicates: true });
+
   const title = str(formData, "title");
   const logline = str(formData, "logline");
   if (!title || !logline) return { error: "Title and logline are required." };
