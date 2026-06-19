@@ -122,22 +122,6 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {/* Profile completion nudge */}
-      {completion < 70 && (
-        <Link href="/dashboard/profile"
-          className="flex items-center gap-4 py-4 px-5 card hover:border-gold transition-colors mb-8">
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] text-ink font-medium">Complete your profile</p>
-            <p className="text-[12px] text-ash mt-0.5">A fuller profile unlocks better matches — {completion}% done.</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-20 h-[3px] bg-line rounded-full overflow-hidden">
-              <div className="h-full bg-gold rounded-full" style={{ width: `${completion}%` }} />
-            </div>
-            <span className="text-[11px] tracking-[0.2em] uppercase text-ash">{completion}%</span>
-          </div>
-        </Link>
-      )}
 
       {/* Pending offers */}
       {(offers?.length ?? 0) > 0 && (
