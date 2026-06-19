@@ -24,7 +24,10 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const params = useSearchParams();
 
   const [step, setStep]   = useState<Step>(mode === "signup" ? "role" : "method");
-  const [role, setRole]   = useState<Role>("filmmaker");
+  const [role, setRole]   = useState<Role>(() => {
+    const r = params.get("role");
+    return r === "producer" ? "producer" : "filmmaker";
+  });
   const [email, setEmail] = useState("");
   const [busy, setBusy]   = useState(false);
   const [error, setError] = useState<string | null>(null);

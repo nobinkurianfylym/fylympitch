@@ -166,7 +166,7 @@ export default async function Home() {
                   <div key={item} className="hairline pt-4 pb-1 text-[14px] text-ash">{item}</div>
                 ))}
               </div>
-              <Link href="/login" className="btn-gold">Submit your project</Link>
+              <Link href="/signup" className="btn-gold">Submit your project</Link>
             </div>
 
             {/* Right — opportunity preview */}
@@ -225,7 +225,7 @@ export default async function Home() {
                   <div key={item} className="hairline pt-4 pb-1 text-[14px] text-ash">{item}</div>
                 ))}
               </div>
-              <Link href="/login" className="btn-ghost">Join as producer</Link>
+              <Link href="/signup?role=producer" className="btn-ghost">Join as producer</Link>
             </div>
 
             {/* Right — project showcase preview */}
@@ -357,14 +357,14 @@ export default async function Home() {
                 <ul className="space-y-3 text-ivory/70">
                   <li><a href="#features" className="hover:text-gold">Features</a></li>
                   <li><a href="#pricing" className="hover:text-gold">Pricing</a></li>
-                  <li><Link href="/login" className="hover:text-gold">Join</Link></li>
+                  <li><Link href="/signup" className="hover:text-gold">Join</Link></li>
                 </ul>
               </div>
               <div>
                 <p className="eyebrow !text-ivory/40 mb-4">For industry</p>
                 <ul className="space-y-3 text-ivory/70">
-                  <li><Link href="/login" className="hover:text-gold">Producers</Link></li>
-                  <li><Link href="/login" className="hover:text-gold">Investors</Link></li>
+                  <li><Link href="/signup?role=producer" className="hover:text-gold">Producers</Link></li>
+                  <li><Link href="/signup?role=producer" className="hover:text-gold">Investors</Link></li>
                   <li><a href="#contact" className="hover:text-gold">List a fund</a></li>
                 </ul>
               </div>

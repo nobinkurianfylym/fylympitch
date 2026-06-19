@@ -13,7 +13,7 @@ const CONTENT = {
       </>
     ),
     body: "FYLYMPITCH matches your project with the producers, funds, grants, labs, markets and investors most likely to say yes — and tells you exactly why.",
-    primary: { label: "Get started", href: "/login" },
+    primary: { label: "Get started", href: "/signup" },
     secondary: { label: "See how it works", href: "#how" },
   },
   producer: {
@@ -25,7 +25,7 @@ const CONTENT = {
       </>
     ),
     body: "One account, two roles. Browse filmmaker projects by genre, stage and territory. Read scripts, send offers, co-produce — no approval needed.",
-    primary: { label: "Get started", href: "/login?next=/producer" },
+    primary: { label: "Get started", href: "/signup?role=producer" },
     secondary: { label: "Browse projects", href: "/projects" },
   },
 };
