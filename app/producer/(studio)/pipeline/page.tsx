@@ -65,21 +65,6 @@ export default async function ProducerPipelinePage() {
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
-        {[
-          { label: "In pipeline", val: (rows ?? []).length },
-          { label: "Shortlisted", val: (byStage.shortlisted?.length ?? 0) + (byStage.in_review?.length ?? 0) },
-          { label: "Meetings set", val: byStage.meeting_set?.length ?? 0 },
-          { label: "Deals active", val: byStage.deal_active?.length ?? 0 },
-        ].map((s) => (
-          <div key={s.label} className="card px-5 py-4">
-            <p className="text-[12px] text-ash mb-1">{s.label}</p>
-            <p className="font-display text-[28px]">{s.val}</p>
-          </div>
-        ))}
-      </div>
-
       {(rows ?? []).length === 0 ? (
         <div className="card py-16 text-center">
           <p className="font-display text-[22px] mb-3">Your pipeline is empty</p>
@@ -94,13 +79,22 @@ export default async function ProducerPipelinePage() {
               const cards = byStage[stage.key] ?? [];
               return (
                 <div key={stage.key} className="flex-1 min-w-[180px]">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className={`text-[11px] tracking-[0.16em] uppercase font-medium ${stage.color}`}>
-                      {stage.label}
-                    </span>
-                    <span className="text-[11px] bg-parchment text-ash px-2 py-0.5 rounded-full">
-                      {cards.length}
-                    </span>
+                  {/* Column header — border-top + label + count clearly aligned */}
+                  <div className={`border-t-2 pt-3 mb-3 ${
+                    stage.key === "saved"        ? "border-ash/30" :
+                    stage.key === "shortlisted"  ? "border-blue-400" :
+                    stage.key === "in_review"    ? "border-amber-400" :
+                    stage.key === "meeting_set"  ? "border-emerald-400" :
+                    "border-gold"
+                  }`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-[12px] tracking-[0.18em] uppercase font-medium ${stage.color}`}>
+                        {stage.label}
+                      </span>
+                      <span className="text-[11px] bg-parchment text-ash px-2 py-0.5 rounded-full shrink-0">
+                        {cards.length}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex flex-col gap-3 bg-parchment/40 rounded-card p-3 min-h-[200px]">
                     {cards.map((row: any) => {
@@ -143,6 +137,21 @@ export default async function ProducerPipelinePage() {
           </div>
         </div>
       )}
+
+      {/* Stats — bottom of page */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10">
+        {[
+          { label: "In pipeline", val: (rows ?? []).length },
+          { label: "Shortlisted", val: (byStage.shortlisted?.length ?? 0) + (byStage.in_review?.length ?? 0) },
+          { label: "Meetings set", val: byStage.meeting_set?.length ?? 0 },
+          { label: "Deals active", val: byStage.deal_active?.length ?? 0 },
+        ].map((s) => (
+          <div key={s.label} className="card px-5 py-4">
+            <p className="text-[12px] text-ash mb-1">{s.label}</p>
+            <p className="font-display text-[28px]">{s.val}</p>
+          </div>
+        ))}
+      </div>
 
       {/* Passed projects link */}
       <div className="mt-8 text-center">
