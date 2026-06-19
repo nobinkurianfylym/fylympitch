@@ -5,7 +5,13 @@ import Link from "next/link";
 import { useRole } from "@/components/RoleProvider";
 import { signOut } from "@/lib/auth-actions";
 
-export default function HeaderCTA({ isLoggedIn }: { isLoggedIn: boolean }) {
+type Props = {
+  isLoggedIn:  boolean;
+  userName?:   string;
+  avatarUrl?:  string;
+};
+
+export default function HeaderCTA({ isLoggedIn, userName, avatarUrl }: Props) {
   const { role } = useRole();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -19,10 +25,9 @@ export default function HeaderCTA({ isLoggedIn }: { isLoggedIn: boolean }) {
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
-  const destination = role === "producer" ? "/producer" : "/dashboard";
-
-  // Not logged in — plain link, role-aware destination
+  // Not logged in — plain role-aware link
   if (!isLoggedIn) {
+    const destination = role === "producer" ? "/producer" : "/dashboard";
     return (
       <Link href={`/login?next=${destination}`} className="btn-outline !px-5 !py-2.5 !text-[11px]">
         Get started
@@ -30,36 +35,53 @@ export default function HeaderCTA({ isLoggedIn }: { isLoggedIn: boolean }) {
     );
   }
 
-  // Logged in — same label, adds dropdown with sign out
+  // Derive display name + initials
+  const firstName = (userName ?? "").split(" ")[0] || "Account";
+  const initials  = (userName ?? "")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "?";
+
   return (
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="btn-outline !px-5 !py-2.5 !text-[11px] inline-flex items-center gap-2"
+        className="flex items-center gap-2.5 px-3 py-1.5 rounded-card border border-line hover:border-ink/30 transition-colors bg-transparent"
       >
-        Get started
-        <span style={{ fontSize: 9, lineHeight: 1 }}>▾</span>
+        {/* Avatar */}
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={firstName}
+            className="w-[26px] h-[26px] rounded-full object-cover shrink-0"
+          />
+        ) : (
+          <span
+            className="w-[26px] h-[26px] rounded-full flex items-center justify-center shrink-0 text-[10px] font-medium"
+            style={{ background: "#BF9953", color: "#1A1815" }}
+          >
+            {initials}
+          </span>
+        )}
+        {/* Name */}
+        <span className="text-[11px] tracking-[0.1em] uppercase text-ink max-w-[96px] truncate">
+          {firstName}
+        </span>
+        <span style={{ fontSize: 9, color: "#8A857C", lineHeight: 1 }}>▾</span>
       </button>
 
       {open && (
         <div
           className="absolute right-0 top-full mt-2 bg-white border border-line rounded-card overflow-hidden z-50"
-          style={{ minWidth: 180, boxShadow: "0 4px 24px rgba(26,24,21,0.08)" }}
+          style={{ minWidth: 160, boxShadow: "0 4px 24px rgba(26,24,21,0.08)" }}
         >
-          <Link href="/dashboard" onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.1em] uppercase text-ash hover:text-ink hover:bg-parchment/60 transition-colors">
-            <i className="ti ti-movie" style={{ fontSize: 14 }} aria-hidden="true" />
-            Filmmaker
-          </Link>
-          <Link href="/producer" onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.1em] uppercase text-ash hover:text-ink hover:bg-parchment/60 transition-colors">
-            <i className="ti ti-building" style={{ fontSize: 14 }} aria-hidden="true" />
-            Producer Studio
-          </Link>
-          <div className="border-t border-line" />
           <form action={signOut}>
-            <button type="submit"
-              className="w-full flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.1em] uppercase text-ash hover:text-red-600 transition-colors">
+            <button
+              type="submit"
+              className="w-full flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.1em] uppercase text-ash hover:text-red-600 transition-colors"
+            >
               <i className="ti ti-logout" style={{ fontSize: 14 }} aria-hidden="true" />
               Sign out
             </button>

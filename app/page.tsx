@@ -78,7 +78,11 @@ export default async function Home() {
           </nav>
           <div className="flex items-center gap-3">
             <HeaderRoleToggle />
-            <HeaderCTA isLoggedIn={!!user} />
+            <HeaderCTA
+              isLoggedIn={!!user}
+              userName={user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? ""}
+              avatarUrl={user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? ""}
+            />
           </div>
         </header>
 
