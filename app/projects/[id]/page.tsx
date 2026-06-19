@@ -55,10 +55,14 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
 
   if (!p) notFound();
 
-  const [{ data: filmmakerCredits }, { data: loved }] = await Promise.all([
+  const [{ data: filmmakerCredits }, { data: loved }, { data: producerProfile }] = await Promise.all([
     supabase.from("filmmaker_credits").select("*").eq("user_id", p.owner_id).order("year", { ascending: false }),
     supabase.from("project_loves").select("user_id").eq("user_id", user.id).eq("project_id", id).single(),
+    supabase.from("producer_profiles").select("user_id").eq("user_id", user.id).single(),
   ]);
+
+  const isProducer  = !!producerProfile;
+  const isOwnProject = user.id === p.owner_id;
 
   const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -170,13 +174,40 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           </section>
         )}
 
-        <div className="mt-14 border border-line rounded-card bg-white/70 p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-          <div>
-            <p className="text-[16px]">Interested in this project?</p>
-            <p className="mt-1 text-[13px] text-ash">Go to your dashboard to send a financing offer or message.</p>
+        {!isOwnProject && (
+          <div className="mt-14 border border-line rounded-card bg-white/70 p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+            {isProducer ? (
+              <>
+                <div>
+                  <p className="text-[16px]">Interested in this project?</p>
+                  <p className="mt-1 text-[13px] text-ash">Message the filmmaker or add it to your pipeline.</p>
+                </div>
+                <div className="flex gap-3 flex-wrap shrink-0">
+                  <Link href={`/producer/messages`} className="btn-ghost whitespace-nowrap">
+                    Message filmmaker
+                  </Link>
+                  <form action={async (fd: FormData) => {
+                    "use server";
+                    const { upsertProducerProject } = await import("@/lib/actions");
+                    await upsertProducerProject(fd);
+                  }}>
+                    <input type="hidden" name="project_id" value={p.id} />
+                    <input type="hidden" name="status" value="saved" />
+                    <button className="btn-gold whitespace-nowrap">Add to pipeline</button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <p className="text-[16px]">Interested in this project?</p>
+                  <p className="mt-1 text-[13px] text-ash">Go to your dashboard to send a message or financing offer.</p>
+                </div>
+                <Link href="/dashboard" className="btn-gold shrink-0 whitespace-nowrap">Go to dashboard</Link>
+              </>
+            )}
           </div>
-          <Link href="/dashboard" className="btn-gold shrink-0 whitespace-nowrap">Go to dashboard</Link>
-        </div>
+        )}
 
         <Link href="/projects" className="mt-10 inline-block text-[12px] tracking-[0.16em] uppercase text-ash hover:text-ink transition-colors">
           ← Back to Projects
