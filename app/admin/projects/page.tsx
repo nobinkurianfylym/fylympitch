@@ -14,11 +14,12 @@ export default async function AdminProjects({
 
   let query = supabase
     .from("projects")
-    .select("id, owner_id, title, genre, format, stage, country, funding_needed_usd, is_public, created_at")
+    .select("id, owner_id, title, genre, format, stage, country, funding_needed_usd, is_public, admin_hidden, created_at")
     .order("created_at", { ascending: false })
     .limit(200);
 
-  if (filter === "hidden") query = query.eq("is_public", false);
+  if (filter === "hidden")  query = query.eq("admin_hidden", true);
+  if (filter === "private") query = query.eq("is_public", false);
 
   const { data: projects } = await query;
 
@@ -28,6 +29,11 @@ export default async function AdminProjects({
     : { data: [] };
   const ownerById = new Map((owners ?? []).map((o) => [o.id, o]));
 
+  const { count: hiddenCount } = await supabase
+    .from("projects")
+    .select("id", { count: "exact", head: true })
+    .eq("admin_hidden", true);
+
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -35,10 +41,13 @@ export default async function AdminProjects({
           <p className="eyebrow">Project management</p>
           <h1 className="font-display text-[30px] font-normal mt-1">Projects</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <a href="/admin/projects" className={`btn-ghost ${!filter ? "border-gold text-ink" : ""}`}>All</a>
           <a href="/admin/projects?filter=hidden" className={`btn-ghost ${filter === "hidden" ? "border-gold text-ink" : ""}`}>
-            Hidden
+            Admin hidden {(hiddenCount ?? 0) > 0 && `(${hiddenCount})`}
+          </a>
+          <a href="/admin/projects?filter=private" className={`btn-ghost ${filter === "private" ? "border-gold text-ink" : ""}`}>
+            Filmmaker private
           </a>
         </div>
       </div>
@@ -49,7 +58,19 @@ export default async function AdminProjects({
           return (
             <div key={p.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="font-normal text-ink">{p.title}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-normal text-ink">{p.title}</p>
+                  {p.admin_hidden && (
+                    <span className="text-[10px] tracking-[0.12em] uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200">
+                      Admin hidden
+                    </span>
+                  )}
+                  {!p.is_public && !p.admin_hidden && (
+                    <span className="text-[10px] tracking-[0.12em] uppercase px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      Private
+                    </span>
+                  )}
+                </div>
                 <p className="text-[12px] text-ash font-normal mt-0.5">
                   {[owner?.full_name ?? "Unknown", owner?.company, p.genre, STAGE_LABEL[p.stage] ?? p.stage, p.country]
                     .filter(Boolean)
@@ -57,18 +78,19 @@ export default async function AdminProjects({
                   {p.funding_needed_usd ? ` · seeking ${usd(p.funding_needed_usd)}` : ""}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className={`text-[12px] uppercase tracking-[0.14em] font-normal ${p.is_public ? "text-emerald-700" : "text-gold"}`}>
-                  {p.is_public ? "Public" : "Hidden"}
-                </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Admin hide toggle */}
                 <form action={adminToggleProjectVisibility}>
                   <input type="hidden" name="project_id" value={p.id} />
-                  <input type="hidden" name="is_public" value={p.is_public ? "false" : "true"} />
-                  <button className="btn-ghost !py-1.5 !px-4 text-[14px]">{p.is_public ? "Hide" : "Unhide"}</button>
+                  <input type="hidden" name="admin_hidden" value={p.admin_hidden ? "false" : "true"} />
+                  <button className={`btn-ghost !py-1.5 !px-4 text-[13px] ${p.admin_hidden ? "border-red-200 text-red-600" : ""}`}>
+                    {p.admin_hidden ? "Unhide" : "Admin hide"}
+                  </button>
                 </form>
+                {/* Delete */}
                 <form action={adminDeleteProject}>
                   <input type="hidden" name="project_id" value={p.id} />
-                  <button className="btn-ghost !py-1.5 !px-4 text-[14px]">Remove</button>
+                  <button className="btn-ghost !py-1.5 !px-4 text-[13px]">Remove</button>
                 </form>
               </div>
             </div>

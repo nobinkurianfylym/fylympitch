@@ -20,7 +20,7 @@ export default async function MyProjectsPage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, title, genre, format, stage, country, language, logline, funding_needed_usd, poster_path, love_count, is_public, created_at")
+    .select("id, title, genre, format, stage, country, language, logline, funding_needed_usd, poster_path, love_count, is_public, admin_hidden, created_at")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -86,7 +86,12 @@ export default async function MyProjectsPage() {
                 {/* Badges — top of thumbnail */}
                 <div className="relative">
                   {/* Private badge — top left */}
-                  {!p.is_public && (
+                  {p.admin_hidden && (
+                    <span className="absolute top-2 left-2 z-10 text-[10px] tracking-[0.14em] uppercase bg-red-600/90 text-white px-2.5 py-0.5 rounded-full">
+                      Admin hidden
+                    </span>
+                  )}
+                  {!p.admin_hidden && !p.is_public && (
                     <span className="absolute top-2 left-2 z-10 text-[10px] tracking-[0.14em] uppercase bg-ink/75 text-ivory px-2.5 py-0.5 rounded-full">
                       Private
                     </span>

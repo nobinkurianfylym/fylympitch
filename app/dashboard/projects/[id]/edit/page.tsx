@@ -18,7 +18,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
   if (!user) redirect("/login");
 
   const { data: project } = await supabase
-    .from("projects").select("*").eq("id", id).eq("owner_id", user.id).single<Project>();
+    .from("projects").select("*, admin_hidden").eq("id", id).eq("owner_id", user.id).single<Project & { admin_hidden: boolean }>();
 
   if (!project) notFound();
 
@@ -29,6 +29,15 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
       <p className="text-[14px] text-ash mb-8">
         Update your project details. After saving, re-run the engine to refresh your match scores.
       </p>
+
+      {/* Admin hidden warning */}
+      {project.admin_hidden && (
+        <div className="mb-8 px-4 py-3 rounded-card bg-red-50 border border-red-200">
+          <p className="text-[13px] text-red-700 font-normal">
+            <strong>This project has been hidden by an administrator.</strong> It is not visible to the public or producers, regardless of your visibility setting below. Contact support if you believe this is an error.
+          </p>
+        </div>
+      )}
 
       <form action={updateProject} className="space-y-6">
         <input type="hidden" name="project_id" value={project.id} />

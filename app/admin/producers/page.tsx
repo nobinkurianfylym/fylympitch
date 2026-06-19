@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { adminSetApproval } from "@/lib/actions";
+import { adminSetApproval, adminVerifyProducer } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -13,22 +13,28 @@ export default async function AdminProducersPage({
 
   let query = supabase
     .from("profiles")
-    .select("id, full_name, role, approval_status, company, country, bio, imdb_url, created_at")
+    .select("id, full_name, role, approval_status, is_producer_verified, company, country, bio, imdb_url, created_at")
     .eq("role", "producer")
     .order("created_at", { ascending: false })
     .limit(200);
 
-  if (filter === "pending") query = query.eq("approval_status", "pending");
+  if (filter === "pending")  query = query.eq("approval_status", "pending");
   if (filter === "approved") query = query.eq("approval_status", "approved");
+  if (filter === "verified") query = query.eq("is_producer_verified", true);
 
   const { data: producers } = await query;
 
-  // Pending count for badge
   const { count: pendingCount } = await supabase
     .from("profiles")
     .select("id", { count: "exact", head: true })
     .eq("role", "producer")
     .eq("approval_status", "pending");
+
+  const { count: verifiedCount } = await supabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "producer")
+    .eq("is_producer_verified", true);
 
   const statusStyle: Record<string, string> = {
     pending:  "bg-amber-50 text-amber-700 border border-amber-200",
@@ -50,12 +56,15 @@ export default async function AdminProducersPage({
             )}
           </h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <a href="/admin/producers" className={`btn-ghost ${!filter ? "border-gold text-ink" : ""}`}>All</a>
           <a href="/admin/producers?filter=pending" className={`btn-ghost ${filter === "pending" ? "border-gold text-ink" : ""}`}>
             Pending {(pendingCount ?? 0) > 0 && `(${pendingCount})`}
           </a>
           <a href="/admin/producers?filter=approved" className={`btn-ghost ${filter === "approved" ? "border-gold text-ink" : ""}`}>Approved</a>
+          <a href="/admin/producers?filter=verified" className={`btn-ghost ${filter === "verified" ? "border-gold text-ink" : ""}`}>
+            ✓ Verified {(verifiedCount ?? 0) > 0 && `(${verifiedCount})`}
+          </a>
         </div>
       </div>
 
@@ -63,8 +72,16 @@ export default async function AdminProducersPage({
         {(producers ?? []).map((p) => (
           <div key={p.id} className="px-5 py-5 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-normal text-ink">{p.full_name ?? "Unnamed"}</p>
+                {p.is_producer_verified && (
+                  <span
+                    title="Verified producer"
+                    className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-blue-500 text-white text-[10px] font-bold leading-none"
+                  >
+                    ✓
+                  </span>
+                )}
                 <span className={`text-[10px] tracking-[0.14em] uppercase px-2.5 py-0.5 rounded-full ${statusStyle[p.approval_status] ?? ""}`}>
                   {p.approval_status}
                 </span>
@@ -85,23 +102,36 @@ export default async function AdminProducersPage({
               </p>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              {/* Approve / Reject */}
               {p.approval_status !== "approved" && (
                 <form action={adminSetApproval}>
                   <input type="hidden" name="user_id" value={p.id} />
                   <input type="hidden" name="decision" value="approved" />
-                  <button className="btn-gold !py-2 !px-5 text-[13px]">Approve</button>
+                  <button className="btn-gold !py-2 !px-4 text-[13px]">Approve</button>
                 </form>
               )}
               {p.approval_status !== "rejected" && (
                 <form action={adminSetApproval}>
                   <input type="hidden" name="user_id" value={p.id} />
                   <input type="hidden" name="decision" value="rejected" />
-                  <button className="btn-ghost !py-2 !px-5 text-[13px]">Reject</button>
+                  <button className="btn-ghost !py-2 !px-4 text-[13px]">Reject</button>
                 </form>
               )}
+
+              {/* Verify / Unverify — only available on approved producers */}
               {p.approval_status === "approved" && (
-                <span className="text-[12px] text-ash">Access granted</span>
+                <form action={adminVerifyProducer}>
+                  <input type="hidden" name="user_id" value={p.id} />
+                  <input type="hidden" name="verify" value={p.is_producer_verified ? "false" : "true"} />
+                  <button
+                    className={p.is_producer_verified
+                      ? "btn-ghost !py-2 !px-4 text-[13px] border-blue-200 text-blue-600"
+                      : "btn-ghost !py-2 !px-4 text-[13px]"}
+                  >
+                    {p.is_producer_verified ? "✓ Unverify" : "Verify"}
+                  </button>
+                </form>
               )}
             </div>
           </div>

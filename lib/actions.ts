@@ -428,13 +428,56 @@ export async function adminToggleOpportunity(formData: FormData) {
 export async function adminToggleProjectVisibility(formData: FormData) {
   const { supabase, user } = await requireAdmin();
   const id = str(formData, "project_id");
-  const is_public = str(formData, "is_public") === "true";
-  await supabase.from("projects").update({ is_public }).eq("id", id);
+  const admin_hidden = str(formData, "admin_hidden") === "true";
+  await supabase.from("projects").update({ admin_hidden }).eq("id", id);
   await supabase.from("audit_logs").insert({
-    actor_id: user.id, action: is_public ? "project_unhidden" : "project_hidden",
+    actor_id: user.id, action: admin_hidden ? "project_admin_hidden" : "project_admin_unhidden",
     target: "project", target_id: id,
   });
   revalidatePath("/admin/projects");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/projects");
+}
+
+export async function adminVerifyProducer(formData: FormData) {
+  const { supabase, user } = await requireAdmin();
+  const target_id = str(formData, "user_id");
+  const verify = str(formData, "verify") === "true";
+  if (!target_id) return;
+
+  // Only allow verifying an approved producer
+  if (verify) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("approval_status")
+      .eq("id", target_id)
+      .single();
+    if (profile?.approval_status !== "approved") return;
+  }
+
+  await supabase
+    .from("profiles")
+    .update({ is_producer_verified: verify })
+    .eq("id", target_id);
+
+  await supabase.from("audit_logs").insert({
+    actor_id: user.id,
+    action: verify ? "producer_verified" : "producer_unverified",
+    target: "profile",
+    target_id,
+  });
+
+  await supabase.from("notifications").insert({
+    user_id: target_id,
+    kind: "system",
+    title: verify ? "Your account has been verified" : "Your verified status has been removed",
+    body: verify
+      ? "You now have verified producer access, including visibility of private projects."
+      : "Your verified producer status has been removed by an administrator.",
+    link: "/producer",
+  });
+
+  revalidatePath("/admin/producers");
 }
 
 export async function adminDeleteProject(formData: FormData) {
@@ -638,6 +681,22 @@ export async function upsertProducerProject(formData: FormData) {
 
   const VALID_STATUS = ["saved","shortlisted","in_review","meeting_set","deal_active","passed"];
   if (!VALID_STATUS.includes(status)) return;
+
+  // If the project is private, require verified producer status
+  const { data: project } = await supabase
+    .from("projects")
+    .select("is_public")
+    .eq("id", project_id)
+    .single();
+
+  if (project && !project.is_public) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_producer_verified, approval_status")
+      .eq("id", user.id)
+      .single();
+    if (!profile?.is_producer_verified || profile?.approval_status !== "approved") return;
+  }
 
   await supabase.from("producer_projects").upsert(
     { producer_id: user.id, project_id, status, rating, notes, updated_at: new Date().toISOString() },
