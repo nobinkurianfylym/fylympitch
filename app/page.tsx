@@ -3,6 +3,8 @@ import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import HomepageDemo from "@/components/HomepageDemo";
 import HeroToggle from "@/components/HeroToggle";
+
+export const dynamic = "force-dynamic";
 import IntelligenceTicker from "@/components/IntelligenceTicker";
 import { RoleProvider, type Role } from "@/components/RoleProvider";
 import HeaderRoleToggle from "@/components/HeaderRoleToggle";
