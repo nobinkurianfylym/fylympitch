@@ -1,7 +1,10 @@
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import AuthForm from "@/components/AuthForm";
 
-// Email sign-up removed — Google-only auth.
-// Redirect any /signup links to the login page.
 export default function SignupPage() {
-  redirect("/login");
+  return (
+    <Suspense>
+      <AuthForm mode="signup" />
+    </Suspense>
+  );
 }

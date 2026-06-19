@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic"; // never cache — code exchange must run fresh
+export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
@@ -36,6 +36,17 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=auth`);
   }
 
-  // Everyone goes to dashboard — dual roles, no approval gate
+  // ── Role claim for Google OAuth signups ──────────────────────
+  // If the user selected a role before the Google redirect, a short-lived
+  // 'signup_role' cookie was set client-side. We claim it here via a
+  // security-definer RPC (bypasses the "no self-promote" RLS check),
+  // but the RPC itself only acts within 5 minutes of account creation.
+  const signupRole = cookieStore.get("signup_role")?.value;
+  if (signupRole && ["filmmaker", "producer"].includes(signupRole)) {
+    await supabase.rpc("claim_signup_role", { desired_role: signupRole });
+    // Clear the cookie
+    cookieStore.set("signup_role", "", { maxAge: 0, path: "/" });
+  }
+
   return NextResponse.redirect(`${origin}${next}`);
 }

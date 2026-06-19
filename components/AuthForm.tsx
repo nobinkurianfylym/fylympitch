@@ -5,7 +5,9 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import Wordmark from "@/components/Wordmark";
-import { sanitizeNext } from "@/lib/sanitizeNext";
+
+type Role = "filmmaker" | "producer";
+type Step = "role" | "method" | "sent";
 
 function GoogleIcon() {
   return (
@@ -20,10 +22,13 @@ function GoogleIcon() {
 
 export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const params = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
 
-  // Sanitise the ?next= param — must be a relative path, and must not loop back to auth pages.
+  const [step, setStep]   = useState<Step>(mode === "signup" ? "role" : "method");
+  const [role, setRole]   = useState<Role>("filmmaker");
+  const [email, setEmail] = useState("");
+  const [busy, setBusy]   = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const rawNext = params.get("next") ?? "/dashboard";
   const next =
     rawNext.startsWith("/") &&
@@ -35,9 +40,14 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
   const authError = params.get("error");
 
+  /* ── Google OAuth ───────────────────────────────────────────── */
   async function handleGoogle() {
     setError(null);
     setBusy(true);
+    if (mode === "signup") {
+      // Cookie picked up by /auth/callback to claim correct role
+      document.cookie = `signup_role=${role}; path=/; max-age=300; SameSite=Lax`;
+    }
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -46,11 +56,139 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         queryParams: mode === "signup" ? { prompt: "select_account" } : {},
       },
     });
-    if (error) {
-      setError(error.message);
-      setBusy(false);
-    }
+    if (error) { setError(error.message); setBusy(false); }
   }
+
+  /* ── Magic link ─────────────────────────────────────────────── */
+  async function handleMagicLink() {
+    if (!email.trim()) return;
+    setError(null);
+    setBusy(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim(),
+      options: {
+        ...(mode === "signup" ? { data: { role } } : {}),
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+      },
+    });
+    if (error) { setError(error.message); setBusy(false); }
+    else        { setStep("sent"); setBusy(false); }
+  }
+
+  /* ── Shared error banner ────────────────────────────────────── */
+  function ErrorBanner({ msg }: { msg: string }) {
+    return (
+      <p className="mt-6 text-[13px] text-red-700 border border-red-200 bg-red-50 rounded-card px-4 py-3 text-left">
+        {msg}
+      </p>
+    );
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     STEP 1 — Role selection (signup only)
+  ══════════════════════════════════════════════════════════════ */
+  if (step === "role") {
+    return (
+      <main className="min-h-screen flex flex-col">
+        <header className="max-w-6xl w-full mx-auto px-6 py-7">
+          <Wordmark />
+        </header>
+        <div className="flex-1 flex items-center justify-center px-6 pb-24">
+          <div className="w-full max-w-lg">
+            <p className="eyebrow text-center mb-3">Create account</p>
+            <h1 className="font-display text-[32px] text-center">How will you use FYLYMPITCH?</h1>
+            <p className="mt-3 text-[15px] leading-[1.7] text-ash text-center mb-10">
+              Choose your role to get started. You can always add more later.
+            </p>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              {/* Filmmaker tile */}
+              <button
+                onClick={() => { setRole("filmmaker"); setStep("method"); }}
+                className={`text-left p-6 rounded-card border-2 transition-all hover:border-gold focus:outline-none ${
+                  role === "filmmaker" ? "border-gold bg-parchment" : "border-line bg-white"
+                }`}
+              >
+                <p className="font-display text-[20px] font-normal mb-2">Filmmaker</p>
+                <p className="text-[13px] text-ash leading-relaxed">
+                  Submit projects, run funding intelligence, connect with producers and investors.
+                </p>
+                <p className="mt-4 text-[11px] tracking-[0.14em] uppercase text-emerald-700">
+                  Instant access
+                </p>
+              </button>
+
+              {/* Producer tile */}
+              <button
+                onClick={() => { setRole("producer"); setStep("method"); }}
+                className={`text-left p-6 rounded-card border-2 transition-all hover:border-gold focus:outline-none ${
+                  role === "producer" ? "border-gold bg-parchment" : "border-line bg-white"
+                }`}
+              >
+                <p className="font-display text-[20px] font-normal mb-2">Producer</p>
+                <p className="text-[13px] text-ash leading-relaxed">
+                  Discover projects to finance or co-produce. Build your pipeline and connect with filmmakers.
+                </p>
+                <p className="mt-4 text-[11px] tracking-[0.14em] uppercase text-amber-700">
+                  Reviewed within 48 hours
+                </p>
+              </button>
+            </div>
+
+            <p className="mt-8 text-[13px] text-ash text-center">
+              Already a member?{" "}
+              <Link href="/login" className="text-ink underline underline-offset-4 hover:text-gold">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     STEP 3 — Magic link sent confirmation
+  ══════════════════════════════════════════════════════════════ */
+  if (step === "sent") {
+    return (
+      <main className="min-h-screen flex flex-col">
+        <header className="max-w-6xl w-full mx-auto px-6 py-7">
+          <Wordmark />
+        </header>
+        <div className="flex-1 flex items-center justify-center px-6 pb-24">
+          <div className="w-full max-w-md text-center">
+            <div className="w-12 h-12 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center mx-auto mb-6">
+              <span className="text-gold text-[20px]">✉</span>
+            </div>
+            <h1 className="font-display text-[32px]">Check your inbox</h1>
+            <p className="mt-3 text-[15px] leading-[1.7] text-ash">
+              We sent a sign-in link to <strong className="text-ink font-normal">{email}</strong>.
+              Click it to continue — the link expires in 1 hour.
+            </p>
+            <p className="mt-6 text-[13px] text-ash">
+              Wrong address?{" "}
+              <button
+                onClick={() => { setStep(mode === "signup" ? "role" : "method"); setEmail(""); }}
+                className="text-ink underline underline-offset-4 hover:text-gold"
+              >
+                Go back
+              </button>
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     STEP 2 — Auth method (Google + Magic link)
+  ══════════════════════════════════════════════════════════════ */
+  const headingByRole: Record<string, string> = {
+    filmmaker: "Join as Filmmaker",
+    producer:  "Join as Producer",
+  };
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -58,40 +196,87 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         <Wordmark />
       </header>
       <div className="flex-1 flex items-center justify-center px-6 pb-24">
-        <div className="w-full max-w-md text-center">
+        <div className="w-full max-w-md">
+
+          {/* Back arrow — signup only */}
+          {mode === "signup" && (
+            <button
+              onClick={() => setStep("role")}
+              className="flex items-center gap-2 text-[13px] text-ash hover:text-ink mb-8 transition-colors"
+            >
+              ← Back
+            </button>
+          )}
+
           <h1 className="font-display text-[32px]">
-            {mode === "signup" ? "Create your account" : "Welcome back"}
+            {mode === "signup" ? headingByRole[role] : "Welcome back"}
           </h1>
-          <p className="mt-3 text-[21px] leading-[1.7] text-ash">
-            {mode === "signup"
-              ? "Filmmaker accounts get instant access. Producer, investor and organisation accounts are verified within 48 hours."
-              : "Sign in with Google to see your matches, applications and offers."}
-          </p>
 
-          {/* Auth error from callback */}
+          {mode === "signup" && role === "producer" && (
+            <p className="mt-2 text-[13px] text-ash leading-relaxed">
+              Producer accounts are reviewed within 48 hours. You'll receive an email once approved.
+            </p>
+          )}
+          {mode === "login" && (
+            <p className="mt-2 text-[13px] text-ash">
+              Sign in to see your matches, applications and offers.
+            </p>
+          )}
+
+          {/* Callback error */}
           {authError && (
-            <p className="mt-6 text-[13px] text-red-700 border border-red-200 bg-red-50 rounded-card px-4 py-3 text-left">
-              {authError === "cancelled"
+            <ErrorBanner msg={
+              authError === "cancelled"
                 ? "Sign-in was cancelled. Try again when you're ready."
-                : "Something went wrong with sign-in. Please try again."}
-            </p>
+                : "Something went wrong with sign-in. Please try again."
+            } />
           )}
+          {error && <ErrorBanner msg={error} />}
 
-          {error && (
-            <p className="mt-6 text-[13px] text-red-700 border border-red-200 bg-red-50 rounded-card px-4 py-3 text-left">
-              {error}
+          <div className="mt-8 space-y-3">
+            {/* Google */}
+            <button
+              onClick={handleGoogle}
+              disabled={busy}
+              className="btn-gold w-full gap-3 disabled:opacity-50"
+            >
+              <GoogleIcon />
+              {busy ? "One moment…" : "Continue with Google"}
+            </button>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1 h-px bg-line" />
+              <span className="text-[11px] tracking-[0.14em] uppercase text-ash">or</span>
+              <div className="flex-1 h-px bg-line" />
+            </div>
+
+            {/* Magic link email */}
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleMagicLink()}
+                placeholder="your@email.com"
+                className="field flex-1"
+                disabled={busy}
+                autoComplete="email"
+              />
+              <button
+                onClick={handleMagicLink}
+                disabled={busy || !email.trim()}
+                className="btn-ghost !px-4 disabled:opacity-40 shrink-0"
+              >
+                {busy ? "…" : "Send link"}
+              </button>
+            </div>
+            <p className="text-[11px] text-ash pl-0.5">
+              We'll email you a magic link — no password needed.
             </p>
-          )}
+          </div>
 
-          <button
-            onClick={handleGoogle}
-            disabled={busy}
-            className="btn-gold w-full mt-10 gap-3 disabled:opacity-50"
-          >
-            <GoogleIcon />
-            {busy ? "One moment…" : "Continue with Google"}
-          </button>
-
+          {/* Switch mode */}
           <p className="mt-8 text-[13px] text-ash">
             {mode === "signup" ? (
               <>
