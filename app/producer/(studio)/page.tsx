@@ -125,13 +125,15 @@ export default async function ProducerDiscoverPage() {
                 {/* Thumbnail with match score badge */}
                 <div className="relative">
                   <Link href={`/producer/projects/${p.id}`}>
-                    <ProjectThumbnail
-                      posterPath={p.poster_path}
-                      title={p.title}
-                      genre={p.genre}
-                      supabaseUrl={supabaseUrl}
-                      className="w-full rounded-t-card"
-                    />
+                    <div className="aspect-[3/2] overflow-hidden">
+                      <ProjectThumbnail
+                        posterPath={p.poster_path}
+                        title={p.title}
+                        genre={p.genre}
+                        supabaseUrl={supabaseUrl}
+                        className="w-full h-full rounded-t-card"
+                      />
+                    </div>
                   </Link>
                   {/* Match score badge — top right corner */}
                   <span className={`absolute top-2 right-2 text-[11px] tracking-[0.1em] font-medium px-2 py-0.5 rounded-full ${scoreBadgeStyle(p._score)}`}>

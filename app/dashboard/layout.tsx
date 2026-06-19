@@ -94,7 +94,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </form>
         </div>
       </aside>
-      <main className="flex-1 px-6 md:px-12 py-10 max-w-6xl">
+      <main className="flex-1 px-6 md:px-8 py-10">
 
         {children}
       </main>
