@@ -51,7 +51,7 @@ export default async function ProjectsPage({
 
       {/* ── NAV ── */}
       <header className="border-b border-line">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
           <Wordmark />
           <nav className="hidden md:flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase font-[400] text-ash">
             <Link href="/#features" className="hover:text-ink transition-colors">Platform</Link>
@@ -68,7 +68,7 @@ export default async function ProjectsPage({
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-12">
+      <main className="max-w-5xl mx-auto px-6 py-12">
         <div className="mb-10">
           <p className="eyebrow mb-3">Discover</p>
           <h1 className="font-display text-[38px] font-[400]">Projects</h1>
@@ -165,7 +165,7 @@ export default async function ProjectsPage({
 
       {!user && (
         <div className="border-t border-line mt-16">
-          <div className="max-w-6xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div className="max-w-5xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6">
             <div>
               <p className="font-display text-[22px]">Ready to pitch your film?</p>
               <p className="mt-1 text-[14px] text-ash">Submit your project and get matched with funds, labs and co-producers.</p>
