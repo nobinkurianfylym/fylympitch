@@ -30,6 +30,17 @@ const CONTENT = {
   },
 };
 
+const FILMMAKER_TAGS = [
+  "Grants", "Film Funds", "Labs", "Co-productions", "Markets",
+  "Producers", "Production Companies", "Distribution", "Investors", "Streamers",
+];
+
+const PRODUCER_TAGS = [
+  "Scripts", "Feature Films", "Series", "Documentaries",
+  "Lab-Selected", "Grant-Winning", "Packaged", "Attached Talent",
+  "Co-Production Ready", "Financing Ready",
+];
+
 export default function HeroToggle() {
   const { role } = useRole();
   const c = CONTENT[role];
@@ -67,16 +78,9 @@ export default function HeroToggle() {
         className="mt-10 hairline-gold pt-5 flex flex-nowrap gap-x-6 overflow-x-auto text-[9px] tracking-[0.14em] uppercase text-ash"
         style={{ scrollbarWidth: "none" }}
       >
-        <span className="shrink-0">Grants</span>
-        <span className="shrink-0">Film Funds</span>
-        <span className="shrink-0">Labs</span>
-        <span className="shrink-0">Co-productions</span>
-        <span className="shrink-0">Markets</span>
-        <span className="shrink-0">Producers</span>
-        <span className="shrink-0">Production Companies</span>
-        <span className="shrink-0">Distribution</span>
-        <span className="shrink-0">Investors</span>
-        <span className="shrink-0">Streamers</span>
+        {(role === "producer" ? PRODUCER_TAGS : FILMMAKER_TAGS).map((tag) => (
+          <span key={tag} className="shrink-0">{tag}</span>
+        ))}
       </div>
 
       <style>{`
