@@ -38,8 +38,6 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) redirect(`/login?next=/projects/${id}`);
-
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
   // UUID → redirect to slug-based URL (preserve old shared links)
@@ -55,14 +53,16 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
 
   if (!p) notFound();
 
-  const [{ data: filmmakerCredits }, { data: loved }, { data: producerProfile }] = await Promise.all([
+  const [{ data: filmmakerCredits }, lovedResult, producerResult] = await Promise.all([
     supabase.from("filmmaker_credits").select("*").eq("user_id", p.owner_id).order("year", { ascending: false }),
-    supabase.from("project_loves").select("user_id").eq("user_id", user.id).eq("project_id", id).single(),
-    supabase.from("producer_profiles").select("user_id").eq("user_id", user.id).single(),
+    user ? supabase.from("project_loves").select("user_id").eq("user_id", user.id).eq("project_id", p.id).single() : Promise.resolve({ data: null }),
+    user ? supabase.from("producer_profiles").select("user_id").eq("user_id", user.id).single() : Promise.resolve({ data: null }),
   ]);
 
-  const isProducer  = !!producerProfile;
-  const isOwnProject = user.id === p.owner_id;
+  const loved          = lovedResult.data;
+  const producerProfile = producerResult.data;
+  const isProducer     = !!producerProfile;
+  const isOwnProject   = !!user && user.id === p.owner_id;
 
   const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -174,16 +174,22 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           </section>
         )}
 
+        {/* CTA block */}
         {!isOwnProject && (
           <div className="mt-14 border border-line rounded-card bg-white/70 p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-            {isProducer ? (
+            {!user ? (
+              <>
+                <p className="font-display text-[18px] font-normal italic">Every great film starts with the right discovery.</p>
+                <Link href="/signup" className="btn-gold shrink-0 whitespace-nowrap">Get started</Link>
+              </>
+            ) : isProducer ? (
               <>
                 <div>
                   <p className="text-[16px]">Interested in this project?</p>
                   <p className="mt-1 text-[13px] text-ash">Message the filmmaker or add it to your pipeline.</p>
                 </div>
                 <div className="flex gap-3 flex-wrap shrink-0">
-                  <Link href={`/producer/messages`} className="btn-ghost whitespace-nowrap">
+                  <Link href="/producer/messages" className="btn-ghost whitespace-nowrap">
                     Message filmmaker
                   </Link>
                   <form action={async (fd: FormData) => {
@@ -197,15 +203,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
                   </form>
                 </div>
               </>
-            ) : (
-              <>
-                <div>
-                  <p className="text-[16px]">Interested in this project?</p>
-                  <p className="mt-1 text-[13px] text-ash">Go to your dashboard to send a message or financing offer.</p>
-                </div>
-                <Link href="/dashboard" className="btn-gold shrink-0 whitespace-nowrap">Go to dashboard</Link>
-              </>
-            )}
+            ) : null}
           </div>
         )}
 
