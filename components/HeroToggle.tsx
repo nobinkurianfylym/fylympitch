@@ -41,9 +41,23 @@ const PRODUCER_TAGS = [
   "Co-Production Ready", "Financing Ready",
 ];
 
-export default function HeroToggle() {
+export default function HeroToggle({
+  isLoggedIn  = false,
+  accountRole = "FILMMAKER",
+}: {
+  isLoggedIn?:  boolean
+  accountRole?: string
+}) {
   const { role } = useRole();
   const c = CONTENT[role];
+
+  // Logged-in CTAs
+  const loggedInPrimary = accountRole === "PRODUCER"
+    ? { label: "Go to Studio",    href: "/producer"   }
+    : { label: "Go to Dashboard", href: "/dashboard"  };
+
+  const primary   = isLoggedIn ? loggedInPrimary : c.primary;
+  const secondary = c.secondary;
 
   return (
     <section className="flex-1 flex flex-col justify-center max-w-6xl mx-auto w-full px-6 pb-16">
@@ -58,16 +72,16 @@ export default function HeroToggle() {
           {c.body}
         </p>
         <div className="mt-7 flex flex-wrap gap-4">
-          <Link href={c.primary.href} className="btn-gold">
-            {c.primary.label}
+          <Link href={primary.href} className="btn-gold">
+            {primary.label}
           </Link>
-          {c.secondary.href.startsWith("#") ? (
-            <a href={c.secondary.href} className="btn-ghost">
-              {c.secondary.label}
+          {secondary.href.startsWith("#") ? (
+            <a href={secondary.href} className="btn-ghost">
+              {secondary.label}
             </a>
           ) : (
-            <Link href={c.secondary.href} className="btn-ghost">
-              {c.secondary.label}
+            <Link href={secondary.href} className="btn-ghost">
+              {secondary.label}
             </Link>
           )}
         </div>

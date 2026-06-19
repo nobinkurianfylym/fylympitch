@@ -29,7 +29,6 @@ const FAQS = [
 export default async function Home() {
   const cookieStore = await cookies();
   const rawRole = cookieStore.get("fyp_role")?.value;
-  const initialRole: Role = rawRole === "producer" ? "producer" : "filmmaker";
 
   // Auth + projects in parallel
   const supabase = await createClient();
@@ -48,7 +47,16 @@ export default async function Home() {
     else accountRole = "FILMMAKER";
   }
 
-  // Fetch live public projects for the producer ticker
+  // Role for RoleProvider:
+  // - logged out or admin → use cookie (they can toggle)
+  // - logged-in filmmaker/producer → lock to their actual DB role
+  const isAdmin = accountRole === "ADMIN";
+  let initialRole: Role;
+  if (!user || isAdmin) {
+    initialRole = rawRole === "producer" ? "producer" : "filmmaker";
+  } else {
+    initialRole = accountRole === "PRODUCER" ? "producer" : "filmmaker";
+  }
   let trendingProjects: {
     id: string; title: string; genre: string; format: string;
     stage: string; country: string; budget: string; seeking: string;
@@ -92,7 +100,7 @@ export default async function Home() {
             <Link href="/funds"    className="hover:text-ink transition-colors">Funds</Link>
           </nav>
           <div className="flex items-center gap-3">
-            <HeaderRoleToggle />
+            <HeaderRoleToggle isLoggedIn={!!user} isAdmin={isAdmin} />
             <HeaderCTA
               isLoggedIn={!!user}
               userName={user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? ""}
@@ -103,7 +111,7 @@ export default async function Home() {
         </header>
 
         {/* HERO — grows to fill remaining viewport */}
-        <HeroToggle />
+        <HeroToggle isLoggedIn={!!user} accountRole={accountRole} />
       </div>
 
       {/* INTELLIGENCE TICKER */}

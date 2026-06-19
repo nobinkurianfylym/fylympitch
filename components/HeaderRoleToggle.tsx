@@ -2,8 +2,17 @@
 
 import { useRole } from './RoleProvider'
 
-export default function HeaderRoleToggle() {
+export default function HeaderRoleToggle({
+  isLoggedIn = false,
+  isAdmin    = false,
+}: {
+  isLoggedIn?: boolean
+  isAdmin?:    boolean
+}) {
   const { role, setRole } = useRole()
+
+  // Only show toggle for logged-out visitors and admins
+  if (isLoggedIn && !isAdmin) return null
 
   return (
     <div
