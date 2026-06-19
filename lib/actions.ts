@@ -88,7 +88,7 @@ export async function createProject(formData: FormData) {
     approval_status:   "approved" as const,
     onboarded_at:      new Date().toISOString(),
     profile_completed: false,
-    username:          generatedUsername ?? displayName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 25) || "user",
+    username:          generatedUsername ?? (displayName.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 25) || "user"),
   }, { onConflict: "id", ignoreDuplicates: true });
 
   const title = str(formData, "title");
