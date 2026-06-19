@@ -122,7 +122,9 @@ export default async function ProjectsPage({
               return (
                 <div key={p.id} className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all">
                   <Link href={`/projects/${p.id}`}>
-                    <ProjectThumbnail posterPath={p.poster_path} title={p.title} genre={p.genre} supabaseUrl={supabaseUrl} className="rounded-t-card w-full" />
+                    <div className="aspect-[3/2] overflow-hidden">
+                      <ProjectThumbnail posterPath={p.poster_path} title={p.title} genre={p.genre} supabaseUrl={supabaseUrl} className="rounded-t-card w-full h-full" />
+                    </div>
                   </Link>
                   <div className="p-5 flex flex-col flex-1">
                     <p className="text-[11px] tracking-[0.24em] uppercase text-ash mb-2">

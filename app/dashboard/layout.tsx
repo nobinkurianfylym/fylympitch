@@ -36,6 +36,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Primary nav
   const nav = [
     { href: "/dashboard",              label: "Home" },
+    { href: "/dashboard/projects",     label: "My Projects" },
     { href: "/dashboard/opportunities",label: "Opportunities" },
     { href: "/dashboard/applications", label: "Applications" },
     ...(isIndustry ? [{ href: "/producer", label: "Producer Studio" }] : []),
