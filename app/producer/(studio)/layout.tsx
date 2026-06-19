@@ -12,28 +12,28 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
   if (!user || authError) redirect("/login");
 
   // Parallelise — saves one sequential round-trip on every producer page load
-  const [{ data: profile }, { data: producerProfile }] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("id, full_name, avatar_url")   // only what the sidebar needs
-      .eq("id", user.id)
-      .single(),
-    supabase
-      .from("producer_profiles")
-      .select("user_id")
-      .eq("user_id", user.id)
-      .single(),
+  const [{ data: profile }, { data: producerProfile }, { count: unreadNotif }, { data: msgUnread }] = await Promise.all([
+    supabase.from("profiles").select("id, full_name, avatar_url").eq("id", user.id).single(),
+    supabase.from("producer_profiles").select("user_id").eq("user_id", user.id).single(),
+    supabase.from("notifications").select("id", { count: "exact", head: true })
+      .eq("user_id", user.id).eq("read", false),
+    supabase.from("conversation_participants").select("unread_count")
+      .eq("user_id", user.id).is("archived_at", null),
   ]);
+
+  const totalMsgUnread = (msgUnread ?? []).reduce((s: number, r: any) => s + (r.unread_count ?? 0), 0);
 
   if (!profile) redirect("/dashboard");
   if (!producerProfile) redirect("/producer/onboarding");
 
   const nav = [
-    { href: "/producer",          label: "Discover",           icon: "ti-compass" },
-    { href: "/producer/pipeline", label: "Pipeline",           icon: "ti-layout-kanban" },
-    { href: "/producer/projects", label: "All projects",       icon: "ti-stack-2" },
-    { href: "/producer/meetings", label: "Meetings & Notes",   icon: "ti-calendar" },
-    { href: "/producer/profile",  label: "My profile",         icon: "ti-user" },
+    { href: "/producer",               label: "Discover",         icon: "ti-compass" },
+    { href: "/producer/pipeline",      label: "Pipeline",         icon: "ti-layout-kanban" },
+    { href: "/producer/projects",      label: "All projects",     icon: "ti-stack-2" },
+    { href: "/producer/meetings",      label: "Meetings & Notes", icon: "ti-calendar" },
+    { href: "/producer/messages",      label: totalMsgUnread > 0 ? `Messages (${totalMsgUnread})` : "Messages",      icon: "ti-message" },
+    { href: "/producer/notifications", label: (unreadNotif ?? 0) > 0 ? `Notifications (${unreadNotif})` : "Notifications", icon: "ti-bell" },
+    { href: "/producer/profile",       label: "My profile",       icon: "ti-user" },
   ];
 
   return (

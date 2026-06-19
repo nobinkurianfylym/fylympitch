@@ -216,6 +216,10 @@ export async function createProject(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/projects");
   revalidatePath("/dashboard/projects");
+  // Notify approved producers if project is public
+  if (formData.get("is_public") !== "false") {
+    await supabase.rpc("broadcast_new_project", { p_project_id: data.id });
+  }
   redirect(`/dashboard/projects/${data.id}`);
 }
 
@@ -547,6 +551,8 @@ export async function adminCreateOpportunity(formData: FormData) {
   await supabase.from("audit_logs").insert({
     actor_id: user.id, action: "opportunity_created", target: "opportunity", target_id: data.id,
   });
+  // Notify all filmmakers about the new fund
+  await supabase.rpc("broadcast_new_fund", { p_opp_id: data.id, p_title: title });
   revalidatePath("/admin/opportunities");
   redirect("/admin/opportunities");
 }
@@ -702,6 +708,8 @@ export async function upsertProducerProject(formData: FormData) {
     { producer_id: user.id, project_id, status, rating, notes, updated_at: new Date().toISOString() },
     { onConflict: "producer_id,project_id" }
   );
+  // Notify filmmaker that a producer is interested
+  await supabase.rpc("notify_producer_interest", { p_project_id: project_id });
   revalidatePath("/producer");
   revalidatePath(`/producer/projects/${project_id}`);
 }
