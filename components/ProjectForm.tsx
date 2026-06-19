@@ -403,18 +403,33 @@ export default function ProjectForm() {
 
       </div>
 
-      {/* ── ADVANCED TOGGLE (includes Title, Logline, Genre) ── */}
+      {/* ── 2. TITLE + LOGLINE — always visible, required ── */}
+      <div className="space-y-5">
+        <div>
+          <label className="field-label" htmlFor="title">Title *</label>
+          <input id="title" name="title" className="field" required maxLength={200}
+            value={fields.title} onChange={set("title")}
+            placeholder="Your film title" />
+        </div>
+        <div>
+          <label className="field-label" htmlFor="logline">
+            Logline *{" "}
+            <span className="normal-case tracking-normal font-normal">(one sentence, max 500 characters)</span>
+          </label>
+          <textarea id="logline" name="logline" className="field" rows={2} required maxLength={500}
+            value={fields.logline} onChange={set("logline")}
+            placeholder="A one-sentence description of your film." />
+          <p className="mt-1 text-[11px] text-ash text-right">{fields.logline.length}/500</p>
+        </div>
+      </div>
+
+      {/* ── ADVANCED TOGGLE ── */}
       <div className="border border-line rounded-card overflow-hidden">
         <button type="button"
           onClick={() => setShowAdvanced((v) => !v)}
           className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-parchment/40 transition-colors">
           <span className="text-[13px] font-medium tracking-[0.04em]">
-            Advanced details
-            {!showAdvanced && fields.title && (
-              <span className="ml-2 text-[11px] text-ash normal-case font-normal tracking-normal">
-                {fields.title}
-              </span>
-            )}
+            Additional details
           </span>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
             className={`text-ash transition-transform ${showAdvanced ? "rotate-180" : ""}`}>
@@ -425,25 +440,8 @@ export default function ProjectForm() {
         {showAdvanced && (
           <div className="px-5 pb-5 space-y-5 border-t border-line pt-5">
 
-            {/* Title, Logline, Genre — AI fills these from pitch deck */}
             <div>
-              <label className="field-label" htmlFor="title">{label("Title *")}</label>
-              <input id="title" name="title" className="field" required maxLength={200}
-                value={fields.title} onChange={set("title")} />
-            </div>
-
-            <div>
-              <label className="field-label" htmlFor="logline">
-                {label("Logline *")}{" "}
-                <span className="normal-case tracking-normal font-normal">(max 500 characters)</span>
-              </label>
-              <textarea id="logline" name="logline" className="field" rows={2} required maxLength={500}
-                value={fields.logline} onChange={set("logline")} />
-              <p className="mt-1 text-[11px] text-ash text-right">{fields.logline.length}/500</p>
-            </div>
-
-            <div>
-              <label className="field-label" htmlFor="genre">{label("Genre *")}</label>
+              <label className="field-label" htmlFor="genre">Genre *</label>
               <select id="genre" name="genre" className="field" value={fields.genre} onChange={set("genre")}>
                 {GENRES.map((g) => <option key={g}>{g}</option>)}
               </select>
@@ -451,7 +449,7 @@ export default function ProjectForm() {
 
             <div className="grid sm:grid-cols-2 gap-5">
               <div>
-                <label className="field-label" htmlFor="format">{label("Format")}</label>
+                <label className="field-label" htmlFor="format">"Format"</label>
                 <select id="format" name="format" className="field" value={fields.format} onChange={set("format")}>
                   <option value="feature">Feature</option>
                   <option value="short">Short</option>
@@ -461,7 +459,7 @@ export default function ProjectForm() {
                 </select>
               </div>
               <div>
-                <label className="field-label" htmlFor="stage">{label("Stage")}</label>
+                <label className="field-label" htmlFor="stage">"Stage"</label>
                 <select id="stage" name="stage" className="field" value={fields.stage} onChange={set("stage")}>
                   <option value="development">Development</option>
                   <option value="pre_production">Pre-Production</option>
@@ -471,23 +469,23 @@ export default function ProjectForm() {
                 </select>
               </div>
               <div>
-                <label className="field-label" htmlFor="language">{label("Language")}</label>
+                <label className="field-label" htmlFor="language">"Language"</label>
                 <input id="language" name="language" className="field" required
                   value={fields.language} onChange={set("language")} />
               </div>
               <div>
-                <label className="field-label" htmlFor="country">{label("Country")}</label>
+                <label className="field-label" htmlFor="country">"Country"</label>
                 <input id="country" name="country" className="field" required
                   value={fields.country} onChange={set("country")} />
               </div>
               <div>
-                <label className="field-label" htmlFor="budget_usd">{label("Total budget (USD)")}</label>
+                <label className="field-label" htmlFor="budget_usd">"Total budget (USD)"</label>
                 <input id="budget_usd" name="budget_usd" type="number" min="0" step="1000"
                   className="field" placeholder="400000"
                   value={fields.budget_usd} onChange={set("budget_usd")} />
               </div>
               <div>
-                <label className="field-label" htmlFor="funding_needed_usd">{label("Funding needed (USD)")}</label>
+                <label className="field-label" htmlFor="funding_needed_usd">"Funding needed (USD)"</label>
                 <input id="funding_needed_usd" name="funding_needed_usd" type="number" min="0" step="1000"
                   className="field" placeholder="150000"
                   value={fields.funding_needed_usd} onChange={set("funding_needed_usd")} />
@@ -495,19 +493,19 @@ export default function ProjectForm() {
             </div>
 
             <div>
-              <label className="field-label" htmlFor="synopsis">{label("Synopsis")}</label>
+              <label className="field-label" htmlFor="synopsis">"Synopsis"</label>
               <textarea id="synopsis" name="synopsis" className="field" rows={5}
                 value={fields.synopsis} onChange={set("synopsis")} />
             </div>
 
             <div>
-              <label className="field-label" htmlFor="director_statement">{label("Director's statement")}</label>
+              <label className="field-label" htmlFor="director_statement">"Director's statement"</label>
               <textarea id="director_statement" name="director_statement" className="field" rows={4}
                 value={fields.director_statement} onChange={set("director_statement")} />
             </div>
 
             <div>
-              <label className="field-label" htmlFor="producer_info">{label("Producer information")}</label>
+              <label className="field-label" htmlFor="producer_info">"Producer information"</label>
               <textarea id="producer_info" name="producer_info" className="field" rows={3}
                 placeholder="Attached producers, production company, prior credits"
                 value={fields.producer_info} onChange={set("producer_info")} />
