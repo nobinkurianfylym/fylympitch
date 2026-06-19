@@ -27,7 +27,7 @@ export default async function DashboardPage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, title, stage, genre, format, country, funding_needed_usd, is_public, created_at, poster_path, love_count")
+    .select("id, title, stage, genre, format, country, logline, funding_needed_usd, is_public, created_at, poster_path, love_count")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -63,10 +63,10 @@ export default async function DashboardPage() {
           .select("score, project_id, opportunities!inner(id, title, deadline, opp_type, max_award_usd)")
           .in("project_id", projectIds)
           .gte("opportunities.deadline", new Date().toISOString())
-          .lte("opportunities.deadline", new Date(Date.now() + 30 * 86_400_000).toISOString())
-          .gte("score", 65)
+          .lte("opportunities.deadline", new Date(Date.now() + 90 * 86_400_000).toISOString())
+          .gte("score", 60)
           .order("opportunities.deadline")
-          .limit(5)
+          .limit(8)
       : Promise.resolve({ data: [] as any[] }),
 
     projectIds.length
@@ -175,47 +175,54 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      {/* Main 2-column layout */}
-      <div className="grid md:grid-cols-[1fr_288px] gap-8 items-start">
-
-        {/* LEFT — Your slate */}
-        <section>
-          <div className="flex items-baseline justify-between mb-5">
-            <div>
-              <p className="eyebrow mb-1">FYLYMPITCH Engine</p>
-              <h2 className="font-display text-[24px]">Your slate</h2>
-            </div>
-            {hasProjects && (
-              <Link href="/dashboard/projects/new"
-                className="text-[11px] tracking-[0.16em] uppercase text-ash hover:text-gold transition-colors">
-                + Add project
-              </Link>
-            )}
+      {/* ── Your Slate — full width ── */}
+      <section className="mb-10">
+        <div className="flex items-baseline justify-between mb-5">
+          <div>
+            <p className="eyebrow mb-1">FYLYMPITCH Engine</p>
+            <h2 className="font-display text-[24px]">Your slate</h2>
           </div>
+          {hasProjects && (
+            <Link href="/dashboard/projects/new"
+              className="text-[11px] tracking-[0.16em] uppercase text-ash hover:text-gold transition-colors">
+              + Add project
+            </Link>
+          )}
+        </div>
 
-          {!hasProjects ? (
-            <div className="card p-8 text-center">
-              <p className="font-display text-[22px] mb-2">Your slate is empty</p>
-              <p className="text-[14px] text-ash max-w-sm mx-auto mb-6 leading-relaxed">
-                Submit your first project and the FYLYMPITCH engine will score every live
-                funding opportunity, build your financing roadmap, and generate an EP brief.
-              </p>
-              <Link href="/dashboard/projects/new" className="btn-gold inline-flex">
-                Submit your first project →
-              </Link>
-              <p className="mt-4 text-[12px] text-ash">Takes 15–20 seconds. Upload a pitch deck or fill manually.</p>
-            </div>
-          ) : (
-            <div className={`grid gap-4 ${(projects?.length ?? 0) === 1 ? "" : "sm:grid-cols-2"}`}>
-              {(projects ?? []).map((p) => {
-                const best = bestScoreByProject[p.id];
-                const matchCount = matchCountByProject[p.id] ?? 0;
-                return (
-                  <Link key={p.id} href={`/dashboard/projects/${p.id}`}
-                    className="group card overflow-hidden flex flex-col hover:border-gold transition-all hover:shadow-sm">
+        {!hasProjects ? (
+          <div className="card p-8 text-center max-w-lg mx-auto">
+            <p className="font-display text-[22px] mb-2">Your slate is empty</p>
+            <p className="text-[14px] text-ash max-w-sm mx-auto mb-6 leading-relaxed">
+              Submit your first project and the FYLYMPITCH engine will score every live
+              funding opportunity, build your financing roadmap, and generate an EP brief.
+            </p>
+            <Link href="/dashboard/projects/new" className="btn-gold inline-flex">
+              Submit your first project →
+            </Link>
+            <p className="mt-4 text-[12px] text-ash">Takes 15–20 seconds. Upload a pitch deck or fill manually.</p>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {(projects ?? []).map((p) => {
+              const best = bestScoreByProject[p.id];
+              const matchCount = matchCountByProject[p.id] ?? 0;
+              return (
+                <div key={p.id} className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all relative">
 
-                    {/* Thumbnail + score badge */}
-                    <div className="relative">
+                  {/* Badges */}
+                  <div className="relative">
+                    {!p.is_public && (
+                      <span className="absolute top-2 left-2 z-10 text-[10px] tracking-[0.14em] uppercase bg-ink/75 text-ivory px-2.5 py-0.5 rounded-full">
+                        Private
+                      </span>
+                    )}
+                    {best != null && (
+                      <span className={`absolute top-2 right-2 z-10 text-[10px] tracking-[0.1em] font-medium px-2.5 py-0.5 rounded-full ${scoreBadgeStyle(best)}`}>
+                        {best} match
+                      </span>
+                    )}
+                    <Link href={`/dashboard/projects/${p.id}`} className="block">
                       <div className="aspect-[3/2] overflow-hidden">
                         <ProjectThumbnail
                           posterPath={p.poster_path}
@@ -225,132 +232,127 @@ export default async function DashboardPage() {
                           className="w-full h-full rounded-t-card"
                         />
                       </div>
-                      {best != null && (
-                        <span className={`absolute top-2 right-2 text-[11px] tracking-[0.1em] font-medium px-2 py-0.5 rounded-full ${scoreBadgeStyle(best)}`}>
-                          {best} match
-                        </span>
-                      )}
-                    </div>
+                    </Link>
+                  </div>
 
-                    {/* Card body */}
-                    <div className="p-4 flex flex-col flex-1">
-                      <p className="text-[11px] tracking-[0.2em] uppercase text-ash mb-1.5">
-                        {[p.genre, p.format].filter(Boolean).join(" · ")}
-                      </p>
-                      <h3 className="font-display text-[18px] group-hover:text-gold transition-colors leading-snug mb-3">
+                  {/* Card body */}
+                  <div className="p-5 flex flex-col flex-1">
+                    <p className="text-[11px] tracking-[0.24em] uppercase text-ash mb-2">
+                      {[p.genre, p.format].filter(Boolean).join(" · ")}
+                    </p>
+                    <Link href={`/dashboard/projects/${p.id}`}>
+                      <h3 className="font-display text-[20px] font-[400] group-hover:text-gold transition-colors leading-snug mb-2">
                         {p.title}
                       </h3>
+                    </Link>
+                    {(p as any).logline && (
+                      <p className="font-display italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">
+                        &ldquo;{(p as any).logline}&rdquo;
+                      </p>
+                    )}
+                    <div className="mt-auto pt-3 border-t border-line flex flex-wrap items-center gap-2 text-[12px]">
+                      {matchCount > 0 && (
+                        <span className="text-gold tracking-[0.06em]">
+                          {matchCount} {matchCount === 1 ? "match" : "matches"}
+                        </span>
+                      )}
+                      {(p.love_count ?? 0) > 0 && (
+                        <span className="text-ash">♥ {p.love_count}</span>
+                      )}
+                      {p.funding_needed_usd && (
+                        <span className="text-gold ml-auto shrink-0">{usd(p.funding_needed_usd)}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
-                      {/* Stats row */}
-                      <div className="mt-auto pt-3 border-t border-line flex flex-wrap items-center gap-2 text-[11px]">
-                        {matchCount > 0 && (
-                          <span className="text-gold tracking-[0.08em]">
-                            {matchCount} {matchCount === 1 ? "match" : "matches"}
-                          </span>
-                        )}
-                        {(p.love_count ?? 0) > 0 && (
-                          <span className="text-ash">♥ {p.love_count}</span>
-                        )}
-                        <span className={`ml-auto tracking-[0.1em] uppercase px-2 py-0.5 rounded-full border ${
-                          p.is_public
-                            ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+      {/* ── Upcoming deadlines + Producer interest — right-aligned ── */}
+      {hasProjects && (
+        <div className="flex justify-end">
+          <div className="w-full md:max-w-sm space-y-8">
+
+            {/* Upcoming deadlines */}
+            {(upcomingDeadlines?.length ?? 0) > 0 && (
+              <section>
+                <p className="eyebrow mb-4">Upcoming deadlines</p>
+                <div className="space-y-2">
+                  {(upcomingDeadlines ?? []).map((m: any) => {
+                    const opp = m.opportunities;
+                    const days = daysUntil(opp.deadline);
+                    return (
+                      <Link key={opp.id} href={`/dashboard/opportunities/${opp.id}`}
+                        className="card p-4 flex items-start justify-between gap-3 hover:border-gold transition-colors">
+                        <div className="min-w-0">
+                          <p className="text-[13px] text-ink font-medium leading-snug truncate">{opp.title}</p>
+                          <p className="text-[11px] tracking-[0.12em] uppercase text-ash mt-0.5">
+                            {opp.opp_type}
+                            {opp.max_award_usd ? ` · ${usd(opp.max_award_usd)}` : ""}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 text-[11px] tracking-[0.1em] px-2 py-0.5 rounded-full border whitespace-nowrap ${
+                          days <= 7
+                            ? "bg-red-50 border-red-200 text-red-600"
+                            : days <= 30
+                            ? "bg-amber-50 border-amber-200 text-amber-700"
                             : "bg-parchment border-line text-ash"
                         }`}>
-                          {p.is_public ? "Public" : "Private"}
+                          {days}d
                         </span>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </section>
+                      </Link>
+                    );
+                  })}
+                </div>
+                <Link href="/dashboard/opportunities"
+                  className="mt-3 block text-[11px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors">
+                  All opportunities →
+                </Link>
+              </section>
+            )}
 
-        {/* RIGHT — Deadlines + Producer interest */}
-        <div className="space-y-8">
-
-          {/* Closing soon */}
-          {(upcomingDeadlines?.length ?? 0) > 0 && (
-            <section>
-              <p className="eyebrow mb-4">Closing soon</p>
-              <div className="space-y-2">
-                {(upcomingDeadlines ?? []).map((m: any) => {
-                  const opp = m.opportunities;
-                  const days = daysUntil(opp.deadline);
-                  return (
-                    <Link key={opp.id} href={`/dashboard/opportunities/${opp.id}`}
-                      className="card p-4 flex items-start justify-between gap-3 hover:border-gold transition-colors">
-                      <div className="min-w-0">
-                        <p className="text-[13px] text-ink font-medium leading-snug truncate">{opp.title}</p>
-                        <p className="text-[11px] tracking-[0.12em] uppercase text-ash mt-0.5">
-                          {opp.opp_type}
-                          {opp.max_award_usd ? ` · ${usd(opp.max_award_usd)}` : ""}
-                        </p>
+            {/* Producer interest */}
+            {(introRequests?.length ?? 0) > 0 && (
+              <section>
+                <p className="eyebrow mb-4">Producer interest</p>
+                <div className="space-y-2">
+                  {(introRequests ?? []).map((r: any) => {
+                    const producer = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
+                    const project  = Array.isArray(r.projects) ? r.projects[0] : r.projects;
+                    const initials = (producer?.full_name ?? "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                    const ago = Math.floor((Date.now() - new Date(r.created_at).getTime()) / 3_600_000);
+                    return (
+                      <div key={r.id} className="card p-4 flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center shrink-0">
+                          {producer?.avatar_url
+                            ? <img src={producer.avatar_url} alt={producer.full_name} className="w-full h-full object-cover" />
+                            : <span className="font-display text-[11px] text-ash">{initials}</span>
+                          }
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[13px] text-ink leading-snug">
+                            <span className="font-medium">{producer?.full_name ?? "A producer"}</span>
+                            {" "}requested an introduction
+                          </p>
+                          <p className="text-[11px] text-ash mt-0.5">
+                            {project?.title ?? "Your project"}
+                            {producer?.company ? ` · ${producer.company}` : ""}
+                            {ago < 24 ? ` · ${ago}h ago` : ` · ${Math.floor(ago / 24)}d ago`}
+                          </p>
+                        </div>
                       </div>
-                      <span className={`shrink-0 text-[11px] tracking-[0.1em] px-2 py-0.5 rounded-full border whitespace-nowrap ${
-                        days <= 7
-                          ? "bg-red-50 border-red-200 text-red-600"
-                          : "bg-amber-50 border-amber-200 text-amber-700"
-                      }`}>
-                        {days}d left
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-              <Link href="/dashboard/opportunities"
-                className="mt-3 block text-[11px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors">
-                All opportunities →
-              </Link>
-            </section>
-          )}
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
-          {/* Producer interest */}
-          {(introRequests?.length ?? 0) > 0 && (
-            <section>
-              <p className="eyebrow mb-4">Producer interest</p>
-              <div className="space-y-2">
-                {(introRequests ?? []).map((r: any) => {
-                  const producer = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
-                  const project  = Array.isArray(r.projects) ? r.projects[0] : r.projects;
-                  const initials = (producer?.full_name ?? "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
-                  const ago = Math.floor((Date.now() - new Date(r.created_at).getTime()) / 3_600_000);
-                  return (
-                    <div key={r.id} className="card p-4 flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center shrink-0">
-                        {producer?.avatar_url
-                          ? <img src={producer.avatar_url} alt={producer.full_name} className="w-full h-full object-cover" />
-                          : <span className="font-display text-[11px] text-ash">{initials}</span>
-                        }
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[13px] text-ink leading-snug">
-                          <span className="font-medium">{producer?.full_name ?? "A producer"}</span>
-                          {" "}requested an introduction
-                        </p>
-                        <p className="text-[11px] text-ash mt-0.5">
-                          {project?.title ?? "Your project"}
-                          {producer?.company ? ` · ${producer.company}` : ""}
-                          {ago < 24 ? ` · ${ago}h ago` : ` · ${Math.floor(ago / 24)}d ago`}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* No right-column content — show a nudge */}
-          {(upcomingDeadlines?.length ?? 0) === 0 && (introRequests?.length ?? 0) === 0 && hasProjects && (
-            <div className="card p-5 text-center">
-              <p className="font-display text-[16px] mb-2">No deadlines this month</p>
-              <p className="text-[12px] text-ash">Matched opportunities with upcoming deadlines appear here.</p>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
