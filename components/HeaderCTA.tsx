@@ -30,7 +30,7 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
   if (!isLoggedIn) {
     const destination = role === "producer" ? "/producer" : "/dashboard";
     return (
-      <Link href={`/login?next=${destination}`} className="btn-outline !px-5 !py-2.5 !text-[11px]">
+      <Link href="/signup" className="btn-outline !px-5 !py-2.5 !text-[11px]">
         Get started
       </Link>
     );
