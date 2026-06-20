@@ -57,14 +57,15 @@ export default async function Home() {
   // Fetch profile role + producer status (parallel, skip if not logged in)
   let accountRole = "FILMMAKER";
   if (user) {
-    const [{ data: profile }, { count: producerCount }] = await Promise.all([
-      supabase.from("profiles").select("role").eq("id", user.id).single(),
-      supabase.from("producer_profiles").select("user_id", { count: "exact", head: true }).eq("user_id", user.id),
-    ]);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
     const dbRole = (profile as any)?.role ?? "filmmaker";
-    if (dbRole === "admin") accountRole = "ADMIN";
-    else if ((producerCount ?? 0) > 0) accountRole = "PRODUCER";
-    else accountRole = "FILMMAKER";
+    if (dbRole === "admin")    accountRole = "ADMIN";
+    else if (dbRole === "producer") accountRole = "PRODUCER";
+    else                            accountRole = "FILMMAKER";
   }
 
   // Role for RoleProvider:
