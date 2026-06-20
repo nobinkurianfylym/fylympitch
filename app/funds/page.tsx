@@ -97,7 +97,7 @@ export default async function FundsPage({
 
   let query = supabase
     .from("opportunities")
-    .select("id, title, opp_type, description, country, region, deadline, deadline_note, languages, url, app_link")
+    .select("id, slug, title, opp_type, description, country, region, deadline, deadline_note, languages, url, app_link")
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(200);
@@ -174,7 +174,7 @@ export default async function FundsPage({
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {opps.map((o) => {
+            {(opps as any[]).map((o) => {
               const p         = PALETTES[hashTitle(o.title) % PALETTES.length];
               const location  = o.country || o.region || "Worldwide";
               const bandLabel = BAND_LABEL[o.opp_type] ?? (o.opp_type as string).toUpperCase();
@@ -182,10 +182,8 @@ export default async function FundsPage({
               const link      = (o.app_link as string | null) || (o.url as string | null) || undefined;
 
               return (
-                <a key={o.id}
-                  href={link}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link key={o.id}
+                  href={`/funds/${(o as any).slug}`}
                   className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all"
                   style={{ textDecoration: "none", color: "inherit" }}>
 
@@ -232,7 +230,7 @@ export default async function FundsPage({
                     </div>
                   </div>
 
-                </a>
+                </Link>
               );
             })}
           </div>
