@@ -166,15 +166,15 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
             <div className="flex-1 h-px bg-line" />
           </div>
 
-          {/* Email + send link — same size as Google */}
-          <div className="flex items-center gap-2 w-full rounded-full border border-line bg-white px-6 py-2.5">
+          {/* Email + send link — identical pill to Google */}
+          <div className="flex items-center w-full rounded-full border border-ink bg-white px-6 py-2.5">
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleMagicLink()}
               placeholder="your@email.com"
-              className="flex-1 bg-transparent text-[10px] font-semibold text-ink placeholder:text-ash/50 placeholder:font-semibold outline-none tracking-[0.06em]"
+              className="flex-1 min-w-0 bg-transparent text-[13px] font-medium text-ink placeholder:text-ash/50 outline-none"
               disabled={busy}
               autoComplete="email"
             />
@@ -182,7 +182,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
               type="button"
               onClick={handleMagicLink}
               disabled={busy || !email.trim()}
-              className="text-[10px] font-bold tracking-[0.18em] uppercase text-ink hover:text-gold transition-colors disabled:opacity-30 shrink-0"
+              className="ml-3 text-[10px] font-bold tracking-[0.18em] uppercase text-ink hover:text-gold transition-colors disabled:opacity-30 shrink-0"
             >
               {busy ? "…" : "SEND LINK"}
             </button>
