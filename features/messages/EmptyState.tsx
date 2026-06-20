@@ -24,7 +24,7 @@ export const EmptyState = React.memo(function EmptyState({
     "no-conversations": {
       label:    "INBOX",
       heading:  "No conversations yet",
-      body:     "Open a project and select "Message filmmaker" to begin a conversation.",
+      body:     "Open a project and select \"Message filmmaker\" to begin a conversation.",
     },
   } as const;
 
