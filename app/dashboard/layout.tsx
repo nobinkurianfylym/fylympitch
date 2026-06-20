@@ -40,7 +40,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     { href: "/dashboard/opportunities",label: "Opportunities" },
     { href: "/dashboard/applications", label: "Applications" },
     ...(isIndustry ? [{ href: "/producer", label: "Producer Studio" }] : []),
-    { href: "/dashboard/messages",     label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}` },
+    { href: "/dashboard/messages",       label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}` },
+    { href: "/dashboard/notifications",  label: `Notifications${(unread ?? 0) > 0 ? ` (${unread})` : ""}` },
     { href: "/dashboard/profile",      label: "Profile & Credits" },
     ...(role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
   ];
@@ -49,7 +50,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const secondaryNav = [
     { href: "/dashboard/saved", label: "Saved" },
     { href: "/projects", label: "Film showcase" },
-    { href: "/dashboard/notifications", label: `Notifications${unread ? ` (${unread})` : ""}` },
   ];
 
   return (
@@ -65,6 +65,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
               className={`hover:text-ink transition-colors ${
                 n.href === "/producer"
                   ? "text-gold hover:text-gold/80 font-medium"
+                  : n.href === "/dashboard/notifications" && (unread ?? 0) > 0
+                  ? "text-gold hover:text-gold/80"
+                  : n.href === "/dashboard/messages" && totalMsgUnread > 0
+                  ? "text-gold hover:text-gold/80"
                   : "text-ash"
               }`}>
               {n.label}

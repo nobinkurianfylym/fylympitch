@@ -5,32 +5,55 @@ import { markAllRead } from "@/lib/auth-actions";
 
 export const dynamic = "force-dynamic";
 
+const KIND_META: Record<string, { label: string; dot: string }> = {
+  producer_interest: { label: "Producer Interest", dot: "bg-gold" },
+  offer_received:    { label: "Offer",             dot: "bg-emerald-500" },
+  match_found:       { label: "New Match",         dot: "bg-blue-500" },
+  application_update:{ label: "Application",       dot: "bg-violet-500" },
+  system:            { label: "System",            dot: "bg-ash" },
+};
+
 export default async function NotificationsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   const [{ data: items }, { data: profile }] = await Promise.all([
     supabase.from("notifications").select("*").eq("user_id", user!.id)
-      .order("created_at", { ascending: false }).limit(50),
-    supabase.from("profiles").select("full_name, country, bio, company, website, imdb_url").eq("id", user!.id).single(),
+      .order("created_at", { ascending: false }).limit(80),
+    supabase.from("profiles").select("full_name, country, bio, company, website, imdb_url")
+      .eq("id", user!.id).single(),
   ]);
 
-  const completionFields = [profile?.full_name, profile?.country, profile?.bio, profile?.company, (profile as any)?.website || (profile as any)?.imdb_url];
+  const completionFields = [
+    profile?.full_name, profile?.country, profile?.bio,
+    profile?.company, (profile as any)?.website || (profile as any)?.imdb_url,
+  ];
   const completion = Math.round((completionFields.filter(Boolean).length / completionFields.length) * 100);
+
+  const unreadCount = (items ?? []).filter((n: any) => !n.read).length;
 
   return (
     <div>
       <div className="flex items-end justify-between">
         <div>
           <p className="eyebrow mb-3">Inbox</p>
-          <h1 className="font-display text-[34px]">Notifications</h1>
+          <h1 className="font-display text-[34px]">
+            Notifications
+            {unreadCount > 0 && (
+              <span className="ml-3 align-middle text-[14px] font-normal bg-gold text-white px-3 py-1 rounded-full">
+                {unreadCount} new
+              </span>
+            )}
+          </h1>
         </div>
-        <form action={markAllRead}>
-          <button className="btn-ghost !px-5 !py-2.5">Mark all read</button>
-        </form>
+        {unreadCount > 0 && (
+          <form action={markAllRead}>
+            <button className="btn-ghost !px-5 !py-2.5">Mark all read</button>
+          </form>
+        )}
       </div>
 
-      {/* Profile completion nudge — shown until 70% */}
+      {/* Profile completion nudge */}
       {completion < 70 && (
         <Link href="/dashboard/profile"
           className="flex items-center gap-4 py-4 px-5 card hover:border-gold transition-colors mt-8">
@@ -47,18 +70,57 @@ export default async function NotificationsPage() {
         </Link>
       )}
 
-      <div className="mt-8">
-        {(items ?? []).map((n) => (
-          <div key={n.id} className="hairline py-5 flex justify-between gap-6">
-            <div className="text-[14px] min-w-0">
-              <span className={n.read ? "text-ash" : "font-normal"}>{n.title}</span>
-              {n.body && <p className="mt-1 text-ash">{n.body}</p>}
-              {n.link && <Link href={n.link} className="mt-1 inline-block text-[12px] tracking-[0.14em] uppercase text-gold hover:text-ink">Open →</Link>}
+      <div className="mt-8 divide-y divide-line">
+        {(items ?? []).map((n: any) => {
+          const meta = KIND_META[n.kind] ?? KIND_META.system;
+          const isUnread = !n.read;
+          return (
+            <div
+              key={n.id}
+              className={`py-5 flex items-start gap-4 transition-colors ${
+                isUnread ? "bg-parchment/60 -mx-3 px-3 rounded-card" : ""
+              }`}
+            >
+              {/* Unread dot */}
+              <div className="mt-1.5 shrink-0 flex flex-col items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${isUnread ? meta.dot : "bg-transparent"}`} />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                {/* Kind label */}
+                <p className="text-[10px] tracking-[0.18em] uppercase text-ash mb-1">{meta.label}</p>
+
+                {/* Title */}
+                <p className={`text-[14px] leading-snug ${isUnread ? "text-ink font-medium" : "text-ash"}`}>
+                  {n.title}
+                </p>
+
+                {/* Body */}
+                {n.body && (
+                  <p className="mt-1 text-[13px] text-ash leading-relaxed">{n.body}</p>
+                )}
+
+                {/* CTA link */}
+                {n.link && (
+                  <Link
+                    href={n.link}
+                    className="mt-2 inline-block text-[11px] tracking-[0.14em] uppercase text-gold hover:text-ink transition-colors"
+                  >
+                    Open →
+                  </Link>
+                )}
+              </div>
+
+              <span className="text-[12px] text-ash shrink-0 mt-0.5 whitespace-nowrap">
+                {timeAgo(n.created_at)}
+              </span>
             </div>
-            <span className="text-[12px] text-ash shrink-0">{timeAgo(n.created_at)}</span>
-          </div>
-        ))}
-        {(!items || items.length === 0) && <p className="hairline py-10 text-[14px] text-ash">All quiet for now.</p>}
+          );
+        })}
+
+        {(!items || items.length === 0) && (
+          <p className="py-10 text-[14px] text-ash">All quiet for now.</p>
+        )}
       </div>
     </div>
   );
