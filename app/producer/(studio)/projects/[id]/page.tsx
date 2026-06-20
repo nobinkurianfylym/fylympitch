@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { usd, STAGE_LABEL, TYPE_LABEL } from "@/lib/format";
 import { upsertProducerProject, requestMeeting } from "@/lib/actions";
 import MessageButton from "@/components/MessageButton";
+import FilmIdentity from "@/components/FilmIdentity";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,6 @@ export default async function ProducerProjectDetailPage({
   const { data: profile } = await supabase.from("profiles").select("approval_status").eq("id", user.id).single();
   if (profile?.approval_status !== "approved") redirect("/producer/pending");
 
-  // Fetch project (approved producers see all via RLS)
   const { data: project } = await supabase
     .from("projects")
     .select("*, profiles!projects_owner_id_fkey(id, full_name, company)")
@@ -37,7 +36,6 @@ export default async function ProducerProjectDetailPage({
 
   if (!project) notFound();
 
-  // Fetch CRM row
   const { data: crm } = await supabase
     .from("producer_projects")
     .select("*")
@@ -45,7 +43,6 @@ export default async function ProducerProjectDetailPage({
     .eq("project_id", id)
     .single();
 
-  // Fetch existing meeting request
   const { data: meeting } = await supabase
     .from("meeting_requests")
     .select("*")
@@ -53,7 +50,6 @@ export default async function ProducerProjectDetailPage({
     .eq("project_id", id)
     .maybeSingle();
 
-  // Signed URLs for deck and script
   const deckUrl = project.pitch_deck_path
     ? (await supabase.storage.from("pitch-decks").createSignedUrl(project.pitch_deck_path, 3600)).data?.signedUrl
     : null;
@@ -62,96 +58,93 @@ export default async function ProducerProjectDetailPage({
     : null;
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const posterUrl = project.poster_path
-    ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${project.poster_path}`
-    : null;
-
   const filmmaker = Array.isArray(project.profiles) ? project.profiles[0] : project.profiles;
 
   return (
     <div className="p-6 md:p-10 max-w-5xl">
       {/* Breadcrumb */}
-      <p className="text-[11px] tracking-[0.14em] uppercase text-ash mb-6">
+      <p className="text-[11px] tracking-[0.14em] uppercase text-ash mb-8">
         <Link href="/producer/projects" className="hover:text-ink">Projects</Link>
         <span className="mx-2">›</span>
-        <span className="text-ink">{project.title}</span>
+        <span className="text-ink uppercase" style={{ letterSpacing: "-0.01em" }}>{project.title}</span>
       </p>
 
-      <div className="grid lg:grid-cols-[1fr_300px] gap-8">
-        {/* LEFT: project content */}
+      <div className="grid lg:grid-cols-[1fr_300px] gap-10">
+        {/* LEFT: FilmIdentity full + narrative sections */}
         <div>
-          {posterUrl && (
-            <img src={posterUrl} alt={project.title} className="w-full rounded-card mb-6 object-cover" style={{ maxHeight: 360 }} />
-          )}
+          {/* ── Film Identity — Levels 1–8 ─────────────────────────── */}
+          <FilmIdentity
+            variant="full"
+            project={{
+              ...project,
+              filmmaker: filmmaker
+                ? { full_name: filmmaker.full_name, career_stage: null }
+                : null,
+            }}
+            supabaseUrl={supabaseUrl}
+            actions={
+              <div className="flex flex-wrap gap-3 items-center">
+                {/* Primary CTA */}
+                {(deckUrl || scriptUrl) && (
+                  <>
+                    {deckUrl && (
+                      <a
+                        href={deckUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-gold !py-2.5 !px-5 text-[13px]"
+                      >
+                        View pitch deck ↗
+                      </a>
+                    )}
+                    {scriptUrl && (
+                      <a
+                        href={scriptUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-ghost !py-2.5 !px-5 text-[13px]"
+                      >
+                        Read script
+                      </a>
+                    )}
+                  </>
+                )}
+                {filmmaker && (
+                  <MessageButton
+                    projectId={project.id}
+                    producerId={user.id}
+                    filmakerId={filmmaker?.id ?? project.owner_id}
+                    label="Message"
+                  />
+                )}
+              </div>
+            }
+          />
 
-          <p className="eyebrow mb-2">
-            {project.genre} · {project.format} · {STAGE_LABEL[project.stage] ?? project.stage}
-          </p>
-          <h1 className="font-display text-[34px] mb-1">{project.title}</h1>
-          <p className="text-[14px] text-ash mb-4">
-            {[project.country, project.language].filter(Boolean).join(" · ")}
-            {filmmaker?.full_name ? ` · by ${filmmaker.full_name}` : ""}
-            {filmmaker?.company ? ` (${filmmaker.company})` : ""}
-          </p>
-
-          {project.logline && (
-            <p className="font-display italic text-[17px] leading-[1.6] text-ink mb-6">
-              "{project.logline}"
-            </p>
-          )}
-
-          <div className="flex flex-wrap gap-6 text-[13px] text-ash mb-8">
-            <span>Budget — <span className="text-ink">{usd(project.budget_usd)}</span></span>
-            <span>Seeking — <span className="text-gold font-normal">{usd(project.funding_needed_usd)}</span></span>
-            <span className={`${project.is_public ? "text-emerald-700" : "text-amber-700"}`}>
-              {project.is_public ? "Public project" : "Private project"}
-            </span>
-          </div>
-
-          {(deckUrl || scriptUrl) && (
-            <div className="flex flex-wrap gap-3 mb-8">
-              {deckUrl && <a href={deckUrl} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">View pitch deck</a>}
-              {scriptUrl && <a href={scriptUrl} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">Read script</a>}
-              <MessageButton
-                projectId={project.id}
-                producerId={user.id}
-                filmakerId={filmmaker?.id ?? project.owner_id}
-                label="Message filmmaker regarding this project"
-              />
+          {/* ── Narrative sections — below identity ───────────────── */}
+          {(project.synopsis || project.director_statement || project.producer_info) && (
+            <div className="mt-10 pt-8 border-t border-line space-y-8">
+              {project.synopsis && (
+                <section>
+                  <h2 className="eyebrow mb-3">Synopsis</h2>
+                  <p className="text-[16px] leading-[1.7] text-ink whitespace-pre-line">
+                    {project.synopsis}
+                  </p>
+                </section>
+              )}
+              {project.director_statement && (
+                <section>
+                  <h2 className="eyebrow mb-3">Director's statement</h2>
+                  <p className="text-[16px] leading-[1.7] text-ink whitespace-pre-line">
+                    {project.director_statement}
+                  </p>
+                </section>
+              )}
             </div>
-          )}
-          {!deckUrl && !scriptUrl && filmmaker && (
-            <div className="mb-8">
-              <MessageButton
-                projectId={project.id}
-                producerId={user.id}
-                filmakerId={filmmaker?.id ?? project.owner_id}
-                label="Message filmmaker regarding this project"
-              />
-            </div>
-          )}
-
-          {project.synopsis && (
-            <section className="mb-8">
-              <h2 className="eyebrow mb-3">Synopsis</h2>
-              <p className="text-[17px] leading-[1.7] text-ink whitespace-pre-line">{project.synopsis}</p>
-            </section>
-          )}
-          {project.director_statement && (
-            <section className="mb-8">
-              <h2 className="eyebrow mb-3">Director's statement</h2>
-              <p className="text-[17px] leading-[1.7] text-ink whitespace-pre-line">{project.director_statement}</p>
-            </section>
-          )}
-          {project.producer_info && (
-            <section className="mb-8">
-              <h2 className="eyebrow mb-3">Producers</h2>
-              <p className="text-[17px] leading-[1.7] text-ink whitespace-pre-line">{project.producer_info}</p>
-            </section>
           )}
         </div>
 
-        {/* RIGHT: CRM panel */}
+        {/* RIGHT: CRM panel — unchanged */}
         <div className="space-y-4">
 
           {/* Pipeline stage */}

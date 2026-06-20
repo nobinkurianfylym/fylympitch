@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { usd, STAGE_LABEL, TYPE_LABEL, timeAgo } from "@/lib/format";
+import { usd, timeAgo } from "@/lib/format";
 import { deleteProject, respondToOffer } from "@/lib/project-actions";
 import { requestProducerIntroduction } from "@/lib/actions";
 import type { Opportunity, Project } from "@/types";
@@ -15,6 +15,7 @@ import ProjectAnalysisLoader from "@/components/ProjectAnalysisLoader";
 import FundingJourney, { type JourneyOpp } from "@/components/FundingJourney";
 import ProjectIntelligenceBox from "@/components/ProjectIntelligenceBox";
 import MessageButton from "@/components/MessageButton";
+import FilmIdentity from "@/components/FilmIdentity";
 
 export const dynamic = "force-dynamic";
 
@@ -167,9 +168,6 @@ export default async function ProjectDetailPage({
   const deckUrl   = await signedUrl("pitch-decks", project.pitch_deck_path);
   const scriptUrl = await signedUrl("scripts",     project.script_path);
 
-  // ── Genre + format label ───────────────────────────────────────────
-  const formatLabel = TYPE_LABEL?.[project.format] ?? project.format;
-
   return (
     <div className="max-w-4xl">
 
@@ -179,80 +177,59 @@ export default async function ProjectDetailPage({
       )}
 
       {/* ════════════════════════════════════════════════════════════
-          1. FILM TITLE HERO
+          1. FILM IDENTITY — standardised header (L1–L8)
       ════════════════════════════════════════════════════════════ */}
-      <p className="eyebrow mb-4">
-        {project.genre} · {formatLabel} · {STAGE_LABEL[project.stage]}
-      </p>
+      <div className="mb-10 pb-8 border-b border-line">
+        <FilmIdentity
+          variant="full"
+          project={project}
+          supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!}
+          actions={
+            <div className="flex flex-wrap items-center gap-3">
+              {isOwner && (
+                <Link
+                  href={`/dashboard/projects/${project.id}/edit`}
+                  className="btn-ghost !py-2.5 !px-5 text-[13px] flex items-center gap-1.5"
+                >
+                  Edit project ✎
+                </Link>
+              )}
+              {deckUrl && (
+                <a href={deckUrl} target="_blank" rel="noreferrer" className="btn-ghost !py-2.5 !px-5 text-[13px]">
+                  Pitch deck ↗
+                </a>
+              )}
+              {scriptUrl && (
+                <a href={scriptUrl} target="_blank" rel="noreferrer" className="btn-ghost !py-2.5 !px-5 text-[13px]">
+                  Script ↗
+                </a>
+              )}
+            </div>
+          }
+        />
 
-      <div className="flex items-start justify-between gap-4 mb-5">
-        <h1 className="font-display text-[40px] sm:text-[48px] leading-[1.04]">
-          {project.title}
-        </h1>
-        {isOwner && (
-          <Link
-            href={`/dashboard/projects/${project.id}/edit`}
-            className="btn-ghost !py-2.5 !px-5 text-[11px] shrink-0 mt-2 flex items-center gap-1.5"
-          >
-            Edit project ✎
-          </Link>
+        {/* Director's statement + Producer info — narrative, below identity */}
+        {(project.director_statement || project.producer_info) && (
+          <div className="mt-8 space-y-6">
+            {project.director_statement && (
+              <div className="max-w-2xl">
+                <p className="eyebrow mb-2">Director&rsquo;s statement</p>
+                <p className="text-[15px] leading-[1.75] text-ink whitespace-pre-line">
+                  {project.director_statement}
+                </p>
+              </div>
+            )}
+            {project.producer_info && (
+              <div className="max-w-2xl">
+                <p className="eyebrow mb-2">Producers</p>
+                <p className="text-[15px] leading-[1.7] text-ink whitespace-pre-line">
+                  {project.producer_info}
+                </p>
+              </div>
+            )}
+          </div>
         )}
       </div>
-
-      {/* Logline */}
-      <p className="font-display italic text-[16px] leading-relaxed max-w-2xl text-ink mb-5"
-        style={{ paddingLeft: 14, borderLeft: "2px solid #BF9953" }}>
-        &ldquo;{project.logline}&rdquo;
-      </p>
-
-      {/* Metadata */}
-      <div className="flex flex-wrap gap-x-8 gap-y-2 text-[13px] text-ash mb-4">
-        <span>Country — <span className="text-ink">{project.country}</span></span>
-        <span>Language — <span className="text-ink">{project.language}</span></span>
-        <span>Budget — <span className="text-ink">{usd(project.budget_usd)}</span></span>
-        <span>Seeking — <span className="text-gold font-normal">{usd(project.funding_needed_usd)}</span></span>
-      </div>
-
-      {/* Director / Writer names */}
-      {(project.director_name || project.writer_name) && (
-        <div className="flex flex-wrap gap-x-8 gap-y-1 text-[13px] text-ash mb-5">
-          {project.director_name && (
-            <span>Director — <span className="text-ink">{project.director_name}</span></span>
-          )}
-          {project.writer_name && (
-            <span>Writer — <span className="text-ink">{project.writer_name}</span></span>
-          )}
-        </div>
-      )}
-
-      {/* Director's statement */}
-      {project.director_statement && (
-        <div className="max-w-2xl mb-4">
-          <p className="eyebrow mb-2">Director&rsquo;s statement</p>
-          <p className="text-[15px] leading-[1.75] text-ink whitespace-pre-line">
-            {project.director_statement}
-          </p>
-        </div>
-      )}
-
-      {/* Producers */}
-      {project.producer_info && (
-        <div className="max-w-2xl mb-5">
-          <p className="eyebrow mb-2">Producers</p>
-          <p className="text-[15px] leading-[1.7] text-ink whitespace-pre-line">
-            {project.producer_info}
-          </p>
-        </div>
-      )}
-
-      {/* Files */}
-      {(deckUrl || scriptUrl) && (
-        <div className="flex gap-3 mb-12">
-          {deckUrl   && <a href={deckUrl}   target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">Pitch deck</a>}
-          {scriptUrl && <a href={scriptUrl} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">Script</a>}
-        </div>
-      )}
-      {!deckUrl && !scriptUrl && <div className="mb-12" />}
 
       {/* ════════════════════════════════════════════════════════════
           2. INTELLIGENCE BLACK BOX (tabs: matches / producers / dream)

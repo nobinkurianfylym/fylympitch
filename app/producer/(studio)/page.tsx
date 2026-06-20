@@ -1,18 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { usd } from "@/lib/format";
-import ProjectThumbnail from "@/components/ProjectThumbnail";
 import AddToPipelineButton from "@/components/AddToPipelineButton";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
+import FilmIdentity from "@/components/FilmIdentity";
 
 export const dynamic = "force-dynamic";
-
-const CAREER_LABEL: Record<string, string> = {
-  debut: "Debut", second_film: "2nd Film",
-  established: "Established", veteran: "Veteran",
-};
 
 function scoreProject(
   project: { genre: string | null; format: string | null; country: string | null; budget_usd: number | null },
@@ -36,12 +30,6 @@ function scoreProject(
   return score;
 }
 
-function scoreBadgeStyle(score: number) {
-  if (score >= 80) return "bg-emerald-600 text-white";
-  if (score >= 60) return "bg-gold text-white";
-  return "bg-ink/70 text-ivory";
-}
-
 export default async function ProducerDiscoverPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -58,7 +46,7 @@ export default async function ProducerDiscoverPage() {
   const [{ data: projects }, { data: pipelineRows }, { data: loves }] = await Promise.all([
     supabase
       .from("projects")
-      .select("id, title, genre, format, country, budget_usd, funding_needed_usd, logline, poster_path, love_count, is_public, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+      .select("id, title, genre, format, stage, country, language, budget_usd, funding_needed_usd, logline, poster_path, love_count, is_public, director_name, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
       .eq("admin_hidden", false)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -119,96 +107,45 @@ export default async function ProducerDiscoverPage() {
           {top9.map((p: any) => {
             const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
             return (
-              <div key={p.id}
-                className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all">
-
-                {/* Thumbnail with match score badge */}
-                <div className="relative">
-                  <Link href={`/producer/projects/${p.id}`}>
-                    <div className="aspect-[3/2] overflow-hidden">
-                      <ProjectThumbnail
-                        posterPath={p.poster_path}
-                        title={p.title}
-                        genre={p.genre}
-                        supabaseUrl={supabaseUrl}
-                        className="w-full h-full rounded-t-card"
-                      />
-                    </div>
-                  </Link>
-                  {/* Private badge — top left */}
-                  {!p.is_public && (
-                    <span className="absolute top-2 left-2 text-[10px] tracking-[0.14em] uppercase font-medium px-2 py-0.5 rounded-full bg-ink/80 text-ivory">
-                      Private
-                    </span>
-                  )}
-                  {/* Match score badge — top right corner */}
-                  <span className={`absolute top-2 right-2 text-[11px] tracking-[0.1em] font-medium px-2 py-0.5 rounded-full ${scoreBadgeStyle(p._score)}`}>
-                    {p._score} match
-                  </span>
-                </div>
-
-                {/* Card body */}
-                <div className="p-5 flex flex-col flex-1">
-                  <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-2">
-                    {p.genre} · {p.format?.charAt(0).toUpperCase() + (p.format?.slice(1) ?? "")}
-                  </p>
-
-                  <Link href={`/producer/projects/${p.id}`}>
-                    <h2 className="font-display text-[24px] font-[400] mb-2 group-hover:text-gold transition-colors leading-snug">
-                      {p.title}
-                    </h2>
-                  </Link>
-
-                  {p.logline && (
-                    <p className="font-display italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">
-                      "{p.logline}"
-                    </p>
-                  )}
-
-                  {/* Filmmaker credit line */}
-                  {filmmaker?.full_name && (
-                    <div className="mt-3 flex items-center gap-2 text-[12px] text-ash">
-                      <span>{filmmaker.full_name}</span>
-                      {filmmaker.career_stage && (
-                        <span className="text-[10px] tracking-[0.1em] uppercase bg-parchment border border-line px-2 py-0.5 rounded-full">
-                          {CAREER_LABEL[filmmaker.career_stage] ?? filmmaker.career_stage}
+              <FilmIdentity
+                key={p.id}
+                variant="compact-card"
+                project={{ ...p, filmmaker }}
+                supabaseUrl={supabaseUrl}
+                matchScore={p._score}
+                href={`/producer/projects/${p.id}`}
+                actions={
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <LoveButton
+                          projectId={p.id}
+                          initialCount={p.love_count ?? 0}
+                          initialLiked={lovedSet.has(p.id)}
+                          isLoggedIn={true}
+                          size="sm"
+                        />
+                        <ShareButton
+                          projectId={p.id}
+                          title={p.title}
+                          genre={p.genre}
+                          country={p.country}
+                          size="sm"
+                        />
+                      </div>
+                      {p.funding_needed_usd && (
+                        <span className="text-[11px] text-gold shrink-0">
+                          Seeking ${Math.round(p.funding_needed_usd / 1000)}K
                         </span>
                       )}
                     </div>
-                  )}
-
-                  {/* Love + share row */}
-                  <div className="mt-4 pt-3 border-t border-line flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <LoveButton
-                        projectId={p.id}
-                        initialCount={p.love_count ?? 0}
-                        initialLiked={lovedSet.has(p.id)}
-                        isLoggedIn={true}
-                        size="sm"
-                      />
-                      <ShareButton
-                        projectId={p.id}
-                        title={p.title}
-                        genre={p.genre}
-                        country={p.country}
-                        size="sm"
-                      />
-                    </div>
-                    {p.funding_needed_usd && (
-                      <span className="text-[11px] text-gold shrink-0">{usd(p.funding_needed_usd)}</span>
-                    )}
-                  </div>
-
-                  {/* Pipeline button — full width at bottom */}
-                  <div className="mt-3">
                     <AddToPipelineButton
                       projectId={p.id}
                       inPipeline={pipelineSet.has(p.id)}
                     />
                   </div>
-                </div>
-              </div>
+                }
+              />
             );
           })}
         </div>
