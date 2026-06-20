@@ -13,12 +13,14 @@ export default async function AdminOpportunities() {
       id, title, opp_type, country, region,
       genres, formats, stages, languages,
       min_budget_usd, max_budget_usd, max_award_usd,
-      deadline, url, description, is_active
+      deadline, deadline_note, url, app_link, description, is_active,
+      key_person, contact_email, gender_focus,
+      copro_required, festival_affiliated, ott_affiliated
     `)
     .order("created_at", { ascending: false })
     .limit(200);
 
-  const allOpps = opps ?? [];
+  const allOpps = (opps ?? []) as any[];
 
   // Group by category; only show categories that have at least one entry
   const grouped = CATEGORY_CONFIG
@@ -50,7 +52,7 @@ export default async function AdminOpportunities() {
             </div>
             <div className="card divide-y divide-line">
               {cat.items.map(o => (
-                <OpportunityEditForm key={o.id} opp={o} />
+                <OpportunityEditForm key={o.id} opp={o as any} />
               ))}
             </div>
           </div>
@@ -66,7 +68,7 @@ export default async function AdminOpportunities() {
             </div>
             <div className="card divide-y divide-line">
               {uncategorised.map(o => (
-                <OpportunityEditForm key={o.id} opp={o} />
+                <OpportunityEditForm key={o.id} opp={o as any} />
               ))}
             </div>
           </div>

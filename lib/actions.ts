@@ -541,7 +541,15 @@ export async function adminCreateOpportunity(formData: FormData) {
     max_budget_usd: num(formData, "max_budget_usd"),
     max_award_usd: num(formData, "max_award_usd"),
     deadline: str(formData, "deadline") || null,
+    deadline_note: str(formData, "deadline_note") || null,
     url: str(formData, "url") || null,
+    app_link: str(formData, "app_link") || null,
+    key_person: str(formData, "key_person") || null,
+    contact_email: str(formData, "contact_email") || null,
+    gender_focus: str(formData, "gender_focus") || null,
+    copro_required: formData.get("copro_required") === "on",
+    festival_affiliated: formData.get("festival_affiliated") === "on",
+    ott_affiliated: formData.get("ott_affiliated") === "on",
   }).select("id").single();
 
   if (error) return { error: error.message };
@@ -576,7 +584,15 @@ export async function adminUpdateOpportunity(formData: FormData) {
     max_budget_usd: num(formData, "max_budget_usd"),
     max_award_usd: num(formData, "max_award_usd"),
     deadline: str(formData, "deadline") || null,
+    deadline_note: str(formData, "deadline_note") || null,
     url: str(formData, "url") || null,
+    app_link: str(formData, "app_link") || null,
+    key_person: str(formData, "key_person") || null,
+    contact_email: str(formData, "contact_email") || null,
+    gender_focus: str(formData, "gender_focus") || null,
+    copro_required: formData.get("copro_required") === "on",
+    festival_affiliated: formData.get("festival_affiliated") === "on",
+    ott_affiliated: formData.get("ott_affiliated") === "on",
   }).eq("id", id);
 
   if (error) return { error: error.message };
@@ -584,6 +600,7 @@ export async function adminUpdateOpportunity(formData: FormData) {
     actor_id: user.id, action: "opportunity_updated", target: "opportunity", target_id: id,
   });
   revalidatePath("/admin/opportunities");
+  revalidatePath("/funds");
 }
 
 // ---------- BOOTSTRAP: SELF-PROMOTE FIRST ADMIN ----------

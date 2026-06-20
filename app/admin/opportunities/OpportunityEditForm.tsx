@@ -4,24 +4,24 @@ import { useState, useTransition } from "react";
 import { adminUpdateOpportunity, adminToggleOpportunity } from "@/lib/actions";
 
 const OPP_TYPES = [
-  { value: "grant", label: "Grant" },
-  { value: "fund", label: "Fund" },
-  { value: "lab", label: "Lab" },
-  { value: "co_production", label: "Co-production" },
-  { value: "market", label: "Market" },
-  { value: "distribution", label: "Distribution" },
-  { value: "investor", label: "Investor" },
-  { value: "broadcaster", label: "Broadcaster" },
-  { value: "streamer", label: "Streamer" },
-  { value: "sales_agent", label: "Sales Agent" },
-  { value: "brand_integration", label: "Brand Integration" },
-  { value: "crowdfunding", label: "Crowdfunding" },
-  { value: "producer", label: "Producer" },
+  { value: "grant",              label: "Grant" },
+  { value: "fund",               label: "Fund" },
+  { value: "lab",                label: "Lab" },
+  { value: "co_production",      label: "Co-production" },
+  { value: "market",             label: "Market" },
+  { value: "distribution",       label: "Distribution" },
+  { value: "investor",           label: "Investor" },
+  { value: "broadcaster",        label: "Broadcaster" },
+  { value: "streamer",           label: "Streamer" },
+  { value: "sales_agent",        label: "Sales Agent" },
+  { value: "brand_integration",  label: "Brand Integration" },
+  { value: "crowdfunding",       label: "Crowdfunding" },
+  { value: "producer",           label: "Producer" },
   { value: "production_company", label: "Production Company" },
-  { value: "studio", label: "Studio" },
-  { value: "sponsor", label: "Sponsor" },
-  { value: "pre_sale", label: "Pre-Sale" },
-  { value: "tax_incentive", label: "Tax Incentive" },
+  { value: "studio",             label: "Studio" },
+  { value: "sponsor",            label: "Sponsor" },
+  { value: "pre_sale",           label: "Pre-Sale" },
+  { value: "tax_incentive",      label: "Tax Incentive" },
 ];
 
 type Opportunity = {
@@ -38,9 +38,17 @@ type Opportunity = {
   max_budget_usd: number | null;
   max_award_usd: number | null;
   deadline: string | null;
+  deadline_note: string | null;
   url: string | null;
+  app_link: string | null;
   description: string | null;
   is_active: boolean;
+  key_person: string | null;
+  contact_email: string | null;
+  gender_focus: string | null;
+  copro_required: boolean | null;
+  festival_affiliated: boolean | null;
+  ott_affiliated: boolean | null;
 };
 
 export function OpportunityEditForm({ opp }: { opp: Opportunity }) {
@@ -58,10 +66,7 @@ export function OpportunityEditForm({ opp }: { opp: Opportunity }) {
         setError(result.error);
       } else {
         setSaved(true);
-        setTimeout(() => {
-          setSaved(false);
-          setOpen(false);
-        }, 1200);
+        setTimeout(() => { setSaved(false); setOpen(false); }, 1200);
       }
     });
   }
@@ -85,7 +90,7 @@ export function OpportunityEditForm({ opp }: { opp: Opportunity }) {
             {opp.is_active ? "Active" : "Inactive"}
           </span>
           <button
-            onClick={() => { setOpen(o => !o); setError(null); setSaved(false); }}
+            onClick={() => { setOpen((o: boolean) => !o); setError(null); setSaved(false); }}
             className="btn-ghost !py-1.5 !px-4 text-[14px]"
           >
             {open ? "Close" : "Edit"}
@@ -106,6 +111,7 @@ export function OpportunityEditForm({ opp }: { opp: Opportunity }) {
           <form action={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input type="hidden" name="opportunity_id" value={opp.id} />
 
+            {/* ── Core ── */}
             <label className="block sm:col-span-2">
               <span className="eyebrow">Title *</span>
               <input name="title" required defaultValue={opp.title} className="field mt-1.5" />
@@ -128,6 +134,16 @@ export function OpportunityEditForm({ opp }: { opp: Opportunity }) {
               <input name="region" defaultValue={opp.region ?? ""} placeholder="e.g. Europe, Asia-Pacific" className="field mt-1.5" />
             </label>
 
+            <label className="block sm:col-span-2">
+              <span className="eyebrow">Description</span>
+              <textarea name="description" rows={3} defaultValue={opp.description ?? ""} className="field mt-1.5" />
+            </label>
+
+            {/* ── Eligibility ── */}
+            <div className="sm:col-span-2 pt-2 border-t border-line">
+              <p className="eyebrow text-ash mb-3">Eligibility</p>
+            </div>
+
             <label className="block">
               <span className="eyebrow">Genres (comma-separated)</span>
               <input name="genres" defaultValue={(opp.genres ?? []).join(", ")} placeholder="Drama, Documentary" className="field mt-1.5" />
@@ -149,6 +165,34 @@ export function OpportunityEditForm({ opp }: { opp: Opportunity }) {
             </label>
 
             <label className="block">
+              <span className="eyebrow">Gender focus</span>
+              <input name="gender_focus" defaultValue={opp.gender_focus ?? ""} placeholder="e.g. Women filmmakers, All" className="field mt-1.5" />
+            </label>
+
+            <div className="block">
+              <span className="eyebrow">Flags</span>
+              <div className="mt-2.5 flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-[13px] text-ink cursor-pointer">
+                  <input type="checkbox" name="copro_required" defaultChecked={!!opp.copro_required} className="w-4 h-4 accent-gold" />
+                  Co-production required
+                </label>
+                <label className="flex items-center gap-2 text-[13px] text-ink cursor-pointer">
+                  <input type="checkbox" name="festival_affiliated" defaultChecked={!!opp.festival_affiliated} className="w-4 h-4 accent-gold" />
+                  Festival affiliated
+                </label>
+                <label className="flex items-center gap-2 text-[13px] text-ink cursor-pointer">
+                  <input type="checkbox" name="ott_affiliated" defaultChecked={!!opp.ott_affiliated} className="w-4 h-4 accent-gold" />
+                  OTT / Streaming affiliated
+                </label>
+              </div>
+            </div>
+
+            {/* ── Budget & Award ── */}
+            <div className="sm:col-span-2 pt-2 border-t border-line">
+              <p className="eyebrow text-ash mb-3">Budget & award</p>
+            </div>
+
+            <label className="block">
               <span className="eyebrow">Min budget USD</span>
               <input name="min_budget_usd" type="number" min={0} defaultValue={opp.min_budget_usd ?? ""} className="field mt-1.5" />
             </label>
@@ -163,30 +207,61 @@ export function OpportunityEditForm({ opp }: { opp: Opportunity }) {
               <input name="max_award_usd" type="number" min={0} defaultValue={opp.max_award_usd ?? ""} className="field mt-1.5" />
             </label>
 
+            {/* ── Deadline ── */}
+            <div className="sm:col-span-2 pt-2 border-t border-line">
+              <p className="eyebrow text-ash mb-3">Deadline</p>
+            </div>
+
             <label className="block">
-              <span className="eyebrow">Deadline</span>
+              <span className="eyebrow">Deadline date</span>
               <input name="deadline" type="date" defaultValue={opp.deadline ?? ""} className="field mt-1.5" />
             </label>
 
-            <label className="block sm:col-span-2">
-              <span className="eyebrow">URL</span>
+            <label className="block">
+              <span className="eyebrow">Deadline note</span>
+              <input name="deadline_note" defaultValue={opp.deadline_note ?? ""} placeholder="e.g. Annual — opens Jan/Feb" className="field mt-1.5" />
+            </label>
+
+            {/* ── Links ── */}
+            <div className="sm:col-span-2 pt-2 border-t border-line">
+              <p className="eyebrow text-ash mb-3">Links</p>
+            </div>
+
+            <label className="block">
+              <span className="eyebrow">Website URL</span>
               <input name="url" type="url" defaultValue={opp.url ?? ""} placeholder="https://" className="field mt-1.5" />
             </label>
 
-            <label className="block sm:col-span-2">
-              <span className="eyebrow">Description</span>
-              <textarea name="description" rows={3} defaultValue={opp.description ?? ""} className="field mt-1.5" />
+            <label className="block">
+              <span className="eyebrow">Application / submission URL</span>
+              <input name="app_link" type="url" defaultValue={opp.app_link ?? ""} placeholder="https://" className="field mt-1.5" />
             </label>
 
-            <div className="sm:col-span-2 flex items-center gap-4">
+            {/* ── Contact ── */}
+            <div className="sm:col-span-2 pt-2 border-t border-line">
+              <p className="eyebrow text-ash mb-3">Contact</p>
+            </div>
+
+            <label className="block">
+              <span className="eyebrow">Key person</span>
+              <input name="key_person" defaultValue={opp.key_person ?? ""} placeholder="Name or role" className="field mt-1.5" />
+            </label>
+
+            <label className="block">
+              <span className="eyebrow">Contact email</span>
+              <input name="contact_email" type="email" defaultValue={opp.contact_email ?? ""} placeholder="contact@fund.org" className="field mt-1.5" />
+            </label>
+
+            {/* ── Actions ── */}
+            <div className="sm:col-span-2 pt-2 border-t border-line flex items-center gap-4">
               <button type="submit" disabled={isPending} className="btn-gold !py-1.5 !px-5 text-[14px] disabled:opacity-50">
                 {isPending ? "Saving…" : "Save changes"}
               </button>
               <button type="button" onClick={() => setOpen(false)} className="btn-ghost !py-1.5 !px-4 text-[14px]">
                 Cancel
               </button>
-              {saved && <span className="text-[13px] text-emerald-700 font-normal">Saved.</span>}
-              {error && <span className="text-[13px] text-red-600 font-normal">{error}</span>}
+              {saved  && <span className="text-[13px] text-emerald-700 font-normal">Saved.</span>}
+              {error  && <span className="text-[13px] text-red-600 font-normal">{error}</span>}
             </div>
           </form>
         </div>
