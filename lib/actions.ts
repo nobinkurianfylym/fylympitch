@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { calculateMatchScore } from "@/services/matching";
 import type { OpportunityIntelligenceExtras, ProducerMatchProfile } from "@/services/fylympitchEngine";
 import {
   sendProducerApplicationEmail,
@@ -191,6 +190,7 @@ export async function createProject(formData: FormData) {
   // Write opportunity scores to the DB immediately so the dashboard
   // always shows results even if the AI engine times out or fails.
   if (opps?.length) {
+    const { calculateMatchScore } = await import("@/services/matching");
     const basicMatches = (opps as Opportunity[])
       .map((opp) => ({
         ...(() => { const m = calculateMatchScore(project as Project, opp); return {
@@ -242,6 +242,7 @@ export async function applyToOpportunity(formData: FormData) {
   const { data: opp } = await supabase.from("opportunities").select("*").eq("id", opportunity_id).single();
   if (!project || !opp) return { error: "Project or opportunity not found." };
 
+  const { calculateMatchScore } = await import("@/services/matching");
   const match = calculateMatchScore(project as Project, opp as Opportunity);
 
   const { error } = await supabase.from("applications").insert({
