@@ -137,7 +137,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                     <p className="text-[11px] tracking-[0.24em] uppercase text-ash mb-2">
                       {p.genre}{p.format ? ` · ${p.format.charAt(0).toUpperCase()}${p.format.slice(1)}` : ""}
                     </p>
-                    <h3 className="font-display text-[20px] font-[400] group-hover:text-gold transition-colors leading-snug mb-2">{p.title}</h3>
+                    <h3 className="font-display text-[24px] font-[400] group-hover:text-gold transition-colors leading-snug mb-2">{p.title}</h3>
                     {p.logline && <p className="font-display italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">&ldquo;{p.logline}&rdquo;</p>}
                     <div className="mt-4 pt-4 border-t border-line flex items-center justify-between text-[12px]">
                       <span className="text-ash">♥ {p.love_count ?? 0}</span>

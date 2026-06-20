@@ -219,7 +219,7 @@ export default async function FundDetailPage({ params }: Props) {
         {/* Hero */}
         <div className="mt-8 pb-10 border-b border-line">
           <p className="eyebrow mb-4">{typeLabel} · {location}</p>
-          <h1 className="font-display text-[42px] md:text-[52px] font-[400] leading-[1.1] text-ink">
+          <h1 className="font-display text-[46px] md:text-[58px] font-[400] leading-[1.1] text-ink">
             {opp.title}
           </h1>
 
@@ -259,7 +259,7 @@ export default async function FundDetailPage({ params }: Props) {
         {/* Description */}
         {opp.description && (
           <div className="mt-10 pb-10 border-b border-line">
-            <p className="font-display text-[20px] leading-[1.75] text-ink">
+            <p className="font-display text-[22px] leading-[1.7] text-ink">
               {opp.description}
             </p>
           </div>

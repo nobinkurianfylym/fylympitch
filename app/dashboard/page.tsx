@@ -226,7 +226,7 @@ export default async function DashboardPage() {
                       {[p.genre, p.format].filter(Boolean).join(" · ")}
                     </p>
                     <Link href={`/dashboard/projects/${p.id}`}>
-                      <h3 className="font-display text-[20px] font-[400] group-hover:text-gold transition-colors leading-snug mb-2">
+                      <h3 className="font-display text-[24px] font-[400] group-hover:text-gold transition-colors leading-snug mb-2">
                         {p.title}
                       </h3>
                     </Link>

@@ -154,7 +154,7 @@ export default async function ProducerDiscoverPage() {
                   </p>
 
                   <Link href={`/producer/projects/${p.id}`}>
-                    <h2 className="font-display text-[20px] font-[400] mb-2 group-hover:text-gold transition-colors leading-snug">
+                    <h2 className="font-display text-[24px] font-[400] mb-2 group-hover:text-gold transition-colors leading-snug">
                       {p.title}
                     </h2>
                   </Link>

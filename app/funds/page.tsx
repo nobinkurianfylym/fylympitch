@@ -230,7 +230,7 @@ export default async function FundsPage({
                     <p className="text-[11px] tracking-[0.24em] uppercase text-ash mb-2">
                       {TYPE_LABEL[o.opp_type as string] ?? o.opp_type} · {location}
                     </p>
-                    <h2 className="font-display text-[21px] font-[400] mb-3 group-hover:text-gold transition-colors leading-snug">
+                    <h2 className="font-display text-[24px] font-[400] mb-3 group-hover:text-gold transition-colors leading-snug">
                       {o.title}
                     </h2>
                     {o.description && (
