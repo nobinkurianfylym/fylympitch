@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usd } from "@/lib/format";
 import { upsertProducerProject } from "@/lib/actions";
+import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
@@ -134,17 +135,29 @@ export default async function ProducerProjectsPage({
 
               {/* Card body */}
               <div className="p-5 flex flex-col flex-1">
-                <p className="text-[11px] tracking-[0.24em] uppercase text-ash mb-2">
-                  {p.genre}{p.format ? ` · ${p.format.charAt(0).toUpperCase()}${p.format.slice(1)}` : ""}
+                {/* L2: Metadata row */}
+                <p className="text-[12px] text-ash mb-2.5 leading-tight">
+                  {[
+                    formatFormat(p.format),
+                    p.genre,
+                    (() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? null; })(),
+                    p.language,
+                    formatStage(p.stage),
+                  ].filter(Boolean).join(" · ")}
                 </p>
+                {/* L1: Title */}
                 <Link href={`/producer/projects/${p.id}`}>
-                  <h2 className="font-display text-[24px] font-[400] mb-2 group-hover:text-gold transition-colors leading-snug">
+                  <h2
+                    className="font-display font-bold text-[18px] mb-2.5 group-hover:text-gold transition-colors leading-tight uppercase"
+                    style={{ letterSpacing: "-0.01em" }}
+                  >
                     {p.title}
                   </h2>
                 </Link>
+                {/* L5: Logline */}
                 {p.logline && (
-                  <p className="font-display italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">
-                    &ldquo;{p.logline}&rdquo;
+                  <p className="italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">
+                    {p.logline}
                   </p>
                 )}
 
@@ -173,10 +186,11 @@ export default async function ProducerProjectsPage({
                   </div>
                 </div>
 
-                {/* Country · Language · visibility */}
+                {/* Country · Language */}
                 {(p.country || p.language) && (
                   <p className="mt-2 text-[11px] text-ash/70 tracking-[0.06em]">
-                    {[p.country, p.language].filter(Boolean).join(" · ")}
+                    {(() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? p.country; })()}
+                    {p.language && ` · ${p.language}`}
                     {!p.is_public && <span className="ml-2 text-amber-600">· Private</span>}
                   </p>
                 )}

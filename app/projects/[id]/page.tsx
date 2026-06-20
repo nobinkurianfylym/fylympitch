@@ -6,6 +6,7 @@ import ProjectThumbnail from "@/components/ProjectThumbnail";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
 import { usd, STAGE_LABEL } from "@/lib/format";
+import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -88,29 +89,45 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
         <p className="text-[11px] tracking-[0.16em] uppercase text-ash mb-8">
           <Link href="/projects" className="hover:text-ink transition-colors">Projects</Link>
           <span className="mx-2">›</span>
-          <span className="text-ink">{p.title}</span>
+          <span className="text-ink uppercase" style={{ letterSpacing: "-0.01em" }}>{p.title}</span>
         </p>
 
         <ProjectThumbnail posterPath={p.poster_path} title={p.title} genre={p.genre}
           supabaseUrl={supabaseUrl} className="rounded-card mb-8 w-full max-h-[420px]" />
 
         <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <p className="eyebrow mb-3">{p.genre} · {p.format.charAt(0).toUpperCase() + p.format.slice(1)} · {STAGE_LABEL[p.stage] ?? p.stage}</p>
-            <h1 className="font-display text-[38px] font-[400]">{p.title}</h1>
+          <div className="flex-1 min-w-0">
+            {/* L2: Metadata row */}
+            <p className="text-[13px] text-ash mb-3 leading-tight">
+              {[
+                formatFormat(p.format),
+                p.genre,
+                (() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? null; })(),
+                p.language,
+                formatStage(p.stage),
+              ].filter(Boolean).join(" · ")}
+            </p>
+            {/* L1: Title */}
+            <h1
+              className="font-display font-bold text-[32px] sm:text-[38px] leading-[1.08] uppercase"
+              style={{ letterSpacing: "-0.01em" }}
+            >
+              {p.title}
+            </h1>
           </div>
-          <div className="flex items-center gap-2 shrink-0 mt-3">
+          <div className="flex items-center gap-2 shrink-0 mt-1">
             <LoveButton projectId={p.id} initialCount={p.love_count ?? 0} initialLiked={!!loved} isLoggedIn={true} />
             <ShareButton projectId={p.id} title={p.title} genre={p.genre} country={p.country} />
           </div>
         </div>
 
+        {/* L5: Logline */}
         {p.logline && (
-          <p className="font-display italic text-[18px] leading-[1.6] mt-5 text-ink">"{p.logline}"</p>
+          <p className="italic text-[18px] leading-[1.6] mt-5 text-ink">{p.logline}</p>
         )}
 
         <div className="mt-7 flex flex-wrap gap-6 text-[13px] text-ash">
-          {p.country && <span>Country — <span className="text-ink">{p.country}</span></span>}
+          {p.country && (() => { const c = formatCountry(p.country); return <span key="country">{c?.flag ? `${c.flag} ` : ""}{c?.name ?? p.country}</span>; })()}
           {p.language && <span>Language — <span className="text-ink">{p.language}</span></span>}
           {p.budget_usd && <span>Budget — <span className="text-ink">{usd(p.budget_usd)}</span></span>}
           {p.funding_needed_usd && <span>Seeking — <span className="text-gold font-[400]">{usd(p.funding_needed_usd)}</span></span>}

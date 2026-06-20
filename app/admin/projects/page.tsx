@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { adminToggleProjectVisibility, adminDeleteProject } from "@/lib/actions";
 import { usd, STAGE_LABEL } from "@/lib/format";
+import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +60,12 @@ export default async function AdminProjects({
             <div key={p.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-normal text-ink">{p.title}</p>
+                  <p
+                    className="font-semibold text-ink uppercase text-[13px]"
+                    style={{ letterSpacing: "-0.01em" }}
+                  >
+                    {p.title}
+                  </p>
                   {p.admin_hidden && (
                     <span className="text-[10px] tracking-[0.12em] uppercase px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200">
                       Admin hidden
@@ -72,9 +78,14 @@ export default async function AdminProjects({
                   )}
                 </div>
                 <p className="text-[12px] text-ash font-normal mt-0.5">
-                  {[owner?.full_name ?? "Unknown", owner?.company, p.genre, STAGE_LABEL[p.stage] ?? p.stage, p.country]
-                    .filter(Boolean)
-                    .join(" · ")}
+                  {[
+                    owner?.full_name ?? "Unknown",
+                    owner?.company,
+                    formatFormat(p.format),
+                    p.genre,
+                    (() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? null; })(),
+                    formatStage(p.stage),
+                  ].filter(Boolean).join(" · ")}
                   {p.funding_needed_usd ? ` · seeking ${usd(p.funding_needed_usd)}` : ""}
                 </p>
               </div>

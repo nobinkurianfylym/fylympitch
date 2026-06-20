@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { usd, STAGE_LABEL } from "@/lib/format";
+import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 import OfferForm from "@/components/OfferForm";
 
 export const dynamic = "force-dynamic";
@@ -118,24 +119,37 @@ export default async function DiscoverPage({
           return (
             <article key={p.id} className="card p-6 sm:p-8">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h2 className="font-display text-[24px] font-normal">{p.title}</h2>
-                  <p className="mt-1 text-[14px] text-ash font-normal">
-                    {p.genre} · {p.format} · {p.language} · {p.country}
-                    {owner?.full_name ? <> · by {owner.full_name}</> : null}
+                <div className="flex-1 min-w-0">
+                  {/* L2: Metadata row */}
+                  <p className="text-[12px] text-ash mb-2 leading-tight">
+                    {[
+                      formatFormat(p.format),
+                      p.genre,
+                      (() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? null; })(),
+                      p.language,
+                      formatStage(p.stage),
+                    ].filter(Boolean).join(" · ")}
                   </p>
+                  {/* L1: Title */}
+                  <h2
+                    className="font-display font-bold text-[22px] leading-tight uppercase"
+                    style={{ letterSpacing: "-0.01em" }}
+                  >
+                    {p.title}
+                  </h2>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0">
                   <p className="eyebrow">Seeking</p>
                   <p className="text-[18px] font-normal text-ink">{usd(p.funding_needed_usd)}</p>
                   <p className="text-[12px] text-ash font-normal">
-                    of {usd(p.budget_usd)} budget · {STAGE_LABEL[p.stage] ?? p.stage}
+                    of {usd(p.budget_usd)} budget
                   </p>
                 </div>
               </div>
 
+              {/* L5: Logline */}
               {p.logline && (
-                <p className="mt-4 font-display italic text-[18px] font-normal text-ink border-l-2 border-gold pl-4">
+                <p className="mt-4 italic text-[18px] font-normal text-ink border-l-2 border-gold pl-4">
                   {p.logline}
                 </p>
               )}

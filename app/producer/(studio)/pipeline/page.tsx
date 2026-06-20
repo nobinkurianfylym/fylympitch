@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { usd, STAGE_LABEL } from "@/lib/format";
+import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 
 export const dynamic = "force-dynamic";
 
@@ -109,10 +110,21 @@ export default async function ProducerPipelinePage() {
                           {thumb && (
                             <img src={thumb} alt={p.title} className="w-full rounded-card mb-3 object-cover" style={{ aspectRatio: "16/9" }} />
                           )}
-                          <p className="text-[11px] tracking-[0.16em] uppercase text-ash mb-1">
-                            {p.genre} · {p.format}
+                          {/* L2: Metadata */}
+                          <p className="text-[11px] text-ash mb-1.5 leading-tight">
+                            {[
+                              formatFormat(p.format),
+                              p.genre,
+                              (() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? null; })(),
+                            ].filter(Boolean).join(" · ")}
                           </p>
-                          <p className="font-display text-[15px] leading-snug mb-2">{p.title}</p>
+                          {/* L1: Title */}
+                          <p
+                            className="font-display font-bold text-[14px] leading-tight uppercase mb-2"
+                            style={{ letterSpacing: "-0.01em" }}
+                          >
+                            {p.title}
+                          </p>
                           <div className="flex items-center justify-between">
                             <span className={`text-[10px] px-2 py-0.5 rounded-full ${p.is_public ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
                               {p.is_public ? "Public" : "Private"}
