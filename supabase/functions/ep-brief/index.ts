@@ -23,7 +23,7 @@ const SERVICE_KEY  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const OPENAI_KEY   = Deno.env.get("OPENAI_API_KEY");
 const USE_WEB_SEARCH = Deno.env.get("OPENAI_WEB_SEARCH") === "true";
 
-const EP_SYSTEM_PROMPT = `You are FYLYMPITCH's AI Executive Producer — a senior film finance specialist 
+const EP_SYSTEM_PROMPT = `You are PITCH.FYLYM's AI Executive Producer — a senior film finance specialist 
 with deep knowledge of international co-production, festival strategy, and independent film funding.
 
 Given a film project and its ranked funding matches, respond with STRICT JSON only:

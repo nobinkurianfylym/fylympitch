@@ -95,7 +95,7 @@ export default function ProjectIntelligenceBox({
       {/* ── HEADER ── */}
       <div className="px-7 pt-7 pb-1">
         <p style={{ fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase", color: "rgba(245,245,240,0.35)", marginBottom: 10 }}>
-          FYLYMPITCH ENGINE
+          PITCH.FYLYM ENGINE
         </p>
         <h2 className="font-display" style={{ fontSize: 26, lineHeight: 1.15, color: "#F5F5F0", marginBottom: 4 }}>
           Can raise{" "}

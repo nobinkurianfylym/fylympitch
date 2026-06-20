@@ -4,11 +4,10 @@ export default function Wordmark({ href = "/", light = false }: { href?: string;
   return (
     <Link
       href={href}
-      className={`font-sans tracking-[0.32em] text-[16px] select-none ${light ? "text-ivory" : "text-ink"}`}
-      style={{ fontWeight: 400, letterSpacing: "0.32em" }}
+      className={`font-sans text-[16px] select-none ${light ? "text-ivory" : "text-ink"}`}
+      style={{ fontWeight: 400, letterSpacing: "0.28em" }}
     >
-      <span className="text-gold" style={{ fontWeight: 500 }}>F</span>YLYM
-      <span className="text-gold" style={{ fontWeight: 500 }}>P</span>ITCH
+      PITCH<span className="text-gold" style={{ fontWeight: 600, letterSpacing: 0 }}>.</span>FYLYM
     </Link>
   );
 }

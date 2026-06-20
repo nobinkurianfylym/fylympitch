@@ -21,16 +21,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq("is_active", true)
     .single<Pick<Opportunity, "title" | "opp_type" | "description" | "country" | "region" | "deadline" | "max_award_usd">>();
 
-  if (!opp) return { title: "Fund Not Found — FYLYMPITCH" };
+  if (!opp) return { title: "Fund Not Found — PITCH.FYLYM" };
 
   const typeLabel   = TYPE_LABEL[opp.opp_type] ?? opp.opp_type;
   const location    = opp.country || opp.region || "International";
   const award       = opp.max_award_usd ? ` · Up to ${usd(opp.max_award_usd)}` : "";
   const description = opp.description
     ? opp.description.slice(0, 155) + (opp.description.length > 155 ? "…" : "")
-    : `${opp.title} is a ${typeLabel.toLowerCase()} opportunity for independent filmmakers based in ${location}. Discover eligibility, deadlines and apply through FYLYMPITCH.`;
+    : `${opp.title} is a ${typeLabel.toLowerCase()} opportunity for independent filmmakers based in ${location}. Discover eligibility, deadlines and apply through PITCH.FYLYM.`;
 
-  const title = `${opp.title} — ${typeLabel} · ${location}${award} | FYLYMPITCH`;
+  const title = `${opp.title} — ${typeLabel} · ${location}${award} | PITCH.FYLYM`;
 
   return {
     title,
@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: `https://pitch.fylym.com/funds/${slug}`,
-      siteName: "FYLYMPITCH",
+      siteName: "PITCH.FYLYM",
       type: "website",
     },
     twitter: {
@@ -296,14 +296,14 @@ export default async function FundDetailPage({ params }: Props) {
           </div>
         )}
 
-        {/* FYLYMPITCH CTA */}
+        {/* PITCH.FYLYM CTA */}
         <div className="mt-12 card p-8">
-          <p className="eyebrow mb-3">Apply through FYLYMPITCH</p>
+          <p className="eyebrow mb-3">Apply through PITCH.FYLYM</p>
           <h2 className="font-display text-[24px] font-[400] mb-2">
             Is {opp.title} right for your film?
           </h2>
           <p className="text-[14px] text-ash mb-6 max-w-md">
-            Submit your project and the FYLYMPITCH engine scores your match against
+            Submit your project and the PITCH.FYLYM engine scores your match against
             {` ${opp.title}`} and hundreds of other funds, labs and co-producers worldwide.
           </p>
           {user ? (

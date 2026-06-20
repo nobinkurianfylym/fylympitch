@@ -48,7 +48,7 @@ export default function RerunEngineButton({
             marginBottom: "12px",
           }}
         >
-          FYLYMPITCH ENGINE
+          PITCH.FYLYM ENGINE
         </p>
         <h2
           style={{

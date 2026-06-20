@@ -103,7 +103,7 @@ export default function ProducerOnboardingPage() {
       <header className="border-b border-line bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <p className="text-[10px] tracking-[0.28em] uppercase text-ash">FYLYMPITCH</p>
+            <p className="text-[10px] tracking-[0.28em] uppercase text-ash">PITCH.FYLYM</p>
             <p className="text-[12px] tracking-[0.18em] uppercase text-ink mt-0.5">Producer Studio</p>
           </div>
           <Link href="/dashboard" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors">
@@ -319,9 +319,9 @@ export default function ProducerOnboardingPage() {
                 ${isPublic ? "border-gold bg-gold/5" : "border-line bg-white hover:border-ink/20"}`}>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[15px] font-medium text-ink mb-1">Add me to FYLYMPITCH's producer network</p>
+                  <p className="text-[15px] font-medium text-ink mb-1">Add me to PITCH.FYLYM's producer network</p>
                   <p className="text-[13px] text-ash leading-relaxed">
-                    Filmmakers whose projects match your interests will see your profile in their FYLYMPITCH Intelligence report. You'll receive an email when someone requests an introduction.
+                    Filmmakers whose projects match your interests will see your profile in their PITCH.FYLYM Intelligence report. You'll receive an email when someone requests an introduction.
                   </p>
                 </div>
                 <div className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all

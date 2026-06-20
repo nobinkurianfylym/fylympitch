@@ -335,7 +335,7 @@ export default function ProducerProfilePage() {
                 }`}>
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[15px] font-medium text-ink mb-1">Listed in FYLYMPITCH producer network</p>
+                    <p className="text-[15px] font-medium text-ink mb-1">Listed in PITCH.FYLYM producer network</p>
                     <p className="text-[13px] text-ash leading-relaxed">
                       Filmmakers see your profile in their intelligence report when interests match their project.
                     </p>

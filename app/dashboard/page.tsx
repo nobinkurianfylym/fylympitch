@@ -164,7 +164,7 @@ export default async function DashboardPage() {
       <section className="mb-10">
         <div className="flex items-baseline justify-between mb-5">
           <div>
-            <p className="eyebrow mb-1">FYLYMPITCH Engine</p>
+            <p className="eyebrow mb-1">PITCH.FYLYM Engine</p>
             <h2 className="font-display text-[24px]">Your slate</h2>
           </div>
           {hasProjects && (
@@ -179,7 +179,7 @@ export default async function DashboardPage() {
           <div className="card p-8 text-center max-w-lg mx-auto">
             <p className="font-display text-[22px] mb-2">Your slate is empty</p>
             <p className="text-[14px] text-ash max-w-sm mx-auto mb-6 leading-relaxed">
-              Submit your first project and the FYLYMPITCH engine will score every live
+              Submit your first project and the PITCH.FYLYM engine will score every live
               funding opportunity, build your financing roadmap, and generate an EP brief.
             </p>
             <Link href="/dashboard/projects/new" className="btn-gold inline-flex">

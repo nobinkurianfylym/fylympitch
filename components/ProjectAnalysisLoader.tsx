@@ -55,7 +55,7 @@ export default function ProjectAnalysisLoader({
         textAlign: "center",
       }}>
         <p style={{ fontSize: "10px", letterSpacing: "0.28em", textTransform: "uppercase", color: "#8A857C", marginBottom: "12px" }}>
-          FYLYMPITCH ENGINE
+          PITCH.FYLYM ENGINE
         </p>
         <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "22px", fontWeight: 400, color: "#1A1815", marginBottom: "10px" }}>
           Analysis incomplete
@@ -92,7 +92,7 @@ export default function ProjectAnalysisLoader({
         textAlign: "center",
       }}>
         <p style={{ fontSize: "10px", letterSpacing: "0.28em", textTransform: "uppercase", color: "rgba(248,245,240,0.4)", marginBottom: "20px" }}>
-          FYLYMPITCH ENGINE
+          PITCH.FYLYM ENGINE
         </p>
 
         {/* Spinner */}

@@ -1,5 +1,5 @@
 // ============================================================
-// FYLYMPITCH AI ENGINE  —  services/aiEngine.ts
+// PITCH.FYLYM AI ENGINE  —  services/aiEngine.ts
 //
 // Wraps the existing rule-based engine (fylympitchEngine.ts)
 // with an AI semantic layer. Architecture:

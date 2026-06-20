@@ -3,9 +3,27 @@ import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { TYPE_LABEL } from "@/lib/format";
 import SearchInput from "@/components/SearchInput";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+export const metadata: Metadata = {
+  title: "Film Funds, Grants & Opportunities — PITCH.FYLYM",
+  description:
+    "Discover 180+ film grants, labs, funds, co-productions, sales agents, distributors, tax incentives and investors from 38+ countries. Find the right financing for your independent film.",
+  openGraph: {
+    title: "Film Funds, Grants & Opportunities — PITCH.FYLYM",
+    description:
+      "Discover 180+ film grants, labs, funds, co-productions, sales agents, distributors, tax incentives and investors from 38+ countries.",
+    url: "https://pitch.fylym.com/funds",
+    siteName: "PITCH.FYLYM",
+    type: "website",
+  },
+  alternates: {
+    canonical: "https://pitch.fylym.com/funds",
+  },
+};
 
 const PALETTES = [
   { bg: "#FDF5E4", band: "#F5E8C0", tx: "#7B5E1A" },

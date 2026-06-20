@@ -24,7 +24,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "FYLYMPITCH — Where films find their financiers",
+  title: "PITCH.FYLYM — Where films find their financiers",
   description:
     "Intelligent matchmaking between film projects and producers, funds, grants, labs, markets, distributors and investors worldwide.",
 };

@@ -126,7 +126,7 @@ export async function createProject(formData: FormData) {
     user_id: user.id, action: "project_created", entity: "project", entity_id: data.id,
   });
 
-  // ---------- FYLYMPITCH ENGINE ----------
+  // ---------- PITCH.FYLYM ENGINE ----------
   // Runs ONCE, here, at submission time: hybrid matching, funding
   // readiness/discovery/obstacles, financing roadmap, producer matches,
   // AI Executive Producer (OpenAI, falls back to a heuristic if
@@ -301,7 +301,7 @@ export async function makeOffer(formData: FormData) {
     offer_type: str(formData, "offer_type") || "investment",
     message,
   });
-  if (error) return { error: "Could not send offer. Producer and investor accounts must be approved by FYLYMPITCH first." };
+  if (error) return { error: "Could not send offer. Producer and investor accounts must be approved by PITCH.FYLYM first." };
 
   await supabase.from("activity_logs").insert({
     user_id: user.id, action: "offer_made", entity: "project", entity_id: project_id,

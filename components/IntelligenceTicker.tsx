@@ -84,7 +84,7 @@ const ENTITIES: EntityCard[] = [
 ];
 
 const INSIGHTS: InsightCard[] = [
-  { kind:"insight", label:"FYLYMPITCH INSIGHT",  text:"14 documentary funds close this month." },
+  { kind:"insight", label:"PITCH.FYLYM INSIGHT",  text:"14 documentary funds close this month." },
   { kind:"insight", label:"PRODUCER TREND",      text:"23 European producers seeking India co-productions." },
   { kind:"insight", label:"ACQUISITION ALERT",   text:"4 streamers acquiring international docs right now." },
   { kind:"insight", label:"FESTIVAL TREND",      text:"127 festivals currently accepting submissions." },

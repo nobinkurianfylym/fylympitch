@@ -12,10 +12,10 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   const supabase = await createClient();
   const { data: p } = await supabase.from("profiles")
     .select("full_name, bio, company, country").eq("username", username).single();
-  if (!p) return { title: "Profile — FYLYMPITCH" };
+  if (!p) return { title: "Profile — PITCH.FYLYM" };
   return {
-    title: `${p.full_name} (@${username}) — FYLYMPITCH`,
-    description: p.bio ?? `${p.full_name}${p.company ? ` · ${p.company}` : ""}${p.country ? ` · ${p.country}` : ""} on FYLYMPITCH`,
+    title: `${p.full_name} (@${username}) — PITCH.FYLYM`,
+    description: p.bio ?? `${p.full_name}${p.company ? ` · ${p.company}` : ""}${p.country ? ` · ${p.country}` : ""} on PITCH.FYLYM`,
   };
 }
 

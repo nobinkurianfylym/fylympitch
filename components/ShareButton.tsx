@@ -24,7 +24,7 @@ export default function ShareButton({ projectId, title, genre, country, size = "
   const siteUrl   = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pitch.fylym.com";
   const url       = `${siteUrl}/projects/${projectId}`;
   const tagline   = [genre, country].filter(Boolean).join(" · ");
-  const shareText = `${title}${tagline ? ` — ${tagline}` : ""} · Now pitching on FYLYMPITCH`;
+  const shareText = `${title}${tagline ? ` — ${tagline}` : ""} · Now pitching on PITCH.FYLYM`;
 
   const links = [
     {

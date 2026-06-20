@@ -48,7 +48,7 @@ export default async function MyProjectsPage() {
       {/* Header */}
       <div className="flex items-end justify-between mb-10">
         <div>
-          <p className="eyebrow mb-3">FYLYMPITCH Engine</p>
+          <p className="eyebrow mb-3">PITCH.FYLYM Engine</p>
           <h1 className="font-display text-[34px] font-[400]">My Projects</h1>
         </div>
         <Link href="/dashboard/projects/new" className="btn-gold">New project</Link>

@@ -91,7 +91,7 @@ export default async function ProducerDiscoverPage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <p className="eyebrow mb-2">FYLYMPITCH Engine · Producer Studio</p>
+          <p className="eyebrow mb-2">PITCH.FYLYM Engine · Producer Studio</p>
           <h1 className="font-display text-[32px]">Discover</h1>
           <p className="text-[14px] text-ash mt-1">Your top 9 matches today</p>
         </div>

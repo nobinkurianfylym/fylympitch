@@ -46,7 +46,7 @@ function EngineLoader({ step }: { step: number }) {
         </span>
       </div>
       <p className="text-[13px] text-ash">
-        <span className="text-gold font-medium">FYLYMPITCH ENGINE</span>
+        <span className="text-gold font-medium">PITCH.FYLYM ENGINE</span>
         {" · "}{activeLabel}<BlinkingDots />
       </p>
     </div>
@@ -71,7 +71,7 @@ function AiLoader() {
   return (
     <div className="mt-4 rounded-card border border-gold/30 bg-gold/5 px-5 py-4">
       <div className="flex items-center gap-3 mb-3">
-        <span className="text-gold text-[13px] tracking-[0.12em] uppercase font-medium">FYLYMPITCH AI</span>
+        <span className="text-gold text-[13px] tracking-[0.12em] uppercase font-medium">PITCH.FYLYM AI</span>
         <span className="text-ash text-[12px]">Analysing your pitch deck</span>
       </div>
       <div className="space-y-2">
@@ -382,7 +382,7 @@ export default function ProjectForm() {
           <p className="eyebrow text-gold mb-1">Step 1</p>
           <h3 className="font-display text-[20px] leading-snug">Upload your pitch deck</h3>
           <p className="text-[13px] text-ash mt-1">
-            Upload a PDF and FYLYMPITCH AI will read it and fill the form for you.
+            Upload a PDF and PITCH.FYLYM AI will read it and fill the form for you.
             Review and edit anything before submitting.
           </p>
         </div>

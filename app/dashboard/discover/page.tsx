@@ -41,7 +41,7 @@ export default async function DiscoverPage({
         <h1 className="font-display text-[30px] font-normal">Discover projects</h1>
         <div className="card mt-6 p-6">
           <p className="font-normal text-ink">
-            Your account is pending verification by the FYLYMPITCH team.
+            Your account is pending verification by the PITCH.FYLYM team.
           </p>
           <p className="mt-2 text-[14px] text-ash font-normal">
             Once approved, you will be able to browse projects, read scripts and pitch decks,

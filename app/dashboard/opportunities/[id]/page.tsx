@@ -108,7 +108,7 @@ export default async function OpportunityDetailPage({
                 </a>
                 <p className="mt-3 text-[12px] text-ash leading-relaxed">
                   You'll need to submit directly at the fund's official website.
-                  Use the form below to log this application in your FYLYMPITCH tracker.
+                  Use the form below to log this application in your PITCH.FYLYM tracker.
                 </p>
               </div>
             )}

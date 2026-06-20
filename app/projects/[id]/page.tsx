@@ -21,12 +21,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { data: p } = await supabase
     .from("projects").select("title, genre, logline, poster_path, country")
     .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
-  if (!p) return { title: "Project — FYLYMPITCH" };
+  if (!p) return { title: "Project — PITCH.FYLYM" };
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const image = p.poster_path ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${p.poster_path}` : null;
-  const desc = p.logline ?? `A ${p.genre} from ${p.country} — now pitching on FYLYMPITCH`;
+  const desc = p.logline ?? `A ${p.genre} from ${p.country} — now pitching on PITCH.FYLYM`;
   return {
-    title: `${p.title} — FYLYMPITCH`,
+    title: `${p.title} — PITCH.FYLYM`,
     description: desc,
     openGraph: { title: p.title, description: desc, images: image ? [image] : [], type: "article" },
     twitter: { card: "summary_large_image", title: p.title, description: desc, images: image ? [image] : [] },

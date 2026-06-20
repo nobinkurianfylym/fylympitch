@@ -23,7 +23,7 @@ const STEPS = [
     num: "02",
     icon: "ti-target",
     title: "Match With Global Opportunities",
-    body: "The FYLYMPITCH ENGINE™ scores your project against 1,000+ grants, funds, labs, investors, studios and co-productions worldwide — and tells you exactly why each one fits.",
+    body: "The PITCH.FYLYM ENGINE™ scores your project against 1,000+ grants, funds, labs, investors, studios and co-productions worldwide — and tells you exactly why each one fits.",
   },
   {
     num: "03",
@@ -40,9 +40,9 @@ const STEPS = [
 ];
 
 const FAQS = [
-  ["Who can see my script and pitch deck?", "Only you, FYLYMPITCH administrators, and industry accounts that have been individually verified and approved. Files live in private storage with row-level access control — there are no public links."],
+  ["Who can see my script and pitch deck?", "Only you, PITCH.FYLYM administrators, and industry accounts that have been individually verified and approved. Files live in private storage with row-level access control — there are no public links."],
   ["How is the match score calculated?", "Eight weighted criteria totalling 100 points: genre (20), stage (20), territory (15), budget (15), format (10), funding gap (10), language (5) and historical success (5). Anything under 60 is hidden so you only see real prospects."],
-  ["Is FYLYMPITCH free for filmmakers?", "Creating a profile, submitting one project and viewing your matches is free. Unlimited projects and priority matching are part of the Pro plan."],
+  ["Is PITCH.FYLYM free for filmmakers?", "Creating a profile, submitting one project and viewing your matches is free. Unlimited projects and priority matching are part of the Pro plan."],
   ["How do producers and investors join?", "Sign up with a single Google account — you automatically get access to both the filmmaker dashboard and the producer studio. One login, both sides of the table."],
 ];
 
@@ -182,7 +182,7 @@ export default async function Home() {
             <p className="eyebrow mb-5">One Platform. Two Needs. One Mission.</p>
             <p className="font-display text-[28px] md:text-[38px] leading-tight font-normal italic max-w-2xl mx-auto">
               "Filmmakers need funding. Producers need stories.<br className="hidden md:block" />
-              FYLYMPITCH is where both discover each other."
+              PITCH.FYLYM is where both discover each other."
             </p>
             <Link href="/signup" className="btn-gold mt-10 inline-block">
               Create your free account
@@ -277,7 +277,7 @@ export default async function Home() {
                   "Filter the project showcase by genre, format and territory",
                   "Request scripts and pitch decks through access control",
                   "Send structured co-production, investment or acquisition offers",
-                  "Every project submitted through the FYLYMPITCH engine",
+                  "Every project submitted through the PITCH.FYLYM engine",
                 ].map((item) => (
                   <div key={item} className="hairline pt-4 pb-1 text-[14px] text-ash">{item}</div>
                 ))}
@@ -391,7 +391,7 @@ export default async function Home() {
           <div>
             <p className="eyebrow mb-4">Contact</p>
             <h2 className="font-display text-[28px] md:text-[36px] max-w-lg leading-tight">
-              Festivals, funds and institutions — list your programme on FYLYMPITCH.
+              Festivals, funds and institutions — list your programme on PITCH.FYLYM.
             </h2>
           </div>
           <a href="mailto:nobinkurian@yahoo.com" className="btn-ghost mt-8 md:mt-0 shrink-0">Write to us</a>
@@ -435,7 +435,7 @@ export default async function Home() {
             </div>
           </div>
           <div className="hairline-gold mt-14 pt-6 text-[11px] tracking-[0.2em] uppercase text-ivory/40">
-            © {new Date().getFullYear()} FYLYMPITCH · A FYLYM Company · Ernakulam, Kerala
+            © {new Date().getFullYear()} PITCH.FYLYM · A FYLYM Company · Ernakulam, Kerala
           </div>
         </div>
       </footer>

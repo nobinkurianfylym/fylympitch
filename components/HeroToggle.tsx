@@ -12,7 +12,7 @@ const CONTENT = {
         <span className="italic text-gold">their financiers.</span>
       </>
     ),
-    body: "FYLYMPITCH matches your project with the producers, funds, grants, labs, markets and investors most likely to say yes — and tells you exactly why.",
+    body: "PITCH.FYLYM matches your project with the producers, funds, grants, labs, markets and investors most likely to say yes — and tells you exactly why.",
     primary: { label: "Get started", href: "/signup" },
     secondary: { label: "See how it works", href: "#how" },
   },

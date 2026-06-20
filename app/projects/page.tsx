@@ -80,7 +80,7 @@ export default async function ProjectsPage({
           <p className="eyebrow mb-3">Discover</p>
           <h1 className="font-display text-[38px] font-[400]">Projects</h1>
           <p className="mt-3 text-[15px] text-ash max-w-lg">
-            Pitches submitted by filmmakers on FYLYMPITCH — open for producers, investors and collaborators to discover.
+            Pitches submitted by filmmakers on PITCH.FYLYM — open for producers, investors and collaborators to discover.
           </p>
 
           {/* Format filters + search bar */}

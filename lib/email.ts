@@ -14,7 +14,7 @@
 
 import { Resend } from "resend";
 
-const FROM_ADDRESS = "FYLYMPITCH <hello@fylym.com>";
+const FROM_ADDRESS = "PITCH.FYLYM <hello@fylym.com>";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://fylympitch.com";
 
 function getResend() {
@@ -30,7 +30,7 @@ function wrap(content: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FYLYMPITCH</title>
+  <title>PITCH.FYLYM</title>
 </head>
 <body style="margin:0;padding:0;background:#F5F5F7;font-family:'Helvetica Neue',Arial,sans-serif;color:#1A1815;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F5F7;padding:40px 20px;">
@@ -52,7 +52,7 @@ function wrap(content: string): string {
         <!-- Footer -->
         <tr><td style="padding-top:32px;padding-bottom:8px;">
           <p style="margin:0;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#8A857C;text-align:center;">
-            © FYLYMPITCH · Intelligent film financing
+            © PITCH.FYLYM · Intelligent film financing
           </p>
           <p style="margin:8px 0 0;font-size:11px;color:#8A857C;text-align:center;">
             <a href="${SITE_URL}" style="color:#8A857C;text-decoration:underline;">${SITE_URL}</a>
@@ -93,7 +93,7 @@ export async function sendProducerApplicationEmail(
       Application received
     </h1>
     <p style="margin:0 0 32px;font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#8A857C;">
-      FYLYMPITCH Producer Studio
+      PITCH.FYLYM Producer Studio
     </p>
 
     <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#1A1815;">
@@ -103,7 +103,7 @@ export async function sendProducerApplicationEmail(
       We've received your application for a producer account under
       <strong style="font-weight:500;">${company}</strong>.
       Our team verifies every producer account to maintain the quality and trust of the
-      FYLYMPITCH community.
+      PITCH.FYLYM community.
     </p>
     <p style="margin:0 0 32px;font-size:16px;line-height:1.65;color:#1A1815;">
       You'll hear from us within <strong style="font-weight:500;">24 hours</strong>.
@@ -133,7 +133,7 @@ export async function sendProducerApplicationEmail(
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: "Application received — FYLYMPITCH Producer Studio",
+      subject: "Application received — PITCH.FYLYM Producer Studio",
       html: wrap(body),
     });
     if (error) console.error("[email] sendProducerApplicationEmail:", error);
@@ -161,7 +161,7 @@ export async function sendProducerApprovedEmail(
       You're approved
     </h1>
     <p style="margin:0 0 32px;font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#BF9953;">
-      FYLYMPITCH Producer Studio
+      PITCH.FYLYM Producer Studio
     </p>
 
     <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#1A1815;">
@@ -169,7 +169,7 @@ export async function sendProducerApprovedEmail(
     </p>
     <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#1A1815;">
       Your producer account for <strong style="font-weight:500;">${company}</strong> has
-      been approved. You now have full access to the FYLYMPITCH Producer Studio.
+      been approved. You now have full access to the PITCH.FYLYM Producer Studio.
     </p>
 
     ${divider()}
@@ -180,7 +180,7 @@ export async function sendProducerApprovedEmail(
     <table cellpadding="0" cellspacing="0" style="margin:16px 0 28px;">
       ${[
         ["Pipeline", "Your personal CRM — save, shortlist and track projects across a 5-stage Kanban board."],
-        ["All projects", "Browse every project on FYLYMPITCH — public and private submissions."],
+        ["All projects", "Browse every project on PITCH.FYLYM — public and private submissions."],
         ["Meetings", "Request meetings with filmmakers directly from any project page."],
         ["Messages", "Secure messaging with filmmakers to discuss financing and co-production."],
       ].map(([title, desc]) => `
@@ -207,7 +207,7 @@ export async function sendProducerApprovedEmail(
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: "Your FYLYMPITCH producer account is approved",
+      subject: "Your PITCH.FYLYM producer account is approved",
       html: wrap(body),
     });
     if (error) console.error("[email] sendProducerApprovedEmail:", error);
@@ -253,7 +253,7 @@ export async function sendProducerDeclinedEmail(
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: "Your FYLYMPITCH producer application",
+      subject: "Your PITCH.FYLYM producer application",
       html: wrap(body),
     });
     if (error) console.error("[email] sendProducerDeclinedEmail:", error);
@@ -285,7 +285,7 @@ export async function sendIntroductionRequest({
 
   const body = `
     <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#1A1815;">
-      A filmmaker on FYLYMPITCH has requested an introduction — their project matches your interests.
+      A filmmaker on PITCH.FYLYM has requested an introduction — their project matches your interests.
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0"
@@ -303,14 +303,14 @@ export async function sendIntroductionRequest({
     </table>
 
     <p style="margin:0 0 28px;font-size:15px;line-height:1.65;color:#8A857C;">
-      Log in to FYLYMPITCH to view the full project, review the filmmaker's pitch, and respond.
+      Log in to PITCH.FYLYM to view the full project, review the filmmaker's pitch, and respond.
     </p>
 
     <a href="${siteUrl}/producer/projects"
       style="display:inline-block;background:#BF9953;color:#ffffff;font-size:13px;
              letter-spacing:0.16em;text-transform:uppercase;text-decoration:none;
              padding:14px 28px;border-radius:8px;">
-      View project on FYLYMPITCH
+      View project on PITCH.FYLYM
     </a>
   `;
 
@@ -347,7 +347,7 @@ export async function sendEngineReady({
 
   const body = `
     <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#1A1815;">
-      Hi ${filmmakerName} — your FYLYMPITCH intelligence report is ready.
+      Hi ${filmmakerName} — your PITCH.FYLYM intelligence report is ready.
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0"
@@ -375,7 +375,7 @@ export async function sendEngineReady({
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: `Your FYLYMPITCH report for "${projectTitle}" is ready`,
+      subject: `Your PITCH.FYLYM report for "${projectTitle}" is ready`,
       html: wrap(body),
     });
     if (error) console.error("[email] sendEngineReady:", error);

@@ -57,7 +57,7 @@ export default async function ProducerPipelinePage() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <p className="eyebrow mb-2">FYLYMPITCH Engine · Producer CRM</p>
+          <p className="eyebrow mb-2">PITCH.FYLYM Engine · Producer CRM</p>
           <h1 className="font-display text-[32px]">Pipeline</h1>
         </div>
         <Link href="/producer/projects" className="btn-gold">

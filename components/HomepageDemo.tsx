@@ -109,7 +109,7 @@ export default function HomepageDemo() {
       {/* Engine hero card */}
       <div style={{ background: "#1A1815", borderRadius: "14px", padding: "28px 28px 24px", marginBottom: "20px" }}>
         <p style={{ fontSize: "10px", letterSpacing: "0.26em", textTransform: "uppercase", color: "rgba(248,245,240,0.4)", marginBottom: "10px" }}>
-          FYLYMPITCH ENGINE
+          PITCH.FYLYM ENGINE
         </p>
         <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "26px", fontWeight: 400, color: "#F8F5F0", lineHeight: 1.25, marginBottom: "6px" }}>
           <em>{p.title}</em> can raise{" "}
