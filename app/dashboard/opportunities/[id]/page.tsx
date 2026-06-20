@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import MatchBadge from "@/components/MatchBadge";
 import { usd, TYPE_LABEL, STAGE_LABEL } from "@/lib/format";
-import { calculateMatchScore } from "@/services/matching";
 import { applyToOpportunity, toggleSaved } from "@/lib/actions";
 import type { Opportunity, Project } from "@/types";
 
@@ -21,7 +20,9 @@ export default async function OpportunityDetailPage({
 
   const { data: projects } = await supabase.from("projects").select("*").eq("owner_id", user!.id).order("created_at", { ascending: false });
   const selected = (projects as Project[] | null)?.find((p) => p.id === projectParam) ?? (projects as Project[] | null)?.[0] ?? null;
-  const match = selected ? calculateMatchScore(selected, opp) : null;
+  const match = selected
+    ? (await import("@/services/matching")).calculateMatchScore(selected, opp)
+    : null;
 
   const { data: existing } = selected
     ? await supabase.from("applications").select("id, status").eq("project_id", selected.id).eq("opportunity_id", id).maybeSingle()

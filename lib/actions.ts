@@ -4,11 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { OpportunityIntelligenceExtras, ProducerMatchProfile } from "@/services/fylympitchEngine";
-import {
-  sendProducerApplicationEmail,
-  sendProducerApprovedEmail,
-  sendProducerDeclinedEmail,
-} from "@/lib/email";
 import type { Opportunity, Project } from "@/types";
 
 async function requireUser() {
@@ -387,6 +382,7 @@ export async function adminSetApproval(formData: FormData) {
   ]);
 
   if (producerEmail) {
+    const { sendProducerApprovedEmail, sendProducerDeclinedEmail } = await import("@/lib/email");
     if (status === "approved") {
       await sendProducerApprovedEmail(
         producerEmail as string,
@@ -663,6 +659,7 @@ export async function completeOnboarding(formData: FormData) {
     // Send confirmation email to the producer
     // user.email is already available from requireUser() — no second getUser() needed
     if (user.email) {
+      const { sendProducerApplicationEmail } = await import("@/lib/email");
       await sendProducerApplicationEmail(user.email, full_name, company ?? "");
     }
   }
