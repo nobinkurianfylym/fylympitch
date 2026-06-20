@@ -148,21 +148,21 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
             </p>
           )}
 
-          {/* Google */}
+          {/* Google — white bg, black text, thin border, 25% smaller */}
           <button
             type="button"
             onClick={handleGoogle}
             disabled={busy}
-            className="btn-gold w-full gap-3 mb-6 disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-3 w-full rounded-full border border-ink bg-white text-ink text-[10px] font-bold tracking-[0.14em] uppercase px-6 py-2.5 mb-5 transition-colors hover:bg-ivory disabled:opacity-50"
           >
             <GoogleIcon />
             CONTINUE WITH GOOGLE
           </button>
 
           {/* OR divider */}
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 h-px bg-line" />
-            <span className="text-[9px] font-semibold tracking-[0.14em] text-ash">OR</span>
+            <span className="text-[9px] font-bold tracking-[0.18em] text-ash">OR</span>
             <div className="flex-1 h-px bg-line" />
           </div>
 
@@ -174,7 +174,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
               onChange={e => setEmail(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleMagicLink()}
               placeholder="your@email.com"
-              className="flex-1 bg-transparent text-[13px] text-ink placeholder:text-ash/40 outline-none py-2.5"
+              className="flex-1 bg-transparent text-[13px] font-semibold text-ink placeholder:text-ash/50 placeholder:font-semibold outline-none py-2.5"
               disabled={busy}
               autoComplete="email"
             />
@@ -182,7 +182,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
               type="button"
               onClick={handleMagicLink}
               disabled={busy || !email.trim()}
-              className="text-[10px] font-semibold tracking-[0.16em] uppercase text-ink hover:text-gold transition-colors disabled:opacity-30 shrink-0 py-2.5"
+              className="text-[10px] font-bold tracking-[0.18em] uppercase text-ink hover:text-gold transition-colors disabled:opacity-30 shrink-0 py-2.5"
             >
               {busy ? "…" : "SEND LINK"}
             </button>
