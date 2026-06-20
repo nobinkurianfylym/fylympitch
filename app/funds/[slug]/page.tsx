@@ -355,7 +355,7 @@ export default async function FundDetailPage({ params }: Props) {
         <div className="max-w-[1180px] mx-auto px-6 py-8 flex flex-wrap items-center justify-between gap-4">
           <Wordmark />
           <p className="text-[12px] text-ash">
-            The intelligence layer for independent cinema.
+            The intelligence layer for cinema.
           </p>
           <Link href="/funds" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors">
             Browse all funds →
