@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { usd, STAGE_LABEL } from "@/lib/format";
 import { respondToOffer } from "@/lib/project-actions";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
+import Greeting from "@/components/Greeting";
 import type { Profile } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -102,7 +103,7 @@ export default async function DashboardPage() {
       <div className="flex items-start justify-between gap-4 mb-8">
         <div>
           <p className="eyebrow mb-2">Filmmaker Dashboard</p>
-          <h1 className="font-display text-[34px] leading-tight">Good morning, {firstName}.</h1>
+          <Greeting name={firstName} />
         </div>
         <Link href="/dashboard/projects/new" className="btn-gold shrink-0 mt-2">+ New project</Link>
       </div>
