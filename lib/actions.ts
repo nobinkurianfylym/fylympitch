@@ -815,10 +815,14 @@ export async function signOut() {
 export async function saveProducerProfile(_prevState: unknown, formData: FormData) {
   const { supabase, user } = await requireUser();
 
-  const genres = formData.getAll("genres").map(String);
-  const formats = formData.getAll("formats").map(String);
-  const territories = formData.getAll("territories").map(String);
-  const festivals = formData.getAll("festivals").map(String);
+  const genres               = formData.getAll("genres").map(String);
+  const formats              = formData.getAll("formats").map(String);
+  const territories          = formData.getAll("territories").map(String);
+  const festivals            = formData.getAll("festivals").map(String);
+  const stage_preferences    = formData.getAll("stage_preferences").map(String);
+  const language_preferences = formData.getAll("language_preferences").map(String);
+  const funding_roles        = formData.getAll("funding_roles").map(String);
+  const contribution_capacity = str(formData, "contribution_capacity") ?? null;
 
   // Update identity on profiles table
   const name = str(formData, "name");
@@ -838,17 +842,16 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
     user_id: user.id,
     contact_email: user.email ?? null,
     country: str(formData, "country") ?? "",
-    role_type: str(formData, "role_type") ?? "independent_producer",
     imdb_url: str(formData, "imdb_url") ?? null,
-    credits: str(formData, "credits") ?? null,
     genres,
     formats,
     territories,
     budget_range: str(formData, "budget_range") ?? null,
     festivals,
-    open_to_coproduction: formData.get("open_to_coproduction") === "true",
-    open_to_ep: formData.get("open_to_ep") === "true",
-    bringing_territory_funding: formData.get("bringing_territory_funding") === "true",
+    stage_preferences,
+    language_preferences,
+    funding_roles,
+    contribution_capacity,
     is_public: formData.get("is_public") === "true",
     updated_at: new Date().toISOString(),
   };
