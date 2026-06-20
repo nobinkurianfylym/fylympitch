@@ -55,9 +55,6 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
         </nav>
 
         <div className="md:mt-auto md:pt-8 ml-auto md:ml-0 flex flex-col gap-3 w-full">
-          <Link href="/dashboard" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors px-3">
-            Filmmaker view
-          </Link>
           <div className="flex items-center gap-3 px-3">
             {/* Avatar circle */}
             <Link href="/producer/profile" className="shrink-0">
