@@ -17,8 +17,7 @@ const ROLE_TYPES = [
 
 const GENRES = [
   "Drama","Documentary","Thriller","Horror","Comedy",
-  "Animation","Sci-Fi","World Cinema","Romance","Action",
-  "Experimental",
+  "Animation","Sci-Fi","World Cinema","Romance","Action","Experimental",
 ];
 
 const FORMATS = ["Feature","Series","Documentary"];
@@ -35,13 +34,73 @@ const FESTIVALS = [
   "Rotterdam","Tribeca","IFFR","Hot Docs",
 ];
 
-const COUNTRIES = [
+const BASE_COUNTRIES = [
   "India","United States","United Kingdom","France","Germany",
   "Italy","Spain","Japan","South Korea","Brazil","Mexico",
   "Australia","Canada","Nigeria","Kenya","Egypt","Iran",
   "Indonesia","Philippines","Argentina","Poland","Sweden",
   "Denmark","Norway","Netherlands","Belgium","Switzerland",
   "South Africa","Turkey","China","Hong Kong","Taiwan",
+];
+
+const TERRITORY_GROUPS = [
+  {
+    group: "North America",
+    territories: ["United States", "Canada"],
+  },
+  {
+    group: "United Kingdom & Ireland",
+    territories: ["United Kingdom", "Republic of Ireland"],
+  },
+  {
+    group: "Western Europe",
+    territories: ["Germany", "France", "Austria", "Switzerland", "Benelux"],
+  },
+  {
+    group: "Nordic Countries",
+    territories: ["Sweden", "Norway", "Denmark", "Finland", "Iceland"],
+  },
+  {
+    group: "Central & Eastern Europe",
+    territories: [
+      "Poland", "Czech Republic", "Hungary", "Romania", "Bulgaria",
+      "Slovakia", "The Baltics", "The Balkans", "CIS / Russia", "Ukraine",
+    ],
+  },
+  {
+    group: "Southern Europe",
+    territories: ["Italy", "Spain", "Portugal", "Greece", "Cyprus"],
+  },
+  {
+    group: "Latin America",
+    territories: [
+      "Mexico", "Brazil", "Argentina", "Colombia", "Chile",
+      "Peru", "Venezuela", "Ecuador", "Central America & Caribbean",
+    ],
+  },
+  {
+    group: "Middle East",
+    territories: [
+      "Saudi Arabia", "UAE", "Kuwait", "Qatar", "Oman",
+      "Bahrain", "Egypt", "Jordan", "Lebanon", "Iraq", "Israel",
+    ],
+  },
+  {
+    group: "Africa",
+    territories: ["South Africa", "Nigeria", "Kenya", "Ghana", "Pan-African French-Speaking", "North Africa / Maghreb"],
+  },
+  {
+    group: "South Asia",
+    territories: ["India", "Pakistan", "Bangladesh", "Sri Lanka", "Nepal"],
+  },
+  {
+    group: "East & Southeast Asia",
+    territories: ["Japan", "South Korea", "China", "Hong Kong", "Taiwan", "Southeast Asia (SEAS)"],
+  },
+  {
+    group: "Oceania",
+    territories: ["Australia", "New Zealand", "Pacific Islands"],
+  },
 ];
 
 export default function ProducerProfilePage() {
@@ -69,6 +128,9 @@ export default function ProducerProfilePage() {
   const [bringFunding, setBringFunding] = useState(false);
   const [isPublic, setIsPublic] = useState(false);
   const [imdb, setImdb]         = useState("");
+
+  // Territory accordion
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const supabase = createClient();
@@ -114,6 +176,23 @@ export default function ProducerProfilePage() {
     return arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val];
   }
 
+  function toggleGroup(group: string) {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(group)) next.delete(group); else next.add(group);
+      return next;
+    });
+  }
+
+  function toggleAllInGroup(groupTerritories: string[]) {
+    const allSelected = groupTerritories.every((t) => territories.includes(t));
+    if (allSelected) {
+      setTerritories((prev) => prev.filter((t) => !groupTerritories.includes(t)));
+    } else {
+      setTerritories((prev) => [...new Set([...prev, ...groupTerritories])]);
+    }
+  }
+
   if (loading) return (
     <div className="p-10 text-ash text-[13px]">Loading profile…</div>
   );
@@ -126,7 +205,7 @@ export default function ProducerProfilePage() {
 
       <form action={formAction}>
 
-        {/* Hidden state */}
+        {/* Hidden fields */}
         <input type="hidden" name="name" value={name} />
         <input type="hidden" name="company" value={company} />
         <input type="hidden" name="avatar_url" value={avatarUrl} />
@@ -144,7 +223,7 @@ export default function ProducerProfilePage() {
         {/* ── 2-col grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 items-start">
 
-          {/* ── LEFT: Who you are ── */}
+          {/* ── LEFT ── */}
           <div className="space-y-10">
 
             {/* Identity */}
@@ -177,7 +256,7 @@ export default function ProducerProfilePage() {
               <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Base country</p>
               <select name="country" value={country} onChange={(e) => setCountry(e.target.value)} className="field w-full">
                 <option value="">Select country</option>
-                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                {BASE_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </section>
 
@@ -200,9 +279,9 @@ export default function ProducerProfilePage() {
               <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">What you bring</p>
               <div className="flex flex-wrap gap-3">
                 {[
-                  { label: "Open to co-production",      active: coproduction,  set: setCoproduction },
-                  { label: "Can attach as EP",            active: attachEP,      set: setAttachEP },
-                  { label: "Bringing territory funding",  active: bringFunding,  set: setBringFunding },
+                  { label: "Open to co-production",     active: coproduction, set: setCoproduction },
+                  { label: "Can attach as EP",           active: attachEP,     set: setAttachEP },
+                  { label: "Bringing territory funding", active: bringFunding, set: setBringFunding },
                 ].map((item) => (
                   <button key={item.label} type="button" onClick={() => item.set(!item.active)}
                     className={`px-5 py-2.5 rounded-full text-[13px] border transition-all
@@ -244,7 +323,7 @@ export default function ProducerProfilePage() {
             </div>
           </div>
 
-          {/* ── RIGHT: What you're looking for ── */}
+          {/* ── RIGHT ── */}
           <div className="space-y-10 lg:pt-0 pt-10 lg:border-t-0 border-t border-line">
 
             {/* Genre interests */}
@@ -290,26 +369,70 @@ export default function ProducerProfilePage() {
               </div>
             </section>
 
-            {/* Territories — compact scrollable checklist */}
+            {/* Territories — grouped accordion */}
             <section>
-              <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">
+              <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-1">
                 Territories of interest
-                {territories.length > 0 && (
-                  <span className="ml-2 text-gold">{territories.length} selected</span>
-                )}
               </p>
-              <div className="border border-line rounded-card overflow-y-auto max-h-48 p-3 grid grid-cols-2 gap-y-0.5 bg-white">
-                {COUNTRIES.map((c) => (
-                  <label key={c} className="flex items-center gap-2 text-[12px] text-ash cursor-pointer hover:text-ink py-1 px-1 rounded transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={territories.includes(c)}
-                      onChange={() => setTerritories(toggle(territories, c))}
-                      className="w-3 h-3 accent-[#BF9953] shrink-0"
-                    />
-                    {c}
-                  </label>
-                ))}
+              {territories.length > 0 && (
+                <p className="text-[11px] text-gold mb-3">{territories.length} selected</p>
+              )}
+              {territories.length === 0 && (
+                <p className="text-[11px] text-ash mb-3">Click a region to expand</p>
+              )}
+              <div className="border border-line rounded-card overflow-hidden overflow-y-auto max-h-80 bg-white">
+                {TERRITORY_GROUPS.map((tg, idx) => {
+                  const isOpen = openGroups.has(tg.group);
+                  const selectedInGroup = tg.territories.filter((t) => territories.includes(t)).length;
+                  const allInGroup = selectedInGroup === tg.territories.length;
+
+                  return (
+                    <div key={tg.group} className={idx < TERRITORY_GROUPS.length - 1 ? "border-b border-line" : ""}>
+                      {/* Group header row */}
+                      <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-parchment/40 transition-colors">
+                        {/* Select-all checkbox for group */}
+                        <input
+                          type="checkbox"
+                          checked={allInGroup && tg.territories.length > 0}
+                          onChange={() => toggleAllInGroup(tg.territories)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-3 h-3 accent-[#BF9953] shrink-0 cursor-pointer"
+                        />
+                        {/* Group label — clicking expands */}
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(tg.group)}
+                          className="flex-1 flex items-center justify-between text-left"
+                        >
+                          <span className="text-[12px] font-medium text-ink">{tg.group}</span>
+                          <span className="flex items-center gap-2 shrink-0">
+                            {selectedInGroup > 0 && (
+                              <span className="text-[10px] text-gold font-medium">{selectedInGroup}/{tg.territories.length}</span>
+                            )}
+                            <span className="text-[10px] text-ash">{isOpen ? "▲" : "▼"}</span>
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* Expanded territory list */}
+                      {isOpen && (
+                        <div className="border-t border-line/40 bg-parchment/20 px-5 py-2 grid grid-cols-1 gap-y-0.5">
+                          {tg.territories.map((territory) => (
+                            <label key={territory} className="flex items-center gap-2.5 py-1 cursor-pointer group">
+                              <input
+                                type="checkbox"
+                                checked={territories.includes(territory)}
+                                onChange={() => setTerritories(toggle(territories, territory))}
+                                className="w-3 h-3 accent-[#BF9953] shrink-0"
+                              />
+                              <span className="text-[12px] text-ash group-hover:text-ink transition-colors">{territory}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </section>
 
