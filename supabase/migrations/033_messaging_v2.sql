@@ -7,10 +7,21 @@
 -- ============================================================
 
 -- ── 0. Teardown old system ────────────────────────────────────
+-- Trigger drops must be guarded by table existence — IF EXISTS on the trigger
+-- does not protect against a missing table.
 
-drop trigger  if exists trg_handle_new_message         on public.messages  cascade;
-drop trigger  if exists trg_conversations_touch        on public.conversations cascade;
-drop function if exists public.handle_new_message()    cascade;
+do $$ begin
+  if exists (select 1 from information_schema.tables
+             where table_schema = 'public' and table_name = 'messages') then
+    drop trigger if exists trg_handle_new_message on public.messages;
+  end if;
+  if exists (select 1 from information_schema.tables
+             where table_schema = 'public' and table_name = 'conversations') then
+    drop trigger if exists trg_conversations_touch on public.conversations;
+  end if;
+end $$;
+
+drop function if exists public.handle_new_message()                    cascade;
 drop function if exists public.find_or_create_conversation(uuid, uuid) cascade;
 
 -- Drop in dependency order (messages → participants → conversations)
@@ -18,7 +29,7 @@ drop table if exists public.messages                   cascade;
 drop table if exists public.conversation_participants  cascade;
 drop table if exists public.conversations              cascade;
 
--- Drop old storage policies (bucket is reused)
+-- Drop old storage policies (bucket retained; policies replaced)
 drop policy if exists "sender uploads attachment"    on storage.objects;
 drop policy if exists "participant reads attachment" on storage.objects;
 
@@ -199,12 +210,24 @@ begin
     else '[' || coalesce(new.attachment_name, 'Attachment') || ']'
   end;
 
+  -- Update conversation summary AND advance the sender's own last_read_at.
+  -- Without this, the sender's nav badge would light up on their own message
+  -- because last_message_at > sender_last_read_at immediately after send.
   update public.conversations
   set
-    last_message    = v_preview,
-    last_message_at = new.sent_at,
-    updated_at      = now(),
-    updated_by      = new.sender_id
+    last_message            = v_preview,
+    last_message_at         = new.sent_at,
+    updated_at              = now(),
+    updated_by              = new.sender_id,
+    -- Sender has implicitly "read" the conversation by writing to it
+    producer_last_read_at   = case
+                                when producer_id  = new.sender_id then now()
+                                else producer_last_read_at
+                              end,
+    filmmaker_last_read_at  = case
+                                when filmmaker_id = new.sender_id then now()
+                                else filmmaker_last_read_at
+                              end
   where id = new.conversation_id;
 
   return new;
@@ -398,6 +421,15 @@ create policy "participant reads message attachment"
   );
 
 -- ── 10. Realtime publications ──────────────────────────────────
+-- Tables are dropped and recreated above, so they were auto-removed from the
+-- publication. Re-add them. Using DO block so a re-run doesn't raise an error.
 
-alter publication supabase_realtime add table public.messages;
-alter publication supabase_realtime add table public.conversations;
+do $$ begin
+  alter publication supabase_realtime add table public.messages;
+exception when others then null;
+end $$;
+
+do $$ begin
+  alter publication supabase_realtime add table public.conversations;
+exception when others then null;
+end $$;
