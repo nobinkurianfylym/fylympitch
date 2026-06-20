@@ -10,18 +10,6 @@ export const revalidate = 3600; // ISR — re-generate at most once per hour
 
 type Props = { params: Promise<{ slug: string }> };
 
-// ── Pre-build all active fund pages at deploy time ────────────────────────────
-export async function generateStaticParams() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("opportunities")
-    .select("slug")
-    .eq("is_active", true)
-    .not("slug", "is", null)
-    .limit(500);
-  return (data ?? []).map((row: any) => ({ slug: row.slug }));
-}
-
 // ── SEO metadata ──────────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
