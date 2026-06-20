@@ -10,6 +10,18 @@ export const revalidate = 3600; // ISR — re-generate at most once per hour
 
 type Props = { params: Promise<{ slug: string }> };
 
+// ── Pre-build all active fund pages at deploy time ────────────────────────────
+export async function generateStaticParams() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("opportunities")
+    .select("slug")
+    .eq("is_active", true)
+    .not("slug", "is", null)
+    .limit(500);
+  return (data ?? []).map((row: any) => ({ slug: row.slug }));
+}
+
 // ── SEO metadata ──────────────────────────────────────────────────────────────
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -100,10 +112,92 @@ export default async function FundDetailPage({ params }: Props) {
     ...(opp.ott_affiliated       ? [{ label: "Platform",  value: "OTT / Streaming" }]                                   : []),
   ];
 
+  // ── JSON-LD structured data ───────────────────────────────────────────────
+  const BASE = "https://pitch.fylym.com";
+  const pageUrl = `${BASE}/funds/${(opp as any).slug}`;
+
+  // BreadcrumbList — always present
+  const breadcrumb = {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Funds", "item": `${BASE}/funds` },
+      { "@type": "ListItem", "position": 2, "name": opp.title, "item": pageUrl },
+    ],
+  };
+
+  // Main entity — type-aware
+  const GRANT_TYPES = new Set(["grant", "fund", "lab"]);
+  const TAX_TYPES   = new Set(["tax_incentive"]);
+
+  let mainEntity: Record<string, any>;
+
+  if (GRANT_TYPES.has(opp.opp_type)) {
+    mainEntity = {
+      "@type": "Grant",
+      "name": opp.title,
+      ...(opp.description && { "description": opp.description }),
+      "url": pageUrl,
+      ...(officialLink && { "sameAs": [officialLink] }),
+      "funder": { "@type": "Organization", "name": opp.title },
+      ...(opp.max_award_usd && {
+        "fundingAmount": {
+          "@type": "MonetaryAmount",
+          "currency": "USD",
+          "maxValue": opp.max_award_usd,
+        },
+      }),
+      ...(opp.deadline && { "endDate": opp.deadline }),
+      ...((opp.country || opp.region) && {
+        "areaServed": { "@type": "Place", "name": opp.country || opp.region },
+      }),
+    };
+  } else if (TAX_TYPES.has(opp.opp_type)) {
+    mainEntity = {
+      "@type": "GovernmentService",
+      "name": opp.title,
+      ...(opp.description && { "description": opp.description }),
+      "url": officialLink ?? pageUrl,
+      ...(opp.country && {
+        "areaServed": { "@type": "Country", "name": opp.country },
+        "provider": { "@type": "GovernmentOrganization", "addressCountry": opp.country },
+      }),
+      ...(opp.region && !opp.country && {
+        "areaServed": { "@type": "Place", "name": opp.region },
+      }),
+    };
+  } else {
+    // Organization — production companies, studios, distributors, sales agents,
+    // investors, broadcasters, streamers, crowdfunding platforms, etc.
+    mainEntity = {
+      "@type": "Organization",
+      "name": opp.title,
+      ...(opp.description && { "description": opp.description }),
+      "url": officialLink ?? pageUrl,
+      ...(officialLink && { "sameAs": [officialLink] }),
+      ...((opp as any).contact_email && { "email": (opp as any).contact_email }),
+      ...((opp as any).contact_phone && { "telephone": (opp as any).contact_phone }),
+      ...((opp as any).key_person && {
+        "employee": { "@type": "Person", "name": (opp as any).key_person },
+      }),
+      ...(opp.country && {
+        "address": { "@type": "PostalAddress", "addressCountry": opp.country },
+      }),
+    };
+  }
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [breadcrumb, mainEntity],
+  };
+
   return (
     <div className="min-h-screen bg-ivory">
 
-      {/* Header */}
+      {/* JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="border-b border-line">
         <div className="max-w-[1180px] mx-auto px-6 py-5 flex items-center justify-between">
           <Wordmark />
