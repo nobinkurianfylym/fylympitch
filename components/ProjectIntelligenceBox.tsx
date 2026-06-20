@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usd } from "@/lib/format";
 import { requestProducerIntroduction } from "@/lib/actions";
@@ -34,7 +34,33 @@ function roleColor(role: string): string {
   return "#BF9953";
 }
 
-// ── Types ─────────────────────────────────────────────────────────────
+// ── CountUp hook ──────────────────────────────────────────────────────
+function useCountUp(target: number, duration = 820) {
+  const [count, setCount] = useState(0);
+  const raf = useRef<number>(0);
+
+  useEffect(() => {
+    if (!target) return;
+    const start = performance.now();
+    function tick(now: number) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(target * eased));
+      if (progress < 1) raf.current = requestAnimationFrame(tick);
+    }
+    raf.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf.current);
+  }, [target, duration]);
+
+  return count;
+}
+
+function CountUp({ value, duration }: { value: number; duration?: number }) {
+  const n = useCountUp(value, duration);
+  return <>{n}</>;
+}
+
+
 type Tab = "matches" | "producers" | "dream";
 
 type Props = {
@@ -53,6 +79,8 @@ export default function ProjectIntelligenceBox({
   dream, projectId, requestedProducerIds,
 }: Props) {
   const [tab, setTab] = useState<Tab>("matches");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 80); return () => clearTimeout(t); }, []);
   const requested = new Set(requestedProducerIds);
 
   const tabs: { key: Tab; label: string }[] = [
@@ -95,10 +123,14 @@ export default function ProjectIntelligenceBox({
         {readiness && (
           <div className="flex items-center gap-3 mb-6">
             <div className="flex-1 rounded-full overflow-hidden" style={{ height: 3, background: "rgba(255,255,255,0.1)" }}>
-              <div className="h-full rounded-full" style={{ width: `${readiness.score}%`, background: "#BF9953" }} />
+              <div className="h-full rounded-full" style={{
+                width: mounted ? `${readiness.score}%` : "0%",
+                background: "#BF9953",
+                transition: "width 1100ms cubic-bezier(0.4,0,0.2,1)",
+              }} />
             </div>
             <span style={{ fontSize: 10, color: "rgba(245,245,240,0.4)", whiteSpace: "nowrap" }}>
-              {readiness.score}/100 funding readiness
+              <CountUp value={readiness.score} duration={1100} />/100 funding readiness
             </span>
           </div>
         )}
@@ -125,7 +157,7 @@ export default function ProjectIntelligenceBox({
       </div>
 
       {/* ── TAB CONTENT ── */}
-      <div className="px-7 py-5" style={{ minHeight: 180 }}>
+      <div key={tab} className="fylym-fade-in px-7 py-5" style={{ minHeight: 180 }}>
 
         {/* TOP MATCHES */}
         {tab === "matches" && (
@@ -181,7 +213,7 @@ export default function ProjectIntelligenceBox({
                         className="font-display shrink-0"
                         style={{ fontSize: 18, color: "#BF9953", minWidth: 28, textAlign: "right" }}
                       >
-                        {m.score}
+                        <CountUp value={m.score} />
                       </div>
                     </Link>
                   ))}
@@ -240,7 +272,7 @@ export default function ProjectIntelligenceBox({
 
                       {/* Score */}
                       <div className="shrink-0 text-right mr-2">
-                        <div className="font-display" style={{ fontSize: 18, color: "#BF9953" }}>{pm.score}</div>
+                        <div className="font-display" style={{ fontSize: 18, color: "#BF9953" }}><CountUp value={pm.score} /></div>
                         <div style={{ fontSize: 7.5, textTransform: "uppercase", letterSpacing: "0.12em", color: "rgba(245,245,240,0.3)" }}>match</div>
                       </div>
 
@@ -290,10 +322,14 @@ export default function ProjectIntelligenceBox({
                 </div>
                 <div className="flex items-center gap-3 pt-3" style={{ borderTop: "0.5px solid rgba(255,255,255,0.08)" }}>
                   <div className="flex-1 rounded-full overflow-hidden" style={{ height: 3, background: "rgba(255,255,255,0.1)" }}>
-                    <div className="h-full rounded-full" style={{ width: `${dream.distribution_probability}%`, background: "#BF9953" }} />
+                    <div className="h-full rounded-full" style={{
+                      width: mounted ? `${dream.distribution_probability}%` : "0%",
+                      background: "#BF9953",
+                      transition: "width 1100ms cubic-bezier(0.4,0,0.2,1)",
+                    }} />
                   </div>
                   <span style={{ fontSize: 10, color: "rgba(245,245,240,0.4)", whiteSpace: "nowrap" }}>
-                    {dream.distribution_probability}% distribution probability
+                    <CountUp value={dream.distribution_probability} duration={1100} />% distribution probability
                   </span>
                 </div>
               </>

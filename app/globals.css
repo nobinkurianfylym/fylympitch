@@ -77,7 +77,23 @@ nav { font-weight: 400; }
 .btn-outline:hover { background: #1A1815; color: #F5F5F0; }
 
 /* Cards */
-.card { @apply bg-white/70 border border-line rounded-card; }
+.card {
+  @apply bg-white/70 border border-line rounded-card;
+  transition: transform 200ms ease-out, border-color 200ms ease-out;
+}
+.card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(191,153,83,0.32);
+}
+
+/* Tab / panel fade-in */
+@keyframes fylym-fade-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fylym-fade-in {
+  animation: fylym-fade-in 220ms ease-out forwards;
+}
 
 /* Form fields — 400 weight, never font-light */
 .field {
