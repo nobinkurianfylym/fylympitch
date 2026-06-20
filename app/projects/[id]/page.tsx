@@ -65,6 +65,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   const isProducer      = !!producerProfile;
   const isOwnProject    = !!user && user.id === p.owner_id;
   const dashboardHref   = (meResult.data as any)?.role === "producer" ? "/producer" : "/dashboard";
+  const dashboardLabel  = dashboardHref === "/producer" ? "Producer Studio" : "Dashboard";
 
   const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -79,7 +80,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
             <Link href="/projects" className="text-ink">Projects</Link>
             <Link href="/funds" className="hover:text-ink transition-colors">Funds</Link>
           </nav>
-          <Link href={dashboardHref} className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Dashboard</Link>
+          <Link href={dashboardHref} className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">{dashboardLabel}</Link>
         </div>
       </header>
 

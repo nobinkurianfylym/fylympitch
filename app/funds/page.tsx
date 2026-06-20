@@ -81,6 +81,7 @@ export default async function FundsPage({
     const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
     if ((me as any)?.role === "producer") dashboardHref = "/producer";
   }
+  const dashboardLabel = dashboardHref === "/producer" ? "Producer Studio" : "Dashboard";
 
   // Map category key → opp_type values
   const CATEGORY_TYPES: Record<string, string[]> = {
@@ -122,7 +123,7 @@ export default async function FundsPage({
           <div className="flex items-center gap-3">
             {user ? (
               <Link href={dashboardHref} className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
-                Dashboard
+                {dashboardLabel}
               </Link>
             ) : (
               <Link href="/login" className="btn-outline !px-5 !py-2.5 !text-[11px]">Get started</Link>

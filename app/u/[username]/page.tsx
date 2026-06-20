@@ -46,7 +46,8 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     supabase.from("profiles").select("role").eq("id", user.id).single(),
   ]);
 
-  const dashboardHref = (me as any)?.role === "producer" ? "/producer" : "/dashboard";
+  const dashboardHref  = (me as any)?.role === "producer" ? "/producer" : "/dashboard";
+  const dashboardLabel = dashboardHref === "/producer" ? "Producer Studio" : "Dashboard";
 
   const CAREER: Record<string, string> = {
     debut: "Debut filmmaker", second_film: "2nd film", established: "Established filmmaker", veteran: "Veteran filmmaker",
@@ -65,7 +66,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           <nav className="flex items-center gap-6 text-[12px] tracking-[0.14em] uppercase text-ash">
             <Link href="/projects" className="hover:text-ink transition-colors">Projects</Link>
             <Link href="/funds" className="hover:text-ink transition-colors">Funds</Link>
-            {user && <Link href={dashboardHref} className="hover:text-ink transition-colors">Dashboard</Link>}
+            {user && <Link href={dashboardHref} className="hover:text-ink transition-colors">{dashboardLabel}</Link>}
           </nav>
         </div>
       </header>
