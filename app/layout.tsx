@@ -8,7 +8,7 @@ import { Montserrat, Playfair_Display } from "next/font/google";
 // custom property on <html> that Tailwind picks up via tailwind.config.ts.
 const montserrat = Montserrat({
   subsets: ["latin"],
-  weight: ["200", "300", "400", "500"],
+  weight: ["400", "500"],
   variable: "--font-montserrat",
   display: "swap",
   preload: true,
@@ -16,7 +16,7 @@ const montserrat = Montserrat({
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400"],
   style: ["normal", "italic"],
   variable: "--font-playfair",
   display: "swap",
