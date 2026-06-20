@@ -28,9 +28,9 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
 
   // Not logged in — plain role-aware link
   if (!isLoggedIn) {
-    const destination = role === "producer" ? "/producer" : "/dashboard";
+    const signupHref = role === "producer" ? "/signup?role=producer" : "/signup";
     return (
-      <Link href="/signup" className="btn-outline !px-5 !py-2.5 !text-[11px]">
+      <Link href={signupHref} className="btn-outline !px-5 !py-2.5 !text-[11px]">
         Get started
       </Link>
     );
