@@ -79,7 +79,9 @@ export default function InboxShell({
       <div
         className={`
           ${mobileShowPanel ? "hidden md:flex" : "flex"}
-          flex-col w-full
+          flex-col
+          w-full md:w-[340px] md:shrink-0
+          h-full
         `}
       >
         <ConversationList

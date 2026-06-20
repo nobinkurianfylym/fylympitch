@@ -10,7 +10,6 @@ import type {
   Message,
   PaginatedMessages,
   MessageCursor,
-  SendMessagePayload,
   ServiceResult,
 } from "./message.types";
 import {
@@ -21,7 +20,6 @@ import {
   normalizeMessage,
   toConversationListItem,
   buildAttachmentPath,
-  validateAttachment,
 } from "./message.utils";
 
 // ── Conversations ─────────────────────────────────────────────
