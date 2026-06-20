@@ -112,12 +112,22 @@ export default async function ProducerProjectDetailPage({
             <div className="flex flex-wrap gap-3 mb-8">
               {deckUrl && <a href={deckUrl} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">View pitch deck</a>}
               {scriptUrl && <a href={scriptUrl} target="_blank" rel="noreferrer" className="btn-ghost !px-5 !py-2.5">Read script</a>}
-              <MessageButton otherUserId={filmmaker?.id ?? project.owner_id} projectId={project.id} label="Message filmmaker" />
+              <MessageButton
+                projectId={project.id}
+                producerId={user.id}
+                filmakerId={filmmaker?.id ?? project.owner_id}
+                label="Message filmmaker regarding this project"
+              />
             </div>
           )}
           {!deckUrl && !scriptUrl && filmmaker && (
             <div className="mb-8">
-              <MessageButton otherUserId={filmmaker?.id ?? project.owner_id} projectId={project.id} label="Message filmmaker" />
+              <MessageButton
+                projectId={project.id}
+                producerId={user.id}
+                filmakerId={filmmaker?.id ?? project.owner_id}
+                label="Message filmmaker regarding this project"
+              />
             </div>
           )}
 

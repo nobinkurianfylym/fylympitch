@@ -16,16 +16,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const [
     { data: profile },
     { count: unread },
-    { data: msgUnread },
+    { data: msgUnreadData },
   ] = await Promise.all([
     supabase.from("profiles").select("id, full_name, avatar_url, role, approval_status, company").eq("id", user.id).single<Profile>(),
     supabase.from("notifications").select("id", { count: "exact", head: true })
       .eq("user_id", user.id).eq("read", false),
-    supabase.from("conversation_participants").select("unread_count")
-      .eq("user_id", user.id).is("archived_at", null),
+    supabase.rpc("get_inbox_unread_count"),
   ]);
 
-  const totalMsgUnread = (msgUnread ?? []).reduce((s: number, r: any) => s + (r.unread_count ?? 0), 0);
+  const totalMsgUnread = (msgUnreadData as number | null) ?? 0;
 
   // Safe fallback if profile row is missing (trigger race or DB error).
   const role = profile?.role ?? "filmmaker";

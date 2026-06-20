@@ -12,16 +12,15 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
   if (!user || authError) redirect("/login");
 
   // Parallelise — saves one sequential round-trip on every producer page load
-  const [{ data: profile }, { data: producerProfile }, { count: unreadNotif }, { data: msgUnread }] = await Promise.all([
+  const [{ data: profile }, { data: producerProfile }, { count: unreadNotif }, { data: msgUnreadData }] = await Promise.all([
     supabase.from("profiles").select("id, full_name, avatar_url").eq("id", user.id).single(),
     supabase.from("producer_profiles").select("user_id").eq("user_id", user.id).single(),
     supabase.from("notifications").select("id", { count: "exact", head: true })
       .eq("user_id", user.id).eq("read", false),
-    supabase.from("conversation_participants").select("unread_count")
-      .eq("user_id", user.id).is("archived_at", null),
+    supabase.rpc("get_inbox_unread_count"),
   ]);
 
-  const totalMsgUnread = (msgUnread ?? []).reduce((s: number, r: any) => s + (r.unread_count ?? 0), 0);
+  const totalMsgUnread = (msgUnreadData as number | null) ?? 0;
 
   if (!profile) redirect("/dashboard");
   if (!producerProfile) redirect("/producer/onboarding");

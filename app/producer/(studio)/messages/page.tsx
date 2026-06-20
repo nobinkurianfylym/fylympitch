@@ -1,6 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import MessagesClient from "@/components/MessagesClient";
+import { createClient } from "@/lib/supabase/server";
+import InboxShell from "@/features/messages/InboxShell";
+import { toConversationListItem } from "@/features/messages/message.utils";
+import type { ConversationRow } from "@/features/messages/message.types";
 
 export const dynamic = "force-dynamic";
 
@@ -11,50 +13,44 @@ export default async function ProducerMessagesPage({
 }) {
   const { conv: initialConvId } = await searchParams;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/producer/messages");
 
-  const [{ data: me }, { data: myParticipations }] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, role, company").eq("id", user.id).single(),
-    supabase.from("conversation_participants").select("conversation_id, unread_count")
-      .eq("user_id", user.id).is("archived_at", null),
-  ]);
+  const { data: rows } = await supabase
+    .from("conversations")
+    .select(`
+      id,
+      project_id,
+      producer_id,
+      filmmaker_id,
+      last_message,
+      last_message_at,
+      producer_last_read_at,
+      filmmaker_last_read_at,
+      conversation_type,
+      created_at,
+      updated_at,
+      project:projects!conversations_project_id_fkey(title),
+      producer:profiles!conversations_producer_id_fkey(id, full_name, company, avatar_url),
+      filmmaker:profiles!conversations_filmmaker_id_fkey(id, full_name, company, avatar_url)
+    `)
+    .or(`producer_id.eq.${user.id},filmmaker_id.eq.${user.id}`)
+    .order("last_message_at", { ascending: false, nullsFirst: false });
 
-  const convIds = (myParticipations ?? []).map((p) => p.conversation_id);
+  const conversations = ((rows ?? []) as unknown as ConversationRow[]).map((row) =>
+    toConversationListItem(row, user.id)
+  );
 
-  let conversations: any[] = [];
-  if (convIds.length) {
-    const { data: convs } = await supabase
-      .from("conversations")
-      .select(`
-        id, last_message_at, last_message_text, last_message_sender, project_id,
-        conversation_participants (
-          user_id,
-          profiles:user_id ( id, full_name, role, company )
-        )
-      `)
-      .in("id", convIds)
-      .order("last_message_at", { ascending: false });
-
-    const unreadMap = new Map((myParticipations ?? []).map((p) => [p.conversation_id, p.unread_count]));
-
-    conversations = (convs ?? []).map((c) => {
-      const other = (c.conversation_participants ?? []).find(
-        (cp: any) => cp.user_id !== user.id
-      );
-      return {
-        ...c,
-        other_user: other?.profiles ?? null,
-        unread_count: unreadMap.get(c.id) ?? 0,
-      };
-    });
-  }
-
+  // Producer layout has no padding — InboxShell fills the main area directly.
   return (
-    <MessagesClient
-      currentUser={me}
+    <InboxShell
+      currentUserId={user.id}
       initialConversations={conversations}
-      initialConvId={initialConvId ?? null}
+      initialConversationId={initialConvId ?? null}
+      inboxPath="/producer/messages"
     />
   );
 }

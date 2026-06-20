@@ -391,9 +391,12 @@ export default async function ProjectDetailPage({
                       <button className="btn-ghost !px-5 !py-2.5">Decline</button>
                     </form>
                     <MessageButton
-                      otherUserId={o.from_user_id}
+                      projectId={project.id}
+                      producerId={o.from_user_id}
+                      filmakerId={user!.id}
                       label="Reply"
                       className="btn-ghost !px-5 !py-2.5 gap-2"
+                      inboxPath="/dashboard/messages"
                     />
                   </div>
                 ) : (
