@@ -79,12 +79,19 @@ export default async function ProjectDetailPage({
     .eq("project_id", id)
     .order("score", { ascending: false })) as { data: MatchDbRow[] | null };
 
+  // Completed films only show Buyers & Sales + Release & Distribution
+  const COMPLETED_TYPES = new Set([
+    "broadcaster", "streamer", "pre_sale", "sales_agent", "distribution",
+  ]);
+  const isCompleted = project.stage === "completed";
+
   let ranked: MatchRow[] = [];
   let journeyOpps: JourneyOpp[] = [];
 
   if (matchRows && matchRows.length > 0) {
     ranked = matchRows
       .filter((m) => m.tier !== "hidden" && m.opportunity)
+      .filter((m) => !isCompleted || COMPLETED_TYPES.has(m.opportunity!.opp_type))
       .slice(0, 10)
       .map((m) => ({
         id: m.opportunity!.id, title: m.opportunity!.title,
@@ -94,6 +101,7 @@ export default async function ProjectDetailPage({
       }));
     journeyOpps = matchRows
       .filter((m) => m.score > 0 && m.opportunity)
+      .filter((m) => !isCompleted || COMPLETED_TYPES.has(m.opportunity!.opp_type))
       .map((m) => ({
         id: m.opportunity!.id, title: m.opportunity!.title,
         country: m.opportunity!.country, opp_type: m.opportunity!.opp_type,
@@ -103,13 +111,20 @@ export default async function ProjectDetailPage({
       }));
   } else {
     // Fallback: live scoring (CPU-safe, limited to 80 opps)
-    const { data: opps } = await supabase
+    let fallbackQuery = supabase
       .from("opportunities")
       .select("*")
       .eq("is_active", true)
       .not("match_weight", "is", null)
       .order("match_weight", { ascending: false })
       .limit(80);
+
+    // For completed films, restrict at DB level too
+    if (isCompleted) {
+      fallbackQuery = (fallbackQuery as any).in("opp_type", [...COMPLETED_TYPES]);
+    }
+
+    const { data: opps } = await fallbackQuery;
     const { calculateMatchScore } = await import("@/services/matching");
     const scoredOpps = (opps ?? []).map((o: Opportunity) => ({
       o, m: calculateMatchScore(project, o),
