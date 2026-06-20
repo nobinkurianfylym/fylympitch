@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState, useActionState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { saveProducerProfile } from "@/lib/actions";
+import { saveProducerProfile, updateUsername } from "@/lib/actions";
 import AvatarUpload from "@/components/AvatarUpload";
 
 const ROLE_TYPES = [
@@ -44,90 +43,47 @@ const BASE_COUNTRIES = [
 ];
 
 const TERRITORY_GROUPS = [
-  {
-    group: "North America",
-    territories: ["United States", "Canada"],
-  },
-  {
-    group: "United Kingdom & Ireland",
-    territories: ["United Kingdom", "Republic of Ireland"],
-  },
-  {
-    group: "Western Europe",
-    territories: ["Germany", "France", "Austria", "Switzerland", "Benelux"],
-  },
-  {
-    group: "Nordic Countries",
-    territories: ["Sweden", "Norway", "Denmark", "Finland", "Iceland"],
-  },
-  {
-    group: "Central & Eastern Europe",
-    territories: [
-      "Poland", "Czech Republic", "Hungary", "Romania", "Bulgaria",
-      "Slovakia", "The Baltics", "The Balkans", "CIS / Russia", "Ukraine",
-    ],
-  },
-  {
-    group: "Southern Europe",
-    territories: ["Italy", "Spain", "Portugal", "Greece", "Cyprus"],
-  },
-  {
-    group: "Latin America",
-    territories: [
-      "Mexico", "Brazil", "Argentina", "Colombia", "Chile",
-      "Peru", "Venezuela", "Ecuador", "Central America & Caribbean",
-    ],
-  },
-  {
-    group: "Middle East",
-    territories: [
-      "Saudi Arabia", "UAE", "Kuwait", "Qatar", "Oman",
-      "Bahrain", "Egypt", "Jordan", "Lebanon", "Iraq", "Israel",
-    ],
-  },
-  {
-    group: "Africa",
-    territories: ["South Africa", "Nigeria", "Kenya", "Ghana", "Pan-African French-Speaking", "North Africa / Maghreb"],
-  },
-  {
-    group: "South Asia",
-    territories: ["India", "Pakistan", "Bangladesh", "Sri Lanka", "Nepal"],
-  },
-  {
-    group: "East & Southeast Asia",
-    territories: ["Japan", "South Korea", "China", "Hong Kong", "Taiwan", "Southeast Asia (SEAS)"],
-  },
-  {
-    group: "Oceania",
-    territories: ["Australia", "New Zealand", "Pacific Islands"],
-  },
+  { group: "North America",            territories: ["United States", "Canada"] },
+  { group: "United Kingdom & Ireland", territories: ["United Kingdom", "Republic of Ireland"] },
+  { group: "Western Europe",           territories: ["Germany", "France", "Austria", "Switzerland", "Benelux"] },
+  { group: "Nordic Countries",         territories: ["Sweden", "Norway", "Denmark", "Finland", "Iceland"] },
+  { group: "Central & Eastern Europe", territories: ["Poland", "Czech Republic", "Hungary", "Romania", "Bulgaria", "Slovakia", "The Baltics", "The Balkans", "CIS / Russia", "Ukraine"] },
+  { group: "Southern Europe",          territories: ["Italy", "Spain", "Portugal", "Greece", "Cyprus"] },
+  { group: "Latin America",            territories: ["Mexico", "Brazil", "Argentina", "Colombia", "Chile", "Peru", "Venezuela", "Ecuador", "Central America & Caribbean"] },
+  { group: "Middle East",              territories: ["Saudi Arabia", "UAE", "Kuwait", "Qatar", "Oman", "Bahrain", "Egypt", "Jordan", "Lebanon", "Iraq", "Israel"] },
+  { group: "Africa",                   territories: ["South Africa", "Nigeria", "Kenya", "Ghana", "Pan-African French-Speaking", "North Africa / Maghreb"] },
+  { group: "South Asia",               territories: ["India", "Pakistan", "Bangladesh", "Sri Lanka", "Nepal"] },
+  { group: "East & Southeast Asia",    territories: ["Japan", "South Korea", "China", "Hong Kong", "Taiwan", "Southeast Asia (SEAS)"] },
+  { group: "Oceania",                  territories: ["Australia", "New Zealand", "Pacific Islands"] },
 ];
 
 export default function ProducerProfilePage() {
-  const router = useRouter();
   const [state, formAction, pending] = useActionState(saveProducerProfile, null);
-  const [loading, setLoading]   = useState(true);
-  const [saved, setSaved]       = useState(false);
+  const [usernameState, usernameAction, usernamePending] = useActionState(updateUsername, null);
+
+  const [loading, setLoading] = useState(true);
+  const [saved, setSaved]     = useState(false);
 
   // Identity
-  const [userId, setUserId]     = useState("");
-  const [name, setName]         = useState("");
-  const [company, setCompany]   = useState("");
+  const [userId, setUserId]       = useState("");
+  const [name, setName]           = useState("");
+  const [company, setCompany]     = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [username, setUsername]   = useState("");
+  const [country, setCountry]     = useState("");
+  const [imdb, setImdb]           = useState("");
 
-  // Taste
-  const [roleType, setRoleType] = useState("independent_producer");
-  const [country, setCountry]   = useState("");
-  const [genres, setGenres]     = useState<string[]>([]);
-  const [formats, setFormats]   = useState<string[]>([]);
-  const [budget, setBudget]     = useState("");
-  const [festivals, setFestivals] = useState<string[]>([]);
+  // Preferences
+  const [roleType, setRoleType]       = useState("independent_producer");
+  const [genres, setGenres]           = useState<string[]>([]);
+  const [formats, setFormats]         = useState<string[]>([]);
+  const [budget, setBudget]           = useState("");
+  const [festivals, setFestivals]     = useState<string[]>([]);
   const [territories, setTerritories] = useState<string[]>([]);
-  const [coproduction, setCoproduction] = useState(false);
-  const [attachEP, setAttachEP] = useState(false);
-  const [bringFunding, setBringFunding] = useState(false);
-  const [isPublic, setIsPublic] = useState(false);
-  const [imdb, setImdb]         = useState("");
+  const [coproduction, setCoproduction]   = useState(false);
+  const [attachEP, setAttachEP]           = useState(false);
+  const [bringFunding, setBringFunding]   = useState(false);
+  const [isPublic, setIsPublic]           = useState(false);
 
   // Territory accordion
   const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
@@ -138,13 +94,14 @@ export default function ProducerProfilePage() {
       if (!user) return;
       setUserId(user.id);
       Promise.all([
-        supabase.from("profiles").select("full_name, company, avatar_url").eq("id", user.id).single(),
+        supabase.from("profiles").select("full_name, company, avatar_url, username").eq("id", user.id).single(),
         supabase.from("producer_profiles").select("*").eq("user_id", user.id).single(),
       ]).then(([{ data: profile }, { data: pp }]) => {
         if (profile) {
           setName(profile.full_name ?? "");
           setCompany(profile.company ?? "");
           setAvatarUrl(profile.avatar_url ?? "");
+          setUsername((profile as any).username ?? "");
         }
         if (pp) {
           setRoleType(pp.role_type ?? "independent_producer");
@@ -193,9 +150,7 @@ export default function ProducerProfilePage() {
     }
   }
 
-  if (loading) return (
-    <div className="p-10 text-ash text-[13px]">Loading profile…</div>
-  );
+  if (loading) return <div className="p-10 text-ash text-[13px]">Loading profile…</div>;
 
   return (
     <div className="p-6 md:p-10 max-w-5xl">
@@ -204,34 +159,34 @@ export default function ProducerProfilePage() {
       <p className="text-ash text-[14px] mb-10">Update your profile and taste preferences.</p>
 
       <form action={formAction}>
-
         {/* Hidden fields */}
-        <input type="hidden" name="name" value={name} />
-        <input type="hidden" name="company" value={company} />
-        <input type="hidden" name="avatar_url" value={avatarUrl} />
-        <input type="hidden" name="open_to_coproduction" value={coproduction ? "true" : "false"} />
-        <input type="hidden" name="open_to_ep" value={attachEP ? "true" : "false"} />
+        <input type="hidden" name="name"                     value={name} />
+        <input type="hidden" name="company"                  value={company} />
+        <input type="hidden" name="avatar_url"               value={avatarUrl} />
+        <input type="hidden" name="open_to_coproduction"     value={coproduction ? "true" : "false"} />
+        <input type="hidden" name="open_to_ep"               value={attachEP ? "true" : "false"} />
         <input type="hidden" name="bringing_territory_funding" value={bringFunding ? "true" : "false"} />
-        <input type="hidden" name="is_public" value={isPublic ? "true" : "false"} />
-        <input type="hidden" name="role_type" value={roleType} />
-        <input type="hidden" name="budget_range" value={budget} />
-        {genres.map((g) => <input key={g} type="hidden" name="genres" value={g} />)}
-        {formats.map((f) => <input key={f} type="hidden" name="formats" value={f} />)}
-        {festivals.map((f) => <input key={f} type="hidden" name="festivals" value={f} />)}
+        <input type="hidden" name="is_public"                value={isPublic ? "true" : "false"} />
+        <input type="hidden" name="role_type"                value={roleType} />
+        <input type="hidden" name="budget_range"             value={budget} />
+        {genres.map((g)     => <input key={g} type="hidden" name="genres"      value={g} />)}
+        {formats.map((f)    => <input key={f} type="hidden" name="formats"     value={f} />)}
+        {festivals.map((f)  => <input key={f} type="hidden" name="festivals"   value={f} />)}
         {territories.map((t) => <input key={t} type="hidden" name="territories" value={t} />)}
 
-        {/* ── 2-col grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 items-start">
 
           {/* ── LEFT ── */}
           <div className="space-y-10">
 
-            {/* Identity */}
-            <section className="card p-6">
-              <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-5">Identity</p>
-              <div className="mb-6">
-                <AvatarUpload currentUrl={avatarUrl || null} userId={userId} name={name} onUpload={setAvatarUrl} />
-              </div>
+            {/* Identity card */}
+            <section className="card p-6 space-y-5">
+              <p className="text-[11px] tracking-[0.22em] uppercase text-ash">Identity</p>
+
+              {/* Avatar */}
+              <AvatarUpload currentUrl={avatarUrl || null} userId={userId} name={name} onUpload={setAvatarUrl} />
+
+              {/* Name + Company */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="field-label mb-1 block">Full name</label>
@@ -243,21 +198,51 @@ export default function ProducerProfilePage() {
                   <input type="text" value={company} onChange={(e) => setCompany(e.target.value)}
                     placeholder="Optional" className="field w-full" />
                 </div>
-                <div className="sm:col-span-2">
-                  <label className="field-label mb-1 block">IMDb URL</label>
-                  <input type="url" name="imdb_url" value={imdb} onChange={(e) => setImdb(e.target.value)}
-                    placeholder="Optional" className="field w-full" />
-                </div>
               </div>
-            </section>
 
-            {/* Base country */}
-            <section>
-              <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Base country</p>
-              <select name="country" value={country} onChange={(e) => setCountry(e.target.value)} className="field w-full">
-                <option value="">Select country</option>
-                {BASE_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              {/* Country */}
+              <div>
+                <label className="field-label mb-1 block">Base country</label>
+                <select name="country" value={country} onChange={(e) => setCountry(e.target.value)} className="field w-full">
+                  <option value="">Select country</option>
+                  {BASE_COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              {/* IMDb */}
+              <div>
+                <label className="field-label mb-1 block">IMDb URL</label>
+                <input type="url" name="imdb_url" value={imdb} onChange={(e) => setImdb(e.target.value)}
+                  placeholder="https://www.imdb.com/name/…" className="field w-full" />
+              </div>
+
+              {/* Username — separate form inside the card */}
+              <div className="pt-4 border-t border-line">
+                <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-1">Username</p>
+                <p className="text-[12px] text-ash mb-3">
+                  pitch.fylym.com/u/<span className="text-ink">{username || "yourhandle"}</span>
+                </p>
+                <form action={usernameAction} className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-ash select-none">@</span>
+                    <input
+                      name="username"
+                      className="field !pl-7 w-full"
+                      defaultValue={username}
+                      placeholder="yourhandle"
+                      minLength={3}
+                      maxLength={30}
+                      pattern="[a-z0-9_]+"
+                    />
+                  </div>
+                  <button className="btn-ghost !py-2.5" disabled={usernamePending}>
+                    {usernamePending ? "Saving…" : "Update"}
+                  </button>
+                </form>
+                {usernameState?.error && <p className="mt-2 text-[12px] text-red-700">{usernameState.error}</p>}
+                {usernameState?.ok    && <p className="mt-2 text-[12px] text-[#8A6F3E]">Username updated.</p>}
+                <p className="mt-1.5 text-[11px] text-ash">Lowercase letters, numbers and underscores only.</p>
+              </div>
             </section>
 
             {/* Role */}
@@ -369,18 +354,15 @@ export default function ProducerProfilePage() {
               </div>
             </section>
 
-            {/* Territories — grouped accordion */}
+            {/* Territories — full accordion, no scroll */}
             <section>
-              <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-1">
-                Territories of interest
-              </p>
-              {territories.length > 0 && (
-                <p className="text-[11px] text-gold mb-3">{territories.length} selected</p>
-              )}
-              {territories.length === 0 && (
-                <p className="text-[11px] text-ash mb-3">Click a region to expand</p>
-              )}
-              <div className="border border-line rounded-card overflow-hidden overflow-y-auto max-h-80 bg-white">
+              <div className="flex items-baseline gap-3 mb-3">
+                <p className="text-[11px] tracking-[0.22em] uppercase text-ash">Territories of interest</p>
+                {territories.length > 0 && (
+                  <span className="text-[11px] text-gold">{territories.length} selected</span>
+                )}
+              </div>
+              <div className="border border-line rounded-card overflow-hidden bg-white">
                 {TERRITORY_GROUPS.map((tg, idx) => {
                   const isOpen = openGroups.has(tg.group);
                   const selectedInGroup = tg.territories.filter((t) => territories.includes(t)).length;
@@ -388,9 +370,7 @@ export default function ProducerProfilePage() {
 
                   return (
                     <div key={tg.group} className={idx < TERRITORY_GROUPS.length - 1 ? "border-b border-line" : ""}>
-                      {/* Group header row */}
                       <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-parchment/40 transition-colors">
-                        {/* Select-all checkbox for group */}
                         <input
                           type="checkbox"
                           checked={allInGroup && tg.territories.length > 0}
@@ -398,7 +378,6 @@ export default function ProducerProfilePage() {
                           onClick={(e) => e.stopPropagation()}
                           className="w-3 h-3 accent-[#BF9953] shrink-0 cursor-pointer"
                         />
-                        {/* Group label — clicking expands */}
                         <button
                           type="button"
                           onClick={() => toggleGroup(tg.group)}
@@ -413,8 +392,6 @@ export default function ProducerProfilePage() {
                           </span>
                         </button>
                       </div>
-
-                      {/* Expanded territory list */}
                       {isOpen && (
                         <div className="border-t border-line/40 bg-parchment/20 px-5 py-2 grid grid-cols-1 gap-y-0.5">
                           {tg.territories.map((territory) => (
