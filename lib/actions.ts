@@ -211,6 +211,10 @@ export async function createProject(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/projects");
   revalidatePath("/dashboard/projects");
+  if (formData.get("is_public") !== "false") {
+    revalidatePath(`/projects/${slug}`);
+    revalidatePath("/sitemap.xml");
+  }
   // Notify approved producers if project is public
   if (formData.get("is_public") !== "false") {
     await supabase.rpc("broadcast_new_project", { p_project_id: data.id });
@@ -422,7 +426,12 @@ export async function adminToggleOpportunity(formData: FormData) {
     actor_id: user.id, action: active ? "opportunity_activated" : "opportunity_deactivated",
     target: "opportunity", target_id: id,
   });
+  const { data: toggled } = await supabase
+    .from("opportunities").select("slug").eq("id", id).single();
+  if ((toggled as any)?.slug) revalidatePath(`/funds/${(toggled as any).slug}`);
   revalidatePath("/admin/opportunities");
+  revalidatePath("/funds");
+  revalidatePath("/sitemap.xml");
 }
 
 // ---------- ADMIN: PROJECT MANAGEMENT ----------
@@ -515,6 +524,8 @@ export async function adminVerifyProducer(formData: FormData) {
   });
 
   revalidatePath("/admin/producers");
+  revalidatePath("/funds");
+  revalidatePath("/sitemap.xml");
 }
 
 export async function adminDeleteProject(formData: FormData) {
@@ -595,6 +606,8 @@ export async function adminCreateOpportunity(formData: FormData) {
   // Notify all filmmakers about the new fund
   await supabase.rpc("broadcast_new_fund", { p_opp_id: data.id, p_title: title });
   revalidatePath("/admin/opportunities");
+  revalidatePath("/funds");
+  revalidatePath("/sitemap.xml");
   redirect("/admin/opportunities");
 }
 
@@ -635,8 +648,13 @@ export async function adminUpdateOpportunity(formData: FormData) {
   await supabase.from("audit_logs").insert({
     actor_id: user.id, action: "opportunity_updated", target: "opportunity", target_id: id,
   });
+  // Revalidate the specific fund detail page for instant SEO update
+  const { data: updatedOpp } = await supabase
+    .from("opportunities").select("slug").eq("id", id).single();
+  if ((updatedOpp as any)?.slug) revalidatePath(`/funds/${(updatedOpp as any).slug}`);
   revalidatePath("/admin/opportunities");
   revalidatePath("/funds");
+  revalidatePath("/sitemap.xml");
 }
 
 // ---------- BOOTSTRAP: SELF-PROMOTE FIRST ADMIN ----------
@@ -980,6 +998,8 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
         .update({ is_active: false })
         .eq("producer_user_id", user.id);
     }
+    revalidatePath("/funds");
+    revalidatePath("/sitemap.xml");
   }
 
   return { ok: true as const };

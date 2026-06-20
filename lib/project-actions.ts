@@ -76,6 +76,18 @@ export async function updateProject(formData: FormData) {
   };
 
   await supabase.from("projects").update(patch).eq("id", id).eq("owner_id", user.id);
+
+  // Revalidate public-facing pages if project is public
+  const { data: updated } = await supabase
+    .from("projects").select("slug, is_public").eq("id", id).single();
+  if ((updated as any)?.slug) {
+    if ((updated as any)?.is_public) {
+      revalidatePath(`/projects/${(updated as any).slug}`);
+      revalidatePath("/projects");
+      revalidatePath("/sitemap.xml");
+    }
+  }
+
   revalidatePath(`/dashboard/projects/${id}`);
   revalidatePath("/dashboard");
   redirect(`/dashboard/projects/${id}`);
