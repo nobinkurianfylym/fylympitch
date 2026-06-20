@@ -461,6 +461,42 @@ export async function adminVerifyProducer(formData: FormData) {
     .update({ is_producer_verified: verify })
     .eq("id", target_id);
 
+  // ── Sync producer network listing in opportunities ────────────
+  if (verify) {
+    // Fetch producer data to build the opportunity entry
+    const [{ data: pp }, { data: prof }] = await Promise.all([
+      supabase.from("producer_profiles")
+        .select("is_public, genres, formats, territories, country")
+        .eq("user_id", target_id).single(),
+      supabase.from("profiles")
+        .select("full_name, company, bio, imdb_url, country")
+        .eq("id", target_id).single(),
+    ]);
+
+    if (pp?.is_public) {
+      const title = (prof as any)?.company || (prof as any)?.full_name || "Independent Producer";
+      await supabase.from("opportunities").upsert({
+        producer_user_id: target_id,
+        created_by: user.id,
+        title,
+        opp_type: "producer",
+        description: (prof as any)?.bio || null,
+        country: (pp as any)?.country || (prof as any)?.country || null,
+        genres: (pp as any)?.genres ?? [],
+        formats: (pp as any)?.formats ?? [],
+        languages: (pp as any)?.territories ?? [],
+        url: (prof as any)?.imdb_url || null,
+        key_person: (prof as any)?.full_name || null,
+        is_active: true,
+      }, { onConflict: "producer_user_id" });
+    }
+  } else {
+    // Unverify — deactivate the listing without deleting it
+    await supabase.from("opportunities")
+      .update({ is_active: false })
+      .eq("producer_user_id", target_id);
+  }
+
   await supabase.from("audit_logs").insert({
     actor_id: user.id,
     action: verify ? "producer_verified" : "producer_unverified",
@@ -911,6 +947,39 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
   // producer automatically via the fixed engine query.
   if (payload.is_public && !wasAlreadyPublic) {
     console.log(`[producer-match] user ${user.id} profile went public — future project submissions will match`);
+  }
+
+  // ── Sync producer network listing in opportunities ────────────
+  // Only sync if the producer is verified — unverified producers
+  // cannot be listed on the public funds page.
+  const { data: verifiedCheck } = await supabase
+    .from("profiles")
+    .select("is_producer_verified, full_name, company, bio, imdb_url, country")
+    .eq("id", user.id).single();
+
+  if (verifiedCheck?.is_producer_verified) {
+    if (payload.is_public) {
+      const title = (verifiedCheck as any).company || (verifiedCheck as any).full_name || "Independent Producer";
+      await supabase.from("opportunities").upsert({
+        producer_user_id: user.id,
+        created_by: user.id,
+        title,
+        opp_type: "producer",
+        description: (verifiedCheck as any).bio || null,
+        country: payload.country || (verifiedCheck as any).country || null,
+        genres: genres,
+        formats: formats,
+        languages: territories,
+        url: (verifiedCheck as any).imdb_url || null,
+        key_person: (verifiedCheck as any).full_name || null,
+        is_active: true,
+      }, { onConflict: "producer_user_id" });
+    } else {
+      // Producer unlisted — deactivate without deleting
+      await supabase.from("opportunities")
+        .update({ is_active: false })
+        .eq("producer_user_id", user.id);
+    }
   }
 
   return { ok: true as const };
