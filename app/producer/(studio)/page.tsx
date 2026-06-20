@@ -58,8 +58,8 @@ export default async function ProducerDiscoverPage() {
   const [{ data: projects }, { data: pipelineRows }, { data: loves }] = await Promise.all([
     supabase
       .from("projects")
-      .select("id, title, genre, format, country, budget_usd, funding_needed_usd, logline, poster_path, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
-      .eq("is_public", true)
+      .select("id, title, genre, format, country, budget_usd, funding_needed_usd, logline, poster_path, love_count, is_public, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+      .eq("admin_hidden", false)
       .order("created_at", { ascending: false })
       .limit(50),
     supabase
@@ -135,6 +135,12 @@ export default async function ProducerDiscoverPage() {
                       />
                     </div>
                   </Link>
+                  {/* Private badge — top left */}
+                  {!p.is_public && (
+                    <span className="absolute top-2 left-2 text-[10px] tracking-[0.14em] uppercase font-medium px-2 py-0.5 rounded-full bg-ink/80 text-ivory">
+                      Private
+                    </span>
+                  )}
                   {/* Match score badge — top right corner */}
                   <span className={`absolute top-2 right-2 text-[11px] tracking-[0.1em] font-medium px-2 py-0.5 rounded-full ${scoreBadgeStyle(p._score)}`}>
                     {p._score} match
