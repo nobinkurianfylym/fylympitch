@@ -76,6 +76,12 @@ export default async function FundsPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  let dashboardHref = "/dashboard";
+  if (user) {
+    const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    if ((me as any)?.role === "producer") dashboardHref = "/producer";
+  }
+
   // Map category key → opp_type values
   const CATEGORY_TYPES: Record<string, string[]> = {
     development:          ["lab", "grant", "fund"],
@@ -115,7 +121,7 @@ export default async function FundsPage({
           </nav>
           <div className="flex items-center gap-3">
             {user ? (
-              <Link href="/dashboard" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
+              <Link href={dashboardHref} className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
                 Dashboard
               </Link>
             ) : (

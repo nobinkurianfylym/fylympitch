@@ -53,16 +53,18 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
 
   if (!p) notFound();
 
-  const [{ data: filmmakerCredits }, lovedResult, producerResult] = await Promise.all([
+  const [{ data: filmmakerCredits }, lovedResult, producerResult, meResult] = await Promise.all([
     supabase.from("filmmaker_credits").select("*").eq("user_id", p.owner_id).order("year", { ascending: false }),
     user ? supabase.from("project_loves").select("user_id").eq("user_id", user.id).eq("project_id", p.id).single() : Promise.resolve({ data: null }),
     user ? supabase.from("producer_profiles").select("user_id").eq("user_id", user.id).single() : Promise.resolve({ data: null }),
+    user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);
 
-  const loved          = lovedResult.data;
+  const loved           = lovedResult.data;
   const producerProfile = producerResult.data;
-  const isProducer     = !!producerProfile;
-  const isOwnProject   = !!user && user.id === p.owner_id;
+  const isProducer      = !!producerProfile;
+  const isOwnProject    = !!user && user.id === p.owner_id;
+  const dashboardHref   = (meResult.data as any)?.role === "producer" ? "/producer" : "/dashboard";
 
   const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -77,7 +79,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
             <Link href="/projects" className="text-ink">Projects</Link>
             <Link href="/funds" className="hover:text-ink transition-colors">Funds</Link>
           </nav>
-          <Link href="/dashboard" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Dashboard</Link>
+          <Link href={dashboardHref} className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Dashboard</Link>
         </div>
       </header>
 

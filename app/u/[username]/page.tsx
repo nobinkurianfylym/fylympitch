@@ -36,14 +36,17 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
-  const [{ data: projects }, { data: credits }, { data: producerProfile }] = await Promise.all([
+  const [{ data: projects }, { data: credits }, { data: producerProfile }, { data: me }] = await Promise.all([
     supabase.from("projects").select("id, title, genre, format, logline, poster_path, slug, love_count, funding_needed_usd")
       .eq("owner_id", profile.id).eq("is_public", true).order("created_at", { ascending: false }),
     supabase.from("filmmaker_credits").select("*").eq("user_id", profile.id)
       .eq("is_featured", true).order("year", { ascending: false }).limit(6),
     supabase.from("producer_profiles").select("role_type, genres, formats, territories, is_public")
       .eq("user_id", profile.id).eq("is_public", true).maybeSingle(),
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
   ]);
+
+  const dashboardHref = (me as any)?.role === "producer" ? "/producer" : "/dashboard";
 
   const CAREER: Record<string, string> = {
     debut: "Debut filmmaker", second_film: "2nd film", established: "Established filmmaker", veteran: "Veteran filmmaker",
@@ -62,7 +65,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           <nav className="flex items-center gap-6 text-[12px] tracking-[0.14em] uppercase text-ash">
             <Link href="/projects" className="hover:text-ink transition-colors">Projects</Link>
             <Link href="/funds" className="hover:text-ink transition-colors">Funds</Link>
-            {user && <Link href="/dashboard" className="hover:text-ink transition-colors">Dashboard</Link>}
+            {user && <Link href={dashboardHref} className="hover:text-ink transition-colors">Dashboard</Link>}
           </nav>
         </div>
       </header>

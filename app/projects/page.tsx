@@ -20,6 +20,12 @@ export default async function ProjectsPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  let dashboardHref = "/dashboard";
+  if (user) {
+    const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+    if ((me as any)?.role === "producer") dashboardHref = "/producer";
+  }
+
   let query = supabase
     .from("projects")
     .select("id, title, genre, format, stage, language, country, logline, funding_needed_usd, poster_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
@@ -60,7 +66,7 @@ export default async function ProjectsPage({
           </nav>
           <div className="flex items-center gap-3">
             {user ? (
-              <Link href="/dashboard" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Dashboard</Link>
+              <Link href={dashboardHref} className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Dashboard</Link>
             ) : (
               <Link href="/login" className="btn-outline !px-5 !py-2.5 !text-[11px]">Get started</Link>
             )}
