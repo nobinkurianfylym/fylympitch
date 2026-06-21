@@ -267,7 +267,7 @@ export function normalizeMessage(
     updated_at:           row.updated_at,
     deleted_at:           row.deleted_at ?? null,
     deleted_by:           row.deleted_by ?? null,
-    delivery_status:      computeDeliveryStatus(row),
+    delivery_status:      computeDeliveryStatus(row as { sent_at: string | null; delivered_at: string | null; read_at: string | null }),
   };
 }
 

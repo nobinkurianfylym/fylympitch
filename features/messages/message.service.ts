@@ -47,9 +47,9 @@ export async function loadInbox(
       conversation_type,
       created_at,
       updated_at,
-      project:projects!conversations_project_id_fkey(title),
-      producer:profiles!conversations_producer_id_fkey(id, full_name, company, avatar_url),
-      filmmaker:profiles!conversations_filmmaker_id_fkey(id, full_name, company, avatar_url)
+      project:projects!project_id(title),
+      producer:profiles!producer_id(id, full_name, company, avatar_url),
+      filmmaker:profiles!filmmaker_id(id, full_name, company, avatar_url)
     `)
     .or(`producer_id.eq.${currentUserId},filmmaker_id.eq.${currentUserId}`)
     .order("last_message_at", { ascending: false, nullsFirst: false });

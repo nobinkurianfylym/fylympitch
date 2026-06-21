@@ -56,8 +56,8 @@ const DeliveryMark = React.memo(function DeliveryMark({
 
 export const MessageItem = React.memo(
   forwardRef<HTMLDivElement, Props>(function MessageItem(
-    { msg, isMine, getUrl, onRetry },
-    ref
+    { msg, isMine, getUrl, onRetry }: Props,
+    ref: React.ForwardedRef<HTMLDivElement>
   ) {
     const deleted  = !isOptimistic(msg) && msg.deleted_at !== null;
     const hasAttachment =

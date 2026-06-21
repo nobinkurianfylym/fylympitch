@@ -144,7 +144,7 @@ export const MessageList = React.memo(function MessageList({
           </p>
         )}
 
-        {items.map((msg, i) => {
+        {items.map((msg: MessageOrOptimistic, i: number) => {
           const showDivider = shouldShowDateDivider(items, i);
           const isMine = msg.sender_id === currentUserId;
 

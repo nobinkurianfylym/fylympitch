@@ -97,7 +97,7 @@ export const AttachmentCard = React.memo(function AttachmentCard({
           rel="noreferrer"
           aria-label={`Download ${name}`}
           className="shrink-0 text-ash hover:text-ink transition-colors"
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
         >
           <i className="ti ti-download" style={{ fontSize: 16 }} aria-hidden="true" />
         </a>

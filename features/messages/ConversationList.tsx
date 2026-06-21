@@ -65,7 +65,7 @@ export function ConversationList({
           <input
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
             placeholder="Search projects or contacts…"
             aria-label="Search conversations"
             className="
@@ -101,7 +101,7 @@ export function ConversationList({
           </div>
         )}
 
-        {filtered.map((conv) => (
+        {filtered.map((conv: ConversationListItem) => (
           <ConversationRow
             key={conv.id}
             conversation={conv}

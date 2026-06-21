@@ -189,7 +189,7 @@ export function PremiumComposer({ onSend, sendError, onClearError, disabled }: P
         <textarea
           ref={textareaRef}
           value={text}
-          onChange={(e) => { setText(e.target.value); onClearError(); }}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => { setText(e.target.value); onClearError(); }}
           onKeyDown={handleKeyDown}
           placeholder="Write a message…"
           rows={1}
