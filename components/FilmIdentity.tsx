@@ -39,7 +39,7 @@ export interface FilmIdentityProject {
   logline?: string | null;
   budget_usd?: number | null;
   funding_needed_usd?: number | null;
-  financing_secured_usd?: number | null;
+  finance_secured_usd?: number | null;
   poster_path?: string | null;
   director_name?: string | null;
   producer_info?: string | null;
@@ -152,7 +152,7 @@ function SeekingChips({ seeking }: { seeking: string[] }) {
 /** Equal-width 3-column business data grid */
 function BusinessGrid({ project }: { project: FilmIdentityProject }) {
   const budget = formatBudgetDisplay(project.budget_usd);
-  const secured = project.financing_secured_usd;
+  const secured = project.finance_secured_usd;
   const securedPct =
     project.budget_usd && secured
       ? Math.round((secured / project.budget_usd) * 100)
@@ -177,7 +177,7 @@ function BusinessGrid({ project }: { project: FilmIdentityProject }) {
     ...(project.expected_delivery
       ? [{ label: "TARGET DELIVERY", value: project.expected_delivery }]
       : []),
-    ...(project.funding_needed_usd && !project.financing_secured_usd
+    ...(project.funding_needed_usd && !project.finance_secured_usd
       ? [{ label: "SEEKING", value: formatBudgetDisplay(project.funding_needed_usd) }]
       : []),
   ];
@@ -338,7 +338,7 @@ function CompactCardVariant({
 }) {
   const cardHref = href ?? `/producer/projects/${project.id}`;
 
-  const secured = project.financing_secured_usd;
+  const secured = project.finance_secured_usd;
   const securedPct =
     project.budget_usd && secured
       ? Math.round((secured / project.budget_usd) * 100)
