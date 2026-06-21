@@ -1,10 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { usd } from "@/lib/format";
 import { upsertProducerProject } from "@/lib/actions";
-import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
-import ProjectThumbnail from "@/components/ProjectThumbnail";
+import FilmIdentity from "@/components/FilmIdentity";
+import MessageButton from "@/components/MessageButton";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
 
@@ -12,6 +11,18 @@ export const dynamic = "force-dynamic";
 
 const FORMATS = ["Feature", "Documentary", "Series", "Animation"];
 const GENRES  = ["Drama", "Thriller", "Comedy", "Documentary", "Horror", "Romance", "Action", "Animation", "Sci-Fi"];
+
+const PIPELINE_PILL: Record<string, string> = {
+  saved:       "bg-parchment text-ash",
+  shortlisted: "bg-blue-50 text-blue-700",
+  in_review:   "bg-amber-50 text-amber-700",
+  meeting_set: "bg-emerald-50 text-emerald-700",
+  deal_active: "bg-gold/10 text-gold",
+};
+const PIPELINE_LABEL: Record<string, string> = {
+  saved: "Saved", shortlisted: "Shortlisted", in_review: "In Review",
+  meeting_set: "Meeting Set", deal_active: "Deal Active",
+};
 
 export default async function ProducerProjectsPage({
   searchParams,
@@ -27,7 +38,7 @@ export default async function ProducerProjectsPage({
 
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, country, language, logline, budget_usd, funding_needed_usd, poster_path, is_public, created_at, owner_id, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage)")
+    .select("id, title, genre, format, stage, country, language, director_name, logline, budget_usd, finance_secured_usd, funding_needed_usd, poster_path, is_public, created_at, owner_id, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
     .eq("admin_hidden", false)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -53,11 +64,7 @@ export default async function ProducerProjectsPage({
     : (projects ?? []).filter((p) => crmByProject.get(p.id)?.status !== "passed");
 
   const hasFilters = !!(genre || format || q || country || language);
-  const clearHref = `/producer/projects${filter ? `?filter=${filter}` : ""}`;
-
-  const CAREER: Record<string, string> = {
-    debut: "Debut", second_film: "2nd Film", established: "Established", veteran: "Veteran",
-  };
+  const clearHref  = `/producer/projects${filter ? `?filter=${filter}` : ""}`;
 
   return (
     <div className="p-6 md:p-10">
@@ -73,10 +80,10 @@ export default async function ProducerProjectsPage({
               : `${display.length} project${display.length !== 1 ? "s" : ""} — including private submissions not visible to the public.`}
           </p>
         </div>
-        <Link href="/producer" className="btn-ghost">← Pipeline</Link>
+        <Link href="/producer" className="btn-ghost">← Discover</Link>
       </div>
 
-      {/* Filters — compact single line */}
+      {/* Filters */}
       <form method="GET" className="flex flex-wrap items-center gap-2 mb-8">
         {filter && <input type="hidden" name="filter" value={filter} />}
         <input
@@ -93,18 +100,8 @@ export default async function ProducerProjectsPage({
           <option value="">All formats</option>
           {FORMATS.map((f) => <option key={f} value={f.toLowerCase()}>{f}</option>)}
         </select>
-        <input
-          name="country"
-          defaultValue={country ?? ""}
-          placeholder="Country"
-          className="field !w-28 !py-2 !text-[13px]"
-        />
-        <input
-          name="language"
-          defaultValue={language ?? ""}
-          placeholder="Language"
-          className="field !w-28 !py-2 !text-[13px]"
-        />
+        <input name="country"  defaultValue={country  ?? ""} placeholder="Country"  className="field !w-28 !py-2 !text-[13px]" />
+        <input name="language" defaultValue={language ?? ""} placeholder="Language" className="field !w-28 !py-2 !text-[13px]" />
         <button className="btn-ghost !py-2 !text-[12px]">Filter</button>
         {hasFilters && <a href={clearHref} className="btn-ghost !py-2 !text-[12px] text-ash">Clear</a>}
       </form>
@@ -112,118 +109,94 @@ export default async function ProducerProjectsPage({
       {/* Project grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {display.map((p) => {
-          const crm = crmByProject.get(p.id);
-          const fm = Array.isArray((p as any).filmmaker) ? (p as any).filmmaker[0] : (p as any).filmmaker;
+          const crm      = crmByProject.get(p.id);
+          const fm       = Array.isArray((p as any).filmmaker) ? (p as any).filmmaker[0] : (p as any).filmmaker;
+          const pillCls  = crm && crm.status !== "passed" ? PIPELINE_PILL[crm.status]  : null;
+          const pillLbl  = crm && crm.status !== "passed" ? PIPELINE_LABEL[crm.status] : null;
 
           return (
-            <div
+            <FilmIdentity
               key={p.id}
-              className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all"
-            >
-              {/* Thumbnail */}
-              <Link href={`/producer/projects/${p.id}`} className="block">
-                <div className="aspect-[3/2] overflow-hidden">
-                  <ProjectThumbnail
-                    posterPath={p.poster_path}
-                    title={p.title}
-                    genre={p.genre}
-                    supabaseUrl={supabaseUrl}
-                    className="w-full h-full rounded-t-card"
-                  />
-                </div>
-              </Link>
+              variant="compact-card"
+              project={{
+                ...p,
+                filmmaker: fm,
+                financing_secured_usd: (p as any).finance_secured_usd ?? null,
+              }}
+              supabaseUrl={supabaseUrl}
+              href={`/producer/projects/${p.id}`}
+              actions={
+                <div className="space-y-2.5">
 
-              {/* Card body */}
-              <div className="p-5 flex flex-col flex-1">
-                {/* L1: Title */}
-                <Link href={`/producer/projects/${p.id}`}>
-                  <h2
-                    className="font-display font-bold text-[18px] mb-2 group-hover:text-gold transition-colors leading-tight uppercase"
-                    style={{ letterSpacing: "-0.01em" }}
-                  >
-                    {p.title}
-                  </h2>
-                </Link>
-                {/* L2: Metadata row */}
-                <p className="text-[12px] text-ash mb-2.5 leading-tight">
-                  {[
-                    formatFormat(p.format),
-                    p.genre,
-                    (() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? null; })(),
-                    p.language,
-                    formatStage(p.stage),
-                  ].filter(Boolean).join(" · ")}
-                </p>
-                {/* L5: Logline */}
-                {p.logline && (
-                  <p className="italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">
-                    {p.logline}
-                  </p>
-                )}
-
-                {/* Filmmaker + meta */}
-                <div className="mt-4 pt-4 border-t border-line flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 text-[12px] text-ash min-w-0">
-                    {fm?.avatar_url ? (
-                      <img src={fm.avatar_url} alt={fm.full_name ?? ""} className="w-5 h-5 rounded-full object-cover shrink-0" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-parchment border border-line shrink-0 flex items-center justify-center">
-                        <span className="text-[7px] text-ash">
-                          {(fm?.full_name ?? "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <span className="truncate">{fm?.full_name ?? "—"}</span>
-                    {fm?.career_stage && (
-                      <span className="text-[9px] tracking-[0.1em] uppercase bg-parchment border border-line px-1.5 py-0.5 rounded-full shrink-0">
-                        {CAREER[fm.career_stage] ?? fm.career_stage}
+                  {/* Row 1: pipeline stage pill + engine analysis link */}
+                  <div className="flex items-center justify-between gap-2">
+                    {pillCls && pillLbl ? (
+                      <span className={`text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-full border border-line ${pillCls}`}>
+                        {pillLbl}
                       </span>
-                    )}
+                    ) : <span />}
+                    <Link
+                      href={`/dashboard/projects/${p.id}`}
+                      className="text-[11px] text-ash hover:text-gold transition-colors tracking-[0.06em] shrink-0"
+                      title="View FYLYMPITCH engine evaluation for this project"
+                    >
+                      Engine analysis ↗
+                    </Link>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <LoveButton projectId={p.id} initialCount={(p as any).love_count ?? 0} initialLiked={false} isLoggedIn={true} size="sm" />
-                    <ShareButton projectId={p.id} title={p.title} genre={p.genre} country={p.country} size="sm" />
+
+                  {/* Row 2: message + love + share */}
+                  <div className="flex items-center gap-2">
+                    <MessageButton
+                      projectId={p.id}
+                      producerId={user.id}
+                      filmakerId={p.owner_id}
+                      label="Message"
+                      className="btn-ghost !py-1.5 !px-3 text-[12px] gap-1.5 flex-1"
+                    />
+                    <LoveButton
+                      projectId={p.id}
+                      initialCount={(p as any).love_count ?? 0}
+                      initialLiked={false}
+                      isLoggedIn={true}
+                      size="sm"
+                    />
+                    <ShareButton
+                      projectId={p.id}
+                      title={p.title}
+                      genre={p.genre}
+                      country={p.country}
+                      size="sm"
+                    />
                   </div>
-                </div>
 
-                {/* Country · Language */}
-                {(p.country || p.language) && (
-                  <p className="mt-2 text-[11px] text-ash/70 tracking-[0.06em]">
-                    {(() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? p.country; })()}
-                    {p.language && ` · ${p.language}`}
-                    {!p.is_public && <span className="ml-2 text-amber-600">· Private</span>}
-                  </p>
-                )}
-
-                {/* CRM quick actions */}
-                <div className="flex gap-2 mt-3 pt-3 border-t border-line">
+                  {/* Row 3: pipeline CRM action */}
                   {(!crm || crm.status === "passed") && (
-                    <form action={upsertProducerProject} className="flex gap-2 w-full">
+                    <form action={upsertProducerProject} className="w-full">
                       <input type="hidden" name="project_id" value={p.id} />
                       <input type="hidden" name="status" value="saved" />
-                      <button className="btn-ghost !py-1.5 flex-1 text-[12px]">Save to pipeline</button>
+                      <button className="btn-ghost !py-1.5 w-full text-[12px]">+ Add to pipeline</button>
                     </form>
                   )}
                   {crm && crm.status !== "passed" && (
-                    <div className="flex items-center gap-2 w-full">
-                      <span className="text-[11px] tracking-[0.12em] uppercase text-ash bg-parchment px-3 py-1 rounded-full">
-                        {crm.status.replace("_", " ")}
-                      </span>
-                      <Link href={`/producer/projects/${p.id}`} className="ml-auto text-[12px] text-gold hover:underline">
-                        Open →
-                      </Link>
-                    </div>
+                    <Link
+                      href={`/producer/projects/${p.id}`}
+                      className="block text-center text-[12px] text-gold hover:underline"
+                    >
+                      Open in pipeline →
+                    </Link>
                   )}
                   {!crm && (
                     <form action={upsertProducerProject}>
                       <input type="hidden" name="project_id" value={p.id} />
                       <input type="hidden" name="status" value="passed" />
-                      <button className="text-[12px] text-ash hover:text-red-600 transition-colors">Pass</button>
+                      <button className="text-[11px] text-ash/60 hover:text-red-500 transition-colors w-full text-center">
+                        Pass
+                      </button>
                     </form>
                   )}
                 </div>
-              </div>
-            </div>
+              }
+            />
           );
         })}
       </div>

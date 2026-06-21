@@ -1,12 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
-import ProjectThumbnail from "@/components/ProjectThumbnail";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
 import SearchInput from "@/components/SearchInput";
-import { usd, formatBudget } from "@/lib/format";
-import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
+import { formatBudget } from "@/lib/format";
+import FilmIdentity from "@/components/FilmIdentity";
 
 export const dynamic = "force-dynamic";
 
@@ -30,12 +29,12 @@ export default async function ProjectsPage({
 
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, language, country, logline, budget_currency, funding_needed_usd, finance_secured_usd, poster_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+    .select("id, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
     .eq("is_public", true)
     .order("created_at", { ascending: false })
     .limit(60);
 
-  if (format) query = query.eq("format", format.toLowerCase());
+  if (format)    query = query.eq("format", format.toLowerCase());
   if (q?.trim()) query = (query as any).or(`title.ilike.%${q.trim()}%,logline.ilike.%${q.trim()}%`);
 
   const { data: projects } = await query;
@@ -50,9 +49,6 @@ export default async function ProjectsPage({
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const CAREER_LABEL: Record<string, string> = {
-    debut: "Debut", second_film: "2nd Film", established: "Established", veteran: "Veteran",
-  };
 
   return (
     <div className="min-h-screen bg-ivory">
@@ -84,7 +80,7 @@ export default async function ProjectsPage({
             Pitches submitted by filmmakers on PITCH.FYLYM — open for producers, investors and collaborators to discover.
           </p>
 
-          {/* Format filters + search bar */}
+          {/* Format filters + search */}
           <div className="mt-7 flex flex-wrap gap-2 items-center">
             <Link
               href={`/projects${q ? `?q=${encodeURIComponent(q)}` : ""}`}
@@ -105,8 +101,6 @@ export default async function ProjectsPage({
                 {f}
               </Link>
             ))}
-
-            {/* Search bar — right side */}
             <div className="ml-auto">
               <SearchInput placeholder="Search projects…" basePath="/projects" />
             </div>
@@ -128,60 +122,42 @@ export default async function ProjectsPage({
             {projects.map((p: any) => {
               const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
               return (
-                <div key={p.id} className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all">
-                  <Link href={`/projects/${p.id}`}>
-                    <div className="aspect-[3/2] overflow-hidden">
-                      <ProjectThumbnail posterPath={p.poster_path} title={p.title} genre={p.genre} supabaseUrl={supabaseUrl} className="rounded-t-card w-full h-full" />
-                    </div>
-                  </Link>
-                  <div className="p-5 flex flex-col flex-1">
-                    {/* L1: Title */}
-                    <Link href={`/projects/${p.id}`}>
-                      <h2
-                        className="font-display font-bold text-[18px] mb-2 group-hover:text-gold transition-colors leading-tight uppercase"
-                        style={{ letterSpacing: "-0.01em" }}
-                      >
-                        {p.title}
-                      </h2>
-                    </Link>
-                    {/* L2: Metadata row */}
-                    <p className="text-[12px] text-ash mb-2.5 leading-tight">
-                      {[
-                        formatFormat(p.format),
-                        p.genre,
-                        (() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? null; })(),
-                        p.language,
-                        formatStage(p.stage),
-                      ].filter(Boolean).join(" · ")}
-                    </p>
-                    {/* L5: Logline */}
-                    {p.logline && (
-                      <p className="italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">{p.logline}</p>
-                    )}
-                    {filmmaker && (
-                      <div className="mt-3 flex items-center gap-2 text-[12px] text-ash">
-                        <span>{filmmaker.full_name}</span>
-                        {filmmaker.career_stage && (
-                          <span className="text-[10px] tracking-[0.1em] uppercase bg-parchment border border-line px-2 py-0.5 rounded-full">
-                            {CAREER_LABEL[filmmaker.career_stage] ?? filmmaker.career_stage}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <div className="mt-4 pt-4 border-t border-line flex items-center justify-between gap-2">
+                <FilmIdentity
+                  key={p.id}
+                  variant="compact-card"
+                  project={{
+                    ...p,
+                    filmmaker,
+                    financing_secured_usd: p.finance_secured_usd ?? null,
+                  }}
+                  supabaseUrl={supabaseUrl}
+                  href={`/projects/${p.id}`}
+                  actions={
+                    <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <LoveButton projectId={p.id} initialCount={p.love_count ?? 0} initialLiked={lovedSet.has(p.id)} isLoggedIn={!!user} size="sm" />
-                        <ShareButton projectId={p.id} title={p.title} genre={p.genre} country={p.country} size="sm" />
+                        <LoveButton
+                          projectId={p.id}
+                          initialCount={p.love_count ?? 0}
+                          initialLiked={lovedSet.has(p.id)}
+                          isLoggedIn={!!user}
+                          size="sm"
+                        />
+                        <ShareButton
+                          projectId={p.id}
+                          title={p.title}
+                          genre={p.genre}
+                          country={p.country}
+                          size="sm"
+                        />
                       </div>
-                      {(p as any).finance_secured_usd && (
-                        <span className="text-[12px] text-emerald-700 shrink-0">Secured {formatBudget((p as any).finance_secured_usd, (p as any).budget_currency)}</span>
-                      )}
                       {p.funding_needed_usd && (
-                        <span className="text-[12px] text-gold shrink-0">Seeking {formatBudget(p.funding_needed_usd, (p as any).budget_currency)}</span>
+                        <span className="text-[11px] text-gold shrink-0">
+                          Seeking {formatBudget(p.funding_needed_usd, p.budget_currency)}
+                        </span>
                       )}
                     </div>
-                  </div>
-                </div>
+                  }
+                />
               );
             })}
           </div>
