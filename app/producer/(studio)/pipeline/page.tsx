@@ -110,6 +110,13 @@ export default async function ProducerPipelinePage() {
                           {thumb && (
                             <img src={thumb} alt={p.title} className="w-full rounded-card mb-3 object-cover" style={{ aspectRatio: "16/9" }} />
                           )}
+                          {/* L1: Title */}
+                          <p
+                            className="font-display font-bold text-[14px] leading-tight uppercase mb-1.5"
+                            style={{ letterSpacing: "-0.01em" }}
+                          >
+                            {p.title}
+                          </p>
                           {/* L2: Metadata */}
                           <p className="text-[11px] text-ash mb-1.5 leading-tight">
                             {[
@@ -117,13 +124,6 @@ export default async function ProducerPipelinePage() {
                               p.genre,
                               (() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? null; })(),
                             ].filter(Boolean).join(" · ")}
-                          </p>
-                          {/* L1: Title */}
-                          <p
-                            className="font-display font-bold text-[14px] leading-tight uppercase mb-2"
-                            style={{ letterSpacing: "-0.01em" }}
-                          >
-                            {p.title}
                           </p>
                           <div className="flex items-center justify-between">
                             <span className={`text-[10px] px-2 py-0.5 rounded-full ${p.is_public ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>

@@ -135,6 +135,15 @@ export default async function ProducerProjectsPage({
 
               {/* Card body */}
               <div className="p-5 flex flex-col flex-1">
+                {/* L1: Title */}
+                <Link href={`/producer/projects/${p.id}`}>
+                  <h2
+                    className="font-display font-bold text-[18px] mb-2 group-hover:text-gold transition-colors leading-tight uppercase"
+                    style={{ letterSpacing: "-0.01em" }}
+                  >
+                    {p.title}
+                  </h2>
+                </Link>
                 {/* L2: Metadata row */}
                 <p className="text-[12px] text-ash mb-2.5 leading-tight">
                   {[
@@ -145,15 +154,6 @@ export default async function ProducerProjectsPage({
                     formatStage(p.stage),
                   ].filter(Boolean).join(" · ")}
                 </p>
-                {/* L1: Title */}
-                <Link href={`/producer/projects/${p.id}`}>
-                  <h2
-                    className="font-display font-bold text-[18px] mb-2.5 group-hover:text-gold transition-colors leading-tight uppercase"
-                    style={{ letterSpacing: "-0.01em" }}
-                  >
-                    {p.title}
-                  </h2>
-                </Link>
                 {/* L5: Logline */}
                 {p.logline && (
                   <p className="italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">

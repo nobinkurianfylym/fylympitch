@@ -120,8 +120,15 @@ export default async function DiscoverPage({
             <article key={p.id} className="card p-6 sm:p-8">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
+                  {/* L1: Title */}
+                  <h2
+                    className="font-display font-bold text-[22px] leading-tight uppercase mb-2"
+                    style={{ letterSpacing: "-0.01em" }}
+                  >
+                    {p.title}
+                  </h2>
                   {/* L2: Metadata row */}
-                  <p className="text-[12px] text-ash mb-2 leading-tight">
+                  <p className="text-[12px] text-ash leading-tight">
                     {[
                       formatFormat(p.format),
                       p.genre,
@@ -130,13 +137,6 @@ export default async function DiscoverPage({
                       formatStage(p.stage),
                     ].filter(Boolean).join(" · ")}
                   </p>
-                  {/* L1: Title */}
-                  <h2
-                    className="font-display font-bold text-[22px] leading-tight uppercase"
-                    style={{ letterSpacing: "-0.01em" }}
-                  >
-                    {p.title}
-                  </h2>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="eyebrow">Seeking</p>
