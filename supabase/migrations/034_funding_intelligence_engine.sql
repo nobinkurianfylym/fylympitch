@@ -185,6 +185,7 @@ create or replace function public.sync_opportunity_statuses()
 as $$
 declare
   v_count int := 0;
+  v_rows  int := 0;
 begin
   -- Mark closing_soon (deadline within 14 days)
   update public.opportunities
@@ -193,7 +194,8 @@ begin
     and deadline is not null
     and deadline > current_date
     and deadline <= current_date + interval '14 days';
-  get diagnostics v_count = row_count;
+  get diagnostics v_rows = row_count;
+  v_count := v_count + v_rows;
 
   -- Mark closed (deadline passed)
   update public.opportunities
@@ -202,7 +204,8 @@ begin
   where submission_status in ('open','closing_soon')
     and deadline is not null
     and deadline < current_date;
-  get diagnostics v_count = v_count + row_count;
+  get diagnostics v_rows = row_count;
+  v_count := v_count + v_rows;
 
   return v_count;
 end;
