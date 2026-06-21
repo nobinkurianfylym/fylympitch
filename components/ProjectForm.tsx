@@ -109,6 +109,30 @@ const DEFAULT_FIELDS: Fields = {
   logline: "", synopsis: "", director_statement: "", producer_info: "",
 };
 
+// ── Live USD preview for a single amount ──────────────────────────────────────
+function useLiveUSD(amount: string, currency: string) {
+  const [usd, setUsd] = useState<number | null>(null);
+  const [source, setSource] = useState<"live" | "fixed" | null>(null);
+  useEffect(() => {
+    const n = parseFloat(amount);
+    if (!amount || isNaN(n) || n <= 0 || currency === "USD") { setUsd(n > 0 ? n : null); setSource(null); return; }
+    const ctrl = new AbortController();
+    fetch(`/api/convert-currency?amount=${n}&from=${currency}`, { signal: ctrl.signal })
+      .then((r) => r.json())
+      .then((d) => { setUsd(d.usd); setSource(d.source); })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [amount, currency]);
+  return { usd, source };
+}
+
+function fmtUSD(n: number | null): string {
+  if (n == null) return "";
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
+  if (n >= 1_000) return `$${Math.round(n / 1_000)}K`;
+  return `$${n}`;
+}
+
 export default function ProjectForm() {
   const [fields, setFields]         = useState<Fields>(DEFAULT_FIELDS);
   const [aiFilled, setAiFilled]     = useState<AiFilled>({});
@@ -122,7 +146,37 @@ export default function ProjectForm() {
   const [scriptPath, setScriptPath] = useState("");
   const [posterPath, setPosterPath] = useState("");
   const [visibility, setVisibility] = useState<"true" | "false">("true");
-  const [showAdvanced, setShowAdvanced] = useState(false);  // closed until AI fills OR user opens
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [budgetError, setBudgetError]   = useState<string | null>(null);
+  const [autoFunding, setAutoFunding]   = useState(false);
+
+  // ── Live USD previews ────────────────────────────────────────────────────
+  const { usd: budgetUSD, source: budgetSrc } = useLiveUSD(fields.budget_usd, fields.budget_currency);
+  const { usd: securedUSD }                   = useLiveUSD(fields.finance_secured_usd, fields.budget_currency);
+  const { usd: neededUSD }                    = useLiveUSD(fields.funding_needed_usd, fields.budget_currency);
+
+  // ── Budget split validation ───────────────────────────────────────────────
+  useEffect(() => {
+    const total   = parseFloat(fields.budget_usd)           || null;
+    const secured = parseFloat(fields.finance_secured_usd)  || null;
+    const needed  = parseFloat(fields.funding_needed_usd)   || null;
+    if (total == null) { setBudgetError(null); return; }
+    if (secured != null && secured > total) { setBudgetError("Finance secured cannot exceed the total budget."); return; }
+    if (needed  != null && needed  > total) { setBudgetError("Funding needed cannot exceed the total budget."); return; }
+    if (secured != null && needed != null && secured + needed > total) { setBudgetError("Finance secured + funding needed cannot exceed the total budget."); return; }
+    setBudgetError(null);
+  }, [fields.budget_usd, fields.finance_secured_usd, fields.funding_needed_usd]);
+
+  // ── Auto-compute funding_needed = total - secured ────────────────────────
+  useEffect(() => {
+    const total   = parseFloat(fields.budget_usd);
+    const secured = parseFloat(fields.finance_secured_usd);
+    if (!isNaN(total) && !isNaN(secured) && total >= secured) {
+      const computed = total - secured;
+      setFields((f) => ({ ...f, funding_needed_usd: String(computed % 1 === 0 ? Math.round(computed) : computed.toFixed(2)) }));
+      setAutoFunding(true);
+    }
+  }, [fields.budget_usd, fields.finance_secured_usd]);
 
   // useTransition — the correct Next.js pattern for server actions that call redirect()
   const [, startTransition] = useTransition();
@@ -340,6 +394,10 @@ export default function ProjectForm() {
       setError("Please enter a logline. It's the one sentence that describes your film.");
       return;
     }
+    if (budgetError) {
+      setError(budgetError);
+      return;
+    }
 
     // Capture formData while form is still mounted
     const formData = new FormData(e.currentTarget);
@@ -481,30 +539,63 @@ export default function ProjectForm() {
               <div className="col-span-full">
                 <label className="field-label" htmlFor="budget_currency">"Currency"</label>
                 <select id="budget_currency" name="budget_currency" className="field"
-                  value={fields.budget_currency} onChange={set("budget_currency")}>
+                  value={fields.budget_currency}
+                  onChange={(e) => {
+                    set("budget_currency")(e);
+                    setFields((f) => ({ ...f, budget_usd: "", finance_secured_usd: "", funding_needed_usd: "" }));
+                    setAutoFunding(false);
+                  }}>
                   {Object.entries(CURRENCIES).map(([code, c]) => (
                     <option key={code} value={code}>{c.label}</option>
                   ))}
                 </select>
+                {budgetSrc === "live" && <p className="mt-1 text-[11px] text-green-600">Live exchange rate applied</p>}
+                {budgetSrc === "fixed" && fields.budget_currency !== "USD" && <p className="mt-1 text-[11px] text-ash">Using fixed rate (live rate unavailable)</p>}
               </div>
               <div>
-                <label className="field-label" htmlFor="budget_usd">"Total budget"</label>
-                <input id="budget_usd" name="budget_usd" type="number" min="0" step="1000"
+                <label className="field-label" htmlFor="budget_usd">
+                  "Total budget" <span className="font-normal normal-case tracking-normal text-ash">({fields.budget_currency})</span>
+                </label>
+                <input id="budget_usd" name="budget_usd" type="number" min="0" step="1"
                   className="field" placeholder="10000000"
-                  value={fields.budget_usd} onChange={set("budget_usd")} />
+                  value={fields.budget_usd} onChange={(e) => { set("budget_usd")(e); setAutoFunding(false); }} />
+                {budgetUSD != null && fields.budget_currency !== "USD" && (
+                  <p className="mt-1 text-[11px] text-ash">≈ {fmtUSD(budgetUSD)}</p>
+                )}
               </div>
               <div>
-                <label className="field-label" htmlFor="finance_secured_usd">"Finance secured"</label>
-                <input id="finance_secured_usd" name="finance_secured_usd" type="number" min="0" step="1000"
+                <label className="field-label" htmlFor="finance_secured_usd">
+                  "Finance secured" <span className="font-normal normal-case tracking-normal text-ash">({fields.budget_currency})</span>
+                </label>
+                <input id="finance_secured_usd" name="finance_secured_usd" type="number" min="0" step="1"
                   className="field" placeholder="3000000"
-                  value={fields.finance_secured_usd} onChange={set("finance_secured_usd")} />
+                  value={fields.finance_secured_usd} onChange={(e) => { set("finance_secured_usd")(e); setAutoFunding(false); }} />
+                {securedUSD != null && fields.budget_currency !== "USD" && (
+                  <p className="mt-1 text-[11px] text-ash">≈ {fmtUSD(securedUSD)}</p>
+                )}
               </div>
               <div>
-                <label className="field-label" htmlFor="funding_needed_usd">"Funding needed"</label>
-                <input id="funding_needed_usd" name="funding_needed_usd" type="number" min="0" step="1000"
+                <label className="field-label" htmlFor="funding_needed_usd">
+                  "Funding needed" <span className="font-normal normal-case tracking-normal text-ash">({fields.budget_currency})</span>
+                </label>
+                <input id="funding_needed_usd" name="funding_needed_usd" type="number" min="0" step="1"
                   className="field" placeholder="7000000"
-                  value={fields.funding_needed_usd} onChange={set("funding_needed_usd")} />
+                  value={fields.funding_needed_usd}
+                  onChange={(e) => { set("funding_needed_usd")(e); setAutoFunding(false); }} />
+                {neededUSD != null && fields.budget_currency !== "USD" && (
+                  <p className="mt-1 text-[11px] text-ash">≈ {fmtUSD(neededUSD)}</p>
+                )}
+                {autoFunding && fields.funding_needed_usd && (
+                  <p className="mt-1 text-[11px] text-gold">Auto-calculated</p>
+                )}
               </div>
+              {budgetError && (
+                <div className="col-span-full">
+                  <p className="text-[12px] text-red-700 bg-red-50 border border-red-200 rounded-card px-3 py-2">
+                    {budgetError}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { toUSD } from "@/lib/format";
+import { toLiveUSD, validateBudgetSplit } from "@/lib/currency";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { OpportunityIntelligenceExtras, ProducerMatchProfile } from "@/services/fylympitchEngine";
@@ -91,6 +92,23 @@ export async function createProject(formData: FormData) {
   if (!title || !logline) return { error: "Title and logline are required." };
   if (logline.length > 500) return { error: "Logline must be 500 characters or fewer." };
 
+  // ── Budget: store original amounts + convert to USD via live-rate waterfall ──
+  const budgetCurrency = str(formData, "budget_currency") || "USD";
+  const budgetAmount        = num(formData, "budget_usd");           // raw amount in budgetCurrency
+  const financeSecuredAmount = num(formData, "finance_secured_usd"); // raw amount in budgetCurrency
+  const fundingNeededAmount  = num(formData, "funding_needed_usd");  // raw amount in budgetCurrency
+
+  // Server-side budget split validation
+  const budgetError = validateBudgetSplit(budgetAmount, financeSecuredAmount, fundingNeededAmount);
+  if (budgetError) return { error: budgetError };
+
+  // Convert to USD using live-rate waterfall (Cerebras-style: try live → fixed fallback)
+  const [budgetUSD, financeSecuredUSD, fundingNeededUSD] = await Promise.all([
+    budgetAmount        != null ? toLiveUSD(budgetAmount, budgetCurrency)        : Promise.resolve(null),
+    financeSecuredAmount != null ? toLiveUSD(financeSecuredAmount, budgetCurrency) : Promise.resolve(null),
+    fundingNeededAmount  != null ? toLiveUSD(fundingNeededAmount, budgetCurrency)  : Promise.resolve(null),
+  ]);
+
   // Generate unique slug for clean public URL
   const { data: generatedSlug } = await supabase.rpc("generate_unique_slug", { base_title: title });
   const slug = generatedSlug ?? title.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "-").slice(0, 60);
@@ -105,10 +123,13 @@ export async function createProject(formData: FormData) {
       format: str(formData, "format") || "feature",
       language: str(formData, "language") || "English",
       country: str(formData, "country") || "India",
-      budget_currency: str(formData, "budget_currency") || "USD",
-      budget_usd: (() => { const v = num(formData, "budget_usd"); const c = str(formData, "budget_currency") || "USD"; return v != null ? toUSD(v, c) : null; })(),
-      finance_secured_usd: (() => { const v = num(formData, "finance_secured_usd"); const c = str(formData, "budget_currency") || "USD"; return v != null ? toUSD(v, c) : null; })(),
-      funding_needed_usd: (() => { const v = num(formData, "funding_needed_usd"); const c = str(formData, "budget_currency") || "USD"; return v != null ? toUSD(v, c) : null; })(),
+      budget_currency:          budgetCurrency,
+      budget_amount:            budgetAmount,
+      budget_usd:               budgetUSD,
+      finance_secured_amount:   financeSecuredAmount,
+      finance_secured_usd:      financeSecuredUSD,
+      funding_needed_amount:    fundingNeededAmount,
+      funding_needed_usd:       fundingNeededUSD,
       stage: str(formData, "stage") || "development",
       logline,
       synopsis: str(formData, "synopsis") || null,

@@ -1,5 +1,5 @@
 "use server";
-import { toUSD } from "@/lib/format";
+import { toLiveUSD, validateBudgetSplit } from "@/lib/currency";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -57,6 +57,23 @@ export async function updateProject(formData: FormData) {
   const id = formData.get("project_id") as string;
   if (!id) return;
 
+  // ── Budget: store original amounts + reconvert to USD via live-rate waterfall ──
+  const budgetCurrency       = (formData.get("budget_currency") as string) || "USD";
+  const budgetAmount         = formData.get("budget_usd")          ? Number(formData.get("budget_usd"))          : null;
+  const financeSecuredAmount = formData.get("finance_secured_usd") ? Number(formData.get("finance_secured_usd")) : null;
+  const fundingNeededAmount  = formData.get("funding_needed_usd")  ? Number(formData.get("funding_needed_usd"))  : null;
+
+  // Server-side validation
+  const budgetError = validateBudgetSplit(budgetAmount, financeSecuredAmount, fundingNeededAmount);
+  if (budgetError) return { error: budgetError };
+
+  // Convert to USD using live-rate waterfall
+  const [budgetUSD, financeSecuredUSD, fundingNeededUSD] = await Promise.all([
+    budgetAmount         != null ? toLiveUSD(budgetAmount, budgetCurrency)         : Promise.resolve(null),
+    financeSecuredAmount != null ? toLiveUSD(financeSecuredAmount, budgetCurrency) : Promise.resolve(null),
+    fundingNeededAmount  != null ? toLiveUSD(fundingNeededAmount, budgetCurrency)  : Promise.resolve(null),
+  ]);
+
   const patch: Record<string, unknown> = {
     title:              formData.get("title"),
     logline:            formData.get("logline"),
@@ -70,10 +87,13 @@ export async function updateProject(formData: FormData) {
     producer_info:      formData.get("producer_info") || null,
     director_name:      formData.get("director_name") || null,
     writer_name:        formData.get("writer_name") || null,
-    budget_currency:     (formData.get("budget_currency") as string) || "USD",
-    budget_usd:          (() => { const v = formData.get("budget_usd") ? Number(formData.get("budget_usd")) : null; const c = (formData.get("budget_currency") as string) || "USD"; return v != null ? toUSD(v, c) : null; })(),
-    finance_secured_usd: (() => { const v = formData.get("finance_secured_usd") ? Number(formData.get("finance_secured_usd")) : null; const c = (formData.get("budget_currency") as string) || "USD"; return v != null ? toUSD(v, c) : null; })(),
-    funding_needed_usd:  (() => { const v = formData.get("funding_needed_usd") ? Number(formData.get("funding_needed_usd")) : null; const c = (formData.get("budget_currency") as string) || "USD"; return v != null ? toUSD(v, c) : null; })(),
+    budget_currency:          budgetCurrency,
+    budget_amount:            budgetAmount,
+    budget_usd:               budgetUSD,
+    finance_secured_amount:   financeSecuredAmount,
+    finance_secured_usd:      financeSecuredUSD,
+    funding_needed_amount:    fundingNeededAmount,
+    funding_needed_usd:       fundingNeededUSD,
     is_public:          formData.get("is_public") === "true",
     updated_at:         new Date().toISOString(),
   };

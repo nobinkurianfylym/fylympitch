@@ -42,8 +42,11 @@ export interface Project {
   country: string;
   budget_currency: string;
   budget_usd: number | null;
+  budget_amount: number | null;          // original entry in budget_currency
   finance_secured_usd: number | null;
+  finance_secured_amount: number | null; // original entry in budget_currency
   funding_needed_usd: number | null;
+  funding_needed_amount: number | null;  // original entry in budget_currency
   stage: ProjectStage;
   logline: string;
   synopsis: string | null;
