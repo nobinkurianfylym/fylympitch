@@ -4,6 +4,7 @@ import Link from "next/link";
 import { upsertProducerProject, requestMeeting } from "@/lib/actions";
 import MessageButton from "@/components/MessageButton";
 import FilmIdentity from "@/components/FilmIdentity";
+import PitchDeckTile from "@/components/PitchDeckTile";
 
 export const dynamic = "force-dynamic";
 
@@ -84,30 +85,15 @@ export default async function ProducerProjectDetailPage({
             supabaseUrl={supabaseUrl}
             actions={
               <div className="flex flex-wrap gap-3 items-center">
-                {/* Primary CTA */}
-                {(deckUrl || scriptUrl) && (
-                  <>
-                    {deckUrl && (
-                      <a
-                        href={deckUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn-gold !py-2.5 !px-5 text-[13px]"
-                      >
-                        View pitch deck ↗
-                      </a>
-                    )}
-                    {scriptUrl && (
-                      <a
-                        href={scriptUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="btn-ghost !py-2.5 !px-5 text-[13px]"
-                      >
-                        Read script
-                      </a>
-                    )}
-                  </>
+                {scriptUrl && (
+                  <a
+                    href={scriptUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-ghost !py-2.5 !px-5 text-[13px]"
+                  >
+                    Read script
+                  </a>
                 )}
                 {filmmaker && (
                   <MessageButton
@@ -120,6 +106,18 @@ export default async function ProducerProjectDetailPage({
               </div>
             }
           />
+
+          {/* ── Pitch deck preview tile ─────────────────────────── */}
+          {deckUrl && (
+            <div className="mt-8">
+              <p className="eyebrow mb-3">Pitch deck</p>
+              <PitchDeckTile
+                deckUrl={deckUrl}
+                title={project.title}
+                className="max-w-sm"
+              />
+            </div>
+          )}
 
           {/* ── Narrative sections — below identity ───────────────── */}
           {(project.synopsis || project.director_statement || project.producer_info) && (

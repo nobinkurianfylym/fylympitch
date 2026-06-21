@@ -16,6 +16,7 @@ import FundingJourney, { type JourneyOpp } from "@/components/FundingJourney";
 import ProjectIntelligenceBox from "@/components/ProjectIntelligenceBox";
 import MessageButton from "@/components/MessageButton";
 import FilmIdentity from "@/components/FilmIdentity";
+import PitchDeckTile from "@/components/PitchDeckTile";
 
 export const dynamic = "force-dynamic";
 
@@ -199,11 +200,6 @@ export default async function ProjectDetailPage({
                   Edit project ✎
                 </Link>
               )}
-              {deckUrl && (
-                <a href={deckUrl} target="_blank" rel="noreferrer" className="btn-ghost !py-2.5 !px-5 text-[13px]">
-                  Pitch deck ↗
-                </a>
-              )}
               {scriptUrl && (
                 <a href={scriptUrl} target="_blank" rel="noreferrer" className="btn-ghost !py-2.5 !px-5 text-[13px]">
                   Script ↗
@@ -232,6 +228,18 @@ export default async function ProjectDetailPage({
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Pitch deck preview tile ── */}
+        {deckUrl && (
+          <div className="mt-8">
+            <p className="eyebrow mb-3">Pitch deck</p>
+            <PitchDeckTile
+              deckUrl={deckUrl}
+              title={project.title}
+              className="max-w-xs"
+            />
           </div>
         )}
       </div>

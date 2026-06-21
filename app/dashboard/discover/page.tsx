@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { usd, STAGE_LABEL } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 import OfferForm from "@/components/OfferForm";
+import PitchDeckTile from "@/components/PitchDeckTile";
 
 export const dynamic = "force-dynamic";
 
@@ -159,12 +160,18 @@ export default async function DiscoverPage({
                 </p>
               )}
 
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                {p.deckUrl && (
-                  <a href={p.deckUrl} target="_blank" rel="noreferrer" className="btn-ghost">
-                    View pitch deck
-                  </a>
-                )}
+              {/* ── Pitch deck preview tile ── */}
+              {p.deckUrl && (
+                <div className="mt-5">
+                  <PitchDeckTile
+                    deckUrl={p.deckUrl}
+                    title={p.title}
+                    className="max-w-sm"
+                  />
+                </div>
+              )}
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
                 {p.scriptUrl && (
                   <a href={p.scriptUrl} target="_blank" rel="noreferrer" className="btn-ghost">
                     Read script
