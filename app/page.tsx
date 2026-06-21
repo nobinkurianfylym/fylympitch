@@ -422,7 +422,7 @@ export default async function Home() {
                 <ul className="space-y-3 text-ivory/70">
                   <li><Link href="/signup?role=producer" className="hover:text-gold">Producers</Link></li>
                   <li><Link href="/signup?role=producer" className="hover:text-gold">Investors</Link></li>
-                  <li><a href="#contact" className="hover:text-gold">List a fund</a></li>
+                  <li><Link href="/funds/submit" className="hover:text-gold">Submit an opportunity</Link></li>
                 </ul>
               </div>
               <div>
