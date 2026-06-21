@@ -37,7 +37,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin/users", label: "User management" },
     { href: "/admin/producers", label: "Producers", badge: pendingProducers },
     { href: "/admin/projects", label: "Project management" },
-    { href: "/admin/opportunities", label: "Fund management" },
+    { href: "/admin/opportunities", label: "Opportunity management" },
     { href: "/admin/intelligence", label: "Intelligence", badge: pendingReview },
     { href: "/admin/certificates", label: "Certificates" },
     { href: "/admin/moderation", label: "Moderation" },

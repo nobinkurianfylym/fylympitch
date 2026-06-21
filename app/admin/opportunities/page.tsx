@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { CATEGORY_CONFIG, OPP_CATEGORY_MAP } from "@/lib/format";
-import { OpportunityEditForm } from "./OpportunityEditForm";
 import { AdminCreateOpportunityForm } from "./AdminCreateOpportunityForm";
+import { OpportunitiesAdminClient } from "./OpportunitiesAdminClient";
 
 export const dynamic = "force-dynamic";
 
@@ -17,70 +16,21 @@ export default async function AdminOpportunities() {
       key_person, contact_email, gender_focus,
       copro_required, festival_affiliated, ott_affiliated
     `)
-    .order("created_at", { ascending: false })
-    .limit(200);
+    .order("is_active", { ascending: false })
+    .order("title", { ascending: true });
 
   const allOpps = (opps ?? []) as any[];
 
-  // Group by category; only show categories that have at least one entry
-  const grouped = CATEGORY_CONFIG
-    .map(cat => ({
-      ...cat,
-      items: allOpps.filter(o => OPP_CATEGORY_MAP[o.opp_type] === cat.key),
-    }))
-    .filter(g => g.items.length > 0);
-
-  // Any opp_type not in the map falls into an "Other" bucket
-  const uncategorised = allOpps.filter(o => !OPP_CATEGORY_MAP[o.opp_type]);
-
   return (
     <div>
-      <p className="eyebrow">Fund management</p>
-      <h1 className="font-display text-[30px] font-normal mt-1">Grants, funds &amp; opportunities</h1>
-      <p className="text-[13px] text-ash font-normal mt-1">{allOpps.length} total · {allOpps.filter(o => o.is_active).length} active</p>
+      <p className="eyebrow">Opportunity management</p>
+      <h1 className="font-display text-[30px] font-normal mt-1">Opportunities</h1>
 
-      {/* Categorised sections */}
-      <div className="mt-8 space-y-10">
-        {grouped.map(cat => (
-          <div key={cat.key}>
-            <div className="mb-3">
-              <div className="flex items-baseline gap-3">
-                <h2 className="font-display text-[22px] font-normal">{cat.label}</h2>
-                <span className="text-[12px] text-ash font-normal tracking-[0.1em]">{cat.items.length}</span>
-              </div>
-              <p className="text-[12px] text-ash/70 font-normal mt-0.5">{cat.sub}</p>
-            </div>
-            <div className="card divide-y divide-line">
-              {cat.items.map(o => (
-                <OpportunityEditForm key={o.id} opp={o as any} />
-              ))}
-            </div>
-          </div>
-        ))}
+      <OpportunitiesAdminClient opps={allOpps} />
 
-        {uncategorised.length > 0 && (
-          <div>
-            <div className="mb-3">
-              <div className="flex items-baseline gap-3">
-                <h2 className="font-display text-[22px] font-normal">Other</h2>
-                <span className="text-[12px] text-ash font-normal tracking-[0.1em]">{uncategorised.length}</span>
-              </div>
-            </div>
-            <div className="card divide-y divide-line">
-              {uncategorised.map(o => (
-                <OpportunityEditForm key={o.id} opp={o as any} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {allOpps.length === 0 && (
-          <p className="text-[14px] text-ash font-normal">No opportunities yet.</p>
-        )}
+      <div className="mt-16 pt-10 border-t border-line">
+        <AdminCreateOpportunityForm />
       </div>
-
-      {/* Add new opportunity */}
-      <AdminCreateOpportunityForm />
     </div>
   );
 }
