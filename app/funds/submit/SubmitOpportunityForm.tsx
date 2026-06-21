@@ -15,10 +15,14 @@ const OPP_TYPES = [
   { value: "broadcaster",        label: "Broadcaster" },
   { value: "streamer",           label: "Streaming Platform" },
   { value: "sales_agent",        label: "Sales Agent" },
-  { value: "tax_incentive",      label: "Tax Incentive" },
+  { value: "brand_integration",  label: "Brand Integration" },
   { value: "crowdfunding",       label: "Crowdfunding" },
-  { value: "sponsor",            label: "Sponsor / Brand" },
+  { value: "producer",           label: "Producer" },
   { value: "production_company", label: "Production Company" },
+  { value: "studio",             label: "Studio" },
+  { value: "sponsor",            label: "Sponsor / Brand" },
+  { value: "pre_sale",           label: "Pre-Sale" },
+  { value: "tax_incentive",      label: "Tax Incentive" },
 ];
 
 export function SubmitOpportunityForm() {
