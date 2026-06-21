@@ -713,7 +713,7 @@ export default async function ProducerProjectDetailPage({
               <input type="hidden" name="status" value="passed" />
               <input type="hidden" name="rating" value={crm?.rating ?? ""} />
               <input type="hidden" name="notes" value={crm?.notes ?? ""} />
-              <button type="submit" style={{
+              <button type="submit" className="fyp-pass-btn" style={{
                 width:         "100%",
                 padding:       "8px 0",
                 background:    "transparent",
@@ -726,10 +726,7 @@ export default async function ProducerProjectDetailPage({
                 fontFamily:    "Montserrat, sans-serif",
                 textAlign:     "center",
                 transition:    "color 0.15s",
-              }}
-              onMouseEnter={e => ((e.target as HTMLButtonElement).style.color = "#dc2626")}
-              onMouseLeave={e => ((e.target as HTMLButtonElement).style.color = "rgba(138,133,124,0.5)")}
-              >
+              }}>
                 Pass on this project
               </button>
             </form>
@@ -739,6 +736,7 @@ export default async function ProducerProjectDetailPage({
 
       {/* ── Responsive: collapse grid on mobile ──────────── */}
       <style>{`
+        .fyp-pass-btn:hover { color: #dc2626 !important; }
         @media (max-width: 900px) {
           .producer-detail-grid {
             grid-template-columns: 1fr !important;
