@@ -26,12 +26,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq("role", "producer")
     .eq("approval_status", "pending");
 
+  // Pending review queue count for intelligence badge
+  const { count: pendingReview } = await supabase
+    .from("admin_review_queue")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+
   const nav = [
     { href: "/admin", label: "Analytics" },
     { href: "/admin/users", label: "User management" },
     { href: "/admin/producers", label: "Producers", badge: pendingProducers },
     { href: "/admin/projects", label: "Project management" },
     { href: "/admin/opportunities", label: "Fund management" },
+    { href: "/admin/intelligence", label: "Intelligence", badge: pendingReview },
     { href: "/admin/certificates", label: "Certificates" },
     { href: "/admin/moderation", label: "Moderation" },
     { href: "/admin/audit", label: "Audit log" },
