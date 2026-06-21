@@ -186,7 +186,7 @@ export default async function ProjectDetailPage({
   const hasIntelligence = isOwner && !!discovery;
 
   return (
-    <div style={{ background: S.canvas, minHeight: "100vh" }}>
+    <div style={{ background: S.canvas, minHeight: "100vh", overflowX: "hidden" }}>
 
       {isOwner && !discovery && <ProjectAnalysisLoader projectId={project.id} />}
 
@@ -247,12 +247,14 @@ export default async function ProjectDetailPage({
           padding:             "0 32px 80px",
           gap:                 0,
           alignItems:          "start",
+          minWidth:            0,
+          overflow:            "hidden",
         }}
         className="filmmaker-detail-grid"
       >
 
         {/* ══ LEFT: Main content ══════════════════════════════ */}
-        <div style={{ paddingRight: hasIntelligence ? 40 : 0, paddingTop: 40 }}>
+        <div style={{ paddingRight: hasIntelligence ? 40 : 0, paddingTop: 40, minWidth: 0, overflow: "hidden" }}>
 
           {/* ── HERO ─────────────────────────────────────────── */}
           <div style={{
@@ -298,6 +300,7 @@ export default async function ProjectDetailPage({
                   fontFamily: "'Playfair Display', Georgia, serif",
                   fontStyle: "italic", fontSize: "clamp(14px, 1.3vw, 17px)",
                   lineHeight: 1.65, color: S.ink, opacity: 0.82, marginBottom: 18,
+                  wordBreak: "break-word", overflowWrap: "break-word",
                 }}>
                   "{project.logline}"
                 </p>
@@ -361,7 +364,7 @@ export default async function ProjectDetailPage({
           {project.synopsis && (
             <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
               <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.gold, fontWeight: 600, marginBottom: 18 }}>Synopsis</p>
-              <p style={{ fontSize: "clamp(15px, 1.3vw, 17px)", lineHeight: 1.8, color: S.ink, whiteSpace: "pre-line" }}>
+              <p style={{ fontSize: "clamp(15px, 1.3vw, 17px)", lineHeight: 1.8, color: S.ink, whiteSpace: "pre-line", wordBreak: "break-word", overflowWrap: "break-word" }}>
                 {project.synopsis}
               </p>
             </div>
@@ -373,7 +376,7 @@ export default async function ProjectDetailPage({
               <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.gold, fontWeight: 600, marginBottom: 18 }}>Director's Statement</p>
               <p style={{
                 fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic",
-                fontSize: "clamp(15px, 1.3vw, 18px)", lineHeight: 1.8, color: S.ink, whiteSpace: "pre-line", opacity: 0.9,
+                fontSize: "clamp(15px, 1.3vw, 18px)", lineHeight: 1.8, color: S.ink, whiteSpace: "pre-line", opacity: 0.9, wordBreak: "break-word", overflowWrap: "break-word",
               }}>
                 {project.director_statement}
               </p>
@@ -384,7 +387,7 @@ export default async function ProjectDetailPage({
           {project.producer_info && (
             <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
               <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.gold, fontWeight: 600, marginBottom: 18 }}>Producers</p>
-              <p style={{ fontSize: "clamp(14px, 1.2vw, 16px)", lineHeight: 1.75, color: S.ink, whiteSpace: "pre-line" }}>
+              <p style={{ fontSize: "clamp(14px, 1.2vw, 16px)", lineHeight: 1.75, color: S.ink, whiteSpace: "pre-line", wordBreak: "break-word", overflowWrap: "break-word" }}>
                 {project.producer_info}
               </p>
             </div>
