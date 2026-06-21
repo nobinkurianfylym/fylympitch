@@ -49,7 +49,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   }
 
   const { data: p } = await supabase.from("projects")
-    .select("id, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, budget_usd, funding_needed_usd, is_public, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username)")
+    .select("id, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, director_name, budget_usd, funding_needed_usd, is_public, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username)")
     .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
 
   if (!p) notFound();
@@ -97,8 +97,15 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
 
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex-1 min-w-0">
-            {/* L2: Metadata row */}
-            <p className="text-[13px] text-ash mb-3 leading-tight">
+            {/* L1: Title — always first */}
+            <h1
+              className="font-display font-bold text-[32px] sm:text-[38px] leading-[1.08] uppercase mb-3"
+              style={{ letterSpacing: "-0.01em" }}
+            >
+              {p.title}
+            </h1>
+            {/* L2: Metadata row — Format · Genre · Country · Language · Stage */}
+            <p className="text-[13px] text-ash leading-tight">
               {[
                 formatFormat(p.format),
                 p.genre,
@@ -107,13 +114,13 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
                 formatStage(p.stage),
               ].filter(Boolean).join(" · ")}
             </p>
-            {/* L1: Title */}
-            <h1
-              className="font-display font-bold text-[32px] sm:text-[38px] leading-[1.08] uppercase"
-              style={{ letterSpacing: "-0.01em" }}
-            >
-              {p.title}
-            </h1>
+            {/* L3: Director */}
+            {(p.director_name || filmmaker?.full_name) && (
+              <p className="mt-3 text-[13px] text-ash">
+                <span className="text-[10px] tracking-[0.08em] uppercase mr-1.5">Dir.</span>
+                <span className="text-ink font-medium">{p.director_name ?? filmmaker?.full_name}</span>
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0 mt-1">
             <LoveButton projectId={p.id} initialCount={p.love_count ?? 0} initialLiked={!!loved} isLoggedIn={true} />
@@ -126,12 +133,13 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           <p className="italic text-[18px] leading-[1.6] mt-5 text-ink">{p.logline}</p>
         )}
 
-        <div className="mt-7 flex flex-wrap gap-6 text-[13px] text-ash">
-          {p.country && (() => { const c = formatCountry(p.country); return <span key="country">{c?.flag ? `${c.flag} ` : ""}{c?.name ?? p.country}</span>; })()}
-          {p.language && <span>Language — <span className="text-ink">{p.language}</span></span>}
-          {p.budget_usd && <span>Budget — <span className="text-ink">{usd(p.budget_usd)}</span></span>}
-          {p.funding_needed_usd && <span>Seeking — <span className="text-gold font-[400]">{usd(p.funding_needed_usd)}</span></span>}
-        </div>
+        {/* Budget / Seeking — only if present, no country/language repeat */}
+        {(p.budget_usd || p.funding_needed_usd) && (
+          <div className="mt-6 flex flex-wrap gap-6 text-[13px] text-ash">
+            {p.budget_usd && <span>Budget — <span className="text-ink">{usd(p.budget_usd)}</span></span>}
+            {p.funding_needed_usd && <span>Seeking — <span className="text-gold font-[400]">{usd(p.funding_needed_usd)}</span></span>}
+          </div>
+        )}
 
         {/* Filmmaker card */}
         {filmmaker && (
