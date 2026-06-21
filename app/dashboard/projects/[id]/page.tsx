@@ -513,16 +513,16 @@ export default async function ProjectDetailPage({
             </div>
           )}
 
-          {/* PITCH DECK — before Synopsis */}
-          {deckUrl && (
+          {/* PITCH DECK — only in My Projects view */}
+          {simpleView && deckUrl && (
             <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}`, display: "flex", flexDirection: "column", alignItems: "center" }}>
               <p style={{ ...SH, alignSelf: "flex-start", color: S.ash }}>Pitch Deck</p>
               <PitchDeckTile deckUrl={deckUrl} title={project.title} className="w-full max-w-[520px]" />
             </div>
           )}
 
-          {/* SYNOPSIS */}
-          {project.synopsis && (
+          {/* SYNOPSIS — only in My Projects view */}
+          {simpleView && project.synopsis && (
             <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
               <p style={SH}>Synopsis</p>
               <p style={{ fontSize: "clamp(15px, 1.3vw, 17px)", lineHeight: 1.8, color: S.ink, whiteSpace: "pre-line", wordBreak: "break-word", overflowWrap: "break-word" }}>
