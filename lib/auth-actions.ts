@@ -21,3 +21,14 @@ export async function markAllRead() {
   await supabase.from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
   revalidatePath("/dashboard/notifications");
 }
+
+export async function deleteNotification(formData: FormData) {
+  const id = formData.get("notification_id") as string;
+  if (!id) return;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("notifications").delete().eq("id", id).eq("user_id", user.id);
+  revalidatePath("/dashboard/notifications");
+  revalidatePath("/producer/notifications");
+}

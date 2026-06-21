@@ -1,16 +1,16 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
-import { markAllRead } from "@/lib/auth-actions";
+import { markAllRead, deleteNotification } from "@/lib/auth-actions";
 
 export const dynamic = "force-dynamic";
 
 const KIND_META: Record<string, { label: string; dot: string }> = {
-  producer_interest: { label: "Producer Interest", dot: "bg-gold" },
-  offer_received:    { label: "Offer",             dot: "bg-emerald-500" },
-  match_found:       { label: "New Match",         dot: "bg-blue-500" },
-  application_update:{ label: "Application",       dot: "bg-violet-500" },
-  system:            { label: "System",            dot: "bg-ash" },
+  producer_interest:  { label: "Producer Interest", dot: "bg-gold" },
+  offer_received:     { label: "Offer",             dot: "bg-emerald-500" },
+  match_found:        { label: "New Match",         dot: "bg-blue-500" },
+  application_update: { label: "Application",       dot: "bg-violet-500" },
+  system:             { label: "System",            dot: "bg-ash" },
 };
 
 export default async function NotificationsPage() {
@@ -77,30 +77,23 @@ export default async function NotificationsPage() {
           return (
             <div
               key={n.id}
-              className={`py-5 flex items-start gap-4 transition-colors ${
+              className={`py-5 flex items-start gap-4 group transition-colors ${
                 isUnread ? "bg-parchment/60 -mx-3 px-3 rounded-card" : ""
               }`}
             >
               {/* Unread dot */}
-              <div className="mt-1.5 shrink-0 flex flex-col items-center gap-1.5">
-                <span className={`w-2 h-2 rounded-full ${isUnread ? meta.dot : "bg-transparent"}`} />
+              <div className="mt-1.5 shrink-0">
+                <span className={`block w-2 h-2 rounded-full ${isUnread ? meta.dot : "bg-transparent"}`} />
               </div>
 
               <div className="flex-1 min-w-0">
-                {/* Kind label */}
                 <p className="text-[10px] tracking-[0.18em] uppercase text-ash mb-1">{meta.label}</p>
-
-                {/* Title */}
                 <p className={`text-[14px] leading-snug ${isUnread ? "text-ink font-medium" : "text-ash"}`}>
                   {n.title}
                 </p>
-
-                {/* Body */}
                 {n.body && (
                   <p className="mt-1 text-[13px] text-ash leading-relaxed">{n.body}</p>
                 )}
-
-                {/* CTA link */}
                 {n.link && (
                   <Link
                     href={n.link}
@@ -111,9 +104,22 @@ export default async function NotificationsPage() {
                 )}
               </div>
 
-              <span className="text-[12px] text-ash shrink-0 mt-0.5 whitespace-nowrap">
-                {timeAgo(n.created_at)}
-              </span>
+              <div className="flex items-center gap-3 shrink-0 mt-0.5">
+                <span className="text-[12px] text-ash whitespace-nowrap">
+                  {timeAgo(n.created_at)}
+                </span>
+                {/* Delete button */}
+                <form action={deleteNotification}>
+                  <input type="hidden" name="notification_id" value={n.id} />
+                  <button
+                    type="submit"
+                    title="Delete notification"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-ash hover:text-red-600 text-[16px] leading-none w-6 h-6 flex items-center justify-center rounded hover:bg-red-50"
+                  >
+                    ×
+                  </button>
+                </form>
+              </div>
             </div>
           );
         })}

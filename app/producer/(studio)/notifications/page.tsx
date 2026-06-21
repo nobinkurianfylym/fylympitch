@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
-import { markAllRead } from "@/lib/auth-actions";
+import { markAllRead, deleteNotification } from "@/lib/auth-actions";
 
 export const dynamic = "force-dynamic";
 
 const KIND_LABEL: Record<string, string> = {
-  new_project:      "New project",
-  producer_match:   "New match",
-  system:           "System",
-  offer_update:     "Offer",
+  new_project:    "New project",
+  producer_match: "New match",
+  system:         "System",
+  offer_update:   "Offer",
 };
 
 export default async function ProducerNotificationsPage() {
@@ -47,7 +47,9 @@ export default async function ProducerNotificationsPage() {
         {(items ?? []).map((n) => (
           <div
             key={n.id}
-            className={`hairline py-5 flex items-start justify-between gap-6 ${!n.read ? "border-l-2 border-gold pl-4 -ml-4" : ""}`}
+            className={`hairline py-5 flex items-start justify-between gap-4 group ${
+              !n.read ? "border-l-2 border-gold pl-4 -ml-4" : ""
+            }`}
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -71,9 +73,26 @@ export default async function ProducerNotificationsPage() {
                 </Link>
               )}
             </div>
-            <span className="text-[12px] text-ash shrink-0 mt-0.5">{timeAgo(n.created_at)}</span>
+
+            <div className="flex items-center gap-3 shrink-0 mt-0.5">
+              <span className="text-[12px] text-ash whitespace-nowrap">
+                {timeAgo(n.created_at)}
+              </span>
+              {/* Delete button */}
+              <form action={deleteNotification}>
+                <input type="hidden" name="notification_id" value={n.id} />
+                <button
+                  type="submit"
+                  title="Delete notification"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-ash hover:text-red-600 text-[16px] leading-none w-6 h-6 flex items-center justify-center rounded hover:bg-red-50"
+                >
+                  ×
+                </button>
+              </form>
+            </div>
           </div>
         ))}
+
         {(!items || items.length === 0) && (
           <p className="hairline py-10 text-[14px] text-ash">All quiet for now.</p>
         )}
