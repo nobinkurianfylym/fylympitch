@@ -4,7 +4,7 @@ import Link from "next/link";
 import { upsertProducerProject, requestMeeting } from "@/lib/actions";
 import MessageButton from "@/components/MessageButton";
 import FilmIdentity from "@/components/FilmIdentity";
-import PitchDeckTile from "@/components/PitchDeckTile";
+import PdfReader from "@/components/PdfReader";
 
 export const dynamic = "force-dynamic";
 
@@ -107,14 +107,29 @@ export default async function ProducerProjectDetailPage({
             }
           />
 
-          {/* ── Pitch deck preview tile ─────────────────────────── */}
+          {/* ── Pitch deck — full in-page reader ─────────────── */}
           {deckUrl && (
-            <div className="mt-8">
-              <p className="eyebrow mb-3">Pitch deck</p>
-              <PitchDeckTile
+            <div className="mt-8 -mx-6 md:-mx-10">
+              <p className="eyebrow mb-3 px-6 md:px-10">Pitch deck</p>
+              <PdfReader
                 deckUrl={deckUrl}
+                projectId={project.id}
                 title={project.title}
-                className="max-w-sm"
+                genre={project.genre}
+                format={project.format}
+                stage={project.stage}
+                country={project.country}
+                language={project.language}
+                logline={project.logline}
+                synopsis={project.synopsis}
+                filmmaker={filmmaker ? {
+                  full_name:    filmmaker.full_name,
+                  career_stage: null,
+                } : null}
+                isProducer={true}
+                isLoggedIn={true}
+                contactHref={`/producer/messages`}
+                backHref="/producer/projects"
               />
             </div>
           )}
