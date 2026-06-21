@@ -64,15 +64,12 @@ BEGIN
   )
     INTO v_partner_orgs;
 
-  -- Festivals: festival-affiliated opportunities + those in festival markets
+  -- Festivals: festival-affiliated opportunities
   SELECT COUNT(*)
     INTO v_festivals
     FROM public.opportunities
    WHERE is_active = true
-     AND (
-       festival_affiliated = true
-       OR opp_type IN ('festival')
-     );
+     AND festival_affiliated = true;
 
   -- Markets: co-production & pitch markets
   SELECT COUNT(*)
