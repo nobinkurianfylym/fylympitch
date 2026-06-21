@@ -440,7 +440,6 @@ export default async function ProducerProjectDetailPage({
                     lineHeight: 1.78,
                     color:      S.ink,
                     whiteSpace: "pre-line",
-                    maxWidth:   640,
                   }}>
                     {project.synopsis}
                   </p>
@@ -457,7 +456,6 @@ export default async function ProducerProjectDetailPage({
                     lineHeight: 1.78,
                     color:      S.ink,
                     whiteSpace: "pre-line",
-                    maxWidth:   600,
                     opacity:    0.9,
                   }}>
                     {project.director_statement}
@@ -473,7 +471,6 @@ export default async function ProducerProjectDetailPage({
                     lineHeight: 1.75,
                     color:      S.ink,
                     whiteSpace: "pre-line",
-                    maxWidth:   600,
                   }}>
                     {project.producer_info}
                   </p>
