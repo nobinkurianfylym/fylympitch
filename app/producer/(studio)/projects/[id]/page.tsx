@@ -7,6 +7,7 @@ import ProjectThumbnail from "@/components/ProjectThumbnail";
 import PitchDeckTile from "@/components/PitchDeckTile";
 import PipelineStageForm from "@/components/PipelineStageForm";
 import StarRatingForm from "@/components/StarRatingForm";
+import PrivateNotesForm from "@/components/PrivateNotesForm";
 import {
   formatBudgetDisplay,
   formatShortId,
@@ -530,32 +531,10 @@ export default async function ProducerProjectDetailPage({
           {/* ── Private Notes ──────────────────────── */}
           <div style={{ marginBottom: 28 }}>
             <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 14 }}>Private Notes</p>
-            <form action={upsertProducerProject} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <input type="hidden" name="project_id" value={project.id} />
-              <input type="hidden" name="status"     value={crm?.status ?? "saved"} />
-              <input type="hidden" name="rating"     value={crm?.rating ?? ""} />
-              <textarea
-                name="notes"
-                rows={4}
-                defaultValue={crm?.notes ?? ""}
-                placeholder="Only you can see these notes…"
-                style={{
-                  width: "100%", padding: "10px 12px", borderRadius: 6,
-                  border: `1px solid ${S.line}`, background: S.surface,
-                  fontSize: 13, lineHeight: 1.6, color: S.ink,
-                  resize: "vertical", fontFamily: "Montserrat, sans-serif",
-                  outline: "none", boxSizing: "border-box",
-                }}
-              />
-              <button type="submit" style={{
-                padding: "7px 0", background: "transparent",
-                border: `1px solid ${S.line}`, borderRadius: 6,
-                fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
-                color: S.ash, cursor: "pointer", fontFamily: "Montserrat, sans-serif",
-              }}>
-                Save notes
-              </button>
-            </form>
+            <PrivateNotesForm
+              projectId={project.id}
+              initialNotes={crm?.notes}
+            />
           </div>
 
           <div style={{ height: 1, background: S.line, margin: "0 0 28px" }} />

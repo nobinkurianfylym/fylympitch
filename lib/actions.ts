@@ -772,6 +772,30 @@ export async function completeOnboarding(formData: FormData) {
 }
 
 // ---------- PRODUCER CRM ----------
+
+/**
+ * Save only the private notes column — never touches status or rating.
+ * Called by PrivateNotesForm (client component) to avoid stale-value clobber.
+ */
+export async function saveProducerNotes(projectId: string, notes: string): Promise<{ error?: string }> {
+  "use server";
+  try {
+    const { supabase, user } = await requireUser();
+    if (!projectId) return { error: "Missing project ID" };
+
+    // Ensure a CRM row exists first (upsert default status if none)
+    await supabase.from("producer_projects").upsert(
+      { producer_id: user.id, project_id: projectId, notes: notes.trim() || null, updated_at: new Date().toISOString() },
+      { onConflict: "producer_id,project_id", ignoreDuplicates: false }
+    );
+
+    revalidatePath(`/producer/projects/${projectId}`);
+    return {};
+  } catch (e) {
+    return { error: String(e) };
+  }
+}
+
 export async function upsertProducerProject(formData: FormData) {
   const { supabase, user } = await requireUser();
   const project_id = str(formData, "project_id");
