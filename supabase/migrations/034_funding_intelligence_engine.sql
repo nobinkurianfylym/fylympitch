@@ -418,10 +418,10 @@ values
  'Annual co-production market. Extract application deadlines and project requirements'),
 
 ('Cannes',
- "L'Atelier",
+ 'L''Atelier',
  'https://www.festival-cannes.com/en/cannes-pro/l-atelier',
  'France', 'Europe', 'lab',
- "Cannes L'Atelier development lab. Extract deadline and eligibility"),
+ 'Cannes L''Atelier development lab. Extract deadline and eligibility'),
 
 ('Venice Film Festival',
  'Venice Production Bridge',
