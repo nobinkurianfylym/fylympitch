@@ -30,6 +30,7 @@ import {
   isOptimistic,
 } from "./message.utils";
 import type { ConversationRow } from "./message.types";
+import { notifyNewMessage } from "./message-notification-action";
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -297,6 +298,14 @@ export function useProjectChat(
       });
 
       retryQueueRef.current.delete(clientId);
+
+      // Fire-and-forget: notify the counterparty by email.
+      // Throttled server-side (skips if recipient was active recently).
+      void notifyNewMessage({
+        conversationId,
+        senderId: currentUserId,
+        messageText: confirmed.message ?? confirmed.attachment_name ?? null,
+      });
 
       setConversations((prev: ConversationListItem[]) =>
         sortByLastMessage(prev.map((c: ConversationListItem) =>

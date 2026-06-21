@@ -327,6 +327,83 @@ export async function sendIntroductionRequest({
   }
 }
 
+// ── New Message Notification ──────────────────────────────────
+export async function sendNewMessageNotification({
+  to,
+  recipientName,
+  senderName,
+  projectTitle,
+  messagePreview,
+  conversationUrl,
+}: {
+  to: string;
+  recipientName: string | null;
+  senderName: string | null;
+  projectTitle: string;
+  messagePreview: string | null;
+  conversationUrl: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY not set — skipping message notification");
+    return;
+  }
+
+  const firstName = recipientName?.split(" ")[0] ?? "there";
+  const from      = senderName ?? "Someone";
+  const preview   = messagePreview
+    ? messagePreview.length > 140
+      ? messagePreview.slice(0, 140) + "…"
+      : messagePreview
+    : "[Attachment]";
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:28px;font-weight:400;font-family:Georgia,serif;color:#1A1815;">
+      New message
+    </h1>
+    <p style="margin:0 0 32px;font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#8A857C;">
+      PITCH.FYLYM Messaging
+    </p>
+
+    <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#1A1815;">
+      Hi ${firstName},
+    </p>
+    <p style="margin:0 0 24px;font-size:16px;line-height:1.65;color:#1A1815;">
+      <strong style="font-weight:500;">${from}</strong> sent you a message about
+      <strong style="font-weight:500;">${projectTitle}</strong>.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0"
+      style="background:#F8F5F0;border:1px solid #E5E0D5;border-left:3px solid #BF9953;
+             border-radius:10px;padding:20px 24px;margin-bottom:28px;">
+      <tr><td>
+        <p style="margin:0;font-size:15px;line-height:1.7;color:#1A1815;font-style:italic;">${preview}</p>
+      </td></tr>
+    </table>
+
+    ${goldButton("Reply on PITCH.FYLYM", conversationUrl)}
+
+    ${divider()}
+
+    <p style="margin:0;font-size:13px;line-height:1.6;color:#8A857C;">
+      You're receiving this because you have an active conversation on
+      <a href="${SITE_URL}" style="color:#BF9953;text-decoration:none;">PITCH.FYLYM</a>.
+    </p>
+  `;
+
+  try {
+    const { error } = await resend.emails.send({
+      from:    FROM_ADDRESS,
+      to,
+      subject: `New message from ${from} — ${projectTitle}`,
+      html:    wrap(body),
+    });
+    if (error) console.error("[email] sendNewMessageNotification:", error);
+  } catch (e) {
+    console.error("[email] sendNewMessageNotification exception:", e);
+  }
+}
+
 // ── Engine Ready ─────────────────────────────────────────────
 export async function sendEngineReady({
   to,
