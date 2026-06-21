@@ -5,6 +5,7 @@ import AddToPipelineButton from "@/components/AddToPipelineButton";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
 import FilmIdentity from "@/components/FilmIdentity";
+import { formatBudget } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
