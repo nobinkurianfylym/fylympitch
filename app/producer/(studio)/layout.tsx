@@ -26,6 +26,7 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
   if (!producerProfile) redirect("/producer/onboarding");
 
   const nav = [
+    { href: "https://pitch.fylym.com/", label: "Home" },
     { href: "/producer",               label: "Discover" },
     { href: "/producer/pipeline",      label: "Pipeline" },
     { href: "/producer/projects",      label: "All Projects" },
