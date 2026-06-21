@@ -150,70 +150,19 @@ export default async function PlatformMetrics() {
     <section
       aria-label="Platform metrics"
       style={{
-        background:   "var(--color-ink, #1A1815)",
-        borderBottom: "1px solid rgba(191,153,83,0.18)",
+        borderTop:    "1px solid rgba(26,24,21,0.08)",
+        borderBottom: "1px solid rgba(26,24,21,0.08)",
         overflow:     "hidden",
       }}
     >
-      {/* ── Header row ───────────────────────────────────────── */}
-      <div
-        style={{
-          display:        "flex",
-          alignItems:     "center",
-          justifyContent: "space-between",
-          padding:        "14px 40px 0",
-          flexWrap:       "wrap",
-          gap:            8,
-        }}
-      >
-        <span
-          style={{
-            fontSize:      9,
-            letterSpacing: "0.28em",
-            textTransform: "uppercase",
-            color:         "#BF9953",
-            fontWeight:    600,
-            fontFamily:    "var(--font-body, Montserrat, sans-serif)",
-          }}
-        >
-          Platform Intelligence
-        </span>
-
-        <span
-          style={{
-            display:       "flex",
-            alignItems:    "center",
-            gap:           6,
-            fontSize:      8.5,
-            letterSpacing: "0.18em",
-            textTransform: "uppercase",
-            color:         "rgba(255,255,255,0.28)",
-            fontFamily:    "var(--font-body, Montserrat, sans-serif)",
-          }}
-        >
-          {/* Pulse dot */}
-          <span
-            style={{
-              display:      "inline-block",
-              width:        5,
-              height:       5,
-              borderRadius: "50%",
-              background:   "#4ade80",
-              boxShadow:    "0 0 6px rgba(74,222,128,0.8)",
-              animation:    "fyp-pulse 2.4s ease-in-out infinite",
-            }}
-          />
-          {updatedStr ? `Updated ${updatedStr}` : "Live"}
-        </span>
-      </div>
-
       {/* ── Metrics grid ─────────────────────────────────────── */}
       <div
         style={{
           display:             "grid",
           gridTemplateColumns: "repeat(5, 1fr)",
-          padding:             "16px 32px 22px",
-          gap:                 0,
+          maxWidth:            1152,
+          margin:              "0 auto",
+          padding:             "0 32px",
         }}
         className="platform-metrics-grid"
       >
@@ -225,50 +174,50 @@ export default async function PlatformMetrics() {
               flexDirection: "column",
               alignItems:    "center",
               textAlign:     "center",
-              padding:       "8px 12px 6px",
+              padding:       "28px 16px 24px",
               borderLeft:    i > 0
-                ? "1px solid rgba(191,153,83,0.14)"
+                ? "1px solid rgba(26,24,21,0.07)"
                 : undefined,
             }}
           >
-            {/* Big number */}
+            {/* Big number — ink, Playfair, dominant */}
             <div
               style={{
-                fontFamily:        "var(--font-display, 'Playfair Display', Georgia, serif)",
-                fontSize:          "clamp(28px, 3.8vw, 52px)",
-                fontWeight:        700,
-                color:             "#F5F5F0",
-                lineHeight:        1,
-                letterSpacing:     "-0.01em",
-                fontVariantNumeric:"tabular-nums",
-                marginBottom:      8,
+                fontFamily:         "var(--font-display, 'Playfair Display', Georgia, serif)",
+                fontSize:           "clamp(32px, 4vw, 56px)",
+                fontWeight:         700,
+                color:              "#1A1815",
+                lineHeight:         1,
+                letterSpacing:      "-0.02em",
+                fontVariantNumeric: "tabular-nums",
+                marginBottom:       10,
               }}
             >
               {value}
             </div>
 
-            {/* Label */}
+            {/* Label — gold, uppercase */}
             <div
               style={{
-                fontSize:      10,
+                fontSize:      9,
                 letterSpacing: "0.22em",
                 textTransform: "uppercase",
                 color:         "#BF9953",
                 fontWeight:    600,
                 fontFamily:    "var(--font-body, Montserrat, sans-serif)",
-                marginBottom:  4,
-                lineHeight:    1.3,
+                marginBottom:  5,
+                lineHeight:    1.4,
               }}
             >
               {label}
             </div>
 
-            {/* Sub-label */}
+            {/* Sub-label — ash, quiet */}
             <div
               style={{
-                fontSize:      8.5,
-                letterSpacing: "0.1em",
-                color:         "rgba(255,255,255,0.25)",
+                fontSize:      8,
+                letterSpacing: "0.08em",
+                color:         "#8A857C",
                 fontFamily:    "var(--font-body, Montserrat, sans-serif)",
                 lineHeight:    1.4,
               }}
@@ -279,22 +228,58 @@ export default async function PlatformMetrics() {
         ))}
       </div>
 
-      {/* ── Keyframes injected inline (no CSS file needed) ────── */}
+      {/* ── Updated timestamp — bottom right, unobtrusive ────── */}
+      {updatedStr && (
+        <div
+          style={{
+            display:        "flex",
+            justifyContent: "flex-end",
+            alignItems:     "center",
+            gap:            5,
+            padding:        "0 40px 10px",
+            maxWidth:       1152,
+            margin:         "0 auto",
+          }}
+        >
+          <span
+            style={{
+              display:      "inline-block",
+              width:        4,
+              height:       4,
+              borderRadius: "50%",
+              background:   "#4ade80",
+              boxShadow:    "0 0 5px rgba(74,222,128,0.7)",
+              animation:    "fyp-pulse 2.4s ease-in-out infinite",
+            }}
+          />
+          <span
+            style={{
+              fontSize:      7.5,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              color:         "#8A857C",
+              fontFamily:    "var(--font-body, Montserrat, sans-serif)",
+            }}
+          >
+            Updated {updatedStr}
+          </span>
+        </div>
+      )}
+
       <style>{`
         @keyframes fyp-pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
-          50%       { opacity: 0.45; transform: scale(0.7); }
+          50%       { opacity: 0.4; transform: scale(0.65); }
         }
         @media (max-width: 767px) {
           .platform-metrics-grid {
             grid-template-columns: repeat(2, 1fr) !important;
-            padding: 12px 20px 18px !important;
+            padding: 0 20px !important;
           }
           .platform-metrics-grid > div:nth-child(5) {
             grid-column: 1 / -1;
             border-left: none !important;
-            border-top: 1px solid rgba(191,153,83,0.14);
-            padding-top: 14px !important;
+            border-top: 1px solid rgba(26,24,21,0.07);
           }
         }
       `}</style>
