@@ -103,6 +103,11 @@ export function AdminCreateOpportunityForm() {
           <input name="gender_focus" placeholder="e.g. Women filmmakers, All" className="field mt-1.5" />
         </label>
 
+        <label className="block sm:col-span-2">
+          <span className="eyebrow">Eligible countries (comma-separated)</span>
+          <input name="eligible_countries" placeholder="e.g. India, Nigeria, Brazil — leave blank for worldwide" className="field mt-1.5" />
+        </label>
+
         <div className="block">
           <span className="eyebrow">Flags</span>
           <div className="mt-2.5 flex flex-col gap-2">

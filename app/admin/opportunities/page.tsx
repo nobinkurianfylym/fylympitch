@@ -13,7 +13,7 @@ export default async function AdminOpportunities() {
       genres, formats, stages, languages,
       min_budget_usd, max_budget_usd, max_award_usd,
       deadline, deadline_note, url, app_link, description, is_active,
-      key_person, contact_email, gender_focus,
+      key_person, contact_email, gender_focus, eligible_countries,
       copro_required, festival_affiliated, ott_affiliated
     `)
     .order("is_active", { ascending: false })

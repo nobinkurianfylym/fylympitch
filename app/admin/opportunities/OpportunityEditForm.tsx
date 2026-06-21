@@ -46,6 +46,7 @@ type Opportunity = {
   key_person: string | null;
   contact_email: string | null;
   gender_focus: string | null;
+  eligible_countries: string[] | null;
   copro_required: boolean | null;
   festival_affiliated: boolean | null;
   ott_affiliated: boolean | null;
@@ -167,6 +168,11 @@ export function OpportunityEditForm({ opp }: { opp: Opportunity }) {
             <label className="block">
               <span className="eyebrow">Gender focus</span>
               <input name="gender_focus" defaultValue={opp.gender_focus ?? ""} placeholder="e.g. Women filmmakers, All" className="field mt-1.5" />
+            </label>
+
+            <label className="block sm:col-span-2">
+              <span className="eyebrow">Eligible countries (comma-separated)</span>
+              <input name="eligible_countries" defaultValue={(opp.eligible_countries ?? []).join(", ")} placeholder="e.g. India, Nigeria, Brazil — leave blank for worldwide" className="field mt-1.5" />
             </label>
 
             <div className="block">
