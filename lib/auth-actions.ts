@@ -18,8 +18,13 @@ export async function markAllRead() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-  await supabase.from("notifications").update({ read: true }).eq("user_id", user.id).eq("read", false);
+  await supabase
+    .from("notifications")
+    .update({ read: true })
+    .eq("user_id", user.id)
+    .eq("read", false);
   revalidatePath("/dashboard/notifications");
+  revalidatePath("/producer/notifications");
 }
 
 export async function deleteNotification(formData: FormData) {
@@ -28,7 +33,23 @@ export async function deleteNotification(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
-  await supabase.from("notifications").delete().eq("id", id).eq("user_id", user.id);
+  await supabase
+    .from("notifications")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+  revalidatePath("/dashboard/notifications");
+  revalidatePath("/producer/notifications");
+}
+
+export async function deleteAllNotifications() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase
+    .from("notifications")
+    .delete()
+    .eq("user_id", user.id);
   revalidatePath("/dashboard/notifications");
   revalidatePath("/producer/notifications");
 }

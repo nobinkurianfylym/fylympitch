@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
-import { markAllRead, deleteNotification } from "@/lib/auth-actions";
+import { markAllRead, deleteNotification, deleteAllNotifications } from "@/lib/auth-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -18,22 +18,33 @@ export default async function NotificationsPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const [{ data: items }, { data: profile }] = await Promise.all([
-    supabase.from("notifications").select("*").eq("user_id", user!.id)
-      .order("created_at", { ascending: false }).limit(80),
-    supabase.from("profiles").select("full_name, country, bio, company, website, imdb_url")
-      .eq("id", user!.id).single(),
+    supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", user!.id)
+      .order("created_at", { ascending: false })
+      .limit(80),
+    supabase
+      .from("profiles")
+      .select("full_name, country, bio, company, website, imdb_url")
+      .eq("id", user!.id)
+      .single(),
   ]);
 
   const completionFields = [
     profile?.full_name, profile?.country, profile?.bio,
     profile?.company, (profile as any)?.website || (profile as any)?.imdb_url,
   ];
-  const completion = Math.round((completionFields.filter(Boolean).length / completionFields.length) * 100);
+  const completion = Math.round(
+    (completionFields.filter(Boolean).length / completionFields.length) * 100
+  );
 
   const unreadCount = (items ?? []).filter((n: any) => !n.read).length;
+  const hasAny = (items ?? []).length > 0;
 
   return (
     <div>
+      {/* ── Header ── */}
       <div className="flex items-end justify-between">
         <div>
           <p className="eyebrow mb-3">Inbox</p>
@@ -46,20 +57,37 @@ export default async function NotificationsPage() {
             )}
           </h1>
         </div>
-        {unreadCount > 0 && (
-          <form action={markAllRead}>
-            <button className="btn-ghost !px-5 !py-2.5">Mark all read</button>
-          </form>
-        )}
       </div>
 
-      {/* Profile completion nudge */}
+      {/* ── Bulk actions bar ── */}
+      {hasAny && (
+        <div className="flex items-center gap-3 mt-6">
+          {unreadCount > 0 && (
+            <form action={markAllRead}>
+              <button className="btn-ghost !px-4 !py-2 text-[12px]">
+                Mark all read
+              </button>
+            </form>
+          )}
+          <form action={deleteAllNotifications}>
+            <button className="btn-ghost !px-4 !py-2 text-[12px] hover:!border-red-300 hover:!text-red-600">
+              Delete all
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ── Profile completion nudge ── */}
       {completion < 70 && (
-        <Link href="/dashboard/profile"
-          className="flex items-center gap-4 py-4 px-5 card hover:border-gold transition-colors mt-8">
+        <Link
+          href="/dashboard/profile"
+          className="flex items-center gap-4 py-4 px-5 card hover:border-gold transition-colors mt-8"
+        >
           <div className="flex-1 min-w-0">
             <p className="text-[13px] text-ink font-medium">Complete your profile</p>
-            <p className="text-[12px] text-ash mt-0.5">A fuller profile unlocks better matches — {completion}% done.</p>
+            <p className="text-[12px] text-ash mt-0.5">
+              A fuller profile unlocks better matches — {completion}% done.
+            </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-20 h-[3px] bg-line rounded-full overflow-hidden">
@@ -70,6 +98,7 @@ export default async function NotificationsPage() {
         </Link>
       )}
 
+      {/* ── List ── */}
       <div className="mt-8 divide-y divide-line">
         {(items ?? []).map((n: any) => {
           const meta = KIND_META[n.kind] ?? KIND_META.system;
@@ -82,13 +111,24 @@ export default async function NotificationsPage() {
               }`}
             >
               {/* Unread dot */}
-              <div className="mt-1.5 shrink-0">
-                <span className={`block w-2 h-2 rounded-full ${isUnread ? meta.dot : "bg-transparent"}`} />
+              <div className="mt-2 shrink-0">
+                <span
+                  className={`block w-2 h-2 rounded-full ${
+                    isUnread ? meta.dot : "bg-transparent"
+                  }`}
+                />
               </div>
 
+              {/* Content */}
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] tracking-[0.18em] uppercase text-ash mb-1">{meta.label}</p>
-                <p className={`text-[14px] leading-snug ${isUnread ? "text-ink font-medium" : "text-ash"}`}>
+                <p className="text-[10px] tracking-[0.18em] uppercase text-ash mb-1">
+                  {meta.label}
+                </p>
+                <p
+                  className={`text-[14px] leading-snug ${
+                    isUnread ? "text-ink font-medium" : "text-ash"
+                  }`}
+                >
                   {n.title}
                 </p>
                 {n.body && (
@@ -104,17 +144,17 @@ export default async function NotificationsPage() {
                 )}
               </div>
 
-              <div className="flex items-center gap-3 shrink-0 mt-0.5">
+              {/* Timestamp + delete */}
+              <div className="flex items-center gap-3 shrink-0 mt-1">
                 <span className="text-[12px] text-ash whitespace-nowrap">
                   {timeAgo(n.created_at)}
                 </span>
-                {/* Delete button */}
                 <form action={deleteNotification}>
                   <input type="hidden" name="notification_id" value={n.id} />
                   <button
                     type="submit"
-                    title="Delete notification"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-ash hover:text-red-600 text-[16px] leading-none w-6 h-6 flex items-center justify-center rounded hover:bg-red-50"
+                    title="Delete"
+                    className="w-8 h-8 flex items-center justify-center rounded text-[20px] leading-none text-ash/50 hover:text-red-600 hover:bg-red-50 transition-colors"
                   >
                     ×
                   </button>
