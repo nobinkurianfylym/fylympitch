@@ -27,9 +27,9 @@ select cron.schedule(
   '0 2 * * *',   -- every day at 02:00 UTC
   $$
   select net.http_post(
-    url     := 'https://<PROJECT_REF>.supabase.co/functions/v1/funding-intelligence',
+    url     := 'https://hwwilevvoinecedexmok.supabase.co/functions/v1/funding-intelligence',
     headers := jsonb_build_object(
-      'Authorization', 'Bearer <SERVICE_ROLE_KEY>',
+      'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3d2lsZXZ2b2luZWNlZGV4bW9rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTI3NjY5NCwiZXhwIjoyMDk2ODUyNjk0fQ.zORR-B4ChE-0V4zBI0h4L4tNNXe7GMYM3yDOTtOjnlE',
       'Content-Type',  'application/json'
     ),
     body    := '{}'::jsonb
