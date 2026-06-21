@@ -17,6 +17,7 @@ import MessageButton from "@/components/MessageButton";
 import PitchDeckTile from "@/components/PitchDeckTile";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import ProjectIntelligenceSidebar from "@/components/ProjectIntelligenceSidebar";
+import FilmmakerWorkspace, { type WorkspaceDeadline } from "@/components/FilmmakerWorkspace";
 import {
   formatBudgetDisplay, formatShortId, formatCountry, STAGE_BADGE,
 } from "@/lib/film-identity";
@@ -147,6 +148,39 @@ export default async function ProjectDetailPage({
   const deckUrl   = await signedUrl("pitch-decks", project.pitch_deck_path);
   const scriptUrl = await signedUrl("scripts",     project.script_path);
 
+  // ── Workspace data (only when coming from My Projects) ──────
+  let workspaceIntroCount    = 0;
+  let workspaceMeetingTotal  = 0;
+  let workspaceMeetingAccept = 0;
+
+  if (simpleView && isOwner) {
+    const [introRes, meetingRes] = await Promise.all([
+      supabase.from("introduction_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("filmmaker_id", user!.id).eq("project_id", id),
+      supabase.from("meeting_requests")
+        .select("status")
+        .eq("filmmaker_id", user!.id).eq("project_id", id),
+    ]);
+    workspaceIntroCount    = introRes.count ?? 0;
+    workspaceMeetingTotal  = (meetingRes.data ?? []).length;
+    workspaceMeetingAccept = (meetingRes.data ?? []).filter((m: any) => m.status === "accepted").length;
+  }
+
+  // Upcoming deadlines for workspace (top matches with a future deadline)
+  const upcomingDeadlines: WorkspaceDeadline[] = journeyOpps
+    .filter(o => o.deadline && new Date(o.deadline) > new Date())
+    .slice(0, 6)
+    .map(o => ({
+      id:            o.id,
+      title:         o.title,
+      opp_type:      o.opp_type,
+      deadline:      o.deadline,
+      deadline_note: o.deadline_note,
+      max_award_usd: o.max_award_usd,
+      score:         o.score,
+    }));
+
   const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const director     = project.director_name ?? (project as any).profiles?.full_name ?? null;
   const secured      = project.finance_secured_usd;
@@ -232,7 +266,7 @@ export default async function ProjectDetailPage({
         className="filmmaker-detail-grid"
         style={{
           display: "grid",
-          gridTemplateColumns: hasIntel ? "1fr 284px" : "1fr",
+          gridTemplateColumns: hasIntel ? "1fr 284px" : simpleView ? "1fr 284px" : "1fr",
           maxWidth: 1200, margin: "0 auto",
           padding: "0 32px 80px",
           alignItems: "start", minWidth: 0,
@@ -240,7 +274,7 @@ export default async function ProjectDetailPage({
       >
 
         {/* ════ MAIN COLUMN ════════════════════════════════════ */}
-        <div style={{ paddingRight: hasIntel ? 40 : 0, paddingTop: 40, minWidth: 0, overflow: "hidden" }}>
+        <div style={{ paddingRight: (hasIntel || simpleView) ? 40 : 0, paddingTop: 40, minWidth: 0, overflow: "hidden" }}>
 
           {/* HERO */}
           <div style={{
@@ -604,13 +638,31 @@ export default async function ProjectDetailPage({
           )}
         </div>
 
-        {/* ════ RIGHT SIDEBAR (sticky) ═════════════════════════ */}
+        {/* ════ RIGHT SIDEBAR ══════════════════════════════════ */}
         {hasIntel && (
           <div style={{ position: "sticky", top: 52, alignSelf: "start", paddingTop: 32 }}>
             <ProjectIntelligenceSidebar
               discovery={discovery!}
               readiness={readiness}
               dream={dream}
+            />
+          </div>
+        )}
+
+        {/* ════ FILMMAKER WORKSPACE (simpleView) ═══════════════ */}
+        {simpleView && isOwner && (
+          <div style={{ position: "sticky", top: 52, alignSelf: "start", paddingTop: 32, paddingLeft: 24, borderLeft: `1px solid rgba(26,24,21,0.07)` }}>
+            <FilmmakerWorkspace
+              projectId={project.id}
+              hasPitchDeck={!!project.pitch_deck_path}
+              hasIntel={!!discovery}
+              hasMatches={ranked.length > 0}
+              introCount={workspaceIntroCount}
+              meetingTotal={workspaceMeetingTotal}
+              meetingAccepted={workspaceMeetingAccept}
+              fundingSecured={(project as any).finance_secured_usd ?? null}
+              loveCount={(project as any).love_count ?? 0}
+              upcomingDeadlines={upcomingDeadlines}
             />
           </div>
         )}
