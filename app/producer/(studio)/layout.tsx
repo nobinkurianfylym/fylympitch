@@ -26,51 +26,54 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
   if (!producerProfile) redirect("/producer/onboarding");
 
   const nav = [
-    { href: "/producer",               label: "Discover",         icon: "ti-compass" },
-    { href: "/producer/pipeline",      label: "Pipeline",         icon: "ti-layout-kanban" },
-    { href: "/producer/projects",      label: "All projects",     icon: "ti-stack-2" },
-    { href: "/producer/meetings",      label: "Meetings & Notes", icon: "ti-calendar" },
-    { href: "/producer/messages",      label: totalMsgUnread > 0 ? `Messages (${totalMsgUnread})` : "Messages",      icon: "ti-message" },
-    { href: "/producer/notifications", label: (unreadNotif ?? 0) > 0 ? `Notifications (${unreadNotif})` : "Notifications", icon: "ti-bell" },
-    { href: "/producer/profile",       label: "My profile",       icon: "ti-user" },
+    { href: "/producer",               label: "Discover" },
+    { href: "/producer/pipeline",      label: "Pipeline" },
+    { href: "/producer/projects",      label: "All Projects" },
+    { href: "/producer/meetings",      label: "Meetings & Notes" },
+    { href: "/producer/messages",      label: totalMsgUnread > 0 ? `Messages (${totalMsgUnread})` : "Messages" },
+    { href: "/producer/notifications", label: (unreadNotif ?? 0) > 0 ? `Notifications (${unreadNotif})` : "Notifications" },
+    { href: "/producer/profile",       label: "My Profile" },
   ];
 
   return (
     <div className="min-h-screen md:flex bg-ivory">
-      <aside className="md:w-56 md:min-h-screen border-b md:border-b-0 md:border-r border-line px-5 py-7 flex md:flex-col gap-6 md:gap-0 items-center md:items-start overflow-x-auto bg-ivory">
-        <div className="flex flex-col gap-1 w-full">
+      <aside className="md:w-60 md:min-h-screen border-b md:border-b-0 md:border-r border-line px-6 py-7 flex md:flex-col gap-6 md:gap-0 items-center md:items-start overflow-x-auto bg-ivory">
+        <div className="flex flex-col gap-1">
           <Wordmark href="/" />
           <span className="text-[10px] tracking-[0.22em] uppercase text-ash mt-1">Producer Studio</span>
         </div>
 
-        <nav className="flex md:flex-col gap-4 md:gap-0 md:mt-10 md:space-y-1 w-full">
+        <nav className="flex md:flex-col gap-5 md:gap-0 md:mt-12 md:space-y-5 text-[12px] tracking-[0.16em] uppercase whitespace-nowrap">
           {nav.map((n) => (
             <Link key={n.href} href={n.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-card text-[13px] text-ash hover:text-ink hover:bg-parchment transition-colors">
-              <i className={`ti ${n.icon}`} style={{ fontSize: 16 }} aria-hidden="true" />
+              className={`hover:text-ink transition-colors ${
+                n.href === "/producer/notifications" && (unreadNotif ?? 0) > 0
+                  ? "text-gold hover:text-gold/80"
+                  : n.href === "/producer/messages" && totalMsgUnread > 0
+                  ? "text-gold hover:text-gold/80"
+                  : "text-ash"
+              }`}>
               {n.label}
             </Link>
           ))}
         </nav>
 
-        <div className="md:mt-auto md:pt-8 ml-auto md:ml-0 flex flex-col gap-3 w-full">
-          <div className="flex items-center gap-3 px-3">
-            {/* Avatar circle */}
-            <Link href="/producer/profile" className="shrink-0">
-              <div className="w-8 h-8 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center hover:border-gold transition-colors">
-                {(profile as any)?.avatar_url ? (
-                  <img src={(profile as any).avatar_url} alt={(profile as any).full_name ?? ""} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="font-display text-[11px] text-ash">
-                    {((profile as any)?.full_name ?? "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
-                  </span>
-                )}
-              </div>
-            </Link>
-            <form action={signOut}>
-              <button className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-gold">Sign out</button>
-            </form>
-          </div>
+        <div className="md:mt-auto md:pt-12 ml-auto md:ml-0 flex items-center gap-3">
+          {/* Avatar circle */}
+          <Link href="/producer/profile" className="shrink-0">
+            <div className="w-8 h-8 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center hover:border-gold transition-colors">
+              {(profile as any)?.avatar_url ? (
+                <img src={(profile as any).avatar_url} alt={(profile as any).full_name ?? ""} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-display text-[11px] text-ash">
+                  {((profile as any)?.full_name ?? "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                </span>
+              )}
+            </div>
+          </Link>
+          <form action={signOut}>
+            <button className="text-[12px] tracking-[0.16em] uppercase text-ash hover:text-gold">Sign out</button>
+          </form>
         </div>
       </aside>
 
