@@ -105,6 +105,7 @@ export async function createProject(formData: FormData) {
       language: str(formData, "language") || "English",
       country: str(formData, "country") || "India",
       budget_usd: num(formData, "budget_usd"),
+      finance_secured_usd: num(formData, "finance_secured_usd"),
       funding_needed_usd: num(formData, "funding_needed_usd"),
       stage: str(formData, "stage") || "development",
       logline,

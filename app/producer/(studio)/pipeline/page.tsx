@@ -34,7 +34,7 @@ export default async function ProducerPipelinePage() {
       id, status, rating, notes, updated_at,
       projects:project_id (
         id, title, genre, format, stage, country, language,
-        logline, funding_needed_usd, poster_path, is_public
+        logline, funding_needed_usd, finance_secured_usd, poster_path, is_public
       )
     `)
     .eq("producer_id", user.id)
@@ -133,8 +133,11 @@ export default async function ProducerPipelinePage() {
                               <span className="text-[11px] text-gold">{"★".repeat(row.rating)}</span>
                             )}
                           </div>
+                          {(p as any).finance_secured_usd && (
+                            <p className="mt-1 text-[12px] text-emerald-700">Secured {usd((p as any).finance_secured_usd)}</p>
+                          )}
                           {p.funding_needed_usd && (
-                            <p className="mt-2 text-[12px] text-gold">{usd(p.funding_needed_usd)}</p>
+                            <p className="mt-1 text-[12px] text-gold">{usd(p.funding_needed_usd)}</p>
                           )}
                         </Link>
                       );

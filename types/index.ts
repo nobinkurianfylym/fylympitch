@@ -41,6 +41,7 @@ export interface Project {
   language: string;
   country: string;
   budget_usd: number | null;
+  finance_secured_usd: number | null;
   funding_needed_usd: number | null;
   stage: ProjectStage;
   logline: string;

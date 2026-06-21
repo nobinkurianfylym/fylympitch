@@ -97,14 +97,14 @@ function AiLoader() {
 
 type Fields = {
   title: string; genre: string; format: string; language: string; country: string;
-  budget_usd: string; funding_needed_usd: string; stage: string;
+  budget_usd: string; finance_secured_usd: string; funding_needed_usd: string; stage: string;
   logline: string; synopsis: string; director_statement: string; producer_info: string;
 };
 type AiFilled = Partial<Record<keyof Fields, boolean>>;
 
 const DEFAULT_FIELDS: Fields = {
   title: "", genre: "Drama", format: "feature", language: "Malayalam",
-  country: "India", budget_usd: "", funding_needed_usd: "", stage: "development",
+  country: "India", budget_usd: "", finance_secured_usd: "", funding_needed_usd: "", stage: "development",
   logline: "", synopsis: "", director_statement: "", producer_info: "",
 };
 
@@ -279,7 +279,7 @@ export default function ProjectForm() {
           const next = { ...prev };
           const keys: (keyof Fields)[] = [
             "title","genre","format","language","country",
-            "budget_usd","funding_needed_usd","stage",
+            "budget_usd","finance_secured_usd","funding_needed_usd","stage",
             "logline","synopsis","director_statement","producer_info",
           ];
           for (const k of keys) {
@@ -482,6 +482,12 @@ export default function ProjectForm() {
                 <input id="budget_usd" name="budget_usd" type="number" min="0" step="1000"
                   className="field" placeholder="400000"
                   value={fields.budget_usd} onChange={set("budget_usd")} />
+              </div>
+              <div>
+                <label className="field-label" htmlFor="finance_secured_usd">"Finance secured (USD)"</label>
+                <input id="finance_secured_usd" name="finance_secured_usd" type="number" min="0" step="1000"
+                  className="field" placeholder="100000"
+                  value={fields.finance_secured_usd} onChange={set("finance_secured_usd")} />
               </div>
               <div>
                 <label className="field-label" htmlFor="funding_needed_usd">"Funding needed (USD)"</label>

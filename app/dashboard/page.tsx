@@ -29,7 +29,7 @@ export default async function DashboardPage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, title, stage, genre, format, country, language, logline, funding_needed_usd, is_public, created_at, poster_path, love_count")
+    .select("id, title, stage, genre, format, country, language, logline, funding_needed_usd, finance_secured_usd, is_public, created_at, poster_path, love_count")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -256,6 +256,9 @@ export default async function DashboardPage() {
                       )}
                       {(p.love_count ?? 0) > 0 && (
                         <span className="text-ash">♥ {p.love_count}</span>
+                      )}
+                      {(p as any).finance_secured_usd && (
+                        <span className="text-emerald-700 shrink-0 text-[12px]">Secured {usd((p as any).finance_secured_usd)}</span>
                       )}
                       {p.funding_needed_usd && (
                         <span className="text-gold ml-auto shrink-0">{usd(p.funding_needed_usd)}</span>

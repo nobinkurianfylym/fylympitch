@@ -37,7 +37,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
   const [{ data: projects }, { data: credits }, { data: producerProfile }, { data: me }] = await Promise.all([
-    supabase.from("projects").select("id, title, genre, format, logline, poster_path, slug, love_count, funding_needed_usd")
+    supabase.from("projects").select("id, title, genre, format, logline, poster_path, slug, love_count, finance_secured_usd, funding_needed_usd")
       .eq("owner_id", profile.id).eq("is_public", true).order("created_at", { ascending: false }),
     supabase.from("filmmaker_credits").select("*").eq("user_id", profile.id)
       .eq("is_featured", true).order("year", { ascending: false }).limit(6),
@@ -141,6 +141,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                     {p.logline && <p className="font-display italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">&ldquo;{p.logline}&rdquo;</p>}
                     <div className="mt-4 pt-4 border-t border-line flex items-center justify-between text-[12px]">
                       <span className="text-ash">♥ {p.love_count ?? 0}</span>
+                      {(p as any).finance_secured_usd && <span className="text-emerald-700">Secured ${((p as any).finance_secured_usd / 1000).toFixed(0)}K</span>}
                       {p.funding_needed_usd && <span className="text-gold">Seeking ${(p.funding_needed_usd / 1000).toFixed(0)}K</span>}
                     </div>
                   </div>

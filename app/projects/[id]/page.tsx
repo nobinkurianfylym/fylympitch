@@ -49,7 +49,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   }
 
   const { data: p } = await supabase.from("projects")
-    .select("id, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, director_name, budget_usd, funding_needed_usd, is_public, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username)")
+    .select("id, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, director_name, budget_usd, finance_secured_usd, funding_needed_usd, is_public, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username)")
     .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
 
   if (!p) notFound();
@@ -137,6 +137,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
         {(p.budget_usd || p.funding_needed_usd) && (
           <div className="mt-6 flex flex-wrap gap-6 text-[13px] text-ash">
             {p.budget_usd && <span>Budget — <span className="text-ink">{usd(p.budget_usd)}</span></span>}
+            {(p as any).finance_secured_usd && <span>Secured — <span className="text-emerald-700 font-[400]">{usd((p as any).finance_secured_usd)}</span></span>}
             {p.funding_needed_usd && <span>Seeking — <span className="text-gold font-[400]">{usd(p.funding_needed_usd)}</span></span>}
           </div>
         )}

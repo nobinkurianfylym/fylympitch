@@ -69,8 +69,9 @@ export async function updateProject(formData: FormData) {
     producer_info:      formData.get("producer_info") || null,
     director_name:      formData.get("director_name") || null,
     writer_name:        formData.get("writer_name") || null,
-    budget_usd:         formData.get("budget_usd") ? Number(formData.get("budget_usd")) : null,
-    funding_needed_usd: formData.get("funding_needed_usd") ? Number(formData.get("funding_needed_usd")) : null,
+    budget_usd:          formData.get("budget_usd") ? Number(formData.get("budget_usd")) : null,
+    finance_secured_usd: formData.get("finance_secured_usd") ? Number(formData.get("finance_secured_usd")) : null,
+    funding_needed_usd:  formData.get("funding_needed_usd") ? Number(formData.get("funding_needed_usd")) : null,
     is_public:          formData.get("is_public") === "true",
     updated_at:         new Date().toISOString(),
   };

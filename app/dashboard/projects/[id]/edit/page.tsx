@@ -87,6 +87,10 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
             <input name="budget_usd" type="number" min="0" defaultValue={project.budget_usd ?? ""} className="field w-full" />
           </div>
           <div>
+            <label className="field-label mb-1 block">Finance secured (USD)</label>
+            <input name="finance_secured_usd" type="number" min="0" defaultValue={(project as any).finance_secured_usd ?? ""} className="field w-full" />
+          </div>
+          <div>
             <label className="field-label mb-1 block">Funding needed (USD)</label>
             <input name="funding_needed_usd" type="number" min="0" defaultValue={project.funding_needed_usd ?? ""} className="field w-full" />
           </div>

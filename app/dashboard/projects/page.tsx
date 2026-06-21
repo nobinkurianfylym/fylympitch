@@ -21,7 +21,7 @@ export default async function MyProjectsPage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, title, genre, format, stage, country, language, logline, funding_needed_usd, poster_path, love_count, is_public, admin_hidden, created_at")
+    .select("id, title, genre, format, stage, country, language, logline, funding_needed_usd, finance_secured_usd, poster_path, love_count, is_public, admin_hidden, created_at")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
