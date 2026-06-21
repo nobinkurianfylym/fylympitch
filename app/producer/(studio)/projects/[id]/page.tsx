@@ -1,10 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { upsertProducerProject, requestMeeting } from "@/lib/actions";
+import { upsertProducerProject } from "@/lib/actions";
 import MessageButton from "@/components/MessageButton";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import PitchDeckTile from "@/components/PitchDeckTile";
+import PipelineStageForm from "@/components/PipelineStageForm";
+import StarRatingForm from "@/components/StarRatingForm";
 import {
   formatBudgetDisplay,
   formatShortId,
@@ -407,21 +409,22 @@ export default async function ProducerProjectDetailPage({
 
           {/* ── 2c. PITCH DECK ───────────────────────────────── */}
           {deckUrl && (
-            <div style={{ paddingTop: 36, paddingBottom: 36, borderBottom: `1px solid ${S.line}` }}>
+            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}`, display: "flex", flexDirection: "column", alignItems: "center" }}>
               <p style={{
                 fontSize:      9,
                 letterSpacing: "0.22em",
                 textTransform: "uppercase",
                 color:         S.ash,
                 fontWeight:    600,
-                marginBottom:  16,
+                marginBottom:  20,
+                alignSelf:     "flex-start",
               }}>
                 Pitch Deck
               </p>
               <PitchDeckTile
                 deckUrl={deckUrl}
                 title={project.title}
-                className="max-w-xs"
+                className="w-full max-w-[520px]"
               />
             </div>
           )}
@@ -501,231 +504,91 @@ export default async function ProducerProjectDetailPage({
             Producer Workspace
           </p>
 
-          {/* ── Pipeline Stage ─────────────────────── */}
+          {/* ── Pipeline Stage — client component ──── */}
           <div style={{ marginBottom: 28 }}>
-            <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 12 }}>Pipeline Stage</p>
-            <form action={upsertProducerProject} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <input type="hidden" name="project_id" value={project.id} />
-              <input type="hidden" name="rating" value={crm?.rating ?? ""} />
-              <input type="hidden" name="notes" value={crm?.notes ?? ""} />
-              {PIPELINE_STAGES.map((s) => {
-                const isActive = crm?.status === s.key;
-                return (
-                  <label key={s.key} style={{
-                    display:      "flex",
-                    alignItems:   "center",
-                    gap:          10,
-                    padding:      "9px 12px",
-                    borderRadius: 6,
-                    border:       `1px solid ${isActive ? "rgba(191,153,83,0.35)" : S.line}`,
-                    background:   isActive ? "rgba(191,153,83,0.06)" : "transparent",
-                    cursor:       "pointer",
-                    transition:   "background 0.15s, border-color 0.15s",
-                  }}>
-                    <input
-                      type="radio"
-                      name="status"
-                      value={s.key}
-                      defaultChecked={isActive}
-                      style={{ accentColor: S.gold, width: 13, height: 13, flexShrink: 0 }}
-                    />
-                    <span style={{
-                      fontSize:      12,
-                      color:         isActive ? S.ink : S.ash,
-                      fontWeight:    isActive ? 600 : 400,
-                      letterSpacing: "0.04em",
-                    }}>
-                      {s.label}
-                    </span>
-                  </label>
-                );
-              })}
-              <button type="submit" style={{
-                marginTop:     8,
-                padding:       "8px 0",
-                background:    S.ink,
-                color:         "#FAFAF8",
-                border:        "none",
-                borderRadius:  6,
-                fontSize:      11,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                fontWeight:    600,
-                cursor:        "pointer",
-                fontFamily:    "Montserrat, sans-serif",
-                transition:    "opacity 0.15s",
-              }}>
-                Update stage
-              </button>
-            </form>
+            <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 14 }}>Pipeline Stage</p>
+            <PipelineStageForm
+              projectId={project.id}
+              currentStatus={crm?.status}
+              rating={crm?.rating}
+              notes={crm?.notes}
+            />
           </div>
 
-          <div style={{ height: 1, background: S.line, margin: "0 0 24px" }} />
+          <div style={{ height: 1, background: S.line, margin: "0 0 28px" }} />
 
-          {/* ── Internal Rating ────────────────────── */}
+          {/* ── Star Rating — client component ─────── */}
           <div style={{ marginBottom: 28 }}>
-            <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 12 }}>Your Rating</p>
-            <form action={upsertProducerProject}>
-              <input type="hidden" name="project_id" value={project.id} />
-              <input type="hidden" name="status" value={crm?.status ?? "saved"} />
-              <input type="hidden" name="notes" value={crm?.notes ?? ""} />
-              <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <label key={n} style={{ cursor: "pointer" }}>
-                    <input type="radio" name="rating" value={n} defaultChecked={crm?.rating === n} className="sr-only" />
-                    <span style={{
-                      fontSize:   24,
-                      color:      (crm?.rating ?? 0) >= n ? S.gold : "rgba(26,24,21,0.12)",
-                      transition: "color 0.15s",
-                      display:    "block",
-                      lineHeight: 1,
-                    }}>★</span>
-                  </label>
-                ))}
-              </div>
-              <button type="submit" style={{
-                width:         "100%",
-                padding:       "7px 0",
-                background:    "transparent",
-                border:        `1px solid ${S.line}`,
-                borderRadius:  6,
-                fontSize:      11,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color:         S.ash,
-                cursor:        "pointer",
-                fontFamily:    "Montserrat, sans-serif",
-              }}>
-                Save rating
-              </button>
-            </form>
+            <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 14 }}>Your Rating</p>
+            <StarRatingForm
+              projectId={project.id}
+              currentStatus={crm?.status}
+              currentRating={crm?.rating}
+              notes={crm?.notes}
+            />
           </div>
 
-          <div style={{ height: 1, background: S.line, margin: "0 0 24px" }} />
+          <div style={{ height: 1, background: S.line, margin: "0 0 28px" }} />
 
           {/* ── Private Notes ──────────────────────── */}
           <div style={{ marginBottom: 28 }}>
-            <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 12 }}>Private Notes</p>
+            <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 14 }}>Private Notes</p>
             <form action={upsertProducerProject} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <input type="hidden" name="project_id" value={project.id} />
-              <input type="hidden" name="status" value={crm?.status ?? "saved"} />
-              <input type="hidden" name="rating" value={crm?.rating ?? ""} />
+              <input type="hidden" name="status"     value={crm?.status ?? "saved"} />
+              <input type="hidden" name="rating"     value={crm?.rating ?? ""} />
               <textarea
                 name="notes"
                 rows={4}
                 defaultValue={crm?.notes ?? ""}
                 placeholder="Only you can see these notes…"
                 style={{
-                  width:        "100%",
-                  padding:      "10px 12px",
-                  borderRadius: 6,
-                  border:       `1px solid ${S.line}`,
-                  background:   S.surface,
-                  fontSize:     13,
-                  lineHeight:   1.6,
-                  color:        S.ink,
-                  resize:       "vertical",
-                  fontFamily:   "Montserrat, sans-serif",
-                  outline:      "none",
-                  boxSizing:    "border-box",
+                  width: "100%", padding: "10px 12px", borderRadius: 6,
+                  border: `1px solid ${S.line}`, background: S.surface,
+                  fontSize: 13, lineHeight: 1.6, color: S.ink,
+                  resize: "vertical", fontFamily: "Montserrat, sans-serif",
+                  outline: "none", boxSizing: "border-box",
                 }}
               />
               <button type="submit" style={{
-                padding:       "7px 0",
-                background:    "transparent",
-                border:        `1px solid ${S.line}`,
-                borderRadius:  6,
-                fontSize:      11,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color:         S.ash,
-                cursor:        "pointer",
-                fontFamily:    "Montserrat, sans-serif",
+                padding: "7px 0", background: "transparent",
+                border: `1px solid ${S.line}`, borderRadius: 6,
+                fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
+                color: S.ash, cursor: "pointer", fontFamily: "Montserrat, sans-serif",
               }}>
                 Save notes
               </button>
             </form>
           </div>
 
-          <div style={{ height: 1, background: S.line, margin: "0 0 24px" }} />
+          <div style={{ height: 1, background: S.line, margin: "0 0 28px" }} />
 
-          {/* ── Meeting ────────────────────────────── */}
-          <div style={{ marginBottom: 28 }}>
-            <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 12 }}>Meeting</p>
-            {meeting ? (
-              <div>
-                <p style={{ fontSize: 12, color: S.ash, marginBottom: 4 }}>
-                  Request sent —{" "}
-                  <span style={{ color: S.ink, fontWeight: 500, textTransform: "capitalize" }}>{meeting.status}</span>
-                </p>
-                {meeting.status === "accepted" && (
-                  <p style={{ fontSize: 11, color: "#2E6B4E", lineHeight: 1.5 }}>
-                    Filmmaker accepted. Check your email.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <form action={requestMeeting} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <input type="hidden" name="project_id" value={project.id} />
-                <input type="hidden" name="filmmaker_id" value={filmmaker?.id ?? project.owner_id} />
-                <textarea
-                  name="message"
-                  rows={3}
-                  placeholder="Introduce yourself and explain your interest…"
-                  style={{
-                    width:        "100%",
-                    padding:      "10px 12px",
-                    borderRadius: 6,
-                    border:       `1px solid ${S.line}`,
-                    background:   S.surface,
-                    fontSize:     13,
-                    lineHeight:   1.6,
-                    color:        S.ink,
-                    resize:       "vertical",
-                    fontFamily:   "Montserrat, sans-serif",
-                    outline:      "none",
-                    boxSizing:    "border-box",
-                  }}
-                />
-                <button type="submit" style={{
-                  padding:       "8px 0",
-                  background:    S.gold,
-                  color:         "#fff",
-                  border:        "none",
-                  borderRadius:  6,
-                  fontSize:      11,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  fontWeight:    600,
-                  cursor:        "pointer",
-                  fontFamily:    "Montserrat, sans-serif",
-                }}>
-                  Request meeting
-                </button>
-              </form>
-            )}
-          </div>
+          {/* ── Message Filmmaker ──────────────────── */}
+          {filmmaker && (
+            <div style={{ marginBottom: 28 }}>
+              <MessageButton
+                projectId={project.id}
+                producerId={user.id}
+                filmakerId={filmmaker.id ?? project.owner_id}
+                label="Message Filmmaker"
+                className="w-full text-[11px] tracking-[0.14em] uppercase font-semibold text-white bg-[#BF9953] border-0 rounded-[6px] py-[11px] px-4 cursor-pointer block text-center hover:opacity-90 transition-opacity disabled:opacity-50"
+              />
+            </div>
+          )}
 
           {/* ── Pass on project ────────────────────── */}
           {crm?.status !== "passed" && (
             <form action={upsertProducerProject}>
               <input type="hidden" name="project_id" value={project.id} />
-              <input type="hidden" name="status" value="passed" />
-              <input type="hidden" name="rating" value={crm?.rating ?? ""} />
-              <input type="hidden" name="notes" value={crm?.notes ?? ""} />
+              <input type="hidden" name="status"     value="passed" />
+              <input type="hidden" name="rating"     value={crm?.rating ?? ""} />
+              <input type="hidden" name="notes"      value={crm?.notes ?? ""} />
               <button type="submit" className="fyp-pass-btn" style={{
-                width:         "100%",
-                padding:       "8px 0",
-                background:    "transparent",
-                border:        "none",
-                fontSize:      11,
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                color:         "rgba(138,133,124,0.5)",
-                cursor:        "pointer",
-                fontFamily:    "Montserrat, sans-serif",
-                textAlign:     "center",
-                transition:    "color 0.15s",
+                width: "100%", padding: "8px 0", background: "transparent",
+                border: "none", fontSize: 11, letterSpacing: "0.12em",
+                textTransform: "uppercase", color: "rgba(138,133,124,0.4)",
+                cursor: "pointer", fontFamily: "Montserrat, sans-serif",
+                textAlign: "center", transition: "color 0.15s",
               }}>
                 Pass on this project
               </button>
