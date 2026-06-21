@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { usd, timeAgo } from "@/lib/format";
 import { deleteProject, respondToOffer } from "@/lib/project-actions";
+import { requestProducerIntroduction } from "@/lib/actions";
 import type { Opportunity, Project } from "@/types";
 import type {
   FundingDiscovery, FundingObstacle, Roadmap,
@@ -17,8 +18,7 @@ import PitchDeckTile from "@/components/PitchDeckTile";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import ProjectIntelligenceSidebar from "@/components/ProjectIntelligenceSidebar";
 import {
-  formatBudgetDisplay, formatShortId, formatStage,
-  formatCountry, STAGE_BADGE,
+  formatBudgetDisplay, formatShortId, formatCountry, STAGE_BADGE,
 } from "@/lib/film-identity";
 
 export const dynamic = "force-dynamic";
@@ -31,12 +31,14 @@ const STAGE_LABEL: Record<string, string> = {
   development: "Development", pre_production: "Pre-Production",
   production: "Production", post_production: "Post-Production", completed: "Completed",
 };
+const OPP_LABELS: Record<string, string> = {
+  grant: "Grant", lab: "Lab", co_production: "Co-Pro", fund: "Fund",
+  market: "Market", producer: "Producer", investor: "Investor",
+};
 
 export default async function ProjectDetailPage({
   params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+}: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -44,12 +46,10 @@ export default async function ProjectDetailPage({
   const { data: project } = await supabase
     .from("projects")
     .select("*, profiles!projects_owner_id_fkey(full_name)")
-    .eq("id", id)
-    .single<Project>();
+    .eq("id", id).single<Project>();
   if (!project) notFound();
   const isOwner = project.owner_id === user!.id;
 
-  // ── Engine intelligence ───────────────────────────────────────
   const { data: intel } = await supabase
     .from("project_intelligence").select("*").eq("project_id", id).single();
 
@@ -61,15 +61,13 @@ export default async function ProjectDetailPage({
   const dream:     DreamScenario | null          = intel?.dream_scenario ?? null;
   const producerMatches: ProducerMatch[]         = intel?.producer_matches ?? [];
 
-  // ── Introduction requests ─────────────────────────────────────
   const { data: introRequests } = await supabase
     .from("introduction_requests").select("producer_user_id")
     .eq("filmmaker_id", user!.id).eq("project_id", id);
-  const requestedProducerIds = (introRequests ?? []).map(
-    (r: { producer_user_id: string }) => r.producer_user_id
+  const requestedProducerIds = new Set(
+    (introRequests ?? []).map((r: { producer_user_id: string }) => r.producer_user_id)
   );
 
-  // ── Match scores ──────────────────────────────────────────────
   type MatchDbRow = {
     score: number; tier: string; reasons: string[];
     opportunity: {
@@ -92,19 +90,19 @@ export default async function ProjectDetailPage({
 
   if (matchRows && matchRows.length > 0) {
     ranked = matchRows
-      .filter((m) => m.tier !== "hidden" && m.opportunity)
-      .filter((m) => !isCompleted || COMPLETED_TYPES.has(m.opportunity!.opp_type))
+      .filter(m => m.tier !== "hidden" && m.opportunity)
+      .filter(m => !isCompleted || COMPLETED_TYPES.has(m.opportunity!.opp_type))
       .slice(0, 10)
-      .map((m) => ({
+      .map(m => ({
         id: m.opportunity!.id, title: m.opportunity!.title,
         opp_type: m.opportunity!.opp_type, max_award_usd: m.opportunity!.max_award_usd,
         deadline_note: m.opportunity!.deadline_note, deadline: m.opportunity!.deadline,
         score: m.score, tier: m.tier, warnings: [],
       }));
     journeyOpps = matchRows
-      .filter((m) => m.score > 0 && m.opportunity)
-      .filter((m) => !isCompleted || COMPLETED_TYPES.has(m.opportunity!.opp_type))
-      .map((m) => ({
+      .filter(m => m.score > 0 && m.opportunity)
+      .filter(m => !isCompleted || COMPLETED_TYPES.has(m.opportunity!.opp_type))
+      .map(m => ({
         id: m.opportunity!.id, title: m.opportunity!.title,
         country: m.opportunity!.country, opp_type: m.opportunity!.opp_type,
         max_award_usd: m.opportunity!.max_award_usd, deadline: m.opportunity!.deadline,
@@ -112,39 +110,29 @@ export default async function ProjectDetailPage({
         url: m.opportunity!.url, app_link: m.opportunity!.app_link,
       }));
   } else {
-    let fallbackQuery = supabase
-      .from("opportunities").select("*").eq("is_active", true)
-      .not("match_weight", "is", null)
-      .order("match_weight", { ascending: false }).limit(80);
-    if (isCompleted) fallbackQuery = (fallbackQuery as any).in("opp_type", [...COMPLETED_TYPES]);
-    const { data: opps } = await fallbackQuery;
+    let q = supabase.from("opportunities").select("*").eq("is_active", true)
+      .not("match_weight", "is", null).order("match_weight", { ascending: false }).limit(80);
+    if (isCompleted) q = (q as any).in("opp_type", [...COMPLETED_TYPES]);
+    const { data: opps } = await q;
     const { calculateMatchScore } = await import("@/services/matching");
-    const scoredOpps = (opps ?? []).map((o: Opportunity) => ({ o, m: calculateMatchScore(project, o) }));
-    ranked = scoredOpps
-      .filter((r) => r.m.tier !== "hidden").sort((a, b) => b.m.score - a.m.score).slice(0, 10)
-      .map(({ o, m }) => ({
-        id: o.id, title: o.title, opp_type: o.opp_type,
+    const scored = (opps ?? []).map((o: Opportunity) => ({ o, m: calculateMatchScore(project, o) }));
+    ranked = scored.filter(r => r.m.tier !== "hidden").sort((a,b) => b.m.score - a.m.score).slice(0, 10)
+      .map(({ o, m }) => ({ id: o.id, title: o.title, opp_type: o.opp_type,
         max_award_usd: o.max_award_usd, deadline_note: (o as any).deadline_note,
-        deadline: o.deadline, score: m.score, tier: m.tier, warnings: m.warnings,
-      }));
-    journeyOpps = scoredOpps
-      .filter(({ m }) => m.score > 0).sort((a, b) => b.m.score - a.m.score)
-      .map(({ o, m }) => ({
-        id: o.id, title: o.title, country: o.country ?? null, opp_type: o.opp_type,
-        max_award_usd: o.max_award_usd ?? null, deadline: o.deadline ?? null,
-        deadline_note: (o as any).deadline_note ?? null, score: m.score,
-        url: o.url ?? null, app_link: (o as any).app_link ?? null,
-      }));
+        deadline: o.deadline, score: m.score, tier: m.tier, warnings: m.warnings }));
+    journeyOpps = scored.filter(({ m }) => m.score > 0).sort((a,b) => b.m.score - a.m.score)
+      .map(({ o, m }) => ({ id: o.id, title: o.title, country: o.country ?? null,
+        opp_type: o.opp_type, max_award_usd: o.max_award_usd ?? null,
+        deadline: o.deadline ?? null, deadline_note: (o as any).deadline_note ?? null,
+        score: m.score, url: o.url ?? null, app_link: (o as any).app_link ?? null }));
   }
 
-  // ── Offers ────────────────────────────────────────────────────
   const { data: offers } = isOwner
     ? await supabase.from("offers")
         .select("*, profiles!offers_from_user_id_fkey(full_name, company, role)")
         .eq("project_id", id).order("created_at", { ascending: false })
     : { data: [] as any[] };
 
-  // ── Signed URLs ───────────────────────────────────────────────
   async function signedUrl(bucket: string, path: string | null) {
     if (!path) return null;
     const { data } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
@@ -153,7 +141,6 @@ export default async function ProjectDetailPage({
   const deckUrl   = await signedUrl("pitch-decks", project.pitch_deck_path);
   const scriptUrl = await signedUrl("scripts",     project.script_path);
 
-  // ── Display values ────────────────────────────────────────────
   const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const director     = project.director_name ?? (project as any).profiles?.full_name ?? null;
   const secured      = project.finance_secured_usd;
@@ -174,23 +161,24 @@ export default async function ProjectDetailPage({
   ].filter(Boolean) as string[];
 
   const S = {
-    canvas:  "#FAFAF8",
-    ink:     "#1A1815",
-    ash:     "#8A857C",
-    gold:    "#BF9953",
-    line:    "rgba(26,24,21,0.07)",
-    surface: "#FFFFFF",
-    mist:    "rgba(26,24,21,0.03)",
+    canvas:  "#FAFAF8", ink: "#1A1815", ash: "#8A857C",
+    gold:    "#BF9953", line: "rgba(26,24,21,0.07)",
+    surface: "#FFFFFF", mist: "rgba(26,24,21,0.03)",
   } as const;
 
-  const hasIntelligence = isOwner && !!discovery;
+  const hasIntel = isOwner && !!discovery;
+
+  // ── Section heading style ────────────────────────────────────
+  const SH: React.CSSProperties = {
+    fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase",
+    color: S.gold, fontWeight: 600, marginBottom: 18,
+  };
 
   return (
     <div style={{ background: S.canvas, minHeight: "100vh", overflowX: "hidden" }}>
-
       {isOwner && !discovery && <ProjectAnalysisLoader projectId={project.id} />}
 
-      {/* ══ STICKY ACTION BAR ══════════════════════════════════ */}
+      {/* ── ACTION BAR ─────────────────────────────────────────── */}
       <div style={{
         position: "sticky", top: 0, zIndex: 20,
         background: S.canvas, borderBottom: `1px solid ${S.line}`,
@@ -198,9 +186,9 @@ export default async function ProjectDetailPage({
         padding: "0 32px", height: 52, gap: 12,
       }}>
         <Link href="/dashboard" style={{
-          display: "flex", alignItems: "center", gap: 6,
+          display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
           fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase",
-          color: S.ash, textDecoration: "none", flexShrink: 0,
+          color: S.ash, textDecoration: "none",
         }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -213,9 +201,7 @@ export default async function ProjectDetailPage({
           letterSpacing: "-0.01em", textTransform: "uppercase",
           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
           flex: 1, textAlign: "center",
-        }}>
-          {project.title}
-        </span>
+        }}>{project.title}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           {scriptUrl && (
             <a href={scriptUrl} target="_blank" rel="noreferrer" style={{
@@ -231,32 +217,26 @@ export default async function ProjectDetailPage({
               padding: "6px 14px", border: `1px solid rgba(26,24,21,0.2)`, borderRadius: 6,
             }}>Edit</Link>
           )}
-          {isOwner && !!discovery && (
-            <RerunEngineButton projectId={project.id} hasData={true} />
-          )}
+          {isOwner && !!discovery && <RerunEngineButton projectId={project.id} hasData={true} />}
         </div>
       </div>
 
-      {/* ══ 2-COLUMN LAYOUT ════════════════════════════════════ */}
+      {/* ── 2-COLUMN GRID ──────────────────────────────────────── */}
       <div
-        style={{
-          display:             "grid",
-          gridTemplateColumns: hasIntelligence ? "1fr 292px" : "1fr",
-          maxWidth:            1200,
-          margin:              "0 auto",
-          padding:             "0 32px 80px",
-          gap:                 0,
-          alignItems:          "start",
-          minWidth:            0,
-          overflow:            "hidden",
-        }}
         className="filmmaker-detail-grid"
+        style={{
+          display: "grid",
+          gridTemplateColumns: hasIntel ? "1fr 284px" : "1fr",
+          maxWidth: 1200, margin: "0 auto",
+          padding: "0 32px 80px",
+          alignItems: "start", minWidth: 0,
+        }}
       >
 
-        {/* ══ LEFT: Main content ══════════════════════════════ */}
-        <div style={{ paddingRight: hasIntelligence ? 40 : 0, paddingTop: 40, minWidth: 0, overflow: "hidden" }}>
+        {/* ════ MAIN COLUMN ════════════════════════════════════ */}
+        <div style={{ paddingRight: hasIntel ? 40 : 0, paddingTop: 40, minWidth: 0, overflow: "hidden" }}>
 
-          {/* ── HERO ─────────────────────────────────────────── */}
+          {/* HERO */}
           <div style={{
             display: "flex", gap: 28, alignItems: "flex-start",
             paddingBottom: 36, borderBottom: `1px solid ${S.line}`,
@@ -266,24 +246,16 @@ export default async function ProjectDetailPage({
               overflow: "hidden", boxShadow: "0 4px 24px rgba(26,24,21,0.12)",
               aspectRatio: "2/3", background: S.mist,
             }}>
-              <ProjectThumbnail
-                posterPath={project.poster_path}
-                title={project.title}
-                genre={project.genre}
-                supabaseUrl={supabaseUrl}
-                className="w-full h-full object-cover"
-              />
+              <ProjectThumbnail posterPath={project.poster_path} title={project.title}
+                genre={project.genre} supabaseUrl={supabaseUrl} className="w-full h-full object-cover" />
             </div>
-
             <div style={{ flex: 1, minWidth: 0, paddingTop: 4 }}>
               <h1 style={{
                 fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "clamp(24px, 2.8vw, 42px)", fontWeight: 700,
-                color: S.ink, lineHeight: 1.06, letterSpacing: "-0.02em",
-                textTransform: "uppercase", margin: 0, marginBottom: 14,
-              }}>
-                {project.title}
-              </h1>
+                fontSize: "clamp(24px, 2.8vw, 42px)", fontWeight: 700, color: S.ink,
+                lineHeight: 1.06, letterSpacing: "-0.02em", textTransform: "uppercase",
+                margin: 0, marginBottom: 14, wordBreak: "break-word",
+              }}>{project.title}</h1>
               {metaItems.length > 0 && (
                 <p style={{ fontSize: 12, letterSpacing: "0.1em", color: S.ash, lineHeight: 1.6, marginBottom: director ? 10 : 0 }}>
                   {metaItems.join("  ·  ")}
@@ -297,13 +269,11 @@ export default async function ProjectDetailPage({
               )}
               {project.logline && (
                 <p style={{
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  fontStyle: "italic", fontSize: "clamp(14px, 1.3vw, 17px)",
-                  lineHeight: 1.65, color: S.ink, opacity: 0.82, marginBottom: 18,
+                  fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic",
+                  fontSize: "clamp(14px, 1.3vw, 17px)", lineHeight: 1.65,
+                  color: S.ink, opacity: 0.82, marginBottom: 18,
                   wordBreak: "break-word", overflowWrap: "break-word",
-                }}>
-                  "{project.logline}"
-                </p>
+                }}>"{project.logline}"</p>
               )}
               {stageDisplay && stageBadge && (
                 <span style={{
@@ -311,14 +281,12 @@ export default async function ProjectDetailPage({
                   textTransform: "uppercase", fontWeight: 600,
                   padding: "4px 10px", borderRadius: 4,
                   background: stageBadge.bg, color: stageBadge.color,
-                }}>
-                  {stageDisplay}
-                </span>
+                }}>{stageDisplay}</span>
               )}
             </div>
           </div>
 
-          {/* ── INVESTMENT STRIP ─────────────────────────────── */}
+          {/* INVESTMENT STRIP */}
           {(budget !== "—" || secured || seeking) && (
             <div style={{
               display: "grid",
@@ -360,59 +328,132 @@ export default async function ProjectDetailPage({
             </div>
           )}
 
-          {/* ── SYNOPSIS ─────────────────────────────────────── */}
-          {project.synopsis && (
-            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.gold, fontWeight: 600, marginBottom: 18 }}>Synopsis</p>
-              <p style={{ fontSize: "clamp(15px, 1.3vw, 17px)", lineHeight: 1.8, color: S.ink, whiteSpace: "pre-line", wordBreak: "break-word", overflowWrap: "break-word" }}>
-                {project.synopsis}
-              </p>
+          {/* TOP MATCHES */}
+          {isOwner && ranked.length > 0 && (
+            <div style={{ paddingTop: 36, paddingBottom: 36, borderBottom: `1px solid ${S.line}` }}>
+              <p style={SH}>Top Matches</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {ranked.slice(0, 8).map(m => (
+                  <Link key={m.id}
+                    href={`/dashboard/opportunities/${m.id}?project=${project.id}`}
+                    className="fyp-match-row"
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "10px 14px", borderRadius: 8,
+                      border: `1px solid ${S.line}`, background: S.surface,
+                      textDecoration: "none", transition: "border-color 0.15s",
+                    }}
+                  >
+                    <span style={{
+                      fontSize: 8, letterSpacing: "0.1em", textTransform: "uppercase",
+                      padding: "2px 7px", borderRadius: 4, flexShrink: 0,
+                      background: "rgba(191,153,83,0.08)", color: S.gold, fontWeight: 600,
+                    }}>
+                      {OPP_LABELS[m.opp_type] ?? m.opp_type}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, color: S.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>
+                        {m.title}
+                      </p>
+                      {(m.max_award_usd || m.deadline_note || m.deadline) && (
+                        <p style={{ fontSize: 10, color: S.ash }}>
+                          {m.max_award_usd ? usd(m.max_award_usd) : ""}
+                          {m.max_award_usd && (m.deadline_note || m.deadline) ? " · " : ""}
+                          {m.deadline_note ?? (m.deadline ? new Date(m.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "")}
+                        </p>
+                      )}
+                    </div>
+                    <div style={{
+                      fontFamily: "'Playfair Display', serif",
+                      fontSize: 20, fontWeight: 700, color: S.gold,
+                      flexShrink: 0, minWidth: 32, textAlign: "right",
+                    }}>{m.score}</div>
+                  </Link>
+                ))}
+              </div>
+              {ranked.length > 8 && (
+                <Link href="/dashboard/opportunities" style={{
+                  display: "inline-block", marginTop: 12,
+                  fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase",
+                  color: S.gold, textDecoration: "none", opacity: 0.75,
+                }}>
+                  View all {ranked.length} matches →
+                </Link>
+              )}
             </div>
           )}
 
-          {/* ── DIRECTOR'S STATEMENT ─────────────────────────── */}
-          {project.director_statement && (
-            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.gold, fontWeight: 600, marginBottom: 18 }}>Director's Statement</p>
-              <p style={{
-                fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic",
-                fontSize: "clamp(15px, 1.3vw, 18px)", lineHeight: 1.8, color: S.ink, whiteSpace: "pre-line", opacity: 0.9, wordBreak: "break-word", overflowWrap: "break-word",
-              }}>
-                {project.director_statement}
-              </p>
+          {/* PRODUCER MATCHES */}
+          {isOwner && producerMatches.length > 0 && (
+            <div style={{ paddingTop: 36, paddingBottom: 36, borderBottom: `1px solid ${S.line}` }}>
+              <p style={SH}>Producers &amp; Investors</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {producerMatches.slice(0, 5).map(pm => {
+                  const done = requestedProducerIds.has(pm.profile.id);
+                  const initials = pm.profile.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                  return (
+                    <div key={pm.profile.id} style={{
+                      display: "flex", alignItems: "center", gap: 12,
+                      padding: "12px 14px", borderRadius: 8,
+                      border: `1px solid ${S.line}`, background: S.surface,
+                    }}>
+                      <div style={{
+                        width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+                        background: "rgba(26,24,21,0.06)", overflow: "hidden",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 11, color: S.ash, border: `1px solid ${S.line}`,
+                      }}>
+                        {pm.profile.avatar_url
+                          ? <img src={pm.profile.avatar_url} alt={pm.profile.full_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          : initials}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, color: S.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>
+                          {pm.profile.full_name}
+                          {pm.profile.company && <span style={{ color: S.ash }}> · {pm.profile.company}</span>}
+                        </p>
+                        <span style={{
+                          fontSize: 8, letterSpacing: "0.12em", textTransform: "uppercase",
+                          padding: "2px 7px", borderRadius: 100, fontWeight: 600,
+                          background: "rgba(191,153,83,0.08)", color: S.gold,
+                        }}>
+                          {pm.profile.role === "investor" ? "Investor" : pm.profile.role === "organization" ? "Org" : "Producer"}
+                        </span>
+                      </div>
+                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: S.gold, flexShrink: 0, marginRight: 8 }}>
+                        {pm.score}
+                      </div>
+                      {done
+                        ? <span style={{ fontSize: 10, color: "#16a34a", whiteSpace: "nowrap", flexShrink: 0 }}>✓ Sent</span>
+                        : (
+                          <form action={requestProducerIntroduction} style={{ flexShrink: 0 }}>
+                            <input type="hidden" name="producer_user_id" value={pm.profile.id} />
+                            <input type="hidden" name="project_id" value={project.id} />
+                            <button type="submit" style={{
+                              fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
+                              padding: "6px 12px", borderRadius: 6,
+                              border: `1px solid rgba(26,24,21,0.2)`,
+                              background: "transparent", color: S.ink,
+                              cursor: "pointer", whiteSpace: "nowrap",
+                              fontFamily: "Montserrat, sans-serif",
+                            }}>Connect →</button>
+                          </form>
+                        )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          {/* ── PRODUCERS ────────────────────────────────────── */}
-          {project.producer_info && (
-            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.gold, fontWeight: 600, marginBottom: 18 }}>Producers</p>
-              <p style={{ fontSize: "clamp(14px, 1.2vw, 16px)", lineHeight: 1.75, color: S.ink, whiteSpace: "pre-line", wordBreak: "break-word", overflowWrap: "break-word" }}>
-                {project.producer_info}
-              </p>
-            </div>
-          )}
-
-          {/* ── PITCH DECK — centered, 520px ─────────────────── */}
-          {deckUrl && (
-            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}`, display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 18, alignSelf: "flex-start" }}>
-                Pitch Deck
-              </p>
-              <PitchDeckTile deckUrl={deckUrl} title={project.title} className="w-full max-w-[520px]" />
-            </div>
-          )}
-
-          {/* ── EP BRIEF ─────────────────────────────────────── */}
+          {/* AI EP BRIEF */}
           {isOwner && epBrief && (
             <div style={{ paddingTop: 36, paddingBottom: 36, borderBottom: `1px solid ${S.line}` }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.gold, fontWeight: 600, marginBottom: 18 }}>
-                AI Executive Producer
-              </p>
+              <p style={SH}>AI Executive Producer</p>
               <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: S.ink, marginBottom: 8 }}>
                 {epBrief.next_best_move?.title}
               </h3>
-              <p style={{ fontSize: 14, lineHeight: 1.7, color: S.ash, marginBottom: 18, maxWidth: 560 }}>
+              <p style={{ fontSize: 14, lineHeight: 1.7, color: S.ash, marginBottom: 18 }}>
                 {epBrief.summary}
               </p>
               {epBrief.next_best_move && (
@@ -432,19 +473,57 @@ export default async function ProjectDetailPage({
             </div>
           )}
 
-          {/* ── FUNDING JOURNEY ──────────────────────────────── */}
+          {/* PITCH DECK — before Synopsis */}
+          {deckUrl && (
+            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}`, display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <p style={{ ...SH, alignSelf: "flex-start", color: S.ash }}>Pitch Deck</p>
+              <PitchDeckTile deckUrl={deckUrl} title={project.title} className="w-full max-w-[520px]" />
+            </div>
+          )}
+
+          {/* SYNOPSIS */}
+          {project.synopsis && (
+            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
+              <p style={SH}>Synopsis</p>
+              <p style={{ fontSize: "clamp(15px, 1.3vw, 17px)", lineHeight: 1.8, color: S.ink, whiteSpace: "pre-line", wordBreak: "break-word", overflowWrap: "break-word" }}>
+                {project.synopsis}
+              </p>
+            </div>
+          )}
+
+          {/* DIRECTOR'S STATEMENT */}
+          {project.director_statement && (
+            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
+              <p style={SH}>Director's Statement</p>
+              <p style={{
+                fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic",
+                fontSize: "clamp(15px, 1.3vw, 18px)", lineHeight: 1.8, color: S.ink,
+                whiteSpace: "pre-line", opacity: 0.9, wordBreak: "break-word", overflowWrap: "break-word",
+              }}>{project.director_statement}</p>
+            </div>
+          )}
+
+          {/* PRODUCERS */}
+          {project.producer_info && (
+            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
+              <p style={SH}>Producers</p>
+              <p style={{ fontSize: "clamp(14px, 1.2vw, 16px)", lineHeight: 1.75, color: S.ink, whiteSpace: "pre-line", wordBreak: "break-word", overflowWrap: "break-word" }}>
+                {project.producer_info}
+              </p>
+            </div>
+          )}
+
+          {/* FUNDING JOURNEY */}
           {isOwner && (
             <div style={{ paddingTop: 8 }}>
               <FundingJourney projectId={project.id} opportunities={journeyOpps} roadmap={roadmap} readiness={readiness} />
             </div>
           )}
 
-          {/* ── OBSTACLES ────────────────────────────────────── */}
+          {/* OBSTACLES */}
           {isOwner && obstacles.length > 0 && (
             <div style={{ paddingTop: 40, paddingBottom: 40, borderTop: `1px solid ${S.line}` }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.gold, fontWeight: 600, marginBottom: 6 }}>
-                Strengthen Before Applying
-              </p>
+              <p style={SH}>Strengthen Before Applying</p>
               <p style={{ fontSize: 12, color: S.ash, marginBottom: 18 }}>
                 Address these to improve match scores and application success rates.
               </p>
@@ -452,15 +531,14 @@ export default async function ProjectDetailPage({
                 {obstacles.map((ob: FundingObstacle) => (
                   <div key={ob.id} style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-                    padding: "12px 14px", borderRadius: 8,
-                    border: `1px solid ${S.line}`, background: S.surface,
+                    padding: "12px 14px", borderRadius: 8, border: `1px solid ${S.line}`, background: S.surface,
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{
                         fontSize: 8, letterSpacing: "0.14em", textTransform: "uppercase",
                         padding: "2px 7px", borderRadius: 100, fontWeight: 600,
                         background: ob.severity === "high" ? "rgba(220,38,38,0.08)" : ob.severity === "medium" ? "rgba(234,179,8,0.08)" : S.mist,
-                        color:      ob.severity === "high" ? "#b91c1c" : ob.severity === "medium" ? "#854d0e" : S.ash,
+                        color: ob.severity === "high" ? "#b91c1c" : ob.severity === "medium" ? "#854d0e" : S.ash,
                       }}>{ob.severity}</span>
                       <span style={{ fontSize: 13, color: S.ink }}>{ob.label}</span>
                     </div>
@@ -477,10 +555,10 @@ export default async function ProjectDetailPage({
             </div>
           )}
 
-          {/* ── OFFERS ───────────────────────────────────────── */}
+          {/* OFFERS */}
           {isOwner && (offers?.length ?? 0) > 0 && (
             <div style={{ paddingTop: 44, borderTop: `1px solid ${S.line}` }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.gold, fontWeight: 600, marginBottom: 22 }}>Offers</p>
+              <p style={SH}>Offers</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {offers!.map((o: any) => (
                   <div key={o.id} style={{ padding: "18px", borderRadius: 8, border: `1px solid ${S.line}`, background: S.surface }}>
@@ -494,20 +572,9 @@ export default async function ProjectDetailPage({
                     <p style={{ fontSize: 13, color: S.ash, lineHeight: 1.6 }}>{o.message}</p>
                     {o.status === "pending" ? (
                       <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
-                        <form action={respondToOffer}>
-                          <input type="hidden" name="offer_id" value={o.id} />
-                          <input type="hidden" name="decision" value="accepted" />
-                          <button className="btn-gold !px-5 !py-2.5">Accept</button>
-                        </form>
-                        <form action={respondToOffer}>
-                          <input type="hidden" name="offer_id" value={o.id} />
-                          <input type="hidden" name="decision" value="declined" />
-                          <button className="btn-ghost !px-5 !py-2.5">Decline</button>
-                        </form>
-                        <MessageButton
-                          projectId={project.id} producerId={o.from_user_id} filmakerId={user!.id}
-                          label="Reply" className="btn-ghost !px-5 !py-2.5 gap-2" inboxPath="/dashboard/messages"
-                        />
+                        <form action={respondToOffer}><input type="hidden" name="offer_id" value={o.id} /><input type="hidden" name="decision" value="accepted" /><button className="btn-gold !px-5 !py-2.5">Accept</button></form>
+                        <form action={respondToOffer}><input type="hidden" name="offer_id" value={o.id} /><input type="hidden" name="decision" value="declined" /><button className="btn-ghost !px-5 !py-2.5">Decline</button></form>
+                        <MessageButton projectId={project.id} producerId={o.from_user_id} filmakerId={user!.id} label="Reply" className="btn-ghost !px-5 !py-2.5 gap-2" inboxPath="/dashboard/messages" />
                       </div>
                     ) : (
                       <p style={{ marginTop: 10, fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: S.ash }}>{o.status}</p>
@@ -518,7 +585,7 @@ export default async function ProjectDetailPage({
             </div>
           )}
 
-          {/* ── DELETE ───────────────────────────────────────── */}
+          {/* DELETE */}
           {isOwner && (
             <form action={deleteProject} style={{ marginTop: 60, paddingTop: 20, borderTop: `1px solid ${S.line}` }}>
               <input type="hidden" name="project_id" value={project.id} />
@@ -526,48 +593,30 @@ export default async function ProjectDetailPage({
                 fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
                 color: "rgba(138,133,124,0.45)", background: "none", border: "none",
                 cursor: "pointer", fontFamily: "Montserrat, sans-serif",
-              }} className="fyp-delete-btn">
-                Delete this project
-              </button>
+              }} className="fyp-delete-btn">Delete this project</button>
             </form>
           )}
         </div>
 
-        {/* ══ RIGHT: Intelligence sidebar (sticky) ════════════ */}
-        {hasIntelligence && (
-          <div style={{
-            position:   "sticky",
-            top:        52,
-            alignSelf:  "start",
-            paddingTop: 32,
-            paddingLeft: 0,
-          }}>
+        {/* ════ RIGHT SIDEBAR (sticky) ═════════════════════════ */}
+        {hasIntel && (
+          <div style={{ position: "sticky", top: 52, alignSelf: "start", paddingTop: 32 }}>
             <ProjectIntelligenceSidebar
               discovery={discovery!}
               readiness={readiness}
-              ranked={ranked}
-              producerMatches={producerMatches}
               dream={dream}
-              projectId={project.id}
-              requestedProducerIds={requestedProducerIds}
             />
           </div>
         )}
       </div>
 
       <style>{`
+        .fyp-match-row:hover  { border-color: rgba(191,153,83,0.4) !important; }
         .fyp-delete-btn:hover { color: #dc2626 !important; }
         @media (max-width: 900px) {
-          .filmmaker-detail-grid {
-            grid-template-columns: 1fr !important;
-          }
-          .filmmaker-detail-grid > div:first-child {
-            padding-right: 0 !important;
-          }
-          .filmmaker-detail-grid > div:last-child {
-            position: static !important;
-            padding-top: 0 !important;
-          }
+          .filmmaker-detail-grid { grid-template-columns: 1fr !important; }
+          .filmmaker-detail-grid > div:first-child { padding-right: 0 !important; }
+          .filmmaker-detail-grid > div:last-child  { position: static !important; padding-top: 0 !important; }
         }
         @media (max-width: 640px) {
           .filmmaker-detail-grid { padding: 0 16px 60px !important; }
