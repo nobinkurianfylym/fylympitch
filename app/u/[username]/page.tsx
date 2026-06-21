@@ -64,8 +64,8 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
         <div className="max-w-[1180px] mx-auto px-6 py-5 flex items-center justify-between">
           <Link href="/"><Wordmark /></Link>
           <nav className="flex items-center gap-6 text-[12px] tracking-[0.14em] uppercase text-ash">
-            <Link href="/projects" className="hover:text-ink transition-colors">Projects</Link>
-            <Link href="/funds" className="hover:text-ink transition-colors">Funds</Link>
+            <Link href="/projects" className="hover:text-ink transition-colors">Film Projects</Link>
+            <Link href="/funds" className="hover:text-ink transition-colors">Opportunities</Link>
             {user && <Link href={dashboardHref} className="hover:text-ink transition-colors">{dashboardLabel}</Link>}
           </nav>
         </div>

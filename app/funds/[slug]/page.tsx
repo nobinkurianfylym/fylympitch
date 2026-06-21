@@ -191,8 +191,8 @@ export default async function FundDetailPage({ params }: Props) {
           <Wordmark />
           <nav className="hidden md:flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase font-[400] text-ash">
             <Link href="/#features"  className="hover:text-ink transition-colors">Platform</Link>
-            <Link href="/projects"   className="hover:text-ink transition-colors">Projects</Link>
-            <Link href="/funds"      className="text-ink">Funds</Link>
+            <Link href="/projects"   className="hover:text-ink transition-colors">Film Projects</Link>
+            <Link href="/funds"      className="text-ink">Opportunities</Link>
           </nav>
           <div className="flex items-center gap-3">
             {user ? (
