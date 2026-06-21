@@ -10,8 +10,42 @@ interface Props {
   className?: string;
 }
 
+/** Paints a diagonal www.fylym.com watermark onto an already-rendered canvas. */
+function paintWatermark(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const w   = canvas.width;
+  const h   = canvas.height;
+  const txt = 'www.fylym.com';
+
+  ctx.save();
+
+  // Diagonal stamp across the centre — single pass, low opacity
+  ctx.globalAlpha    = 0.07;
+  ctx.fillStyle      = '#1A1815';
+  ctx.font           = `${Math.round(w * 0.038)}px Montserrat, sans-serif`;
+  ctx.letterSpacing  = '0.14em';
+  ctx.textAlign      = 'center';
+  ctx.textBaseline   = 'middle';
+
+  // Tile diagonally so watermark appears throughout
+  ctx.translate(w / 2, h / 2);
+  ctx.rotate(-Math.PI / 6); // −30°
+
+  const step = Math.round(w * 0.38);
+  for (let row = -h; row < h; row += step) {
+    for (let col = -w; col < w; col += step) {
+      ctx.fillText(txt, col, row);
+    }
+  }
+
+  ctx.restore();
+}
+
 /**
- * Renders the first page of a pitch-deck PDF as a clickable tile.
+ * Renders the first page of a pitch-deck PDF as a read-only preview tile.
+ * No download, no external link. Watermark painted on canvas after render.
  * All PDF.js work happens inside a useEffect (browser only) so the
  * Cloudflare Workers module graph is never touched.
  */
@@ -19,7 +53,6 @@ export default function PitchDeckTile({ deckUrl, title, className = '' }: Props)
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-  // default to A4 portrait while loading
   const [aspectRatio, setAspectRatio] = useState<number>(1.4142);
 
   useEffect(() => {
@@ -27,10 +60,7 @@ export default function PitchDeckTile({ deckUrl, title, className = '' }: Props)
 
     async function render() {
       try {
-        // Dynamic import — runs only in the browser, never on Workers
         const pdfjsLib = await import('pdfjs-dist');
-
-        // Point to CDN worker so Next/Cloudflare doesn't try to bundle it
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (pdfjsLib as any).GlobalWorkerOptions.workerSrc =
           `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -45,7 +75,7 @@ export default function PitchDeckTile({ deckUrl, title, className = '' }: Props)
         const container = containerRef.current;
         if (!canvas || !container) return;
 
-        const vp0  = page.getViewport({ scale: 1 });
+        const vp0   = page.getViewport({ scale: 1 });
         const ratio = vp0.height / vp0.width;
         setAspectRatio(ratio);
 
@@ -57,8 +87,12 @@ export default function PitchDeckTile({ deckUrl, title, className = '' }: Props)
         canvas.height = Math.floor(vp.height);
 
         const ctx = canvas.getContext('2d')!;
-        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await page.render({ canvasContext: ctx, viewport: vp } as any).promise;
         if (cancelled) return;
+
+        // Watermark on top — after page pixels are painted
+        paintWatermark(canvas);
 
         setStatus('ready');
       } catch {
@@ -71,21 +105,18 @@ export default function PitchDeckTile({ deckUrl, title, className = '' }: Props)
   }, [deckUrl]);
 
   return (
-    <a
-      href={deckUrl}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={`Open ${title} pitch deck`}
+    <div
+      aria-label={`${title} pitch deck preview`}
       className={[
-        'group block relative overflow-hidden rounded-card border border-line bg-ivory',
-        'hover:border-gold/60 hover:shadow-[0_4px_24px_rgba(191,153,83,0.12)]',
-        'transition-all duration-200',
+        'block relative overflow-hidden rounded-card border border-line bg-ivory',
         className,
       ].join(' ')}
+      // Block right-click → Save image
+      onContextMenu={e => e.preventDefault()}
     >
       <div ref={containerRef} className="relative w-full overflow-hidden">
 
-        {/* ── Canvas: hidden until rendered ── */}
+        {/* ── Canvas ── */}
         <canvas
           ref={canvasRef}
           className={[
@@ -94,9 +125,11 @@ export default function PitchDeckTile({ deckUrl, title, className = '' }: Props)
               ? 'opacity-100'
               : 'opacity-0 absolute inset-0 pointer-events-none',
           ].join(' ')}
+          // Disable drag-to-save
+          draggable={false}
         />
 
-        {/* ── Skeleton while loading ── */}
+        {/* ── Skeleton ── */}
         {status === 'loading' && (
           <div
             className="w-full bg-line/20 animate-pulse flex items-center justify-center"
@@ -108,13 +141,12 @@ export default function PitchDeckTile({ deckUrl, title, className = '' }: Props)
           </div>
         )}
 
-        {/* ── Error / fallback ── */}
+        {/* ── Error ── */}
         {status === 'error' && (
           <div
             className="w-full bg-ivory flex flex-col items-center justify-center gap-3 px-4"
             style={{ aspectRatio: `1 / ${aspectRatio}` }}
           >
-            {/* Document icon */}
             <svg
               width="32" height="32" viewBox="0 0 32 32" fill="none"
               className="text-ash/30" aria-hidden="true"
@@ -131,27 +163,17 @@ export default function PitchDeckTile({ deckUrl, title, className = '' }: Props)
             </p>
           </div>
         )}
-
-        {/* ── Hover ink overlay ── */}
-        <div
-          className={[
-            'absolute inset-0 flex items-center justify-center pointer-events-none',
-            'bg-ink/0 group-hover:bg-ink/55 transition-colors duration-200',
-          ].join(' ')}
-        >
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-ivory text-[11px] tracking-[0.22em] uppercase font-medium">
-            Open deck ↗
-          </span>
-        </div>
       </div>
 
-      {/* ── Footer label ── */}
+      {/* ── Footer ── */}
       <div className="flex items-center justify-between px-3 py-2 border-t border-line">
         <span className="text-[10px] tracking-[0.18em] uppercase text-ash select-none">
           Pitch deck
         </span>
-        <span className="text-[10px] text-ash/50 select-none">PDF ↗</span>
+        <span className="text-[10px] text-ash/40 select-none tracking-[0.08em]">
+          www.fylym.com
+        </span>
       </div>
-    </a>
+    </div>
   );
 }

@@ -2,12 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
-import { Footer } from "@/components/Footer";
-import HomepageDemo from "@/components/HomepageDemo";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
-import PdfReader from "@/components/PdfReader";
 import { usd, STAGE_LABEL, formatBudget } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 import type { Metadata } from "next";
@@ -74,15 +71,6 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
-  // Generate signed deck URL for authenticated users so the in-page reader can load it
-  let deckUrl: string | null = null;
-  if (user && p.pitch_deck_path) {
-    const { data: signed } = await supabase.storage
-      .from("pitch-decks")
-      .createSignedUrl(p.pitch_deck_path, 3600);
-    deckUrl = signed?.signedUrl ?? null;
-  }
-
   return (
     <div className="min-h-screen bg-ivory">
       <header className="border-b border-line">
@@ -97,34 +85,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
         </div>
       </header>
 
-      {/* ── In-page PDF reader — shown when deck is available ── */}
-      {deckUrl ? (
-        <PdfReader
-          deckUrl={deckUrl}
-          projectId={p.id}
-          title={p.title}
-          genre={p.genre}
-          format={p.format}
-          stage={p.stage}
-          country={p.country}
-          language={p.language}
-          logline={p.logline}
-          synopsis={(p as any).synopsis}
-          filmmaker={filmmaker ? {
-            full_name:    filmmaker.full_name,
-            avatar_url:   filmmaker.avatar_url,
-            career_stage: filmmaker.career_stage,
-          } : null}
-          budgetDisplay={p.budget_usd ? formatBudget(p.budget_usd, (p as any).budget_currency) : null}
-          isProducer={isProducer}
-          isOwnProject={isOwnProject}
-          isLoggedIn={!!user}
-          contactHref={isProducer ? `/producer/messages` : null}
-          editHref={isOwnProject ? `/dashboard/projects/${p.id}/edit` : null}
-          backHref="/projects"
-        />
-      ) : (
-        <main className="max-w-3xl mx-auto px-6 py-12 pb-24">
+      <main className="max-w-3xl mx-auto px-6 py-12 pb-24">
         <p className="text-[11px] tracking-[0.16em] uppercase text-ash mb-8">
           <Link href="/projects" className="hover:text-ink transition-colors">Film Projects</Link>
           <span className="mx-2">›</span>
@@ -279,7 +240,6 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           ← Back to Projects
         </Link>
       </main>
-      )}
     </div>
   );
 }
