@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { usd, STAGE_LABEL } from "@/lib/format";
+import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 import { respondToOffer } from "@/lib/project-actions";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import Greeting from "@/components/Greeting";
@@ -28,7 +29,7 @@ export default async function DashboardPage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, title, stage, genre, format, country, logline, funding_needed_usd, is_public, created_at, poster_path, love_count")
+    .select("id, title, stage, genre, format, country, language, logline, funding_needed_usd, is_public, created_at, poster_path, love_count")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -222,17 +223,29 @@ export default async function DashboardPage() {
 
                   {/* Card body */}
                   <div className="p-5 flex flex-col flex-1">
-                    <p className="text-[11px] tracking-[0.24em] uppercase text-ash mb-2">
-                      {[p.genre, p.format].filter(Boolean).join(" · ")}
-                    </p>
+                    {/* L1: Title */}
                     <Link href={`/dashboard/projects/${p.id}`}>
-                      <h3 className="font-display text-[24px] font-[400] group-hover:text-gold transition-colors leading-snug mb-2">
+                      <h3
+                        className="font-display font-bold text-[18px] group-hover:text-gold transition-colors leading-tight uppercase mb-2"
+                        style={{ letterSpacing: "-0.01em" }}
+                      >
                         {p.title}
                       </h3>
                     </Link>
+                    {/* L2: Metadata row — Format · Genre · Country · Language · Stage */}
+                    <p className="text-[12px] text-ash mb-2.5 leading-tight">
+                      {[
+                        formatFormat(p.format),
+                        p.genre,
+                        (() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? null; })(),
+                        (p as any).language,
+                        formatStage(p.stage),
+                      ].filter(Boolean).join(" · ")}
+                    </p>
+                    {/* L5: Logline — no quotes */}
                     {(p as any).logline && (
-                      <p className="font-display italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">
-                        &ldquo;{(p as any).logline}&rdquo;
+                      <p className="italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">
+                        {(p as any).logline}
                       </p>
                     )}
                     <div className="mt-auto pt-3 border-t border-line flex flex-wrap items-center gap-2 text-[12px]">
