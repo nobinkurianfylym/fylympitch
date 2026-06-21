@@ -153,7 +153,7 @@ export default async function FundsPage({
       <main className="max-w-[1180px] mx-auto px-6 py-12">
         <div className="mb-10">
           <p className="eyebrow mb-3">Grants · Support · Growth</p>
-          <h1 className="font-display text-[38px] font-[400]">Funds</h1>
+          <h1 className="font-display text-[38px] font-[400]">Opportunities</h1>
           <p className="mt-3 text-[15px] text-ash max-w-lg">
             Grants, funding programs and development initiatives from 38 countries — open for filmmakers to discover and apply.
           </p>
