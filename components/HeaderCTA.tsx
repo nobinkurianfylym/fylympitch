@@ -26,13 +26,44 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
-  // Not logged in — plain role-aware link
+  // Not logged in — Get started with hover dropdown revealing Sign in
   if (!isLoggedIn) {
     const signupHref = role === "producer" ? "/signup?role=producer" : "/signup";
     return (
-      <Link href={signupHref} className="btn-outline !px-5 !py-2.5 !text-[11px]">
-        Get started
-      </Link>
+      <div
+        ref={ref}
+        className="relative"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        <Link
+          href={signupHref}
+          className="btn-outline !px-5 !py-2.5 !text-[11px] flex items-center gap-1.5"
+        >
+          Get started
+          <span style={{ fontSize: 8, opacity: 0.5 }}>▾</span>
+        </Link>
+
+        {open && (
+          <div
+            className="absolute right-0 top-full pt-1 z-50"
+            onMouseEnter={() => setOpen(true)}
+            onMouseLeave={() => setOpen(false)}
+          >
+            <div
+              className="bg-white border border-line rounded-card overflow-hidden"
+              style={{ minWidth: 148, boxShadow: "0 4px 24px rgba(26,24,21,0.08)" }}
+            >
+              <Link
+                href="/login"
+                className="flex items-center px-4 py-3 text-[11px] tracking-[0.1em] uppercase text-ash hover:text-ink transition-colors"
+              >
+                Sign in
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
     );
   }
 
