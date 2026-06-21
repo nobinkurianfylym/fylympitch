@@ -1,3 +1,4 @@
+import { toUSD } from "@/lib/format";
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -69,9 +70,10 @@ export async function updateProject(formData: FormData) {
     producer_info:      formData.get("producer_info") || null,
     director_name:      formData.get("director_name") || null,
     writer_name:        formData.get("writer_name") || null,
-    budget_usd:          formData.get("budget_usd") ? Number(formData.get("budget_usd")) : null,
-    finance_secured_usd: formData.get("finance_secured_usd") ? Number(formData.get("finance_secured_usd")) : null,
-    funding_needed_usd:  formData.get("funding_needed_usd") ? Number(formData.get("funding_needed_usd")) : null,
+    budget_currency:     (formData.get("budget_currency") as string) || "USD",
+    budget_usd:          (() => { const v = formData.get("budget_usd") ? Number(formData.get("budget_usd")) : null; const c = (formData.get("budget_currency") as string) || "USD"; return v != null ? toUSD(v, c) : null; })(),
+    finance_secured_usd: (() => { const v = formData.get("finance_secured_usd") ? Number(formData.get("finance_secured_usd")) : null; const c = (formData.get("budget_currency") as string) || "USD"; return v != null ? toUSD(v, c) : null; })(),
+    funding_needed_usd:  (() => { const v = formData.get("funding_needed_usd") ? Number(formData.get("funding_needed_usd")) : null; const c = (formData.get("budget_currency") as string) || "USD"; return v != null ? toUSD(v, c) : null; })(),
     is_public:          formData.get("is_public") === "true",
     updated_at:         new Date().toISOString(),
   };

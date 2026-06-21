@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { updateProject } from "@/lib/project-actions";
-import { STAGE_LABEL } from "@/lib/format";
+import { STAGE_LABEL, CURRENCIES } from "@/lib/format";
 import type { Project } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -83,7 +83,15 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
             <input name="language" defaultValue={project.language ?? ""} className="field w-full" />
           </div>
           <div>
-            <label className="field-label mb-1 block">Budget (USD)</label>
+            <label className="field-label mb-1 block">Currency</label>
+            <select name="budget_currency" defaultValue={(project as any).budget_currency ?? "USD"} className="field w-full">
+              {Object.entries(CURRENCIES).map(([code, c]) => (
+                <option key={code} value={code}>{c.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="field-label mb-1 block">Total budget</label>
             <input name="budget_usd" type="number" min="0" defaultValue={project.budget_usd ?? ""} className="field w-full" />
           </div>
           <div>

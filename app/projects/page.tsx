@@ -5,7 +5,7 @@ import ProjectThumbnail from "@/components/ProjectThumbnail";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
 import SearchInput from "@/components/SearchInput";
-import { usd } from "@/lib/format";
+import { usd, formatBudget } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +30,7 @@ export default async function ProjectsPage({
 
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, language, country, logline, funding_needed_usd, finance_secured_usd, poster_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+    .select("id, title, genre, format, stage, language, country, logline, budget_currency, funding_needed_usd, finance_secured_usd, poster_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
     .eq("is_public", true)
     .order("created_at", { ascending: false })
     .limit(60);
@@ -174,10 +174,10 @@ export default async function ProjectsPage({
                         <ShareButton projectId={p.id} title={p.title} genre={p.genre} country={p.country} size="sm" />
                       </div>
                       {(p as any).finance_secured_usd && (
-                        <span className="text-[12px] text-emerald-700 shrink-0">Secured {usd((p as any).finance_secured_usd)}</span>
+                        <span className="text-[12px] text-emerald-700 shrink-0">Secured {formatBudget((p as any).finance_secured_usd, (p as any).budget_currency)}</span>
                       )}
                       {p.funding_needed_usd && (
-                        <span className="text-[12px] text-gold shrink-0">Seeking {usd(p.funding_needed_usd)}</span>
+                        <span className="text-[12px] text-gold shrink-0">Seeking {formatBudget(p.funding_needed_usd, (p as any).budget_currency)}</span>
                       )}
                     </div>
                   </div>

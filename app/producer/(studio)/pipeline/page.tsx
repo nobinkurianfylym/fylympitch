@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { usd, STAGE_LABEL } from "@/lib/format";
+import { usd, STAGE_LABEL, formatBudget } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 
 export const dynamic = "force-dynamic";
@@ -34,7 +34,7 @@ export default async function ProducerPipelinePage() {
       id, status, rating, notes, updated_at,
       projects:project_id (
         id, title, genre, format, stage, country, language,
-        logline, funding_needed_usd, finance_secured_usd, poster_path, is_public
+        logline, budget_currency, funding_needed_usd, finance_secured_usd, poster_path, is_public
       )
     `)
     .eq("producer_id", user.id)
@@ -134,10 +134,10 @@ export default async function ProducerPipelinePage() {
                             )}
                           </div>
                           {(p as any).finance_secured_usd && (
-                            <p className="mt-1 text-[12px] text-emerald-700">Secured {usd((p as any).finance_secured_usd)}</p>
+                            <p className="mt-1 text-[12px] text-emerald-700">Secured {formatBudget((p as any).finance_secured_usd, (p as any).budget_currency)}</p>
                           )}
                           {p.funding_needed_usd && (
-                            <p className="mt-1 text-[12px] text-gold">{usd(p.funding_needed_usd)}</p>
+                            <p className="mt-1 text-[12px] text-gold">{formatBudget(p.funding_needed_usd, (p as any).budget_currency)}</p>
                           )}
                         </Link>
                       );

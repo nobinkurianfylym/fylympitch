@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
-import { usd } from "@/lib/format";
+import { usd, formatBudget } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export default async function MyProjectsPage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, title, genre, format, stage, country, language, logline, funding_needed_usd, finance_secured_usd, poster_path, love_count, is_public, admin_hidden, created_at")
+    .select("id, title, genre, format, stage, country, language, logline, budget_currency, funding_needed_usd, finance_secured_usd, poster_path, love_count, is_public, admin_hidden, created_at")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -156,7 +156,7 @@ export default async function MyProjectsPage() {
                     </div>
                     {p.funding_needed_usd && (
                       <span className="text-[12px] text-gold shrink-0">
-                        Seeking {usd(p.funding_needed_usd)}
+                        Seeking {formatBudget(p.funding_needed_usd, (p as any).budget_currency)}
                       </span>
                     )}
                   </div>

@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition } from "react";
 import { flushSync } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { createProject } from "@/lib/actions";
+import { CURRENCIES } from "@/lib/format";
 
 const GENRES = ["Drama","Comedy","Thriller","Horror","Romance","Action","Documentary","Family","Crime","Sci-Fi","Fantasy","Musical"];
 
@@ -97,14 +98,14 @@ function AiLoader() {
 
 type Fields = {
   title: string; genre: string; format: string; language: string; country: string;
-  budget_usd: string; finance_secured_usd: string; funding_needed_usd: string; stage: string;
+  budget_usd: string; finance_secured_usd: string; funding_needed_usd: string; budget_currency: string; stage: string;
   logline: string; synopsis: string; director_statement: string; producer_info: string;
 };
 type AiFilled = Partial<Record<keyof Fields, boolean>>;
 
 const DEFAULT_FIELDS: Fields = {
   title: "", genre: "Drama", format: "feature", language: "Malayalam",
-  country: "India", budget_usd: "", finance_secured_usd: "", funding_needed_usd: "", stage: "development",
+  country: "India", budget_usd: "", finance_secured_usd: "", funding_needed_usd: "", budget_currency: "USD", stage: "development",
   logline: "", synopsis: "", director_statement: "", producer_info: "",
 };
 
@@ -279,7 +280,7 @@ export default function ProjectForm() {
           const next = { ...prev };
           const keys: (keyof Fields)[] = [
             "title","genre","format","language","country",
-            "budget_usd","finance_secured_usd","funding_needed_usd","stage",
+            "budget_usd","finance_secured_usd","funding_needed_usd","budget_currency","stage",
             "logline","synopsis","director_statement","producer_info",
           ];
           for (const k of keys) {
@@ -477,22 +478,31 @@ export default function ProjectForm() {
                 <input id="country" name="country" className="field" required
                   value={fields.country} onChange={set("country")} />
               </div>
+              <div className="col-span-full">
+                <label className="field-label" htmlFor="budget_currency">"Currency"</label>
+                <select id="budget_currency" name="budget_currency" className="field"
+                  value={fields.budget_currency} onChange={set("budget_currency")}>
+                  {Object.entries(CURRENCIES).map(([code, c]) => (
+                    <option key={code} value={code}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
               <div>
-                <label className="field-label" htmlFor="budget_usd">"Total budget (USD)"</label>
+                <label className="field-label" htmlFor="budget_usd">"Total budget"</label>
                 <input id="budget_usd" name="budget_usd" type="number" min="0" step="1000"
-                  className="field" placeholder="400000"
+                  className="field" placeholder="10000000"
                   value={fields.budget_usd} onChange={set("budget_usd")} />
               </div>
               <div>
-                <label className="field-label" htmlFor="finance_secured_usd">"Finance secured (USD)"</label>
+                <label className="field-label" htmlFor="finance_secured_usd">"Finance secured"</label>
                 <input id="finance_secured_usd" name="finance_secured_usd" type="number" min="0" step="1000"
-                  className="field" placeholder="100000"
+                  className="field" placeholder="3000000"
                   value={fields.finance_secured_usd} onChange={set("finance_secured_usd")} />
               </div>
               <div>
-                <label className="field-label" htmlFor="funding_needed_usd">"Funding needed (USD)"</label>
+                <label className="field-label" htmlFor="funding_needed_usd">"Funding needed"</label>
                 <input id="funding_needed_usd" name="funding_needed_usd" type="number" min="0" step="1000"
-                  className="field" placeholder="150000"
+                  className="field" placeholder="7000000"
                   value={fields.funding_needed_usd} onChange={set("funding_needed_usd")} />
               </div>
             </div>

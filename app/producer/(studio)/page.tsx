@@ -46,7 +46,7 @@ export default async function ProducerDiscoverPage() {
   const [{ data: projects }, { data: pipelineRows }, { data: loves }] = await Promise.all([
     supabase
       .from("projects")
-      .select("id, title, genre, format, stage, country, language, budget_usd, finance_secured_usd, funding_needed_usd, logline, poster_path, love_count, is_public, director_name, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+      .select("id, title, genre, format, stage, country, language, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, logline, poster_path, love_count, is_public, director_name, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
       .eq("admin_hidden", false)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -135,7 +135,7 @@ export default async function ProducerDiscoverPage() {
                       </div>
                       {p.funding_needed_usd && (
                         <span className="text-[11px] text-gold shrink-0">
-                          Seeking ${Math.round(p.funding_needed_usd / 1000)}K
+                          Seeking {formatBudget(p.funding_needed_usd, (p as any).budget_currency)}
                         </span>
                       )}
                     </div>

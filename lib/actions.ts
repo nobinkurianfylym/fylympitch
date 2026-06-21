@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { toUSD } from "@/lib/format";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { OpportunityIntelligenceExtras, ProducerMatchProfile } from "@/services/fylympitchEngine";
@@ -104,9 +105,10 @@ export async function createProject(formData: FormData) {
       format: str(formData, "format") || "feature",
       language: str(formData, "language") || "English",
       country: str(formData, "country") || "India",
-      budget_usd: num(formData, "budget_usd"),
-      finance_secured_usd: num(formData, "finance_secured_usd"),
-      funding_needed_usd: num(formData, "funding_needed_usd"),
+      budget_currency: str(formData, "budget_currency") || "USD",
+      budget_usd: (() => { const v = num(formData, "budget_usd"); const c = str(formData, "budget_currency") || "USD"; return v != null ? toUSD(v, c) : null; })(),
+      finance_secured_usd: (() => { const v = num(formData, "finance_secured_usd"); const c = str(formData, "budget_currency") || "USD"; return v != null ? toUSD(v, c) : null; })(),
+      funding_needed_usd: (() => { const v = num(formData, "funding_needed_usd"); const c = str(formData, "budget_currency") || "USD"; return v != null ? toUSD(v, c) : null; })(),
       stage: str(formData, "stage") || "development",
       logline,
       synopsis: str(formData, "synopsis") || null,

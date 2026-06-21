@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { usd, STAGE_LABEL } from "@/lib/format";
+import { usd, STAGE_LABEL, formatBudget } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 import { respondToOffer } from "@/lib/project-actions";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
@@ -29,7 +29,7 @@ export default async function DashboardPage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, title, stage, genre, format, country, language, logline, funding_needed_usd, finance_secured_usd, is_public, created_at, poster_path, love_count")
+    .select("id, title, stage, genre, format, country, language, logline, budget_currency, funding_needed_usd, finance_secured_usd, is_public, created_at, poster_path, love_count")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -258,10 +258,10 @@ export default async function DashboardPage() {
                         <span className="text-ash">♥ {p.love_count}</span>
                       )}
                       {(p as any).finance_secured_usd && (
-                        <span className="text-emerald-700 shrink-0 text-[12px]">Secured {usd((p as any).finance_secured_usd)}</span>
+                        <span className="text-emerald-700 shrink-0 text-[12px]">Secured {formatBudget((p as any).finance_secured_usd, (p as any).budget_currency)}</span>
                       )}
                       {p.funding_needed_usd && (
-                        <span className="text-gold ml-auto shrink-0">{usd(p.funding_needed_usd)}</span>
+                        <span className="text-gold ml-auto shrink-0">{formatBudget(p.funding_needed_usd, (p as any).budget_currency)}</span>
                       )}
                     </div>
                   </div>

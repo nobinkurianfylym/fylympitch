@@ -40,6 +40,7 @@ export interface Project {
   format: ProjectFormat;
   language: string;
   country: string;
+  budget_currency: string;
   budget_usd: number | null;
   finance_secured_usd: number | null;
   funding_needed_usd: number | null;
