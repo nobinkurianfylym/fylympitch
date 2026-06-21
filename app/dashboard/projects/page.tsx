@@ -82,7 +82,7 @@ export default async function MyProjectsPage() {
                   </span>
                 )}
 
-                <Link href={`/dashboard/projects/${p.id}`} className="block">
+                <Link href={`/dashboard/projects/${p.id}?from=projects`} className="block">
                   <div className="aspect-[3/2] overflow-hidden">
                     <ProjectThumbnail
                       posterPath={p.poster_path}
@@ -99,7 +99,7 @@ export default async function MyProjectsPage() {
               <div className="p-5 flex flex-col flex-1">
 
                 {/* Title */}
-                <Link href={`/dashboard/projects/${p.id}`}>
+                <Link href={`/dashboard/projects/${p.id}?from=projects`}>
                   <h2
                     className="font-display font-bold text-[18px] mb-2 group-hover:text-gold transition-colors leading-tight uppercase"
                     style={{ letterSpacing: "-0.01em" }}

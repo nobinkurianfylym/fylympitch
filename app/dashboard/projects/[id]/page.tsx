@@ -38,8 +38,14 @@ const OPP_LABELS: Record<string, string> = {
 
 export default async function ProjectDetailPage({
   params,
-}: { params: Promise<{ id: string }> }) {
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
+}) {
   const { id } = await params;
+  const { from } = await searchParams;
+  const simpleView = from === "projects"; // from My Projects — hide intelligence
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -166,7 +172,7 @@ export default async function ProjectDetailPage({
     surface: "#FFFFFF", mist: "rgba(26,24,21,0.03)",
   } as const;
 
-  const hasIntel = isOwner && !!discovery;
+  const hasIntel = isOwner && !!discovery && !simpleView;
 
   // ── Section heading style ────────────────────────────────────
   const SH: React.CSSProperties = {
@@ -176,7 +182,7 @@ export default async function ProjectDetailPage({
 
   return (
     <div style={{ background: S.canvas, minHeight: "100vh", overflowX: "hidden" }}>
-      {isOwner && !discovery && <ProjectAnalysisLoader projectId={project.id} />}
+      {isOwner && !discovery && !simpleView && <ProjectAnalysisLoader projectId={project.id} />}
 
       {/* ── ACTION BAR ─────────────────────────────────────────── */}
       <div style={{
@@ -217,7 +223,7 @@ export default async function ProjectDetailPage({
               padding: "6px 14px", border: `1px solid rgba(26,24,21,0.2)`, borderRadius: 6,
             }}>Edit</Link>
           )}
-          {isOwner && !!discovery && <RerunEngineButton projectId={project.id} hasData={true} />}
+          {isOwner && !!discovery && !simpleView && <RerunEngineButton projectId={project.id} hasData={true} />}
         </div>
       </div>
 
@@ -329,7 +335,7 @@ export default async function ProjectDetailPage({
           )}
 
           {/* TOP MATCHES */}
-          {isOwner && ranked.length > 0 && (
+          {isOwner && !simpleView && ranked.length > 0 && (
             <div style={{ paddingTop: 36, paddingBottom: 36, borderBottom: `1px solid ${S.line}` }}>
               <p style={SH}>Top Matches</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -384,7 +390,7 @@ export default async function ProjectDetailPage({
           )}
 
           {/* PRODUCER MATCHES */}
-          {isOwner && producerMatches.length > 0 && (
+          {isOwner && !simpleView && producerMatches.length > 0 && (
             <div style={{ paddingTop: 36, paddingBottom: 36, borderBottom: `1px solid ${S.line}` }}>
               <p style={SH}>Producers &amp; Investors</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -447,7 +453,7 @@ export default async function ProjectDetailPage({
           )}
 
           {/* AI EP BRIEF */}
-          {isOwner && epBrief && (
+          {isOwner && !simpleView && epBrief && (
             <div style={{ paddingTop: 36, paddingBottom: 36, borderBottom: `1px solid ${S.line}` }}>
               <p style={SH}>AI Executive Producer</p>
               <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: S.ink, marginBottom: 8 }}>
@@ -514,14 +520,14 @@ export default async function ProjectDetailPage({
           )}
 
           {/* FUNDING JOURNEY */}
-          {isOwner && (
+          {isOwner && !simpleView && (
             <div style={{ paddingTop: 8 }}>
               <FundingJourney projectId={project.id} opportunities={journeyOpps} roadmap={roadmap} readiness={readiness} />
             </div>
           )}
 
           {/* OBSTACLES */}
-          {isOwner && obstacles.length > 0 && (
+          {isOwner && !simpleView && obstacles.length > 0 && (
             <div style={{ paddingTop: 40, paddingBottom: 40, borderTop: `1px solid ${S.line}` }}>
               <p style={SH}>Strengthen Before Applying</p>
               <p style={{ fontSize: 12, color: S.ash, marginBottom: 18 }}>
