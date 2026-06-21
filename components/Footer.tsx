@@ -1,116 +1,121 @@
 import Link from "next/link";
 
 function FylymLogo() {
-  // Circle: centre (62,52) radius 44
-  // Junction (7 o'clock ≈ 220°): (62+44·cos220°, 52+44·sin220°) = (28.3, 80.3) ≈ (28,80)
-  // Dot     (1 o'clock ≈ -60°):  (62+44·cos-60°, 52+44·sin-60°) = (84,  13.9) ≈ (84,14)
-  // Bottom  (6 o'clock ≈  90°):  (62, 96)
+  // Circle: centre (102, 44) radius 42
+  // SVG angle convention: 0°=right, 90°=down, 180°=left, 270°=up
   //
-  // White arc: M 28 80 A 44 44 0 1 0 84 14   (large, counter-clockwise → through top)
-  // Spectrum : M 28 80 A 44 44 0 0 1 96 70   (small, clockwise          → through bottom)
-  // Dot ring at (84,14)
+  // Left  junction (120°): cx+r·cos120, cy+r·sin120 = 102-21=81,  44+36.4=80.4 ≈ (81,80)
+  // Right junction  (60°): cx+r·cos60,  cy+r·sin60  = 102+21=123, 44+36.4=80.4 ≈ (123,80)
+  // Orbital dot    (310°): cx+r·cos310, cy+r·sin310  = 102+27=129, 44-32.2=11.8 ≈ (129,12)
+  //
+  // Dark arc  (large, clockwise sweep=1): M 81 80 A 42 42 0 1 1 123 80  → through top ✓
+  // Spectrum  (small, clockwise sweep=1): M 81 80 A 42 42 0 0 1 123 80  → through bottom ✓
   return (
-    <svg width="130" height="120" viewBox="0 0 130 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="FYLYM">
+    <svg width="160" height="110" viewBox="0 0 160 110" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="FYLYM">
       <defs>
-        {/* Fade-in gradient for white arc (transparent at junction, solid at top) */}
-        <linearGradient id="fl-wfade" x1="28" y1="80" x2="62" y2="8" gradientUnits="userSpaceOnUse">
-          <stop offset="0%"  stopColor="white" stopOpacity="0"/>
-          <stop offset="25%" stopColor="white" stopOpacity="0.7"/>
-          <stop offset="60%" stopColor="white" stopOpacity="0.88"/>
-          <stop offset="100%" stopColor="white" stopOpacity="0.88"/>
+        {/* Dark arc: fade in from left junction, solid over the top, hold through dot, fade at right */}
+        <linearGradient id="fl-dark" x1="81" y1="80" x2="123" y2="80" gradientUnits="userSpaceOnUse">
+          <stop offset="0%"   stopColor="white" stopOpacity="0.15"/>
+          <stop offset="12%"  stopColor="white" stopOpacity="0.80"/>
+          <stop offset="50%"  stopColor="white" stopOpacity="0.85"/>
+          <stop offset="88%"  stopColor="white" stopOpacity="0.80"/>
+          <stop offset="100%" stopColor="white" stopOpacity="0.15"/>
         </linearGradient>
 
-        {/* Spectrum gradient for bottom arc — horizontal maps well to this arc shape */}
-        <linearGradient id="fl-spec" x1="28" y1="0" x2="96" y2="0" gradientUnits="userSpaceOnUse">
+        {/* Spectrum: red→orange→yellow→green→cyan→blue, fade in/out at junctions */}
+        <linearGradient id="fl-spec" x1="81" y1="0" x2="123" y2="0" gradientUnits="userSpaceOnUse">
           <stop offset="0%"   stopColor="#FF3300" stopOpacity="0"/>
-          <stop offset="8%"   stopColor="#FF5500"/>
-          <stop offset="28%"  stopColor="#FFAA00"/>
-          <stop offset="48%"  stopColor="#FFE600"/>
-          <stop offset="62%"  stopColor="#22DD66"/>
-          <stop offset="78%"  stopColor="#00AAFF"/>
-          <stop offset="92%"  stopColor="#6644FF"/>
-          <stop offset="100%" stopColor="#8833FF" stopOpacity="0"/>
+          <stop offset="6%"   stopColor="#FF4400" stopOpacity="1"/>
+          <stop offset="22%"  stopColor="#FF8800"/>
+          <stop offset="38%"  stopColor="#FFD200"/>
+          <stop offset="52%"  stopColor="#AADD00"/>
+          <stop offset="66%"  stopColor="#00CC66"/>
+          <stop offset="80%"  stopColor="#00AAFF"/>
+          <stop offset="94%"  stopColor="#0055FF" stopOpacity="1"/>
+          <stop offset="100%" stopColor="#0044FF" stopOpacity="0"/>
         </linearGradient>
 
         {/* Dot purple glow */}
-        <filter id="fl-glow" x="-150%" y="-150%" width="400%" height="400%">
-          <feGaussianBlur stdDeviation="3.5" result="blur"/>
+        <filter id="fl-glow" x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
           <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
 
-        {/* Star-burst glow */}
-        <filter id="fl-star" x="-300%" y="-300%" width="700%" height="700%">
-          <feGaussianBlur stdDeviation="5" result="blur"/>
+        {/* Star-burst outer glow */}
+        <filter id="fl-star" x="-400%" y="-400%" width="900%" height="900%">
+          <feGaussianBlur stdDeviation="6" result="blur"/>
           <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
         </filter>
+
+        {/* F bar rainbow */}
+        <linearGradient id="fl-fbar" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stopColor="#FF2200"/>
+          <stop offset="25%"  stopColor="#FFAA00"/>
+          <stop offset="50%"  stopColor="#FFEE00"/>
+          <stop offset="70%"  stopColor="#00DD66"/>
+          <stop offset="85%"  stopColor="#00AAFF"/>
+          <stop offset="100%" stopColor="#5555FF"/>
+        </linearGradient>
       </defs>
 
-      {/* ── White arc (large, counter-clockwise through top) ── */}
+      {/* ── Dark arc: large clockwise from left junction to right junction through TOP ── */}
       <path
-        d="M 28 80 A 44 44 0 1 0 84 14"
-        stroke="url(#fl-wfade)"
-        strokeWidth="1.4"
-        strokeLinecap="round"
+        d="M 81 80 A 42 42 0 1 1 123 80"
+        stroke="url(#fl-dark)"
+        strokeWidth="1.3"
+        strokeLinecap="butt"
       />
 
-      {/* ── Spectrum arc (small, clockwise through bottom) ── */}
-      {/* End at about 4 o'clock: (62+44·cos30°, 52+44·sin30°) = (100.1, 74) */}
+      {/* ── Spectrum arc: small clockwise from left junction to right junction through BOTTOM ── */}
       <path
-        d="M 28 80 A 44 44 0 0 1 100 74"
+        d="M 81 80 A 42 42 0 0 1 123 80"
         stroke="url(#fl-spec)"
         strokeWidth="1.8"
-        strokeLinecap="round"
+        strokeLinecap="butt"
       />
 
-      {/* ── Star-burst behind dot ── */}
-      <g filter="url(#fl-star)" opacity="0.55">
-        <line x1="84" y1="14" x2="84" y2="4"  stroke="white" strokeWidth="0.8"/>
-        <line x1="84" y1="14" x2="84" y2="24" stroke="white" strokeWidth="0.8"/>
-        <line x1="84" y1="14" x2="74" y2="14" stroke="white" strokeWidth="0.8"/>
-        <line x1="84" y1="14" x2="94" y2="14" stroke="white" strokeWidth="0.8"/>
-        <line x1="84" y1="14" x2="77" y2="7"  stroke="white" strokeWidth="0.5"/>
-        <line x1="84" y1="14" x2="91" y2="21" stroke="white" strokeWidth="0.5"/>
-        <line x1="84" y1="14" x2="91" y2="7"  stroke="white" strokeWidth="0.5"/>
-        <line x1="84" y1="14" x2="77" y2="21" stroke="white" strokeWidth="0.5"/>
+      {/* ── Dot star-burst (behind dot) ── */}
+      <g filter="url(#fl-star)" opacity="0.45">
+        <line x1="129" y1="12" x2="129" y2="-1"  stroke="#CC99FF" strokeWidth="1"/>
+        <line x1="129" y1="12" x2="129" y2="25"  stroke="#CC99FF" strokeWidth="1"/>
+        <line x1="129" y1="12" x2="116" y2="12"  stroke="#CC99FF" strokeWidth="1"/>
+        <line x1="129" y1="12" x2="142" y2="12"  stroke="#CC99FF" strokeWidth="1"/>
+        <line x1="129" y1="12" x2="120" y2="3"   stroke="#CC99FF" strokeWidth="0.6"/>
+        <line x1="129" y1="12" x2="138" y2="21"  stroke="#CC99FF" strokeWidth="0.6"/>
+        <line x1="129" y1="12" x2="138" y2="3"   stroke="#CC99FF" strokeWidth="0.6"/>
+        <line x1="129" y1="12" x2="120" y2="21"  stroke="#CC99FF" strokeWidth="0.6"/>
       </g>
 
+      {/* ── Dot outer glow ring ── */}
+      <circle cx="129" cy="12" r="6.5" stroke="#9966FF" strokeWidth="0.8" fill="none" filter="url(#fl-glow)" opacity="0.7"/>
+
       {/* ── Dot ring ── */}
-      <circle cx="84" cy="14" r="5" stroke="#7B5CF6" strokeWidth="1.2" filter="url(#fl-glow)" opacity="0.9"/>
-      <circle cx="84" cy="14" r="5" stroke="rgba(160,120,255,0.3)" strokeWidth="3"/>
+      <circle cx="129" cy="12" r="4.5" stroke="#AA77FF" strokeWidth="1.2" fill="none"/>
 
       {/* ── Dot centre ── */}
-      <circle cx="84" cy="14" r="2.2" fill="white"/>
-    </svg>
-  );
-}
+      <circle cx="129" cy="12" r="2" fill="rgba(255,255,255,0.9)"/>
 
-function FylymWordmark() {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 0, lineHeight: 1, marginTop: 2 }}>
-      {/* F with rainbow accent bar */}
-      <span style={{ position: "relative", display: "inline-block" }}>
-        <span style={{
-          fontFamily: "var(--font-sans, sans-serif)",
-          fontSize: 30, fontWeight: 700,
-          letterSpacing: "-0.02em", color: "white",
-          display: "inline-block", lineHeight: 1,
-        }}>F</span>
-        <span style={{
-          position: "absolute",
-          left: 1, top: 10,
-          width: 14, height: 3,
-          borderRadius: 1.5,
-          background: "linear-gradient(90deg,#FF3B30,#FF9500,#FFCC00,#34C759,#007AFF)",
-          display: "block",
-        }}/>
-      </span>
-      <span style={{
-        fontFamily: "var(--font-sans, sans-serif)",
-        fontSize: 30, fontWeight: 700,
-        letterSpacing: "-0.02em", color: "white",
-        lineHeight: 1,
-      }}>YLYM</span>
-    </div>
+      {/* ── FYLYM text ── */}
+      {/* F — drawn manually so we can replace top bar with rainbow */}
+      {/* Vertical stroke */}
+      <rect x="4"  y="62" width="3.5" height="26" rx="0.5" fill="white" opacity="0.85"/>
+      {/* Middle crossbar */}
+      <rect x="4"  y="73" width="13"  height="3"  rx="0.5" fill="white" opacity="0.85"/>
+      {/* Rainbow top bar (replaces top crossbar) */}
+      <rect x="4"  y="62" width="22"  height="3"  rx="1.5" fill="url(#fl-fbar)"/>
+
+      {/* Y L Y M — text */}
+      <text
+        x="30" y="88"
+        fontSize="26"
+        fontWeight="700"
+        fontFamily="system-ui,-apple-system,'Helvetica Neue',sans-serif"
+        letterSpacing="0.5"
+        fill="rgba(255,255,255,0.85)"
+      >
+        YLYM
+      </text>
+    </svg>
   );
 }
 
@@ -136,10 +141,9 @@ export function Footer() {
         <div className="md:flex justify-between gap-12">
 
           {/* Left */}
-          <div className="max-w-[210px] shrink-0">
+          <div className="max-w-[220px] shrink-0">
             <FylymLogo />
-            <FylymWordmark />
-            <p className="mt-4 text-[12px] leading-relaxed text-ivory/40 font-normal">
+            <p className="mt-2 text-[12px] leading-relaxed text-ivory/40 font-normal">
               Funding intelligence for filmmakers. Connecting creators with grants, funds, producers and investors worldwide.
             </p>
             <div className="mt-6 flex items-center gap-5">
@@ -168,21 +172,19 @@ export function Footer() {
 
           {/* 4 columns */}
           <div className="mt-10 md:mt-2 grid grid-cols-2 sm:grid-cols-4 gap-10 text-[13px] flex-1">
-
             <div>
               <span className={HD}>Opportunities<span className={LN} style={{background:"linear-gradient(90deg,#FF3B30,#FF9500)"}}/></span>
               <ul className="space-y-3.5">
-                <li><Link href="/projects"                    className={LI}>Film Projects</Link></li>
-                <li><Link href="/funds?type=development"      className={LI}>Grants</Link></li>
-                <li><Link href="/funds?type=development"      className={LI}>Funds</Link></li>
-                <li><Link href="/funds?type=development"      className={LI}>Labs</Link></li>
+                <li><Link href="/projects"                     className={LI}>Film Projects</Link></li>
+                <li><Link href="/funds?type=development"       className={LI}>Grants</Link></li>
+                <li><Link href="/funds?type=development"       className={LI}>Funds</Link></li>
+                <li><Link href="/funds?type=development"       className={LI}>Labs</Link></li>
                 <li><Link href="/funds?type=packaging_markets" className={LI}>Markets</Link></li>
                 <li><Link href="/funds?type=packaging_markets" className={LI}>Co-Productions</Link></li>
-                <li><Link href="/funds?type=tax_incentives"   className={LI}>Tax Incentives</Link></li>
-                <li><Link href="/funds/submit"                className={LI}>Submit an Opportunity</Link></li>
+                <li><Link href="/funds?type=tax_incentives"    className={LI}>Tax Incentives</Link></li>
+                <li><Link href="/funds/submit"                 className={LI}>Submit an Opportunity</Link></li>
               </ul>
             </div>
-
             <div>
               <span className={HD}>Industry<span className={LN} style={{background:"linear-gradient(90deg,#FFCC00,#34C759)"}}/></span>
               <ul className="space-y-3.5">
@@ -194,7 +196,6 @@ export function Footer() {
                 <li><Link href="/signup?role=producer" className={LI}>Brand Integration</Link></li>
               </ul>
             </div>
-
             <div>
               <span className={HD}>Platform<span className={LN} style={{background:"linear-gradient(90deg,#007AFF,#5AC8FA)"}}/></span>
               <ul className="space-y-3.5">
@@ -205,7 +206,6 @@ export function Footer() {
                 <li><Link href="/login"  className={LI}>Sign In</Link></li>
               </ul>
             </div>
-
             <div>
               <span className={HD}>Legal<span className={LN} style={{background:"linear-gradient(90deg,#AF52DE,#FF2D55)"}}/></span>
               <ul className="space-y-3.5">
@@ -230,24 +230,16 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Ghost watermark — FYLYM only */}
-      <div
-        className="absolute bottom-0 right-0 pointer-events-none select-none overflow-hidden"
-        aria-hidden="true"
-        style={{ lineHeight: 0.85 }}
-      >
-        <span
-          style={{
-            fontFamily: "var(--font-sans, sans-serif)",
-            fontWeight: 800,
-            fontSize: "clamp(90px,16vw,200px)",
-            letterSpacing: "-0.04em",
-            color: "rgba(255,255,255,0.038)",
-            display: "block",
-          }}
-        >
-          FYLYM
-        </span>
+      {/* Ghost watermark */}
+      <div className="absolute bottom-0 right-0 pointer-events-none select-none overflow-hidden" aria-hidden="true" style={{lineHeight:0.85}}>
+        <span style={{
+          fontFamily:"var(--font-sans,sans-serif)",
+          fontWeight:800,
+          fontSize:"clamp(90px,16vw,200px)",
+          letterSpacing:"-0.04em",
+          color:"rgba(255,255,255,0.038)",
+          display:"block",
+        }}>FYLYM</span>
       </div>
     </footer>
   );
