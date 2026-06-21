@@ -118,7 +118,7 @@ export default async function FundsPage({
     .select("id, slug, title, opp_type, description, country, region, deadline, deadline_note, languages, url, app_link")
     .eq("is_active", true)
     .order("created_at", { ascending: false })
-    .limit(200);
+    .limit(user ? 500 : 100);
 
   if (type && CATEGORY_TYPES[type]) {
     query = query.in("opp_type", CATEGORY_TYPES[type]);
@@ -253,19 +253,24 @@ export default async function FundsPage({
             })}
           </div>
         )}
-      </main>
 
-      {!user && (
-        <div className="border-t border-line mt-16">
-          <div className="max-w-[1180px] mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div>
-              <p className="font-display text-[22px]">Ready to pitch your film?</p>
-              <p className="mt-1 text-[14px] text-ash">Submit your project and get matched with funds, labs and co-producers.</p>
+        {/* Guest gate — shown after 100 results */}
+        {!user && opps && opps.length >= 100 && (
+          <div className="mt-16 py-14 px-8 border border-line rounded-card text-center bg-white/60">
+            <p className="font-display text-[26px] font-[400] text-ink leading-snug">
+              Every great film starts with the right discovery.
+            </p>
+            <div className="mt-6">
+              <Link
+                href="https://pitch.fylym.com/signup"
+                className="btn-gold !px-8 !py-3 !text-[13px] tracking-[0.18em]"
+              >
+                Get started
+              </Link>
             </div>
-            <Link href="/signup" className="btn-gold shrink-0">Submit your project</Link>
           </div>
-        </div>
-      )}
+        )}
+      </main>
 
     </div>
   );
