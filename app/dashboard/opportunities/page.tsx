@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { usd, TYPE_LABEL, CATEGORY_CONFIG, OPP_CATEGORY_MAP } from "@/lib/format";
 import { toggleSaved } from "@/lib/actions";
+import { OpportunityCategoryBlock } from "./OpportunityCategoryBlock";
 
 export const dynamic = "force-dynamic";
 
@@ -31,11 +32,12 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
     supabase.from("projects").select("id").eq("owner_id", user!.id),
   ]);
 
-  const savedSet   = new Set((saved ?? []).map((s) => s.opportunity_id));
-  const projectIds = (projects ?? []).map((p: any) => p.id);
+  const savedIds    = (saved ?? []).map((s) => s.opportunity_id);
+  const savedSet    = new Set(savedIds);
+  const projectIds  = (projects ?? []).map((p: any) => p.id);
 
-  // Fetch best match score per opportunity for this filmmaker
-  const matchScoreByOpp: Record<string, number> = {};
+  // Best match score per opportunity
+  const matchScores: Record<string, number> = {};
   if (projectIds.length && sort === "match") {
     const { data: matchRows } = await supabase
       .from("matches")
@@ -44,20 +46,17 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
       .order("score", { ascending: false });
 
     for (const m of matchRows ?? []) {
-      if (!matchScoreByOpp[m.opportunity_id] || m.score > matchScoreByOpp[m.opportunity_id]) {
-        matchScoreByOpp[m.opportunity_id] = m.score;
+      if (!matchScores[m.opportunity_id] || m.score > matchScores[m.opportunity_id]) {
+        matchScores[m.opportunity_id] = m.score;
       }
     }
   }
 
-  // Sort by match score when requested
   const sorted = sort === "match"
-    ? [...(opps ?? [])].sort((a, b) => (matchScoreByOpp[b.id] ?? 0) - (matchScoreByOpp[a.id] ?? 0))
+    ? [...(opps ?? [])].sort((a, b) => (matchScores[b.id] ?? 0) - (matchScores[a.id] ?? 0))
     : (opps ?? []);
 
-  const hasMatches = Object.keys(matchScoreByOpp).length > 0;
-
-  // Show categories only when browsing unfiltered
+  const hasMatches   = Object.keys(matchScores).length > 0;
   const showCategories = !type && !q;
 
   const grouped = showCategories
@@ -69,21 +68,21 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
         .filter(g => g.items.length > 0)
     : null;
 
-  function scorePill(score: number) {
-    if (score >= 80) return "bg-emerald-50 border-emerald-200 text-emerald-700";
-    if (score >= 60) return "bg-gold/10 border-gold/30 text-gold";
-    return "bg-parchment border-line text-ash";
-  }
-
+  // Flat-list row (used only when filter/search is active — no expand logic needed)
   function OppRow({ o }: { o: any }) {
-    const score = matchScoreByOpp[o.id];
+    const score = matchScores[o.id];
     const days = o.deadline
       ? Math.ceil((new Date(o.deadline).getTime() - Date.now()) / 86_400_000)
       : null;
 
+    function scorePill(s: number) {
+      if (s >= 80) return "bg-emerald-50 border-emerald-200 text-emerald-700";
+      if (s >= 60) return "bg-gold/10 border-gold/30 text-gold";
+      return "bg-parchment border-line text-ash";
+    }
+
     return (
       <div className="hairline py-4 flex items-center justify-between gap-4">
-        {/* Match score */}
         <div className="shrink-0 w-12 text-center hidden sm:block">
           {score != null ? (
             <span className={`text-[11px] tracking-[0.08em] px-2 py-0.5 rounded-full border ${scorePill(score)}`}>
@@ -93,8 +92,6 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
             <span className="text-[11px] text-ash/30">—</span>
           )}
         </div>
-
-        {/* Info */}
         <Link href={`/dashboard/opportunities/${o.id}`} className="flex-1 min-w-0 group">
           <div className="font-normal text-[15px] group-hover:text-gold transition-colors truncate">{o.title}</div>
           <div className="mt-0.5 text-[12px] tracking-[0.14em] uppercase text-ash flex flex-wrap gap-x-3">
@@ -103,8 +100,6 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
             {o.max_award_usd ? <span className="text-gold">up to {usd(o.max_award_usd)}</span> : null}
           </div>
         </Link>
-
-        {/* Deadline */}
         {days != null && (
           <span className={`shrink-0 text-[11px] tracking-[0.08em] px-2 py-0.5 rounded-full border hidden md:inline-block ${
             days <= 7
@@ -116,8 +111,6 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
             {days}d
           </span>
         )}
-
-        {/* Save */}
         <form action={toggleSaved} className="shrink-0">
           <input type="hidden" name="opportunity_id" value={o.id} />
           <button className={`text-[12px] tracking-[0.16em] uppercase ${savedSet.has(o.id) ? "text-gold" : "text-ash hover:text-ink"}`}>
@@ -134,7 +127,7 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
       <h1 className="font-display text-[34px]">Opportunities</h1>
       <p className="text-[14px] text-ash mt-2 mb-8">
         {hasMatches
-          ? "Sorted by match score against your projects."
+          ? "Top 5 per category, sorted by match score against your projects."
           : "Active funding opportunities. Submit a project to see your match scores."}
       </p>
 
@@ -153,22 +146,17 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
         {(type || q) && <a href="/dashboard/opportunities" className="btn-ghost !px-5 !py-2.5 text-ash">Clear</a>}
       </form>
 
-      {/* Categorised view (default — no filter active) */}
+      {/* Categorised view — top 5 per category + expandable */}
       {grouped && (
         <div className="space-y-10">
           {grouped.map(cat => (
-            <div key={cat.key}>
-              <div className="mb-1">
-                <div className="flex items-baseline gap-3">
-                  <h2 className="font-display text-[20px] font-normal">{cat.label}</h2>
-                  <span className="text-[12px] text-ash font-normal tracking-[0.1em]">{cat.items.length}</span>
-                </div>
-                <p className="text-[12px] text-ash/70 font-normal">{cat.sub}</p>
-              </div>
-              <div>
-                {cat.items.map((o: any) => <OppRow key={o.id} o={o} />)}
-              </div>
-            </div>
+            <OpportunityCategoryBlock
+              key={cat.key}
+              cat={cat}
+              items={cat.items}
+              matchScores={matchScores}
+              savedIds={savedIds}
+            />
           ))}
           {grouped.length === 0 && (
             <p className="text-[14px] text-ash">No opportunities available.</p>
@@ -176,7 +164,7 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
         </div>
       )}
 
-      {/* Flat list view (filter or search active) */}
+      {/* Flat list — filter or search active */}
       {!grouped && (
         <div>
           {sorted.map((o: any) => <OppRow key={o.id} o={o} />)}
