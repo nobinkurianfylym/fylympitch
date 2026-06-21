@@ -83,6 +83,18 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
           className="absolute right-0 top-full mt-2 bg-white border border-line rounded-card overflow-hidden z-50"
           style={{ minWidth: 180, boxShadow: "0 4px 24px rgba(26,24,21,0.08)" }}
         >
+          {/* Admin Panel — admins only */}
+          {accountRole === "ADMIN" && (
+            <Link
+              href="/admin"
+              onClick={() => setOpen(false)}
+              className="w-full flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.1em] uppercase text-ash hover:text-ink transition-colors border-b border-line"
+              style={{ color: "#BF9953" }}
+            >
+              Admin
+            </Link>
+          )}
+
           {/* Filmmaker Dashboard — filmmakers and admins only */}
           {(accountRole === "FILMMAKER" || accountRole === "ADMIN") && (
             <Link
