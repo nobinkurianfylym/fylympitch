@@ -31,7 +31,7 @@ const CEREBRAS_KEY    = Deno.env.get("CEREBERAS_API");   // note: typo preserved
 const GROQ_KEY        = Deno.env.get("GROQ_API_KEY");
 const OPENAI_KEY      = Deno.env.get("OPENAI_API_KEY");
 
-const CONFIDENCE_GATE   = 90;
+const CONFIDENCE_GATE   = 70;
 const CRAWL_CONCURRENCY = 6;
 
 // ─── AI provider config (mirrors aiEngine.ts) ─────────────────
