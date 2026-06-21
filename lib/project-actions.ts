@@ -1,5 +1,5 @@
-import { toUSD } from "@/lib/format";
 "use server";
+import { toUSD } from "@/lib/format";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
