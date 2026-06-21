@@ -1120,3 +1120,82 @@ export async function updateUsername(_prevState: unknown, formData: FormData) {
   revalidatePath("/dashboard/profile");
   return { ok: true as const };
 }
+
+// ── PUBLIC OPPORTUNITY SUBMISSION ────────────────────────────────────────────
+
+export async function submitPublicOpportunity(formData: FormData) {
+  "use server";
+  const { createServiceClient } = await import("@/lib/supabase/service");
+  const supabase = createServiceClient();
+
+  const title = str(formData, "title");
+  if (!title) return { error: "Title is required." };
+
+  const list = (k: string) =>
+    str(formData, k)
+      ? str(formData, k).split(",").map((s) => s.trim()).filter(Boolean)
+      : [];
+
+  const { error } = await supabase.from("opportunities").insert({
+    title,
+    opp_type:            str(formData, "opp_type") || "grant",
+    description:         str(formData, "description") || null,
+    country:             str(formData, "country") || null,
+    region:              str(formData, "region") || null,
+    url:                 str(formData, "url") || null,
+    app_link:            str(formData, "app_link") || null,
+    max_award_usd:       num(formData, "max_award_usd"),
+    deadline:            str(formData, "deadline") || null,
+    deadline_note:       str(formData, "deadline_note") || null,
+    genres:              list("genres"),
+    formats:             list("formats"),
+    stages:              list("stages"),
+    eligible_countries:  list("eligible_countries"),
+    submitted_by_name:   str(formData, "submitted_by_name") || null,
+    submitted_by_email:  str(formData, "submitted_by_email") || null,
+    opp_approval_status: "pending",
+    is_active:           false,
+  });
+
+  if (error) return { error: error.message };
+  return { ok: true as const };
+}
+
+// ── ADMIN: APPROVE / REJECT SUBMITTED OPPORTUNITY ───────────────────────────
+
+export async function adminApproveOpportunity(formData: FormData) {
+  "use server";
+  const { supabase, user } = await requireAdmin();
+  const id = str(formData, "opportunity_id");
+  if (!id) return { error: "Missing ID." };
+
+  const { error } = await supabase
+    .from("opportunities")
+    .update({ opp_approval_status: "approved", is_active: true })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  await supabase.from("audit_logs").insert({
+    actor_id: user.id, action: "opportunity_approved", target: "opportunity", target_id: id,
+  });
+  revalidatePath("/admin/opportunities");
+  revalidatePath("/funds");
+}
+
+export async function adminRejectOpportunity(formData: FormData) {
+  "use server";
+  const { supabase, user } = await requireAdmin();
+  const id = str(formData, "opportunity_id");
+  if (!id) return { error: "Missing ID." };
+
+  const { error } = await supabase
+    .from("opportunities")
+    .update({ opp_approval_status: "rejected", is_active: false })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  await supabase.from("audit_logs").insert({
+    actor_id: user.id, action: "opportunity_rejected", target: "opportunity", target_id: id,
+  });
+  revalidatePath("/admin/opportunities");
+}

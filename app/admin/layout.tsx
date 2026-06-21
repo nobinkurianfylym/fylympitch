@@ -32,12 +32,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .select("id", { count: "exact", head: true })
     .eq("status", "pending");
 
+  // Pending public opportunity submissions
+  const { count: pendingOpps } = await supabase
+    .from("opportunities")
+    .select("id", { count: "exact", head: true })
+    .eq("opp_approval_status", "pending");
+
   const nav = [
     { href: "/admin", label: "Analytics" },
     { href: "/admin/users", label: "User management" },
     { href: "/admin/producers", label: "Producers", badge: pendingProducers },
     { href: "/admin/projects", label: "Project management" },
-    { href: "/admin/opportunities", label: "Opportunity management" },
+    { href: "/admin/opportunities", label: "Opportunity management", badge: pendingOpps },
     { href: "/admin/intelligence", label: "Intelligence", badge: pendingReview },
     { href: "/admin/certificates", label: "Certificates" },
     { href: "/admin/moderation", label: "Moderation" },

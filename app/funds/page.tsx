@@ -254,6 +254,16 @@ export default async function FundsPage({
           </div>
         )}
 
+        {/* Submit opportunity — always visible */}
+        <div className="mt-12 text-center">
+          <Link
+            href="/funds/submit"
+            className="text-[12px] tracking-[0.16em] uppercase text-ash hover:text-ink transition-colors border-b border-ash/30 hover:border-ink pb-0.5"
+          >
+            + Submit an opportunity
+          </Link>
+        </div>
+
         {/* Guest gate — shown after 100 results */}
         {!user && opps && opps.length >= 100 && (
           <div className="mt-16 py-14 px-8 border border-line rounded-card text-center bg-white/60">
