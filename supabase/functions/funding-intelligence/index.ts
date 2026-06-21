@@ -530,8 +530,23 @@ async function processSource(
   const extracted = normalize(raw);
   stats.confidences.push(extracted.confidence);
 
-  // Low confidence → admin review queue
+  // Smart confidence gate:
+  // - EXISTING record + low confidence → touch last_verified_at only, skip review
+  // - NEW record + low confidence → admin review queue
   if (extracted.confidence < CONFIDENCE_GATE) {
+    const existing = await findExisting(supabase, extracted, source.url);
+    if (existing) {
+      await supabase.from("opportunities")
+        .update({ last_verified_at: new Date().toISOString() })
+        .eq("id", existing.id);
+      stats.duplicates_prevented++;
+      await supabase.from("funding_crawl_items").insert({
+        run_id: runId, source_id: source.id, opportunity_id: existing.id,
+        action: "skipped", confidence: extracted.confidence,
+      });
+      return;
+    }
+    // Genuinely new record — queue for admin review
     stats.pending_review++;
     await supabase.from("admin_review_queue").insert({
       run_id: runId, source_id: source.id,
