@@ -21,7 +21,7 @@ export default async function MyProjectsPage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, title, genre, format, stage, country, language, logline, budget_currency, funding_needed_usd, finance_secured_usd, poster_path, love_count, is_public, admin_hidden, created_at")
+    .select("id, title, genre, format, stage, country, language, logline, budget_currency, funding_needed_usd, finance_secured_usd, poster_path, love_count, is_public, admin_hidden, created_at, director_name")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -128,7 +128,7 @@ export default async function MyProjectsPage() {
                     </h2>
                   </Link>
                   {/* L2: Metadata row */}
-                  <p className="text-[12px] text-ash mb-2.5 leading-tight">
+                  <p className="text-[12px] text-ash mb-0.5 leading-tight">
                     {[
                       formatFormat(p.format),
                       p.genre,
@@ -137,6 +137,14 @@ export default async function MyProjectsPage() {
                       formatStage(p.stage),
                     ].filter(Boolean).join(" · ")}
                   </p>
+                  {/* Director line */}
+                  {p.director_name && (
+                    <p className="text-[12px] text-ash mb-2.5 leading-tight">
+                      <span className="text-[10px] font-medium tracking-[0.08em] uppercase text-ash/60 mr-1">Dir.</span>
+                      {p.director_name}
+                    </p>
+                  )}
+                  {!p.director_name && <div className="mb-2.5" />}
                   {/* L5: Logline */}
                   {p.logline && (
                     <p className="italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">

@@ -106,6 +106,20 @@ function MetadataRow({
   );
 }
 
+/** Director / filmmaker name — rendered directly below MetadataRow on every surface */
+function DirectorLine({ project }: { project: FilmIdentityProject }) {
+  const name = project.director_name ?? project.filmmaker?.full_name ?? null;
+  if (!name) return null;
+  return (
+    <p className="text-[12px] text-ash leading-tight mt-1.5">
+      <span className="text-[10px] font-medium tracking-[0.08em] uppercase text-ash/60 mr-1">
+        Dir.
+      </span>
+      {name}
+    </p>
+  );
+}
+
 /** Canonical status badge with semantic colours */
 function StatusBadge({ stage }: { stage: string | null | undefined }) {
   if (!stage) return null;
@@ -213,13 +227,11 @@ function FullVariant({
   supabaseUrl: string;
   actions?: ReactNode;
 }) {
-  // Resolve director credit — director_name field first, fallback to filmmaker
-  const directorName = project.director_name ?? null;
   // Producer: first line of producer_info
   const producerName = project.producer_info?.split("\n")[0]?.trim() ?? null;
 
+  // Credits grid: PRODUCER + WRITER — DIRECTOR shown via DirectorLine below metadata
   const credits = [
-    directorName ? { label: "DIRECTOR", value: directorName } : null,
     producerName ? { label: "PRODUCER", value: producerName } : null,
     project.writer_name ? { label: "WRITER", value: project.writer_name } : null,
   ].filter((c): c is { label: string; value: string } => c !== null);
@@ -266,6 +278,7 @@ function FullVariant({
           {/* L2: Primary metadata row */}
           <div className="mt-3">
             <MetadataRow project={project} mode="full" />
+            <DirectorLine project={project} />
           </div>
 
           {/* L3: Credits */}
@@ -353,9 +366,6 @@ function CompactCardVariant({
         : "bg-ink/70 text-ivory"
       : "";
 
-  const directorDisplay =
-    project.director_name ?? project.filmmaker?.full_name ?? null;
-
   return (
     <div className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold/40 hover:shadow-sm transition-all">
       {/* Thumbnail + badges */}
@@ -405,25 +415,16 @@ function CompactCardVariant({
           </h2>
         </Link>
 
-        {/* L2 short: Format · Genre · Country */}
+        {/* L2 short: Format · Genre · Country + Director */}
         <div className="mb-3">
           <MetadataRow project={project} mode="short" />
+          <DirectorLine project={project} />
         </div>
 
         {/* L5 mini: Logline — 2 lines, italic */}
         {project.logline && (
           <p className="text-[13px] italic leading-[1.55] text-ash line-clamp-2 flex-1 mb-3">
             {project.logline}
-          </p>
-        )}
-
-        {/* L3 mini: Director */}
-        {directorDisplay && (
-          <p className="text-[11px] text-ash mb-3">
-            <span className="text-[10px] tracking-[0.08em] uppercase mr-1.5">
-              Dir.
-            </span>
-            {directorDisplay}
           </p>
         )}
 
@@ -483,6 +484,7 @@ function TableRowVariant({
         >
           {titleDisplay}
         </p>
+        <DirectorLine project={project} />
       </Link>
 
       <div className="hidden md:flex items-center gap-1.5 text-[12px] text-ash shrink-0">
@@ -558,7 +560,7 @@ function SearchResultVariant({
         >
           {project.title}
         </p>
-        <div className="flex flex-wrap gap-1 items-center text-[12px] text-ash mb-1">
+        <div className="flex flex-wrap gap-1 items-center text-[12px] text-ash mb-0.5">
           {metaParts.map((p, i) => (
             <Fragment key={i}>
               {i > 0 && <span aria-hidden="true">·</span>}
@@ -566,6 +568,7 @@ function SearchResultVariant({
             </Fragment>
           ))}
         </div>
+        <DirectorLine project={project} />
         {project.logline && (
           <p className="text-[12px] text-ash line-clamp-2 leading-snug">
             {project.logline}
@@ -624,6 +627,7 @@ function MessagingPreviewVariant({
           {truncatedTitle}
         </p>
         {meta && <p className="text-[11px] text-ash">{meta}</p>}
+        <DirectorLine project={project} />
       </div>
     </Link>
   );

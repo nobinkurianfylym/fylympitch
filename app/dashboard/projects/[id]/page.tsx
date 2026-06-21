@@ -32,7 +32,7 @@ export default async function ProjectDetailPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("*")
+    .select("*, profiles!projects_owner_id_fkey(full_name)")
     .eq("id", id)
     .single<Project>();
   if (!project) notFound();
@@ -182,7 +182,12 @@ export default async function ProjectDetailPage({
       <div className="mb-10 pb-8 border-b border-line">
         <FilmIdentity
           variant="full"
-          project={project}
+          project={{
+            ...project,
+            filmmaker: (project as any).profiles
+              ? { full_name: (project as any).profiles.full_name, career_stage: null }
+              : null,
+          }}
           supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!}
           actions={
             <div className="flex flex-wrap items-center gap-3">
