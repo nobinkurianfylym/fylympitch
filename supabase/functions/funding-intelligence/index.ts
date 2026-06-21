@@ -67,6 +67,24 @@ interface FundingSource {
   region: string | null;
   expected_opp_type: string | null;
   notes: string | null;
+  crawl_frequency: "daily" | "weekly" | "monthly";
+  last_crawled_at: string | null;
+  last_success_at: string | null;
+}
+
+// Hours threshold per frequency before re-crawling
+const FREQUENCY_HOURS: Record<string, number> = {
+  daily:   20,        // 20h  — fires every daily cron
+  weekly:  6 * 24,   // 6d   — fires once a week
+  monthly: 28 * 24,  // 28d  — fires once a month
+};
+
+function isDue(source: FundingSource): boolean {
+  if (!source.last_crawled_at) return true; // never crawled yet
+  const hoursSince =
+    (Date.now() - new Date(source.last_crawled_at).getTime()) / 36e5;
+  const threshold = FREQUENCY_HOURS[source.crawl_frequency] ?? 20;
+  return hoursSince >= threshold;
 }
 
 interface ExtractedOpportunity {
@@ -619,13 +637,13 @@ Deno.serve(async (req: Request) => {
   };
 
   try {
-    const { data: sources } = await supabase
+    const { data: allSources } = await supabase
       .from("funding_sources")
       .select("*")
       .eq("crawl_active", true)
-      .order("last_crawled_at", { ascending: true, nullsFirst: true });
+      .order("last_verified_at", { ascending: true, nullsFirst: true });
 
-    if (!sources || sources.length === 0) {
+    if (!allSources || allSources.length === 0) {
       await supabase.from("funding_crawl_runs").update({
         status: "complete", finished_at: new Date().toISOString(),
         error_summary: "No active sources found",
@@ -633,10 +651,25 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ message: "No active sources" }), { status: 200 });
     }
 
+    // Filter to only sources due for a crawl based on their frequency
+    const sources = (allSources as FundingSource[]).filter(isDue);
+    const skipped  = allSources.length - sources.length;
+
+    console.log(`[intelligence] ${sources.length} due / ${allSources.length} total / ${skipped} skipped (not due)`);
+
+    if (sources.length === 0) {
+      await supabase.from("funding_crawl_runs").update({
+        status: "complete", finished_at: new Date().toISOString(),
+        sources_crawled: 0,
+        error_summary: `All ${allSources.length} sources up to date — nothing due`,
+      }).eq("id", runId);
+      return new Response(JSON.stringify({ message: "All sources up to date", skipped }), { status: 200 });
+    }
+
     stats.sources_crawled = sources.length;
 
     await runInBatches(
-      sources as FundingSource[],
+      sources,
       CRAWL_CONCURRENCY,
       (source) => processSource(supabase, source, runId, stats),
     );
