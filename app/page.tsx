@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
+import { Footer } from "@/components/Footer";
 import HomepageDemo from "@/components/HomepageDemo";
 import HeroToggle from "@/components/HeroToggle";
 
@@ -399,46 +400,7 @@ export default async function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-deep text-ivory">
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <div className="md:flex justify-between gap-12">
-            <div className="max-w-xs">
-              <Wordmark light />
-              <p className="mt-5 text-[13px] leading-relaxed text-ivory/50">
-                Intelligent matchmaking between film projects and the people who finance them. A FYLYM company.
-              </p>
-            </div>
-            <div className="mt-10 md:mt-0 grid grid-cols-2 sm:grid-cols-3 gap-12 text-[13px]">
-              <div>
-                <p className="eyebrow !text-ivory/40 mb-4">Platform</p>
-                <ul className="space-y-3 text-ivory/70">
-                  <li><a href="#features" className="hover:text-gold">Features</a></li>
-                  <li><a href="#pricing" className="hover:text-gold">Pricing</a></li>
-                  <li><Link href="/signup" className="hover:text-gold">Join</Link></li>
-                </ul>
-              </div>
-              <div>
-                <p className="eyebrow !text-ivory/40 mb-4">For industry</p>
-                <ul className="space-y-3 text-ivory/70">
-                  <li><Link href="/signup?role=producer" className="hover:text-gold">Producers</Link></li>
-                  <li><Link href="/signup?role=producer" className="hover:text-gold">Investors</Link></li>
-                  <li><Link href="/funds/submit" className="hover:text-gold">Submit an opportunity</Link></li>
-                </ul>
-              </div>
-              <div>
-                <p className="eyebrow !text-ivory/40 mb-4">Company</p>
-                <ul className="space-y-3 text-ivory/70">
-                  <li><a href="https://www.nobinkurian.com" className="hover:text-gold">About</a></li>
-                  <li><a href="mailto:nobinkurian@yahoo.com" className="hover:text-gold">Contact</a></li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div className="hairline-gold mt-14 pt-6 text-[11px] tracking-[0.2em] uppercase text-ivory/40">
-            © {new Date().getFullYear()} PITCH.FYLYM · A FYLYM Company · Ernakulam, Kerala
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
     </RoleProvider>
   );
