@@ -1,48 +1,64 @@
 "use client";
 // app/admin/intelligence/TriggerCrawlButton.tsx
-// Triggers a manual crawl run by calling the Supabase Edge Function.
+// Fires crawl and polls via page refresh every 15s until run completes.
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { triggerCrawlRun } from "./actions-trigger";
 
 export function TriggerCrawlButton() {
-  const [state, setState] = useState<"idle" | "running" | "done" | "error">("idle");
-  const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
+  const router = useRouter();
+  const [state, setState] = useState<"idle" | "started" | "error">("idle");
   const [err, setErr] = useState<string | null>(null);
+  const [pollCount, setPollCount] = useState(0);
+
+  // Auto-refresh every 15s while crawl is running
+  useEffect(() => {
+    if (state !== "started") return;
+    const interval = setInterval(() => {
+      router.refresh();
+      setPollCount((c) => c + 1);
+    }, 15000);
+    // Stop polling after 5 minutes
+    const stop = setTimeout(() => {
+      clearInterval(interval);
+      setState("idle");
+    }, 300000);
+    return () => { clearInterval(interval); clearTimeout(stop); };
+  }, [state, router]);
 
   async function handleTrigger() {
-    setState("running");
+    setState("started");
     setErr(null);
-    setSummary(null);
+    setPollCount(0);
     const res = await triggerCrawlRun();
     if (res.error) {
       setErr(res.error);
       setState("error");
-    } else {
-      setSummary(res.data ?? null);
-      setState("done");
     }
+    // On success: stay in "started", polling takes over
   }
 
   return (
     <div>
       <button
         onClick={handleTrigger}
-        disabled={state === "running"}
+        disabled={state === "started"}
         className="text-[11px] uppercase tracking-[0.14em] font-normal px-4 py-2 bg-ink text-ivory rounded hover:bg-gold transition-colors disabled:opacity-50"
       >
-        {state === "running" ? "Running crawl…" : "Run crawl now"}
+        {state === "started" ? "Crawl running…" : "Run crawl now"}
       </button>
 
-      {state === "done" && summary && (
-        <div className="mt-3 text-[12px] text-emerald-700 font-normal bg-emerald-50 border border-emerald-200 px-4 py-2 rounded">
-          ✓ Crawl complete · {String(summary.new_opportunities ?? 0)} new · {String(summary.updated ?? 0)} updated · {String(summary.avg_confidence ?? "—")}% avg confidence
-        </div>
+      {state === "started" && (
+        <p className="mt-2 text-[12px] text-ash font-normal">
+          Crawling 49 sources in background — refreshing every 15s
+          {pollCount > 0 ? ` (${pollCount} refresh${pollCount > 1 ? "es" : ""})` : ""}
+        </p>
       )}
 
       {state === "error" && err && (
         <div className="mt-3 text-[12px] text-red-600 font-normal bg-red-50 border border-red-200 px-4 py-2 rounded">
-          Error: {err}
+          {err}
         </div>
       )}
     </div>
