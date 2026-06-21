@@ -7,6 +7,7 @@ import HeroToggle from "@/components/HeroToggle";
 
 export const dynamic = "force-dynamic";
 import IntelligenceTicker from "@/components/IntelligenceTicker";
+import PlatformMetrics from "@/components/PlatformMetrics";
 import { RoleProvider, type Role } from "@/components/RoleProvider";
 import HeaderRoleToggle from "@/components/HeaderRoleToggle";
 import HeaderCTA from "@/components/HeaderCTA";
@@ -135,6 +136,9 @@ export default async function Home() {
         {/* HERO — grows to fill remaining viewport */}
         <HeroToggle isLoggedIn={!!user} accountRole={accountRole} />
       </div>
+
+      {/* PLATFORM METRICS — live counts above the ticker */}
+      <PlatformMetrics />
 
       {/* INTELLIGENCE TICKER */}
       <IntelligenceTicker />

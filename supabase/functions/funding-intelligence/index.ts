@@ -700,6 +700,16 @@ Deno.serve(async (req: Request) => {
     };
 
     console.log("FUNDING INTELLIGENCE COMPLETE:", JSON.stringify(summary));
+
+    // ── Refresh platform metrics snapshot ──────────────────────
+    try {
+      await supabase.rpc("refresh_platform_metrics");
+      console.log("[intelligence] platform_metrics refreshed");
+    } catch (metricsErr) {
+      // Non-fatal — log and continue
+      console.warn("[intelligence] platform_metrics refresh failed:", metricsErr);
+    }
+
     return new Response(JSON.stringify(summary), {
       status: 200, headers: { "Content-Type": "application/json" },
     });

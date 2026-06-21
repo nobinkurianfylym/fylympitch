@@ -91,13 +91,7 @@ const INSIGHTS: InsightCard[] = [
   { kind:"insight", label:"INDUSTRY SNAPSHOT",   text:"$42M available across active funding opportunities." },
 ];
 
-const STATS = [
-  { value: "1,847", label: "Active Opportunities" },
-  { value: "47",    label: "Partner Organizations" },
-  { value: "411",   label: "Festivals" },
-  { value: "127",   label: "Markets" },
-  { value: "$3.2B+",label: "Funding Tracked" },
-];
+// Stats bar removed — superseded by PlatformMetrics component above the ticker
 
 function buildCards(): Card[] {
   const out: Card[] = [];
@@ -237,22 +231,7 @@ export default function IntelligenceTicker() {
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div style={{
-        display: "flex",
-        gap: 24,
-        alignItems: "center",
-        justifyContent: "center",
-        flexWrap: "wrap",
-        padding: "10px 24px 14px",
-      }}>
-        {STATS.map(({ value, label }) => (
-          <div key={label} style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#BF9953", fontVariantNumeric: "tabular-nums" }}>{value}</span>
-            <span style={{ fontSize: 9, color: "#B8B2A8", letterSpacing: "0.05em" }}>{label}</span>
-          </div>
-        ))}
-      </div>
+
     </section>
   );
 }
