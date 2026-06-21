@@ -19,6 +19,9 @@ export default async function MyProjectsPage() {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
+  const { data: profile } = await supabase
+    .from("profiles").select("full_name").eq("id", user.id).single();
+
   const { data: projects } = await supabase
     .from("projects")
     .select("id, title, genre, format, stage, country, language, logline, budget_currency, funding_needed_usd, finance_secured_usd, poster_path, love_count, is_public, admin_hidden, created_at, director_name")
@@ -138,13 +141,13 @@ export default async function MyProjectsPage() {
                     ].filter(Boolean).join(" · ")}
                   </p>
                   {/* Director line */}
-                  {p.director_name && (
+                  {(p.director_name || profile?.full_name) && (
                     <p className="text-[12px] text-ash mb-2.5 leading-tight">
                       <span className="text-[10px] font-medium tracking-[0.08em] uppercase text-ash/60 mr-1">Dir.</span>
-                      {p.director_name}
+                      {p.director_name ?? profile?.full_name}
                     </p>
                   )}
-                  {!p.director_name && <div className="mb-2.5" />}
+                  {!(p.director_name || profile?.full_name) && <div className="mb-2.5" />}
                   {/* L5: Logline */}
                   {p.logline && (
                     <p className="italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">

@@ -29,7 +29,7 @@ export default async function DashboardPage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, title, stage, genre, format, country, language, logline, budget_currency, funding_needed_usd, finance_secured_usd, is_public, created_at, poster_path, love_count")
+    .select("id, title, stage, genre, format, country, language, logline, budget_currency, funding_needed_usd, finance_secured_usd, is_public, created_at, poster_path, love_count, director_name")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -233,7 +233,7 @@ export default async function DashboardPage() {
                       </h3>
                     </Link>
                     {/* L2: Metadata row — Format · Genre · Country · Language · Stage */}
-                    <p className="text-[12px] text-ash mb-2.5 leading-tight">
+                    <p className="text-[12px] text-ash mb-0.5 leading-tight">
                       {[
                         formatFormat(p.format),
                         p.genre,
@@ -242,6 +242,14 @@ export default async function DashboardPage() {
                         formatStage(p.stage),
                       ].filter(Boolean).join(" · ")}
                     </p>
+                    {/* Director line */}
+                    {((p as any).director_name || profile?.full_name) && (
+                      <p className="text-[12px] text-ash mb-2.5 leading-tight">
+                        <span className="text-[10px] font-medium tracking-[0.08em] uppercase text-ash/60 mr-1">Dir.</span>
+                        {(p as any).director_name ?? profile?.full_name}
+                      </p>
+                    )}
+                    {!((p as any).director_name || profile?.full_name) && <div className="mb-2.5" />}
                     {/* L5: Logline — no quotes */}
                     {(p as any).logline && (
                       <p className="italic text-[13px] leading-[1.55] text-ash line-clamp-2 flex-1">

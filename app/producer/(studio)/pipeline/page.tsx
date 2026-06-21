@@ -34,7 +34,8 @@ export default async function ProducerPipelinePage() {
       id, status, rating, notes, updated_at,
       projects:project_id (
         id, title, genre, format, stage, country, language,
-        logline, budget_currency, funding_needed_usd, finance_secured_usd, poster_path, is_public
+        logline, budget_currency, funding_needed_usd, finance_secured_usd, poster_path, is_public,
+        director_name, filmmaker:profiles!projects_owner_id_fkey(full_name)
       )
     `)
     .eq("producer_id", user.id)
@@ -118,13 +119,20 @@ export default async function ProducerPipelinePage() {
                             {p.title}
                           </p>
                           {/* L2: Metadata */}
-                          <p className="text-[11px] text-ash mb-1.5 leading-tight">
+                          <p className="text-[11px] text-ash mb-0.5 leading-tight">
                             {[
                               formatFormat(p.format),
                               p.genre,
                               (() => { const c = formatCountry(p.country); return c?.flag ? `${c.flag} ${c.name}` : c?.name ?? null; })(),
                             ].filter(Boolean).join(" · ")}
                           </p>
+                          {/* Director line */}
+                          {((p as any).director_name || (p as any).filmmaker?.full_name) && (
+                            <p className="text-[11px] text-ash mb-1.5 leading-tight">
+                              <span className="text-[10px] font-medium tracking-[0.08em] uppercase text-ash/60 mr-1">Dir.</span>
+                              {(p as any).director_name ?? (p as any).filmmaker?.full_name}
+                            </p>
+                          )}
                           <div className="flex items-center justify-between">
                             <span className={`text-[10px] px-2 py-0.5 rounded-full ${p.is_public ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
                               {p.is_public ? "Public" : "Private"}
