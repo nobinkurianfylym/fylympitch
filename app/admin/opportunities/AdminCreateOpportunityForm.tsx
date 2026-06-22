@@ -135,7 +135,6 @@ export function AdminCreateOpportunityForm() {
                 ))}
               </optgroup>
             ))}
-            ))}
           </select>
         </label>
 
