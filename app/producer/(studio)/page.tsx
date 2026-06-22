@@ -5,6 +5,7 @@ import { upsertProducerProject } from "@/lib/actions";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
 import MessageButton from "@/components/MessageButton";
+import FRSButton from "@/components/FRSButton";
 import FilmIdentity from "@/components/FilmIdentity";
 import { formatBudget } from "@/lib/format";
 
@@ -94,10 +95,10 @@ export default async function ProducerDiscoverPage() {
         .in("project_id", top9Ids)
     : { data: [] };
 
-  const scoreMap = new Map<string, number>(
+  const frsMap = new Map<string, { score: number; missing: string[]; fund_requirements?: string[] }>(
     (intelligenceRows ?? [])
       .filter((r: any) => r.funding_readiness?.score != null)
-      .map((r: any) => [r.project_id as string, r.funding_readiness.score as number])
+      .map((r: any) => [r.project_id as string, r.funding_readiness])
   );
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -138,7 +139,7 @@ export default async function ProducerDiscoverPage() {
             const crm       = crmByProject.get(p.id);
             const pillCls   = crm ? PIPELINE_PILL[crm.status] : null;
             const pillLbl   = crm ? PIPELINE_LABEL[crm.status] : null;
-            const frs       = scoreMap.get(p.id);
+            const frs       = frsMap.get(p.id);
 
             return (
               <FilmIdentity
@@ -160,13 +161,12 @@ export default async function ProducerDiscoverPage() {
 
                     {/* Action row: FRS · Message · Like · Share */}
                     <div className="flex items-center gap-2">
-                      <Link
-                        href={`/dashboard/projects/${p.id}`}
-                        title="Funding Readiness Score — view full engine analysis"
-                        className="btn-ghost !py-1.5 !px-3 !text-[12px] !text-gold !border-gold/40 hover:!border-gold shrink-0"
-                      >
-                        FRS {frs != null ? frs : "—"}
-                      </Link>
+                      <FRSButton
+                        score={frs?.score ?? null}
+                        missing={frs?.missing ?? []}
+                        fundRequirements={frs?.fund_requirements}
+                        projectTitle={p.title}
+                      />
                       <MessageButton
                         projectId={p.id}
                         producerId={user.id}
