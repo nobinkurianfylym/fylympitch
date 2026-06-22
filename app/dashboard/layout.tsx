@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Wordmark from "@/components/Wordmark";
+import DashboardNav from "@/components/DashboardNav";
 import { signOut } from "@/lib/auth-actions";
 import type { Profile } from "@/types";
 
@@ -59,26 +60,24 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Wordmark href="/" />
           <span className="text-[10px] tracking-[0.22em] uppercase text-ash mt-1">Dashboard</span>
         </div>
-        <nav className="flex md:flex-col gap-5 md:gap-0 md:mt-12 md:space-y-5 text-[12px] tracking-[0.16em] uppercase whitespace-nowrap">
-          {nav.map((n) => (
-            <Link key={n.href} href={n.href}
-              className={`hover:text-ink transition-colors ${
-                n.href === "/producer"
-                  ? "text-gold hover:text-gold/80 font-medium"
-                  : n.href === "/dashboard/notifications" && (unread ?? 0) > 0
-                  ? "text-gold hover:text-gold/80"
-                  : n.href === "/dashboard/messages" && totalMsgUnread > 0
-                  ? "text-gold hover:text-gold/80"
-                  : "text-ash"
-              }`}>
-              {n.label}
-            </Link>
-          ))}
-        </nav>
-        {/* Secondary nav — smaller, quieter */}
-        <nav className="hidden md:flex md:flex-col md:mt-8 md:space-y-4 text-[11px] tracking-[0.16em] uppercase whitespace-nowrap">
-          {secondaryNav.map((n) => (
-            <Link key={n.href} href={n.href} className="text-ash/60 hover:text-ash transition-colors">
+        <DashboardNav items={[
+          { href: "https://pitch.fylym.com/", label: "Home" },
+          { href: "/dashboard",               label: "Dashboard" },
+          { href: "/dashboard/projects",      label: "My Projects" },
+          { href: "/dashboard/opportunities", label: "Opportunities" },
+          { href: "/dashboard/applications",  label: "Applications" },
+          ...(isIndustry ? [{ href: "/producer", label: "Producer Studio", gold: true }] : []),
+          { href: "/dashboard/messages",      label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}`, gold: totalMsgUnread > 0 },
+          { href: "/dashboard/notifications", label: `Notifications${(unread ?? 0) > 0 ? ` (${unread})` : ""}`, gold: (unread ?? 0) > 0 },
+          { href: "/dashboard/profile",       label: "Profile & Credits" },
+          ...(role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
+        ]} />
+        <nav className="hidden md:flex md:flex-col md:mt-6 md:space-y-1 text-[11px] tracking-[0.16em] uppercase whitespace-nowrap">
+          {[
+            { href: "/dashboard/saved", label: "Saved" },
+            { href: "/projects",        label: "Film showcase" },
+          ].map((n) => (
+            <Link key={n.href} href={n.href} className="text-ash/60 hover:text-ash transition-colors" style={{ padding: "5px 0 5px 14px" }}>
               {n.label}
             </Link>
           ))}

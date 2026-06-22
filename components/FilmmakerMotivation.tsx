@@ -47,38 +47,28 @@ export default function FilmmakerMotivation() {
     <div style={{
       display:      'flex',
       alignItems:   'center',
-      gap:          20,
-      padding:      '18px 24px',
-      borderRadius: 10,
-      border:       '1px solid rgba(191,153,83,0.18)',
-      background:   'rgba(191,153,83,0.04)',
+      gap:          14,
+      padding:      '12px 16px',
+      borderRadius: 8,
+      borderLeft:   '2px solid rgba(191,153,83,0.4)',
+      background:   'transparent',
       transition:   'opacity 0.4s ease',
       opacity:      fading ? 0 : 1,
     }}>
-      {/* Gold quote mark */}
-      <span style={{
-        fontFamily:  "'Playfair Display', Georgia, serif",
-        fontSize:    40,
-        color:       'rgba(191,153,83,0.35)',
-        lineHeight:  1,
-        flexShrink:  0,
-        marginTop:   -6,
-        userSelect:  'none',
-      }}>"</span>
-
       <div style={{ minWidth: 0 }}>
         <p style={{
-          fontFamily:  "'Playfair Display', Georgia, serif",
-          fontStyle:   'italic',
-          fontSize:    'clamp(13px, 1.15vw, 15px)',
-          lineHeight:  1.6,
-          color:       '#1A1815',
-          marginBottom: 6,
+          fontFamily:   "'Playfair Display', Georgia, serif",
+          fontStyle:    'italic',
+          fontSize:     13,
+          lineHeight:   1.55,
+          color:        '#1A1815',
+          opacity:      0.75,
+          marginBottom: 4,
         }}>
-          {q.text}
+          "{q.text}"
         </p>
         <p style={{
-          fontSize:      10,
+          fontSize:      9,
           letterSpacing: '0.16em',
           textTransform: 'uppercase',
           color:         '#BF9953',

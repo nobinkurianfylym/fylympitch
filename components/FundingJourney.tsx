@@ -299,9 +299,17 @@ export default function FundingJourney({
                       transition: "border-color 0.2s, box-shadow 0.2s",
                     }}
                   >
-                    {/* Category name */}
-                    <div style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: cat.status === "locked" ? "#b0aba4" : "#8A857C", fontFamily: "'Montserrat',sans-serif", lineHeight: 1.35, marginBottom: "6px" }}>
-                      {cat.label}
+                    {/* Category name + checkmark */}
+                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 4, marginBottom: "6px" }}>
+                      <div style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: cat.status === "locked" ? "#b0aba4" : "#8A857C", fontFamily: "'Montserrat',sans-serif", lineHeight: 1.35 }}>
+                        {cat.label}
+                      </div>
+                      {cat.status === "completed" && (
+                        <span style={{ fontSize: 12, color: "#BF9953", flexShrink: 0, lineHeight: 1 }}>✓</span>
+                      )}
+                      {cat.status === "current" && (
+                        <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#BF9953", flexShrink: 0, marginTop: 3, display: "inline-block" }} />
+                      )}
                     </div>
 
                     {/* Sub-type count pill */}
@@ -345,8 +353,15 @@ export default function FundingJourney({
         <ExpandedPanel cat={expandedCat} projectId={projectId} onClose={() => setSelected(null)} />
       )}
 
-      {/* Bottom tip */}
-      <p style={{ marginTop: "16px", fontSize: "12px", color: "#8A857C", textAlign: "center" }}>
+      {/* Next milestone + bottom tip */}
+      {nextCat && (
+        <div style={{ marginTop: "16px", display: "flex", alignItems: "center", gap: 10, padding: "10px 16px", background: "rgba(191,153,83,0.06)", borderRadius: 8, border: "1px solid rgba(191,153,83,0.15)" }}>
+          <span style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: "#BF9953", fontWeight: 600, flexShrink: 0 }}>Next milestone</span>
+          <span style={{ fontSize: 13, color: "#1A1815" }}>{nextCat.label}</span>
+          <span style={{ fontSize: 11, color: "#8A857C", marginLeft: "auto", flexShrink: 0 }}>{nextCat.opportunities.length} match{nextCat.opportunities.length !== 1 ? "es" : ""}</span>
+        </div>
+      )}
+      <p style={{ marginTop: "12px", fontSize: "11px", color: "#8A857C", textAlign: "center" }}>
         Progressing through categories in order significantly increases your success rate in securing funding.
       </p>
     </div>

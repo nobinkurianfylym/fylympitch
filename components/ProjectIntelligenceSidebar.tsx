@@ -129,14 +129,15 @@ function ClickCard({ children, onClick }: { children: React.ReactNode; onClick: 
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        background:    "#1A1815",
+        background:    hover ? "#201E1B" : "#1A1815",
         borderRadius:  10,
         overflow:      "hidden",
         marginBottom:  10,
         cursor:        "pointer",
-        border:        `1px solid ${hover ? "rgba(191,153,83,0.3)" : "transparent"}`,
-        transition:    "border-color 0.2s, box-shadow 0.2s",
-        boxShadow:     hover ? "0 0 0 3px rgba(191,153,83,0.08)" : "none",
+        border:        `1px solid ${hover ? "rgba(191,153,83,0.35)" : "rgba(255,255,255,0.06)"}`,
+        transition:    "all 0.2s ease",
+        boxShadow:     hover ? "0 8px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(191,153,83,0.1)" : "0 2px 8px rgba(0,0,0,0.15)",
+        transform:     hover ? "translateY(-1px)" : "translateY(0)",
       }}
     >
       {children}
@@ -231,6 +232,19 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
                 {scoreVal >= 80 ? "Strong readiness" : scoreVal >= 60 ? "Good readiness" : scoreVal >= 40 ? "Building readiness" : "Early stage"}
               </p>
             </div>
+            {/* Quick improvement actions */}
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "10px 18px 4px", display: "flex", flexDirection: "column", gap: 6 }}>
+              {[
+                { points: "+12", label: "Add cast attachment" },
+                { points: "+8",  label: "Add production co." },
+                { points: "+5",  label: "Upload pitch deck"  },
+              ].map(({ points, label }) => (
+                <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 11, color: "rgba(245,245,240,0.55)", letterSpacing: "0.02em" }}>{label}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "#BF9953", letterSpacing: "0.06em", background: "rgba(191,153,83,0.12)", padding: "2px 7px", borderRadius: 20 }}>{points}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </ClickCard>
       )}
@@ -267,7 +281,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
       {dream && (
         <ClickCard onClick={() => setModal("dream")}>
           <div style={{ padding: "16px 18px 10px" }}>
-            <p style={HDR}>Dream Scenario</p>
+            <p style={HDR}>Funding Forecast</p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 12 }}>
               {([
                 ["Total funding",     usd(dream.funding_usd)],
@@ -382,7 +396,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
 
       {/* Dream Scenario Modal */}
       {modal === "dream" && dream && (
-        <Modal title="Dream Scenario — AI Projection" onClose={() => setModal(null)}>
+        <Modal title="Funding Forecast — AI Projection" onClose={() => setModal(null)}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
             {([
               ["Total Funding",     usd(dream.funding_usd),          "Sum of top 10 match ceiling"],

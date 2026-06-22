@@ -244,13 +244,7 @@ export default async function ProjectDetailPage({
           flex: 1, textAlign: "center",
         }}>{project.title}</span>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-          {scriptUrl && (
-            <a href={scriptUrl} target="_blank" rel="noreferrer" style={{
-              fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
-              color: S.ash, textDecoration: "none",
-              padding: "6px 14px", border: `1px solid ${S.line}`, borderRadius: 6,
-            }}>Script</a>
-          )}
+          {isOwner && !!discovery && !simpleView && <RerunEngineButton projectId={project.id} hasData={true} />}
           {isOwner && (
             <Link href={`/dashboard/projects/${project.id}/edit`} style={{
               fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
@@ -258,9 +252,45 @@ export default async function ProjectDetailPage({
               padding: "6px 14px", border: `1px solid rgba(26,24,21,0.2)`, borderRadius: 6,
             }}>Edit</Link>
           )}
-          {isOwner && !!discovery && !simpleView && <RerunEngineButton projectId={project.id} hasData={true} />}
+          {scriptUrl && (
+            <a href={scriptUrl} target="_blank" rel="noreferrer" style={{
+              fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
+              color: S.ash, textDecoration: "none",
+              padding: "6px 14px", border: `1px solid ${S.line}`, borderRadius: 6,
+            }}>Script</a>
+          )}
         </div>
       </div>
+
+      {/* ── ANCHOR NAV ─────────────────────────────────────────── */}
+      {!simpleView && (
+        <div style={{
+          position: "sticky", top: 52, zIndex: 19,
+          background: S.canvas, borderBottom: `1px solid ${S.line}`,
+          display: "flex", alignItems: "center", gap: 0,
+          padding: "0 32px", overflowX: "auto",
+        }}>
+          {[
+            { href: "#overview",        label: "Overview" },
+            { href: "#top-matches",     label: "Top Matches" },
+            { href: "#ai-ep",           label: "AI Producer" },
+            { href: "#funding-journey", label: "Funding Journey" },
+            { href: "#improve",         label: "Improve" },
+            { href: "#applications",    label: "Applications" },
+          ].map(({ href, label }) => (
+            <a key={href} href={href} style={{
+              fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase",
+              color: S.ash, textDecoration: "none",
+              padding: "10px 16px", flexShrink: 0,
+              borderBottom: "2px solid transparent",
+              transition: "color 0.15s, border-color 0.15s",
+            }}
+            onMouseEnter={e => { (e.target as HTMLElement).style.color = "#1A1815"; (e.target as HTMLElement).style.borderBottomColor = "#BF9953"; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.color = "#8A857C"; (e.target as HTMLElement).style.borderBottomColor = "transparent"; }}
+            >{label}</a>
+          ))}
+        </div>
+      )}
 
       {/* ── 2-COLUMN GRID ──────────────────────────────────────── */}
       <div
@@ -278,7 +308,7 @@ export default async function ProjectDetailPage({
         <div style={{ paddingRight: (hasIntel || simpleView) ? 40 : 0, paddingTop: 40, minWidth: 0, overflow: "hidden" }}>
 
           {/* HERO */}
-          <div style={{
+          <div id="overview" style={{
             display: "flex", gap: 28, alignItems: "flex-start",
             paddingBottom: 36, borderBottom: `1px solid ${S.line}`,
           }}>
@@ -331,7 +361,7 @@ export default async function ProjectDetailPage({
           {(budget !== "—" || secured || seeking) && (
             <div style={{
               display: "grid",
-              gridTemplateColumns: `repeat(${[budget !== "—", !!secured, !!seeking, true].filter(Boolean).length}, 1fr)`,
+              gridTemplateColumns: `repeat(${[budget !== "—", !!secured, !!seeking].filter(Boolean).length}, 1fr)`,
               borderBottom: `1px solid ${S.line}`,
             }}>
               {budget !== "—" && (
@@ -362,14 +392,18 @@ export default async function ProjectDetailPage({
                   <p style={{ fontSize: 19, fontWeight: 700, color: S.gold, fontFamily: "'Playfair Display', serif" }}>{seeking}</p>
                 </div>
               )}
-              <div style={{ padding: "18px 14px 16px" }}>
-                <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 5 }}>Project ID</p>
-                <p style={{ fontSize: 12, fontWeight: 600, color: S.ash, fontFamily: "monospace" }}>FYP-{projectId}</p>
-              </div>
+
             </div>
+          )}
+          {/* Project ID below strip */}
+          {projectId && (
+            <p style={{ fontSize: 11, color: S.ash, padding: "8px 2px 0", letterSpacing: "0.04em" }}>
+              Project ID: <span style={{ fontFamily: "monospace", fontSize: 11 }}>FYP-{projectId}</span>
+            </p>
           )}
 
           {/* TOP MATCHES */}
+          <div id="top-matches" style={{ position: "relative", marginTop: -1 }} />
           {isOwner && !simpleView && ranked.length > 0 && (
             <div style={{ paddingTop: 36, paddingBottom: 36, borderBottom: `1px solid ${S.line}` }}>
               <p style={SH}>Top Matches</p>
@@ -501,6 +535,7 @@ export default async function ProjectDetailPage({
           )}
 
           {/* AI EP BRIEF */}
+          <div id="ai-ep" style={{ position: "relative", marginTop: -1 }} />
           {isOwner && !simpleView && epBrief && (
             <div style={{ paddingTop: 36, paddingBottom: 36, borderBottom: `1px solid ${S.line}` }}>
               <p style={SH}>AI Executive Producer</p>
@@ -529,7 +564,7 @@ export default async function ProjectDetailPage({
 
           {/* PITCH DECK — only in My Projects view */}
           {simpleView && deckUrl && (
-            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}`, display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ paddingTop: 28, paddingBottom: 28, borderBottom: `1px solid ${S.line}`, display: "flex", flexDirection: "column", alignItems: "center" }}>
               <p style={{ ...SH, alignSelf: "flex-start", color: S.ash }}>Pitch Deck</p>
               <PitchDeckTile deckUrl={deckUrl} title={project.title} className="w-full max-w-[520px]" />
             </div>
@@ -537,7 +572,7 @@ export default async function ProjectDetailPage({
 
           {/* SYNOPSIS — only in My Projects view */}
           {simpleView && project.synopsis && (
-            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
+            <div style={{ paddingTop: 28, paddingBottom: 28, borderBottom: `1px solid ${S.line}` }}>
               <p style={SH}>Synopsis</p>
               <p style={{ fontSize: "clamp(15px, 1.3vw, 17px)", lineHeight: 1.8, color: S.ink, whiteSpace: "pre-line", wordBreak: "break-word", overflowWrap: "break-word" }}>
                 {project.synopsis}
@@ -549,7 +584,7 @@ export default async function ProjectDetailPage({
 
           {/* PRODUCERS */}
           {project.producer_info && (
-            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
+            <div style={{ paddingTop: 28, paddingBottom: 28, borderBottom: `1px solid ${S.line}` }}>
               <p style={SH}>Producers</p>
               <p style={{ fontSize: "clamp(14px, 1.2vw, 16px)", lineHeight: 1.75, color: S.ink, whiteSpace: "pre-line", wordBreak: "break-word", overflowWrap: "break-word" }}>
                 {project.producer_info}
@@ -558,6 +593,7 @@ export default async function ProjectDetailPage({
           )}
 
           {/* FUNDING JOURNEY — back below AI EP */}
+          <div id="funding-journey" style={{ position: "relative", marginTop: -1 }} />
           {isOwner && !simpleView && (
             <div style={{ paddingTop: 8 }}>
               <FundingJourney projectId={project.id} opportunities={journeyOpps} roadmap={roadmap} readiness={readiness} />
@@ -565,41 +601,54 @@ export default async function ProjectDetailPage({
           )}
 
           {/* OBSTACLES */}
+          <div id="improve" style={{ position: "relative", marginTop: -1 }} />
           {isOwner && !simpleView && obstacles.length > 0 && (
-            <div style={{ paddingTop: 40, paddingBottom: 40, borderTop: `1px solid ${S.line}` }}>
+            <div style={{ paddingTop: 28, paddingBottom: 28, borderTop: `1px solid ${S.line}` }}>
               <p style={SH}>Strengthen Before Applying</p>
               <p style={{ fontSize: 12, color: S.ash, marginBottom: 18 }}>
-                Address these to improve match scores and application success rates.
+                Each issue below reduces your funding readiness score. Fix them to unlock better matches.
               </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {obstacles.map((ob: FundingObstacle) => (
-                  <div key={ob.id} style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-                    padding: "12px 14px", borderRadius: 8, border: `1px solid ${S.line}`, background: S.surface,
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{
-                        fontSize: 8, letterSpacing: "0.14em", textTransform: "uppercase",
-                        padding: "2px 7px", borderRadius: 100, fontWeight: 600,
-                        background: ob.severity === "high" ? "rgba(220,38,38,0.08)" : ob.severity === "medium" ? "rgba(234,179,8,0.08)" : S.mist,
-                        color: ob.severity === "high" ? "#b91c1c" : ob.severity === "medium" ? "#854d0e" : S.ash,
-                      }}>{ob.severity}</span>
-                      <span style={{ fontSize: 13, color: S.ink }}>{ob.label}</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {obstacles.map((ob: FundingObstacle) => {
+                  const pts = ob.severity === "high" ? "+12" : ob.severity === "medium" ? "+8" : "+5";
+                  const explanation = ob.severity === "high"
+                    ? "This significantly reduces eligibility across matched opportunities."
+                    : ob.severity === "medium"
+                    ? "This moderately affects your match scores and application strength."
+                    : "Addressing this will improve overall profile completeness.";
+                  const badgeBg = ob.severity === "high" ? "rgba(220,38,38,0.08)" : ob.severity === "medium" ? "rgba(234,179,8,0.08)" : S.mist;
+                  const badgeColor = ob.severity === "high" ? "#b91c1c" : ob.severity === "medium" ? "#854d0e" : S.ash;
+                  return (
+                    <div key={ob.id} style={{
+                      padding: "14px 16px", borderRadius: 10,
+                      border: `1px solid ${S.line}`, background: S.surface,
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                          <span style={{ fontSize: 8, letterSpacing: "0.14em", textTransform: "uppercase", padding: "2px 7px", borderRadius: 100, fontWeight: 600, background: badgeBg, color: badgeColor, flexShrink: 0 }}>
+                            {ob.severity} impact
+                          </span>
+                          <span style={{ fontSize: 13, color: S.ink, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ob.label}</span>
+                        </div>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: "#2E6B4E", background: "rgba(46,107,78,0.08)", padding: "2px 8px", borderRadius: 20, flexShrink: 0, whiteSpace: "nowrap" }}>{pts} pts</span>
+                      </div>
+                      <p style={{ fontSize: 12, color: S.ash, lineHeight: 1.55, marginBottom: ob.action_href ? 10 : 0 }}>{explanation}</p>
+                      {ob.action_href && (
+                        <Link href={ob.action_href} style={{
+                          display: "inline-block", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+                          color: S.ink, textDecoration: "none", fontWeight: 600,
+                          padding: "5px 12px", border: `1px solid rgba(26,24,21,0.2)`, borderRadius: 6,
+                        }}>Fix now →</Link>
+                      )}
                     </div>
-                    {ob.action_href && (
-                      <Link href={ob.action_href} style={{
-                        fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
-                        color: S.ink, textDecoration: "none",
-                        padding: "4px 10px", border: `1px solid ${S.line}`, borderRadius: 5, flexShrink: 0,
-                      }}>Fix →</Link>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
           {/* OFFERS */}
+          <div id="applications" style={{ position: "relative", marginTop: -1 }} />
           {isOwner && (offers?.length ?? 0) > 0 && (
             <div style={{ paddingTop: 44, borderTop: `1px solid ${S.line}` }}>
               <p style={SH}>Offers</p>
@@ -629,25 +678,67 @@ export default async function ProjectDetailPage({
             </div>
           )}
 
-          {/* DELETE */}
+          {/* DELETE — Danger Zone */}
           {isOwner && (
-            <form action={deleteProject} style={{ marginTop: 60, paddingTop: 20, borderTop: `1px solid ${S.line}` }}>
-              <input type="hidden" name="project_id" value={project.id} />
-              <button style={{
-                fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
-                color: "rgba(138,133,124,0.45)", background: "none", border: "none",
-                cursor: "pointer", fontFamily: "Montserrat, sans-serif",
-              }} className="fyp-delete-btn">Delete this project</button>
-            </form>
+            <details style={{ marginTop: 48, paddingTop: 20, borderTop: `1px solid ${S.line}` }}>
+              <summary style={{
+                fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase",
+                color: "rgba(138,133,124,0.4)", cursor: "pointer", userSelect: "none",
+                listStyle: "none", display: "flex", alignItems: "center", gap: 8,
+              }}>
+                <span>▸</span> Danger Zone
+              </summary>
+              <div style={{
+                marginTop: 16, padding: "20px", borderRadius: 8,
+                border: "1px solid rgba(220,38,38,0.2)",
+                background: "rgba(220,38,38,0.03)",
+              }}>
+                <p style={{ fontSize: 13, color: "#b91c1c", fontWeight: 600, marginBottom: 6 }}>Delete this project</p>
+                <p style={{ fontSize: 12, color: S.ash, lineHeight: 1.6, marginBottom: 16 }}>
+                  This action is permanent. All associated matches, intelligence data, and files will be removed and cannot be recovered.
+                </p>
+                <form action={deleteProject} onSubmit={e => { if (!confirm("Permanently delete this project? This cannot be undone.")) e.preventDefault(); }}>
+                  <input type="hidden" name="project_id" value={project.id} />
+                  <button style={{
+                    fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
+                    color: "#b91c1c", background: "none",
+                    border: "1px solid rgba(185,28,28,0.3)", borderRadius: 6,
+                    padding: "7px 16px", cursor: "pointer", fontFamily: "Montserrat, sans-serif",
+                  }}>Delete project permanently</button>
+                </form>
+              </div>
+            </details>
           )}
 
-          {/* MOTIVATION */}
+          {/* END CTA */}
           {!simpleView && (
             <div style={{ marginTop: 48, paddingTop: 32, borderTop: `1px solid ${S.line}` }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 14 }}>
-                Keep Going
+              <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, color: S.ink, marginBottom: 6, fontWeight: 400 }}>
+                Ready to take the next step?
+              </h3>
+              <p style={{ fontSize: 13, color: S.ash, marginBottom: 22, lineHeight: 1.6 }}>
+                Your project is live on PITCH.FYLYM. Start applying to your top matches or share your project to build momentum.
               </p>
-              <FilmmakerMotivation />
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                <Link href="/dashboard/opportunities" style={{
+                  fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
+                  padding: "9px 20px", borderRadius: 6, textDecoration: "none",
+                  background: S.ink, color: "#F5F5F0", fontWeight: 600,
+                }}>View All Matches →</Link>
+                <Link href="/dashboard/applications" style={{
+                  fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
+                  padding: "9px 20px", borderRadius: 6, textDecoration: "none",
+                  border: `1px solid ${S.line}`, color: S.ink,
+                }}>My Applications →</Link>
+                <Link href={`/dashboard/projects/${project.id}/edit`} style={{
+                  fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
+                  padding: "9px 20px", borderRadius: 6, textDecoration: "none",
+                  border: `1px solid ${S.line}`, color: S.ash,
+                }}>Edit Project</Link>
+              </div>
+              <div style={{ marginTop: 36 }}>
+                <FilmmakerMotivation />
+              </div>
             </div>
           )}
         </div>
