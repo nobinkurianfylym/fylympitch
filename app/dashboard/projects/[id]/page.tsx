@@ -18,6 +18,7 @@ import PitchDeckTile from "@/components/PitchDeckTile";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import ProjectIntelligenceSidebar from "@/components/ProjectIntelligenceSidebar";
 import FilmmakerWorkspace, { type WorkspaceDeadline } from "@/components/FilmmakerWorkspace";
+import FilmmakerMotivation from "@/components/FilmmakerMotivation";
 import {
   formatBudgetDisplay, formatShortId, formatCountry, STAGE_BADGE,
 } from "@/lib/film-identity";
@@ -374,16 +375,11 @@ export default async function ProjectDetailPage({
               <p style={SH}>Top Matches</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {ranked.slice(0, 8).map(m => (
-                  <Link key={m.id}
-                    href={`/dashboard/opportunities/${m.id}?project=${project.id}`}
-                    className="fyp-match-row"
-                    style={{
-                      display: "flex", alignItems: "center", gap: 10,
-                      padding: "10px 14px", borderRadius: 8,
-                      border: `1px solid ${S.line}`, background: S.surface,
-                      textDecoration: "none", transition: "border-color 0.15s",
-                    }}
-                  >
+                  <div key={m.id} style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "10px 14px", borderRadius: 8,
+                    border: `1px solid ${S.line}`, background: S.surface,
+                  }}>
                     <span style={{
                       fontSize: 8, letterSpacing: "0.1em", textTransform: "uppercase",
                       padding: "2px 7px", borderRadius: 4, flexShrink: 0,
@@ -403,12 +399,30 @@ export default async function ProjectDetailPage({
                         </p>
                       )}
                     </div>
-                    <div style={{
-                      fontFamily: "'Playfair Display', serif",
-                      fontSize: 20, fontWeight: 700, color: S.gold,
-                      flexShrink: 0, minWidth: 32, textAlign: "right",
-                    }}>{m.score}</div>
-                  </Link>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: S.gold, flexShrink: 0, minWidth: 32, textAlign: "right" }}>
+                      {m.score}
+                    </div>
+                    <Link
+                      href={`/dashboard/opportunities/${m.id}?project=${project.id}`}
+                      style={{
+                        flexShrink:    0,
+                        fontSize:      10,
+                        letterSpacing: "0.12em",
+                        textTransform: "uppercase",
+                        padding:       "5px 12px",
+                        borderRadius:  6,
+                        border:        `1px solid rgba(191,153,83,0.35)`,
+                        color:         S.gold,
+                        textDecoration:"none",
+                        whiteSpace:    "nowrap",
+                        fontWeight:    600,
+                        transition:    "background 0.15s",
+                      }}
+                      className="fyp-view-btn"
+                    >
+                      View →
+                    </Link>
+                  </div>
                 ))}
               </div>
               {ranked.length > 8 && (
@@ -553,12 +567,7 @@ export default async function ProjectDetailPage({
             </div>
           )}
 
-          {/* FUNDING JOURNEY */}
-          {isOwner && !simpleView && (
-            <div style={{ paddingTop: 8 }}>
-              <FundingJourney projectId={project.id} opportunities={journeyOpps} roadmap={roadmap} readiness={readiness} />
-            </div>
-          )}
+          {/* FUNDING JOURNEY → moved to right sidebar */}
 
           {/* OBSTACLES */}
           {isOwner && !simpleView && obstacles.length > 0 && (
@@ -636,16 +645,39 @@ export default async function ProjectDetailPage({
               }} className="fyp-delete-btn">Delete this project</button>
             </form>
           )}
+
+          {/* MOTIVATION */}
+          {!simpleView && (
+            <div style={{ marginTop: 48, paddingTop: 32, borderTop: `1px solid ${S.line}` }}>
+              <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 14 }}>
+                Keep Going
+              </p>
+              <FilmmakerMotivation />
+            </div>
+          )}
         </div>
 
-        {/* ════ RIGHT SIDEBAR ══════════════════════════════════ */}
+        {/* ════ RIGHT SIDEBAR — intelligence + funding journey ═ */}
         {hasIntel && (
-          <div style={{ position: "sticky", top: 52, alignSelf: "start", paddingTop: 32 }}>
-            <ProjectIntelligenceSidebar
-              discovery={discovery!}
-              readiness={readiness}
-              dream={dream}
-            />
+          <div style={{ alignSelf: "start", paddingTop: 32 }}>
+            <div style={{ position: "sticky", top: 52 }}>
+              <ProjectIntelligenceSidebar
+                discovery={discovery!}
+                readiness={readiness}
+                dream={dream}
+              />
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: "#8A857C", fontWeight: 600, marginBottom: 12 }}>
+                Funding Journey
+              </p>
+              <FundingJourney
+                projectId={project.id}
+                opportunities={journeyOpps}
+                roadmap={roadmap}
+                readiness={readiness}
+              />
+            </div>
           </div>
         )}
 

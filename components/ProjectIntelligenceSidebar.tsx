@@ -50,7 +50,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
   };
   const HDR: React.CSSProperties = {
     fontSize: 8.5, letterSpacing: "0.24em", textTransform: "uppercase",
-    color: "rgba(245,245,240,0.28)", fontWeight: 600,
+    color: "rgba(245,245,240,0.72)", fontWeight: 600,
   };
 
   return (
@@ -80,7 +80,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
                   {score}
                 </text>
                 <text x={cx} y={cx + 18} textAnchor="middle"
-                  fill="rgba(245,245,240,0.3)" fontSize={11} fontFamily="Montserrat, sans-serif">
+                  fill="rgba(245,245,240,0.55)" fontSize={11} fontFamily="Montserrat, sans-serif">
                   /100
                 </text>
               </svg>
@@ -93,7 +93,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
                   transition: "width 1100ms cubic-bezier(0.4,0,0.2,1)",
                 }} />
               </div>
-              <p style={{ fontSize: 10, color: "rgba(245,245,240,0.35)", letterSpacing: "0.1em", textAlign: "center" }}>
+              <p style={{ fontSize: 10, color: "rgba(245,245,240,0.60)", letterSpacing: "0.1em", textAlign: "center" }}>
                 {scoreVal >= 80 ? "Strong readiness"
                   : scoreVal >= 60 ? "Good readiness"
                   : scoreVal >= 40 ? "Building readiness"
@@ -108,7 +108,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
       <div style={BOX}>
         <div style={{ padding: "16px 18px 18px" }}>
           <p style={{ ...HDR, marginBottom: 10 }}>PITCH.FYLYM ENGINE™</p>
-          <p style={{ fontSize: 11, color: "rgba(245,245,240,0.38)", marginBottom: 8 }}>
+          <p style={{ fontSize: 11, color: "rgba(245,245,240,0.65)", marginBottom: 8 }}>
             Can raise
           </p>
           <p style={{
@@ -118,7 +118,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
           }}>
             {usd(discovery.total_usd)}
           </p>
-          <p style={{ fontSize: 10, color: "rgba(245,245,240,0.35)", marginBottom: 14, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 10, color: "rgba(245,245,240,0.55)", marginBottom: 14, lineHeight: 1.5 }}>
             {discovery.source_counts?.total ?? 0} matched sources across grants, labs, co-production &amp; investors
           </p>
 
@@ -133,7 +133,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
                   <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 13, color: "#BF9953" }}>
                     {usd(item.amount_usd)}
                   </div>
-                  <div style={{ fontSize: 7, letterSpacing: "0.13em", textTransform: "uppercase", color: "rgba(245,245,240,0.28)", marginTop: 2 }}>
+                  <div style={{ fontSize: 7, letterSpacing: "0.13em", textTransform: "uppercase", color: "rgba(245,245,240,0.50)", marginTop: 2 }}>
                     {item.label}
                   </div>
                 </div>
@@ -157,7 +157,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
               ] as [string, string][]).map(([label, val]) => (
                 <div key={label} style={{ borderRadius: 7, padding: "9px 10px", background: "rgba(255,255,255,0.05)" }}>
                   <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, color: "#BF9953", marginBottom: 3 }}>{val}</div>
-                  <div style={{ fontSize: 7, letterSpacing: "0.13em", textTransform: "uppercase", color: "rgba(245,245,240,0.28)" }}>{label}</div>
+                  <div style={{ fontSize: 7, letterSpacing: "0.13em", textTransform: "uppercase", color: "rgba(245,245,240,0.55)" }}>{label}</div>
                 </div>
               ))}
             </div>
@@ -169,7 +169,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
                   transition: "width 1100ms cubic-bezier(0.4,0,0.2,1)",
                 }} />
               </div>
-              <span style={{ fontSize: 9, color: "rgba(245,245,240,0.32)", whiteSpace: "nowrap" }}>
+              <span style={{ fontSize: 9, color: "rgba(245,245,240,0.55)", whiteSpace: "nowrap" }}>
                 {dream.distribution_probability}% distribution
               </span>
             </div>
