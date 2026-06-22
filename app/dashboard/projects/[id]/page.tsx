@@ -545,17 +545,7 @@ export default async function ProjectDetailPage({
             </div>
           )}
 
-          {/* DIRECTOR'S STATEMENT */}
-          {project.director_statement && (
-            <div style={{ paddingTop: 40, paddingBottom: 40, borderBottom: `1px solid ${S.line}` }}>
-              <p style={SH}>Director's Statement</p>
-              <p style={{
-                fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic",
-                fontSize: "clamp(15px, 1.3vw, 18px)", lineHeight: 1.8, color: S.ink,
-                whiteSpace: "pre-line", opacity: 0.9, wordBreak: "break-word", overflowWrap: "break-word",
-              }}>{project.director_statement}</p>
-            </div>
-          )}
+
 
           {/* PRODUCERS */}
           {project.producer_info && (

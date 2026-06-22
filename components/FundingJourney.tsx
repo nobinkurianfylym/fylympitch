@@ -267,29 +267,6 @@ export default function FundingJourney({
             The complete financing pathway across all 9 categories. Each shows AI-matched opportunities tailored to your film.
           </p>
         </div>
-
-        {/* Progress card */}
-        <div style={{ background: "#F8F5F0", border: "0.5px solid rgba(26,24,21,0.12)", borderRadius: "12px", padding: "16px 20px", minWidth: "300px" }}>
-          <p style={{ fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "#8A857C", marginBottom: "10px" }}>Funding Journey Progress</p>
-          <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "12px" }}>
-            <span style={{ fontFamily: "'Playfair Display',serif", fontSize: "30px", color: "#BF9953", lineHeight: 1, flexShrink: 0 }}>{progress}%</span>
-            <div style={{ display: "flex", gap: "24px" }}>
-              <div>
-                <div style={{ fontSize: "10px", color: "#8A857C", marginBottom: "2px" }}>Current Category</div>
-                <div style={{ fontSize: "13px", color: "#1A1815", fontFamily: "'Montserrat',sans-serif" }}>{currentCat?.label ?? "—"}</div>
-              </div>
-              {nextCat && (
-                <div>
-                  <div style={{ fontSize: "10px", color: "#8A857C", marginBottom: "2px" }}>Next Recommended</div>
-                  <div style={{ fontSize: "13px", color: "#1A1815", fontFamily: "'Montserrat',sans-serif" }}>{nextCat.label}</div>
-                </div>
-              )}
-            </div>
-          </div>
-          <div style={{ height: "3px", background: "rgba(26,24,21,0.1)", borderRadius: "2px" }}>
-            <div style={{ height: "3px", background: "#BF9953", borderRadius: "2px", width: `${Math.min(Math.max(progress, 0), 99)}%`, transition: "width 0.8s ease" }} />
-          </div>
-        </div>
       </div>
 
       {/* Timeline */}
