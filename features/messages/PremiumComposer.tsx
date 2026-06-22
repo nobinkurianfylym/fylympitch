@@ -119,8 +119,8 @@ export function PremiumComposer({ onSend, sendError, onClearError, disabled }: P
       {stagedFile && (
         <div className="px-5 pt-3">
           <div
-            className="flex items-center gap-3 px-3 py-2 border border-line bg-ivory"
-            style={{ borderRadius: 2, maxWidth: 300 }}
+            className="flex items-center gap-3 px-3 py-2 border border-line bg-ivory rounded-lg"
+            style={{ maxWidth: 300 }}
           >
             <i
               className={`ti ${getFileIcon(stagedExtension)} text-ash`}
@@ -169,8 +169,8 @@ export function PremiumComposer({ onSend, sendError, onClearError, disabled }: P
             hover:text-ink hover:bg-parchment
             disabled:opacity-30
             transition-colors
+            rounded-lg
           "
-          style={{ borderRadius: 2 }}
         >
           <i className="ti ti-paperclip" style={{ fontSize: 18 }} aria-hidden="true" />
         </button>
@@ -223,8 +223,8 @@ export function PremiumComposer({ onSend, sendError, onClearError, disabled }: P
             hover:bg-ink hover:text-ivory
             disabled:opacity-25 disabled:cursor-not-allowed
             transition-colors
+            rounded-lg
           "
-          style={{ borderRadius: 2 }}
         >
           {sending ? (
             <i className="ti ti-loader animate-spin" style={{ fontSize: 14 }} aria-hidden="true" />

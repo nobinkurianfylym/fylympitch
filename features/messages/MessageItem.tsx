@@ -82,6 +82,7 @@ export const MessageItem = React.memo(
               px-4 py-3
               border
               text-[14px] leading-[1.6]
+              ${isMine ? "rounded-2xl rounded-br-md" : "rounded-2xl rounded-bl-md"}
               ${
                 deleted
                   ? "border-line bg-ivory text-ash italic"
@@ -90,7 +91,6 @@ export const MessageItem = React.memo(
                   : "border-line bg-white text-ink"
               }
             `}
-            style={{ borderRadius: 2 }}
           >
             {deleted ? (
               <span className="text-[13px]">This message has been removed.</span>
@@ -114,8 +114,8 @@ export const MessageItem = React.memo(
                 {/* Optimistic attachment placeholder */}
                 {isOptimistic(msg) && msg.attachment_name && (
                   <div
-                    className="flex items-center gap-3 px-4 py-3 mt-2 border border-white/20 bg-white/10"
-                    style={{ borderRadius: 2, maxWidth: 300 }}
+                    className="flex items-center gap-3 px-4 py-3 mt-2 border border-white/20 bg-white/10 rounded-lg"
+                    style={{ maxWidth: 300 }}
                   >
                     <i
                       className="ti ti-loader animate-spin"

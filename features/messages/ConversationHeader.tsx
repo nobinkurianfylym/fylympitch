@@ -50,15 +50,14 @@ export const ConversationHeader = React.memo(function ConversationHeader({
           flex items-center justify-center
           text-[12px] font-medium text-ash
           select-none
+          rounded-full
         "
-        style={{ borderRadius: 2 }}
       >
         {counterparty.avatar_url ? (
           <img
             src={counterparty.avatar_url}
             alt={counterparty.full_name ?? ""}
-            className="w-full h-full object-cover"
-            style={{ borderRadius: 2 }}
+            className="w-full h-full object-cover rounded-full"
           />
         ) : (
           initials
@@ -95,8 +94,8 @@ export const ConversationHeader = React.memo(function ConversationHeader({
           text-[11px] tracking-[0.1em] uppercase text-ash
           hover:border-ash hover:text-ink
           transition-colors shrink-0
+          rounded-lg
         "
-        style={{ borderRadius: 2 }}
         aria-label={`View project: ${project_title}`}
       >
         <i className="ti ti-external-link" style={{ fontSize: 12 }} aria-hidden="true" />

@@ -52,9 +52,9 @@ export const AttachmentCard = React.memo(function AttachmentCard({
         hover:border-ash
         transition-colors
         max-w-[300px]
+        rounded-lg
         group
       "
-      style={{ borderRadius: 2 }}
     >
       <i
         className={`ti ${icon} text-ash group-hover:text-ink`}

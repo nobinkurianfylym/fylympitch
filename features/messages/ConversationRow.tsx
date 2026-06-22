@@ -50,15 +50,14 @@ export const ConversationRow = React.memo(function ConversationRow({
           flex items-center justify-center
           text-[11px] font-medium text-ash
           select-none
+          rounded-full
         "
-        style={{ borderRadius: 2 }}
       >
         {counterparty.avatar_url ? (
           <img
             src={counterparty.avatar_url}
             alt=""
-            className="w-full h-full object-cover"
-            style={{ borderRadius: 2 }}
+            className="w-full h-full object-cover rounded-full"
           />
         ) : (
           initials
