@@ -221,7 +221,7 @@ export function calculateMatchScore(
     }
   }
 
-  score = Math.max(0, Math.min(100, Math.round(score)));
+  score = Math.max(0, Math.min(99, Math.round(score)));
 
   const confidence: MatchResult["confidence"] =
     dataPoints >= 6 ? "high" : dataPoints >= 4 ? "medium" : "low";

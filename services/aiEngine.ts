@@ -696,7 +696,7 @@ export async function runAIEnhancedEngine(input: AIEngineInput): Promise<AIEngin
   const enhancedMatches: EnhancedMatch[] = base.matches.map((m) => {
     const semantic = semanticById.get(m.opportunity.id) ?? null;
     const hybrid_score = semantic
-      ? Math.min(100, Math.round(m.match.score * RULE_WEIGHT + semantic.semantic_score * AI_WEIGHT))
+      ? Math.min(99, Math.round(m.match.score * RULE_WEIGHT + semantic.semantic_score * AI_WEIGHT))
       : m.match.score;
     return { ...m, semantic, hybrid_score };
   }).sort((a, b) => b.hybrid_score - a.hybrid_score);

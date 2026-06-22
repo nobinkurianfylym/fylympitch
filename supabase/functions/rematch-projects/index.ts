@@ -71,7 +71,7 @@ function calculateScore(project: any, opp: any): number {
   const weightMult: Record<string, number> = { high: 1.08, medium: 1.0, low: 0.92 };
   if (opp.match_weight) score = Math.round(score * (weightMult[opp.match_weight] ?? 1));
 
-  return Math.min(100, Math.max(0, score));
+  return Math.min(99, Math.max(0, score));
 }
 
 function tierOf(score: number): string {

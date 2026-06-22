@@ -98,7 +98,7 @@ export function applyHybridAdjustments(
     score = Math.round(score * MATCH_WEIGHT_MULTIPLIER[extras.match_weight]);
   }
 
-  score = Math.max(0, Math.min(100, score));
+  score = Math.max(0, Math.min(99, score));
   return { ...base, score, tier: tierOf(score), reasons };
 }
 
@@ -423,7 +423,7 @@ export function computeRoadmap(
 
   const top3 = matches.slice(0, 3);
   const top3Avg = top3.length ? top3.reduce((s, m) => s + m.match.score, 0) / top3.length : 0;
-  const success_probability = Math.max(0, Math.min(100, Math.round(0.6 * top3Avg + 0.4 * frsScore)));
+  const success_probability = Math.max(0, Math.min(99, Math.round(0.6 * top3Avg + 0.4 * frsScore)));
 
   const currentStageCount = countsByStage[current] ?? 0;
   let recommendation: string;
@@ -538,7 +538,7 @@ export function rankProducerMatches(project: Project, profiles: ProducerMatchPro
         reasons.push("Funding available");
       }
 
-      score = Math.max(0, Math.min(100, score));
+      score = Math.max(0, Math.min(99, score));
       return { profile, score, tier: tierOf(score), reasons };
     })
     .filter((m) => m.tier !== "hidden")
