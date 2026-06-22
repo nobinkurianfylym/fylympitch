@@ -18,58 +18,115 @@ export interface JourneyOpp {
 
 type StageStatus = "completed" | "current" | "ready" | "upcoming" | "locked";
 
-const STAGE_DEFS = [
-  { id: "script",             label: "Script",                types: [],                     isPrimary: false, order: 0  },
-  { id: "script_labs",        label: "Script Labs",           types: ["lab"],                isPrimary: false, order: 1  },
-  { id: "development_labs",   label: "Development Labs",      types: ["lab"],                isPrimary: true,  order: 2  },
-  { id: "development_grants", label: "Development Grants",    types: ["grant"],              isPrimary: true,  order: 3  },
-  { id: "project_packaging",  label: "Project Packaging",     types: ["producer"],           isPrimary: true,  order: 4  },
-  { id: "coproduction",       label: "Co-Production Markets", types: ["market"],             isPrimary: true,  order: 5  },
-  { id: "film_markets",       label: "Film Markets",          types: ["market"],             isPrimary: false, order: 6  },
-  { id: "production_funds",   label: "Production Funds",      types: ["fund"],               isPrimary: true,  order: 7  },
-  { id: "equity",             label: "Equity Investors",      types: ["fund"],               isPrimary: false, order: 8  },
-  { id: "tax_incentives",     label: "Tax Incentives",        types: ["fund"],               isPrimary: false, order: 9  },
-  { id: "gap_financing",      label: "Gap Financing",         types: ["fund"],               isPrimary: false, order: 10 },
-  { id: "production",         label: "Production",            types: ["fund"],               isPrimary: false, order: 11 },
-  { id: "festival",           label: "Festival Premiere",     types: [],                     isPrimary: false, order: 12 },
-  { id: "sales_agent",        label: "Sales Agent",           types: ["broadcaster"],        isPrimary: true,  order: 13 },
-  { id: "distribution",       label: "Distribution",          types: ["streamer"],           isPrimary: true,  order: 14 },
-];
+const MAX_MATCHES = 25;
 
-// Maps roadmap stage keys to journey order index
+// ── 9 Master Categories ──────────────────────────────────────────────────────
+const CATEGORY_DEFS = [
+  {
+    id: "development",
+    label: "Development",
+    subtypes: ["Script Labs", "Development Labs", "Residencies", "Mentorships", "Development Grants", "Development Funds", "Writing Fellowships"],
+    types: ["lab", "grant"],
+    order: 0,
+  },
+  {
+    id: "packaging_markets",
+    label: "Packaging & Markets",
+    subtypes: ["Pitch Forums", "Co-Production Markets", "Film Markets"],
+    types: ["co_production", "market"],
+    order: 1,
+  },
+  {
+    id: "early_financing",
+    label: "Early Financing",
+    subtypes: ["Crowdfunding", "Donations", "Fiscal Sponsorship", "Seed Funding", "Community Funding"],
+    types: ["fund"],
+    order: 2,
+  },
+  {
+    id: "tax_incentives",
+    label: "Tax Incentives",
+    subtypes: ["Tax Credits", "Cash Rebates", "Production Rebates", "Regional Incentives", "Location Incentives"],
+    types: [] as string[],
+    order: 3,
+  },
+  {
+    id: "private_financing",
+    label: "Private Financing",
+    subtypes: ["Equity Investors", "Angel Investors", "Venture Capital", "Gap Financing", "Brand Integration", "Product Placement", "Corporate Sponsorship", "Private Funds"],
+    types: ["investor"],
+    order: 4,
+  },
+  {
+    id: "production",
+    label: "Production",
+    subtypes: ["Producers", "Co-Producers", "Production Companies", "Studios"],
+    types: ["producer"],
+    order: 5,
+  },
+  {
+    id: "post_production",
+    label: "Post Production",
+    subtypes: ["Post-Production Grants", "Post-Production Funds"],
+    types: [] as string[],
+    order: 6,
+  },
+  {
+    id: "buyers_sales",
+    label: "Buyers & Sales",
+    subtypes: ["Sales Agents", "World Sales", "Broadcasters", "Streamers", "Pre-Sales", "Content Buyers", "Music Rights"],
+    types: ["sales_agent", "broadcaster", "streamer"],
+    order: 7,
+  },
+  {
+    id: "release_distribution",
+    label: "Release & Distribution",
+    subtypes: ["Film Festivals", "Distribution Companies", "Theatrical Distribution", "OTT Distribution", "TV Distribution", "Digital Aggregators", "Educational Distribution", "Airline & Inflight Distribution"],
+    types: ["distribution"],
+    order: 8,
+  },
+] as const;
+
+// Roadmap stage key → category order index
 const ROADMAP_TO_ORDER: Record<string, number> = {
-  script: 0, labs: 2, grants: 3, co_production: 5, investors: 7, production: 11,
+  script: 0, labs: 0, grants: 0,
+  co_production: 1,
+  investors: 4,
+  production: 5,
 };
 
-function buildStages(opps: JourneyOpp[], roadmap: any) {
-  const currentOrder = roadmap?.current != null
-    ? (ROADMAP_TO_ORDER[roadmap.current] ?? -1)
-    : -1;
+function buildCategories(opps: JourneyOpp[], roadmap: any) {
+  const currentOrder =
+    roadmap?.current != null ? (ROADMAP_TO_ORDER[roadmap.current] ?? -1) : -1;
 
-  return STAGE_DEFS.map((def) => {
-    const stageOpps = def.isPrimary
-      ? opps.filter((o) => def.types.includes(o.opp_type)).sort((a, b) => b.score - a.score)
-      : [];
+  return CATEGORY_DEFS.map((def) => {
+    const matched =
+      def.types.length > 0
+        ? opps
+            .filter((o) => (def.types as string[]).includes(o.opp_type))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, MAX_MATCHES)
+        : [];
 
     let status: StageStatus = "upcoming";
     if (currentOrder >= 0) {
-      if (def.order < currentOrder)      status = "completed";
-      else if (def.order === currentOrder) status = "current";
+      if (def.order < currentOrder)           status = "completed";
+      else if (def.order === currentOrder)    status = "current";
       else if (def.order === currentOrder + 1) status = "ready";
       else if (def.order <= currentOrder + 3) status = "upcoming";
-      else status = "locked";
+      else                                    status = "locked";
     }
 
-    return { ...def, status, opportunities: stageOpps };
+    return { ...def, status, opportunities: matched };
   });
 }
 
-const STATUS_STYLES: Record<StageStatus, { bg: string; border: string; dot: string; badge: string; badgeText: string; label: string }> = {
-  completed: { bg: "rgba(191,153,83,0.08)", border: "#BF9953",              dot: "#BF9953",              badge: "rgba(191,153,83,0.18)", badgeText: "#7a5e1a", label: "Completed"    },
-  current:   { bg: "rgba(191,153,83,0.06)", border: "#BF9953",              dot: "#BF9953",              badge: "rgba(191,153,83,0.22)", badgeText: "#7a5e1a", label: "Current"      },
-  ready:     { bg: "#ffffff",               border: "rgba(26,24,21,0.14)",  dot: "#2a6b2a",              badge: "rgba(42,107,42,0.12)",  badgeText: "#2a6b2a", label: "Ready"        },
-  upcoming:  { bg: "#fafafa",               border: "rgba(26,24,21,0.10)",  dot: "rgba(26,24,21,0.25)",  badge: "rgba(26,24,21,0.08)",   badgeText: "#8A857C", label: "Upcoming"     },
-  locked:    { bg: "#f7f7f7",               border: "rgba(26,24,21,0.07)",  dot: "rgba(26,24,21,0.15)",  badge: "rgba(26,24,21,0.05)",   badgeText: "#b0aba4", label: "Coming Soon"  },
+const STATUS_STYLES: Record<StageStatus, { bg: string; border: string; badge: string; badgeText: string; label: string }> = {
+  completed: { bg: "rgba(191,153,83,0.08)", border: "#BF9953",             badge: "rgba(191,153,83,0.18)", badgeText: "#7a5e1a", label: "Completed"   },
+  current:   { bg: "rgba(191,153,83,0.06)", border: "#BF9953",             badge: "rgba(191,153,83,0.22)", badgeText: "#7a5e1a", label: "Current"     },
+  ready:     { bg: "#ffffff",               border: "rgba(26,24,21,0.14)", badge: "rgba(42,107,42,0.12)",  badgeText: "#2a6b2a", label: "Ready"       },
+  upcoming:  { bg: "#fafafa",               border: "rgba(26,24,21,0.10)", badge: "rgba(26,24,21,0.08)",   badgeText: "#8A857C", label: "Upcoming"    },
+  locked:    { bg: "#f7f7f7",               border: "rgba(26,24,21,0.07)", badge: "rgba(26,24,21,0.05)",   badgeText: "#b0aba4", label: "Coming Soon" },
 };
 
 function ScoreBadge({ score }: { score: number }) {
@@ -116,29 +173,44 @@ function OppCard({ opp, projectId }: { opp: JourneyOpp; projectId: string }) {
   );
 }
 
-function ExpandedPanel({ stage, projectId, onClose }: { stage: ReturnType<typeof buildStages>[0]; projectId: string; onClose: () => void }) {
+function ExpandedPanel({ cat, projectId, onClose }: { cat: ReturnType<typeof buildCategories>[0]; projectId: string; onClose: () => void }) {
   const [showAll, setShowAll] = useState(false);
-  const visible = showAll ? stage.opportunities : stage.opportunities.slice(0, 4);
-  const remaining = stage.opportunities.length - 4;
+  const visible = showAll ? cat.opportunities : cat.opportunities.slice(0, 4);
+  const remaining = cat.opportunities.length - 4;
 
   return (
-    <div style={{ marginTop: "12px", border: "0.5px solid rgba(26,24,21,0.14)", borderRadius: "12px", background: "#fff", overflow: "hidden", animation: "none" }}>
-      <div style={{ background: "#1A1815", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <p style={{ fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(248,245,240,0.5)", marginBottom: "4px" }}>Stage</p>
-          <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: "18px", fontWeight: 400, color: "#F8F5F0", margin: 0 }}>{stage.label}</h3>
+    <div style={{ marginTop: "12px", border: "0.5px solid rgba(26,24,21,0.14)", borderRadius: "12px", background: "#fff", overflow: "hidden" }}>
+      {/* Header */}
+      <div style={{ background: "#1A1815", padding: "16px 20px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "12px" }}>
+          <div>
+            <p style={{ fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "rgba(248,245,240,0.5)", marginBottom: "4px" }}>Category</p>
+            <h3 style={{ fontFamily: "'Playfair Display',serif", fontSize: "18px", fontWeight: 400, color: "#F8F5F0", margin: 0 }}>{cat.label}</h3>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <span style={{ fontFamily: "'Playfair Display',serif", fontSize: "22px", color: "#BF9953" }}>{cat.opportunities.length}</span>
+            <span style={{ fontSize: "12px", color: "rgba(248,245,240,0.5)" }}>
+              {cat.opportunities.length === MAX_MATCHES ? `top ${MAX_MATCHES} matches` : cat.opportunities.length === 1 ? "match" : "matches"}
+            </span>
+            <button onClick={onClose} style={{ background: "transparent", border: "0.5px solid rgba(248,245,240,0.2)", borderRadius: "50%", width: "28px", height: "28px", color: "rgba(248,245,240,0.6)", cursor: "pointer", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <span style={{ fontFamily: "'Playfair Display',serif", fontSize: "22px", color: "#BF9953" }}>{stage.opportunities.length}</span>
-          <span style={{ fontSize: "12px", color: "rgba(248,245,240,0.5)" }}>matches</span>
-          <button onClick={onClose} style={{ background: "transparent", border: "0.5px solid rgba(248,245,240,0.2)", borderRadius: "50%", width: "28px", height: "28px", color: "rgba(248,245,240,0.6)", cursor: "pointer", fontSize: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+
+        {/* Sub-types chips */}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+          {cat.subtypes.map((st) => (
+            <span key={st} style={{ fontSize: "9px", letterSpacing: "0.1em", textTransform: "uppercase", background: "rgba(191,153,83,0.15)", color: "rgba(191,153,83,0.9)", padding: "3px 8px", borderRadius: "20px", fontFamily: "'Montserrat',sans-serif", whiteSpace: "nowrap" }}>
+              {st}
+            </span>
+          ))}
         </div>
       </div>
 
-      {stage.opportunities.length === 0 ? (
+      {/* Body */}
+      {cat.opportunities.length === 0 ? (
         <div style={{ padding: "40px 20px", textAlign: "center" }}>
-          <p style={{ fontSize: "14px", color: "#8A857C", marginBottom: "6px" }}>No matches found for this stage yet.</p>
-          <p style={{ fontSize: "12px", color: "#b0aba4" }}>More opportunities for this stage are being curated and will appear here.</p>
+          <p style={{ fontSize: "14px", color: "#8A857C", marginBottom: "6px" }}>No matches found for this category yet.</p>
+          <p style={{ fontSize: "12px", color: "#b0aba4" }}>Opportunities across {cat.subtypes.length} sub-types are being curated and will appear here.</p>
         </div>
       ) : (
         <div style={{ padding: "20px" }}>
@@ -171,11 +243,11 @@ export default function FundingJourney({
   const [selected, setSelected] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const stages = buildStages(opportunities, roadmap);
+  const categories = buildCategories(opportunities, roadmap);
   const progress = (readiness as any)?.score ?? (readiness as any)?.overall_score ?? 0;
-  const currentStage = stages.find((s) => s.status === "current");
-  const nextStage = stages.find((s) => (s.status === "ready" || s.status === "upcoming") && s.opportunities.length > 0);
-  const expandedStage = selected ? stages.find((s) => s.id === selected) : null;
+  const currentCat = categories.find((c) => c.status === "current");
+  const nextCat    = categories.find((c) => (c.status === "ready" || c.status === "upcoming") && c.opportunities.length > 0);
+  const expandedCat = selected ? categories.find((c) => c.id === selected) : null;
 
   function scroll(dir: "left" | "right") {
     scrollRef.current?.scrollBy({ left: dir === "left" ? -320 : 320, behavior: "smooth" });
@@ -183,7 +255,7 @@ export default function FundingJourney({
 
   return (
     <div style={{ marginBottom: "48px" }}>
-      <style>{`@keyframes fylym-glow { 0%,100%{box-shadow:0 0 0 0 rgba(191,153,83,0.15)} 50%{box-shadow:0 0 0 8px rgba(191,153,83,0.06)} } .fy-stage-card:hover{transform:translateY(-2px);transition:transform 0.2s}`}</style>
+      <style>{`@keyframes fylym-glow { 0%,100%{box-shadow:0 0 0 0 rgba(191,153,83,0.15)} 50%{box-shadow:0 0 0 8px rgba(191,153,83,0.06)} } .fy-cat-card:hover{transform:translateY(-2px);transition:transform 0.2s}`}</style>
 
       {/* Header row */}
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: "20px", marginBottom: "24px" }}>
@@ -192,7 +264,7 @@ export default function FundingJourney({
             Funding Journey
           </h2>
           <p style={{ fontSize: "13px", color: "#8A857C", maxWidth: "460px", lineHeight: 1.65 }}>
-            Follow the complete financing pathway for your project. Each stage shows AI-matched opportunities tailored to your film.
+            The complete financing pathway across all 9 categories. Each shows AI-matched opportunities tailored to your film.
           </p>
         </div>
 
@@ -203,41 +275,44 @@ export default function FundingJourney({
             <span style={{ fontFamily: "'Playfair Display',serif", fontSize: "30px", color: "#BF9953", lineHeight: 1, flexShrink: 0 }}>{progress}%</span>
             <div style={{ display: "flex", gap: "24px" }}>
               <div>
-                <div style={{ fontSize: "10px", color: "#8A857C", marginBottom: "2px" }}>Current Stage</div>
-                <div style={{ fontSize: "13px", color: "#1A1815", fontFamily: "'Montserrat',sans-serif" }}>{currentStage?.label ?? "—"}</div>
+                <div style={{ fontSize: "10px", color: "#8A857C", marginBottom: "2px" }}>Current Category</div>
+                <div style={{ fontSize: "13px", color: "#1A1815", fontFamily: "'Montserrat',sans-serif" }}>{currentCat?.label ?? "—"}</div>
               </div>
-              {nextStage && (
+              {nextCat && (
                 <div>
                   <div style={{ fontSize: "10px", color: "#8A857C", marginBottom: "2px" }}>Next Recommended</div>
-                  <div style={{ fontSize: "13px", color: "#1A1815", fontFamily: "'Montserrat',sans-serif" }}>{nextStage.label}</div>
+                  <div style={{ fontSize: "13px", color: "#1A1815", fontFamily: "'Montserrat',sans-serif" }}>{nextCat.label}</div>
                 </div>
               )}
             </div>
           </div>
           <div style={{ height: "3px", background: "rgba(26,24,21,0.1)", borderRadius: "2px" }}>
-            <div style={{ height: "3px", background: "#BF9953", borderRadius: "2px", width: `${Math.min(Math.max(progress, 0), 100)}%`, transition: "width 0.8s ease" }} />
+            <div style={{ height: "3px", background: "#BF9953", borderRadius: "2px", width: `${Math.min(Math.max(progress, 0), 99)}%`, transition: "width 0.8s ease" }} />
           </div>
         </div>
       </div>
 
       {/* Timeline */}
       <div style={{ position: "relative" }}>
-        <button onClick={() => scroll("left")} aria-label="Scroll left" style={{ position: "absolute", left: "-14px", top: "44px", zIndex: 2, background: "#fff", border: "0.5px solid rgba(26,24,21,0.14)", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center" }}>←</button>
+        <button onClick={() => scroll("left")} aria-label="Scroll left" style={{ position: "absolute", left: "-14px", top: "52px", zIndex: 2, background: "#fff", border: "0.5px solid rgba(26,24,21,0.14)", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center" }}>←</button>
 
         <div ref={scrollRef} style={{ overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
           <div style={{ display: "flex", alignItems: "stretch", width: "max-content", padding: "4px 28px 0" }}>
-            {stages.map((stage, i) => {
-              const s = STATUS_STYLES[stage.status];
-              const isSelected = selected === stage.id;
-              const isCurrent = stage.status === "current";
+            {categories.map((cat, i) => {
+              const s = STATUS_STYLES[cat.status];
+              const isSelected = selected === cat.id;
+              const isCurrent  = cat.status === "current";
+              const hasTypes   = cat.types.length > 0;
+              const count      = cat.opportunities.length;
+
               return (
-                <div key={stage.id} style={{ display: "flex", alignItems: "center" }}>
+                <div key={cat.id} style={{ display: "flex", alignItems: "center" }}>
                   {/* Card */}
                   <div
-                    className="fy-stage-card"
-                    onClick={() => setSelected(isSelected ? null : stage.id)}
+                    className="fy-cat-card"
+                    onClick={() => setSelected(isSelected ? null : cat.id)}
                     style={{
-                      width: "136px", minHeight: "118px", padding: "12px 12px 10px",
+                      width: "148px", minHeight: "148px", padding: "14px 13px 12px",
                       background: s.bg,
                       border: `${isCurrent ? "1.5px" : "0.5px"} solid ${isSelected ? "#BF9953" : s.border}`,
                       borderRadius: "10px", cursor: "pointer",
@@ -247,18 +322,26 @@ export default function FundingJourney({
                       transition: "border-color 0.2s, box-shadow 0.2s",
                     }}
                   >
-                    {/* Stage name */}
-                    <div style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: stage.status === "locked" ? "#b0aba4" : "#8A857C", fontFamily: "'Montserrat',sans-serif", lineHeight: 1.3, marginBottom: "8px" }}>
-                      {stage.label}
+                    {/* Category name */}
+                    <div style={{ fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", color: cat.status === "locked" ? "#b0aba4" : "#8A857C", fontFamily: "'Montserrat',sans-serif", lineHeight: 1.35, marginBottom: "6px" }}>
+                      {cat.label}
                     </div>
+
+                    {/* Sub-type count pill */}
+                    <div style={{ fontSize: "9px", color: cat.status === "locked" ? "#c8c4be" : "#b0aba4", marginBottom: "6px", letterSpacing: "0.06em" }}>
+                      {cat.subtypes.length} sub-types
+                    </div>
+
                     {/* Match count */}
-                    <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "22px", color: stage.opportunities.length > 0 ? "#BF9953" : (stage.status === "locked" ? "#c8c4be" : "#1A1815"), marginBottom: "6px" }}>
-                      {stage.isPrimary ? stage.opportunities.length : "—"}
+                    <div style={{ fontFamily: "'Playfair Display',serif", fontSize: "26px", color: count > 0 ? "#BF9953" : (cat.status === "locked" ? "#c8c4be" : "#1A1815"), marginBottom: "4px", lineHeight: 1 }}>
+                      {hasTypes ? (count === MAX_MATCHES ? `${MAX_MATCHES}+` : count) : "—"}
                     </div>
+
                     {/* Sub-label */}
-                    <div style={{ fontSize: "10px", color: stage.status === "locked" ? "#c8c4be" : "#8A857C", marginBottom: "8px" }}>
-                      {stage.isPrimary ? (stage.opportunities.length === 1 ? "match" : "matches") : "curating"}
+                    <div style={{ fontSize: "10px", color: cat.status === "locked" ? "#c8c4be" : "#8A857C", marginBottom: "10px" }}>
+                      {hasTypes ? (count === 1 ? "match" : "matches") : "curating"}
                     </div>
+
                     {/* Status badge */}
                     <span style={{ display: "inline-block", fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", background: s.badge, color: s.badgeText, padding: "3px 8px", borderRadius: "20px", fontFamily: "'Montserrat',sans-serif", alignSelf: "flex-start" }}>
                       {s.label}
@@ -266,9 +349,9 @@ export default function FundingJourney({
                   </div>
 
                   {/* Connector */}
-                  {i < stages.length - 1 && (
+                  {i < categories.length - 1 && (
                     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "24px", flexShrink: 0 }}>
-                      <div style={{ height: "1px", width: "100%", background: i < stages.findIndex(s => s.status === "current") ? "#BF9953" : "rgba(26,24,21,0.12)", marginTop: "59px" }} />
+                      <div style={{ height: "1px", width: "100%", background: i < categories.findIndex(c => c.status === "current") ? "#BF9953" : "rgba(26,24,21,0.12)", marginTop: "74px" }} />
                     </div>
                   )}
                 </div>
@@ -277,17 +360,17 @@ export default function FundingJourney({
           </div>
         </div>
 
-        <button onClick={() => scroll("right")} aria-label="Scroll right" style={{ position: "absolute", right: "-14px", top: "44px", zIndex: 2, background: "#fff", border: "0.5px solid rgba(26,24,21,0.14)", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center" }}>→</button>
+        <button onClick={() => scroll("right")} aria-label="Scroll right" style={{ position: "absolute", right: "-14px", top: "52px", zIndex: 2, background: "#fff", border: "0.5px solid rgba(26,24,21,0.14)", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", fontSize: "13px", display: "flex", alignItems: "center", justifyContent: "center" }}>→</button>
       </div>
 
       {/* Expanded panel */}
-      {expandedStage && (
-        <ExpandedPanel stage={expandedStage} projectId={projectId} onClose={() => setSelected(null)} />
+      {expandedCat && (
+        <ExpandedPanel cat={expandedCat} projectId={projectId} onClose={() => setSelected(null)} />
       )}
 
       {/* Bottom tip */}
       <p style={{ marginTop: "16px", fontSize: "12px", color: "#8A857C", textAlign: "center" }}>
-        Progressing through stages in order significantly increases your success rate in securing funding.
+        Progressing through categories in order significantly increases your success rate in securing funding.
       </p>
     </div>
   );
