@@ -278,16 +278,13 @@ export default async function ProjectDetailPage({
             { href: "#improve",         label: "Improve" },
             { href: "#applications",    label: "Applications" },
           ].map(({ href, label }) => (
-            <a key={href} href={href} style={{
+            <a key={href} href={href} className="fyp-anchor-link" style={{
               fontSize: 10, letterSpacing: "0.14em", textTransform: "uppercase",
               color: S.ash, textDecoration: "none",
               padding: "10px 16px", flexShrink: 0,
               borderBottom: "2px solid transparent",
               transition: "color 0.15s, border-color 0.15s",
-            }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.color = "#1A1815"; (e.target as HTMLElement).style.borderBottomColor = "#BF9953"; }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.color = "#8A857C"; (e.target as HTMLElement).style.borderBottomColor = "transparent"; }}
-            >{label}</a>
+            }}>{label}</a>
           ))}
         </div>
       )}
@@ -697,7 +694,7 @@ export default async function ProjectDetailPage({
                 <p style={{ fontSize: 12, color: S.ash, lineHeight: 1.6, marginBottom: 16 }}>
                   This action is permanent. All associated matches, intelligence data, and files will be removed and cannot be recovered.
                 </p>
-                <form action={deleteProject} onSubmit={e => { if (!confirm("Permanently delete this project? This cannot be undone.")) e.preventDefault(); }}>
+                <form action={deleteProject}>
                   <input type="hidden" name="project_id" value={project.id} />
                   <button style={{
                     fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase",
@@ -777,6 +774,7 @@ export default async function ProjectDetailPage({
       <style>{`
         .fyp-match-row:hover  { border-color: rgba(191,153,83,0.4) !important; }
         .fyp-delete-btn:hover { color: #dc2626 !important; }
+        .fyp-anchor-link:hover { color: #1A1815 !important; border-bottom-color: #BF9953 !important; }
         @media (max-width: 900px) {
           .filmmaker-detail-grid { grid-template-columns: 1fr !important; }
           .filmmaker-detail-grid > div:first-child { padding-right: 0 !important; }
