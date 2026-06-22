@@ -3,25 +3,101 @@
 import { useState, useTransition } from "react";
 import { adminCreateOpportunity } from "@/lib/actions";
 
-const OPP_TYPE_OPTIONS = [
-  { value: "grant",              label: "Grant" },
-  { value: "fund",               label: "Fund" },
-  { value: "lab",                label: "Lab" },
-  { value: "co_production",      label: "Co-production" },
-  { value: "market",             label: "Market" },
-  { value: "distribution",       label: "Distribution" },
-  { value: "investor",           label: "Investor" },
-  { value: "broadcaster",        label: "Broadcaster" },
-  { value: "streamer",           label: "Streamer" },
-  { value: "sales_agent",        label: "Sales Agent" },
-  { value: "brand_integration",  label: "Brand Integration" },
-  { value: "crowdfunding",       label: "Crowdfunding" },
-  { value: "producer",           label: "Producer" },
-  { value: "production_company", label: "Production Company" },
-  { value: "studio",             label: "Studio" },
-  { value: "sponsor",            label: "Sponsor" },
-  { value: "pre_sale",           label: "Pre-Sale" },
-  { value: "tax_incentive",      label: "Tax Incentive" },
+const OPP_TYPE_GROUPS = [
+  {
+    label: "Development",
+    options: [
+      { value: "script_lab",          label: "Script Labs" },
+      { value: "lab",                 label: "Development Labs" },
+      { value: "residency",           label: "Residencies" },
+      { value: "mentorship",          label: "Mentorships" },
+      { value: "grant",               label: "Development Grants" },
+      { value: "fund",                label: "Development Funds" },
+      { value: "writing_fellowship",  label: "Writing Fellowships" },
+    ],
+  },
+  {
+    label: "Packaging & Markets",
+    options: [
+      { value: "pitch_forum",    label: "Pitch Forums" },
+      { value: "co_production",  label: "Co-Production Markets" },
+      { value: "market",         label: "Film Markets" },
+    ],
+  },
+  {
+    label: "Early Financing",
+    options: [
+      { value: "crowdfunding",        label: "Crowdfunding" },
+      { value: "donation",            label: "Donations" },
+      { value: "fiscal_sponsorship",  label: "Fiscal Sponsorship" },
+      { value: "seed_funding",        label: "Seed Funding" },
+      { value: "community_funding",   label: "Community Funding" },
+    ],
+  },
+  {
+    label: "Tax Incentives",
+    options: [
+      { value: "tax_incentive",      label: "Tax Credits" },
+      { value: "cash_rebate",        label: "Cash Rebates" },
+      { value: "production_rebate",  label: "Production Rebates" },
+      { value: "regional_incentive", label: "Regional Incentives" },
+      { value: "location_incentive", label: "Location Incentives" },
+    ],
+  },
+  {
+    label: "Private Financing",
+    options: [
+      { value: "investor",            label: "Equity Investors" },
+      { value: "angel_investor",      label: "Angel Investors" },
+      { value: "venture_capital",     label: "Venture Capital" },
+      { value: "gap_financing",       label: "Gap Financing" },
+      { value: "brand_integration",   label: "Brand Integration" },
+      { value: "product_placement",   label: "Product Placement" },
+      { value: "sponsor",             label: "Corporate Sponsorship" },
+      { value: "private_fund",        label: "Private Funds" },
+    ],
+  },
+  {
+    label: "Production",
+    options: [
+      { value: "producer",            label: "Producers" },
+      { value: "co_producer",         label: "Co-Producers" },
+      { value: "production_company",  label: "Production Companies" },
+      { value: "studio",              label: "Studios" },
+    ],
+  },
+  {
+    label: "Post Production",
+    options: [
+      { value: "post_production_grant", label: "Post-Production Grants" },
+      { value: "post_production_fund",  label: "Post-Production Funds" },
+    ],
+  },
+  {
+    label: "Buyers & Sales",
+    options: [
+      { value: "sales_agent",    label: "Sales Agents" },
+      { value: "world_sales",    label: "World Sales" },
+      { value: "broadcaster",    label: "Broadcasters" },
+      { value: "streamer",       label: "Streamers" },
+      { value: "pre_sale",       label: "Pre-Sales" },
+      { value: "content_buyer",  label: "Content Buyers" },
+      { value: "music_rights",   label: "Music Rights" },
+    ],
+  },
+  {
+    label: "Release & Distribution",
+    options: [
+      { value: "film_festival",             label: "Film Festivals" },
+      { value: "distribution",              label: "Distribution Companies" },
+      { value: "theatrical_distribution",   label: "Theatrical Distribution" },
+      { value: "ott_distribution",          label: "OTT Distribution" },
+      { value: "tv_distribution",           label: "TV Distribution" },
+      { value: "digital_aggregator",        label: "Digital Aggregators" },
+      { value: "educational_distribution",  label: "Educational Distribution" },
+      { value: "airline_distribution",      label: "Airline & Inflight Distribution" },
+    ],
+  },
 ];
 
 export function AdminCreateOpportunityForm() {
@@ -52,8 +128,13 @@ export function AdminCreateOpportunityForm() {
         <label className="block">
           <span className="eyebrow">Type *</span>
           <select name="opp_type" required className="field mt-1.5" defaultValue="grant">
-            {OPP_TYPE_OPTIONS.map(t => (
-              <option key={t.value} value={t.value}>{t.label}</option>
+            {OPP_TYPE_GROUPS.map(group => (
+              <optgroup key={group.label} label={group.label}>
+                {group.options.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </optgroup>
+            ))}
             ))}
           </select>
         </label>

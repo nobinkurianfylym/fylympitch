@@ -2,7 +2,25 @@ export type UserRole = "filmmaker" | "producer" | "investor" | "organization" | 
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 export type ProjectStage = "development" | "pre_production" | "production" | "post_production" | "completed";
 export type ProjectFormat = "feature" | "short" | "documentary" | "series" | "animation";
-export type OpportunityType = "grant" | "fund" | "lab" | "co_production" | "market" | "distribution" | "investor" | "broadcaster" | "streamer" | "sales_agent" | "producer";
+export type OpportunityType =
+  // Development
+  | "script_lab" | "lab" | "residency" | "mentorship" | "grant" | "fund" | "writing_fellowship"
+  // Packaging & Markets
+  | "pitch_forum" | "co_production" | "market"
+  // Early Financing
+  | "crowdfunding" | "donation" | "fiscal_sponsorship" | "seed_funding" | "community_funding"
+  // Tax Incentives
+  | "tax_incentive" | "cash_rebate" | "production_rebate" | "regional_incentive" | "location_incentive"
+  // Private Financing
+  | "investor" | "angel_investor" | "venture_capital" | "gap_financing" | "brand_integration" | "product_placement" | "sponsor" | "private_fund"
+  // Production
+  | "producer" | "co_producer" | "production_company" | "studio"
+  // Post Production
+  | "post_production_grant" | "post_production_fund"
+  // Buyers & Sales
+  | "sales_agent" | "world_sales" | "broadcaster" | "streamer" | "pre_sale" | "content_buyer" | "music_rights"
+  // Release & Distribution
+  | "film_festival" | "distribution" | "theatrical_distribution" | "ott_distribution" | "tv_distribution" | "digital_aggregator" | "educational_distribution" | "airline_distribution";
 export type ApplicationStatus = "draft" | "submitted" | "under_review" | "shortlisted" | "accepted" | "rejected" | "withdrawn";
 export type OfferStatus = "pending" | "accepted" | "declined" | "withdrawn";
 

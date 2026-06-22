@@ -174,7 +174,7 @@ export function calculateMatchScore(
   // Production partners: score on creative fit (genre, territory, format, budget range).
   // Funding coverage is irrelevant — they are co-production partners, not funders.
   // Redistribute the funding weight across genre + country + format.
-  const isProducer = opportunity.opp_type === "producer";
+  const isProducer = ["producer", "co_producer", "production_company", "studio"].includes(opportunity.opp_type);
   const parts = isProducer
     ? [
         { ...g,  w: WEIGHTS.genre + 4 },

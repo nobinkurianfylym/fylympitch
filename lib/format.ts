@@ -120,6 +120,7 @@ export const TYPE_LABEL: Record<string, string> = {
 
 export const OPP_CATEGORY_MAP: Record<string, string> = {
   // Development
+  script_lab:            "development",
   lab:                   "development",
   residency:             "development",
   mentorship:            "development",
