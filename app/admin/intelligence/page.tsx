@@ -8,6 +8,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ReviewQueueActions } from "./ReviewQueueActions";
 import { TriggerCrawlButton } from "./TriggerCrawlButton";
+import { SiteCrawlForm } from "./SiteCrawlForm";
 
 export const dynamic = "force-dynamic";
 
@@ -50,16 +51,19 @@ export default async function AdminIntelligencePage() {
 
   return (
     <div>
-      <p className="eyebrow">Funding engine</p>
+      <p className="eyebrow">Admin</p>
       <h1 className="font-display text-[30px] font-normal mt-1">
-        Intelligence Engine
+        Intelligence Gather Engine
       </h1>
-      <p className="text-[13px] text-ash font-normal mt-1">
+      <p className="text-[13px] text-ash font-normal mt-1 mb-8">
         Daily crawl · {totalSources ?? 0} active sources · {autoCrawled ?? 0} auto-discovered opportunities
       </p>
 
-      {/* Manual trigger + source health */}
-      <div className="mt-8 flex items-start gap-4 flex-wrap">
+      {/* ── Targeted site crawl ── */}
+      <SiteCrawlForm />
+
+      {/* Manual full-crawl trigger + source health */}
+      <div className="flex items-start gap-4 flex-wrap mb-8">
         <TriggerCrawlButton />
         {(failingSources ?? 0) > 0 && (
           <div className="text-[12px] text-amber-700 bg-amber-50 border border-amber-200 px-4 py-2 rounded font-normal">
