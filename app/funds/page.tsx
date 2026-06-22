@@ -74,15 +74,16 @@ function formatDeadline(deadline: string | null, note: string | null): string {
 }
 
 const TABS = [
-  { label: "All",                  value: ""                   },
-  { label: "Development",          value: "development"        },
-  { label: "Early Financing",      value: "early_financing"    },
-  { label: "Production",           value: "production"         },
-  { label: "Private Financing",    value: "private_financing"  },
-  { label: "Packaging & Markets",  value: "packaging_markets"  },
-  { label: "Buyers & Sales",       value: "buyers_sales"       },
-  { label: "Release & Distribution", value: "release_distribution" },
-  { label: "Tax Incentives",       value: "tax_incentives"     },
+  { label: "All",                    value: ""                      },
+  { label: "Development",            value: "development"           },
+  { label: "Packaging & Markets",    value: "packaging_markets"     },
+  { label: "Early Financing",        value: "early_financing"       },
+  { label: "Tax Incentives",         value: "tax_incentives"        },
+  { label: "Private Financing",      value: "private_financing"     },
+  { label: "Production",             value: "production"            },
+  { label: "Post Production",        value: "post_production"       },
+  { label: "Buyers & Sales",         value: "buyers_sales"          },
+  { label: "Release & Distribution", value: "release_distribution"  },
 ];
 
 export default async function FundsPage({
@@ -104,13 +105,14 @@ export default async function FundsPage({
   // Map category key → opp_type values
   const CATEGORY_TYPES: Record<string, string[]> = {
     development:          ["lab", "grant", "fund"],
-    early_financing:      ["crowdfunding"],
-    production:           ["producer", "production_company", "studio"],
-    private_financing:    ["investor", "sponsor", "brand_integration"],
     packaging_markets:    ["co_production", "market"],
+    early_financing:      ["crowdfunding"],
+    tax_incentives:       ["tax_incentive"],
+    private_financing:    ["investor", "sponsor", "brand_integration"],
+    production:           ["producer", "production_company", "studio"],
+    post_production:      [],
     buyers_sales:         ["broadcaster", "streamer", "pre_sale", "sales_agent"],
     release_distribution: ["distribution"],
-    tax_incentives:       ["tax_incentive"],
   };
 
   let query = supabase

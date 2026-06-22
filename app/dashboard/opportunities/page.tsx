@@ -7,10 +7,22 @@ import { OpportunityCategoryBlock } from "./OpportunityCategoryBlock";
 export const dynamic = "force-dynamic";
 
 const ALL_TYPES = [
-  "grant","fund","lab","co_production","market","distribution",
-  "investor","broadcaster","streamer","sales_agent",
-  "brand_integration","crowdfunding","producer","production_company",
-  "studio","sponsor","pre_sale","tax_incentive",
+  // Development
+  "lab", "grant", "fund",
+  // Packaging & Markets
+  "co_production", "market",
+  // Early Financing
+  "crowdfunding",
+  // Tax Incentives
+  "tax_incentive",
+  // Private Financing
+  "investor", "brand_integration", "sponsor",
+  // Production
+  "producer", "production_company", "studio",
+  // Buyers & Sales
+  "sales_agent", "broadcaster", "streamer", "pre_sale",
+  // Release & Distribution
+  "distribution",
 ];
 
 export default async function OpportunitiesPage({ searchParams }: { searchParams: Promise<{ type?: string; q?: string; sort?: string }> }) {

@@ -4,24 +4,32 @@ import { useState, useTransition } from "react";
 import { adminUpdateOpportunity, adminToggleOpportunity } from "@/lib/actions";
 
 const OPP_TYPES = [
+  // Development
+  { value: "lab",                label: "Lab" },
   { value: "grant",              label: "Grant" },
   { value: "fund",               label: "Fund" },
-  { value: "lab",                label: "Lab" },
+  // Packaging & Markets
   { value: "co_production",      label: "Co-production" },
   { value: "market",             label: "Market" },
-  { value: "distribution",       label: "Distribution" },
-  { value: "investor",           label: "Investor" },
-  { value: "broadcaster",        label: "Broadcaster" },
-  { value: "streamer",           label: "Streamer" },
-  { value: "sales_agent",        label: "Sales Agent" },
-  { value: "brand_integration",  label: "Brand Integration" },
+  // Early Financing
   { value: "crowdfunding",       label: "Crowdfunding" },
+  // Tax Incentives
+  { value: "tax_incentive",      label: "Tax Incentive" },
+  // Private Financing
+  { value: "investor",           label: "Investor" },
+  { value: "brand_integration",  label: "Brand Integration" },
+  { value: "sponsor",            label: "Sponsor" },
+  // Production
   { value: "producer",           label: "Producer" },
   { value: "production_company", label: "Production Company" },
   { value: "studio",             label: "Studio" },
-  { value: "sponsor",            label: "Sponsor" },
+  // Buyers & Sales
+  { value: "sales_agent",        label: "Sales Agent" },
+  { value: "broadcaster",        label: "Broadcaster" },
+  { value: "streamer",           label: "Streamer" },
   { value: "pre_sale",           label: "Pre-Sale" },
-  { value: "tax_incentive",      label: "Tax Incentive" },
+  // Release & Distribution
+  { value: "distribution",       label: "Distribution" },
 ];
 
 type Opportunity = {
