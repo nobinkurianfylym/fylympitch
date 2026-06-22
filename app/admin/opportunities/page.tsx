@@ -1,7 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { AdminCreateOpportunityForm } from "./AdminCreateOpportunityForm";
-import { OpportunitiesAdminClient } from "./OpportunitiesAdminClient";
-import { PendingSubmissions } from "./PendingSubmissions";
+import { OpportunitiesAdminTabs } from "./OpportunitiesAdminTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -28,20 +26,14 @@ export default async function AdminOpportunities() {
       .order("created_at", { ascending: true }),
   ]);
 
-  const allOpps    = (opps   ?? []) as any[];
-  const pendingOpps = (pending ?? []) as any[];
-
   return (
     <div>
       <p className="eyebrow">Opportunity management</p>
       <h1 className="font-display text-[30px] font-normal mt-1">Opportunities</h1>
-
-      {pendingOpps.length > 0 && <PendingSubmissions items={pendingOpps} />}
-      <OpportunitiesAdminClient opps={allOpps} />
-
-      <div className="mt-16 pt-10 border-t border-line">
-        <AdminCreateOpportunityForm />
-      </div>
+      <OpportunitiesAdminTabs
+        opps={opps ?? []}
+        pendingOpps={pending ?? []}
+      />
     </div>
   );
 }
