@@ -138,6 +138,9 @@ export async function createProject(formData: FormData) {
       pitch_deck_path: str(formData, "pitch_deck_path") || null,
       script_path: str(formData, "script_path") || null,
       poster_path: str(formData, "poster_path") || null,
+      has_script_doc: formData.get("has_script_doc") === "true",
+      has_budget_doc: formData.get("has_budget_doc") === "true",
+      has_lookbook:   formData.get("has_lookbook")   === "true",
       career_stage: str(formData, "career_stage") || null,
       is_public: formData.get("is_public") !== "false",
     })

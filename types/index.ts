@@ -75,6 +75,9 @@ export interface Project {
   pitch_deck_path: string | null;
   script_path: string | null;
   poster_path: string | null;
+  has_script_doc: boolean;
+  has_budget_doc: boolean;
+  has_lookbook: boolean;
   is_public: boolean;
   created_at: string;
   /** e.g. "First-time", "Emerging", "Established" — hybrid matching bonus (fylympitchEngine.ts) */

@@ -11,6 +11,8 @@ import type {
 } from "@/services/fylympitchEngine";
 import type { MatchRow } from "@/components/MatchList";
 import RerunEngineButton from "@/components/RerunEngineButton";
+import BookmarkButton from "@/components/BookmarkButton";
+import { getSavedOpportunityIds } from "@/lib/saved-actions";
 import ProjectAnalysisLoader from "@/components/ProjectAnalysisLoader";
 import FundingJourney, { type JourneyOpp } from "@/components/FundingJourney";
 import MessageButton from "@/components/MessageButton";
@@ -134,6 +136,11 @@ export default async function ProjectDetailPage({
         deadline: o.deadline ?? null, deadline_note: (o as any).deadline_note ?? null,
         score: m.score, url: o.url ?? null, app_link: (o as any).app_link ?? null }));
   }
+
+  // Saved opportunity IDs for this user
+  const savedIds = isOwner
+    ? await getSavedOpportunityIds(ranked.map(m => m.id))
+    : new Set<string>();
 
   const { data: offers } = isOwner
     ? await supabase.from("offers")
@@ -354,6 +361,37 @@ export default async function ProjectDetailPage({
             </div>
           </div>
 
+          {/* DOCUMENT READINESS */}
+          {(() => {
+            const docs = [
+              { label: "Pitch Deck", present: !!project.pitch_deck_path },
+              { label: "Script",     present: !!project.script_path || !!(project as any).has_script_doc },
+              { label: "Budget",     present: !!(project as any).has_budget_doc || !!project.budget_usd },
+              { label: "Lookbook",   present: !!(project as any).has_lookbook },
+            ];
+            return (
+              <div style={{
+                display: "flex", flexWrap: "wrap", gap: 8,
+                paddingTop: 16, paddingBottom: 20,
+                borderBottom: `1px solid ${S.line}`,
+              }}>
+                {docs.map(({ label, present }) => (
+                  <span key={label} style={{
+                    display: "inline-flex", alignItems: "center", gap: 5,
+                    fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+                    padding: "4px 10px", borderRadius: 20,
+                    border: `1px solid ${present ? "rgba(191,153,83,0.3)" : "rgba(26,24,21,0.08)"}`,
+                    background: present ? "rgba(191,153,83,0.06)" : "rgba(26,24,21,0.02)",
+                    color: present ? "#7a5e1a" : S.ash,
+                  }}>
+                    <span style={{ fontSize: 11 }}>{present ? "✓" : "✕"}</span>
+                    {label}
+                  </span>
+                ))}
+              </div>
+            );
+          })()}
+
           {/* INVESTMENT STRIP */}
           {(budget !== "—" || secured || seeking) && (
             <div style={{
@@ -433,6 +471,11 @@ export default async function ProjectDetailPage({
                     <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: S.gold, flexShrink: 0, minWidth: 32, textAlign: "right" }}>
                       {m.score}
                     </div>
+                    <BookmarkButton
+                      opportunityId={m.id}
+                      projectId={project.id}
+                      initialSaved={savedIds.has(m.id)}
+                    />
                     <Link
                       href={`/dashboard/opportunities/${m.id}?project=${project.id}`}
                       style={{

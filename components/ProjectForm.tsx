@@ -149,6 +149,9 @@ export default function ProjectForm() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [budgetError, setBudgetError]   = useState<string | null>(null);
   const [autoFunding, setAutoFunding]   = useState(false);
+  const [hasScript,    setHasScript]    = useState(false);
+  const [hasBudget,    setHasBudget]    = useState(false);
+  const [hasLookbook,  setHasLookbook]  = useState(false);
 
   // ── Live USD previews ────────────────────────────────────────────────────
   const { usd: budgetUSD, source: budgetSrc } = useLiveUSD(fields.budget_usd, fields.budget_currency);
@@ -434,6 +437,9 @@ export default function ProjectForm() {
       <input type="hidden" name="pitch_deck_path" value={deckPath} />
       <input type="hidden" name="script_path" value={scriptPath} />
       <input type="hidden" name="poster_path" value={posterPath} />
+      <input type="hidden" name="has_script_doc" value={String(hasScript || !!scriptPath)} />
+      <input type="hidden" name="has_budget_doc" value={String(hasBudget)} />
+      <input type="hidden" name="has_lookbook"   value={String(hasLookbook)} />
 
       {/* ── 1. PITCH DECK — first, triggers AI ── */}
       <div className="rounded-card border border-line bg-white/60 p-6 space-y-4">
@@ -459,6 +465,32 @@ export default function ProjectForm() {
             {aiError}
           </p>
         )}
+
+        {/* ── Asset Readiness Checklist ── */}
+        <div className="pt-4 border-t border-line">
+          <p className="eyebrow text-ash mb-3">Attached assets <span className="normal-case tracking-normal font-normal text-ash/70">— tick what you have ready</span></p>
+          <div className="flex flex-wrap gap-3">
+            {([
+              { key: "script",   label: "Script",   val: hasScript,   set: setHasScript   },
+              { key: "budget",   label: "Budget",   val: hasBudget,   set: setHasBudget   },
+              { key: "lookbook", label: "Lookbook", val: hasLookbook, set: setHasLookbook },
+            ] as { key: string; label: string; val: boolean; set: (v: boolean) => void }[]).map(({ key, label, val, set }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => set(!val)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[11px] tracking-[0.12em] uppercase transition-all ${
+                  val
+                    ? "border-gold bg-gold/8 text-ink"
+                    : "border-line bg-white/60 text-ash"
+                }`}
+              >
+                <span style={{ fontSize: 12, color: val ? "#BF9953" : "#C8C3BC" }}>{val ? "✓" : "○"}</span>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
 
       </div>
 
@@ -617,14 +649,7 @@ export default function ProjectForm() {
                 value={fields.producer_info} onChange={set("producer_info")} />
             </div>
 
-            <div>
-              <label className="field-label" htmlFor="script">
-                Script (PDF) <span className="normal-case tracking-normal font-normal">— optional</span>
-              </label>
-              <input id="script" type="file" accept=".pdf" className="field !py-2.5 text-[13px]" onChange={handleScript} />
-              {uploading === "scripts" && <p className="mt-2 text-[12px] text-ash">Uploading…</p>}
-              {scriptPath && <p className="mt-2 text-[12px] text-[#8A6F3E]">Script uploaded ✓</p>}
-            </div>
+
 
             <div>
               <label className="field-label" htmlFor="poster">
