@@ -567,7 +567,12 @@ export default async function ProjectDetailPage({
             </div>
           )}
 
-          {/* FUNDING JOURNEY → moved to right sidebar */}
+          {/* FUNDING JOURNEY — back below AI EP */}
+          {isOwner && !simpleView && (
+            <div style={{ paddingTop: 8 }}>
+              <FundingJourney projectId={project.id} opportunities={journeyOpps} roadmap={roadmap} readiness={readiness} />
+            </div>
+          )}
 
           {/* OBSTACLES */}
           {isOwner && !simpleView && obstacles.length > 0 && (
@@ -657,27 +662,15 @@ export default async function ProjectDetailPage({
           )}
         </div>
 
-        {/* ════ RIGHT SIDEBAR — intelligence + funding journey ═ */}
+        {/* ════ RIGHT SIDEBAR — 4 dark boxes incl. journey mini ═ */}
         {hasIntel && (
-          <div style={{ alignSelf: "start", paddingTop: 32 }}>
-            <div style={{ position: "sticky", top: 52 }}>
-              <ProjectIntelligenceSidebar
-                discovery={discovery!}
-                readiness={readiness}
-                dream={dream}
-              />
-            </div>
-            <div style={{ marginTop: 16 }}>
-              <p style={{ fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", color: "#8A857C", fontWeight: 600, marginBottom: 12 }}>
-                Funding Journey
-              </p>
-              <FundingJourney
-                projectId={project.id}
-                opportunities={journeyOpps}
-                roadmap={roadmap}
-                readiness={readiness}
-              />
-            </div>
+          <div style={{ position: "sticky", top: 52, alignSelf: "start", paddingTop: 32 }}>
+            <ProjectIntelligenceSidebar
+              discovery={discovery!}
+              readiness={readiness}
+              dream={dream}
+              roadmap={roadmap}
+            />
           </div>
         )}
 
