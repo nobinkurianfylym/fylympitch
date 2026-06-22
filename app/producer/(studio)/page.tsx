@@ -1,13 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import AddToPipelineButton from "@/components/AddToPipelineButton";
+import { upsertProducerProject } from "@/lib/actions";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
+import MessageButton from "@/components/MessageButton";
 import FilmIdentity from "@/components/FilmIdentity";
 import { formatBudget } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+
+const PIPELINE_PILL: Record<string, string> = {
+  saved:       "bg-parchment text-ash",
+  shortlisted: "bg-blue-50 text-blue-700",
+  in_review:   "bg-amber-50 text-amber-700",
+  meeting_set: "bg-emerald-50 text-emerald-700",
+  deal_active: "bg-gold/10 text-gold",
+};
+const PIPELINE_LABEL: Record<string, string> = {
+  saved: "Saved", shortlisted: "Shortlisted", in_review: "In Review",
+  meeting_set: "Meeting Set", deal_active: "Deal Active",
+};
 
 function scoreProject(
   project: { genre: string | null; format: string | null; country: string | null; budget_usd: number | null },
@@ -47,13 +60,13 @@ export default async function ProducerDiscoverPage() {
   const [{ data: projects }, { data: pipelineRows }, { data: loves }] = await Promise.all([
     supabase
       .from("projects")
-      .select("id, title, genre, format, stage, country, language, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, logline, poster_path, love_count, is_public, director_name, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+      .select("id, title, genre, format, stage, country, language, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, logline, poster_path, love_count, is_public, director_name, owner_id, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
       .eq("admin_hidden", false)
       .order("created_at", { ascending: false })
       .limit(50),
     supabase
       .from("producer_projects")
-      .select("project_id")
+      .select("project_id, status")
       .eq("producer_id", user.id)
       .neq("status", "passed"),
     supabase
@@ -62,15 +75,30 @@ export default async function ProducerDiscoverPage() {
       .eq("user_id", user.id),
   ]);
 
-  const pipelineCount = pipelineRows?.length ?? 0;
-  const pipelineSet   = new Set((pipelineRows ?? []).map((r: any) => r.project_id));
-  const lovedSet      = new Set((loves ?? []).map((r: any) => r.project_id));
+  const pipelineCount   = pipelineRows?.length ?? 0;
+  const crmByProject    = new Map((pipelineRows ?? []).map((r: any) => [r.project_id, r]));
+  const lovedSet        = new Set((loves ?? []).map((r: any) => r.project_id));
 
-  // Score all 50, take top 9 — enforces focus, eliminates decision fatigue
+  // Score all 50, take top 9
   const top9 = (projects ?? [])
     .map((p) => ({ ...p, _score: scoreProject(p, producerProfile) }))
     .sort((a, b) => b._score - a._score)
     .slice(0, 9);
+
+  // Fetch funding readiness scores for top 9
+  const top9Ids = top9.map((p) => p.id);
+  const { data: intelligenceRows } = top9Ids.length
+    ? await supabase
+        .from("project_intelligence")
+        .select("project_id, funding_readiness")
+        .in("project_id", top9Ids)
+    : { data: [] };
+
+  const scoreMap = new Map<string, number>(
+    (intelligenceRows ?? [])
+      .filter((r: any) => r.funding_readiness?.score != null)
+      .map((r: any) => [r.project_id as string, r.funding_readiness.score as number])
+  );
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
@@ -107,6 +135,11 @@ export default async function ProducerDiscoverPage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {top9.map((p: any) => {
             const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
+            const crm       = crmByProject.get(p.id);
+            const pillCls   = crm ? PIPELINE_PILL[crm.status] : null;
+            const pillLbl   = crm ? PIPELINE_LABEL[crm.status] : null;
+            const frs       = scoreMap.get(p.id);
+
             return (
               <FilmIdentity
                 key={p.id}
@@ -116,34 +149,67 @@ export default async function ProducerDiscoverPage() {
                 matchScore={p._score}
                 href={`/producer/projects/${p.id}`}
                 actions={
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
+
+                    {/* Row 1: pipeline stage pill + FRS score */}
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <LoveButton
-                          projectId={p.id}
-                          initialCount={p.love_count ?? 0}
-                          initialLiked={lovedSet.has(p.id)}
-                          isLoggedIn={true}
-                          size="sm"
-                        />
-                        <ShareButton
-                          projectId={p.id}
-                          title={p.title}
-                          genre={p.genre}
-                          country={p.country}
-                          size="sm"
-                        />
-                      </div>
-                      {p.funding_needed_usd && (
-                        <span className="text-[11px] text-gold shrink-0">
-                          Seeking {formatBudget(p.funding_needed_usd, (p as any).budget_currency)}
+                      {pillCls && pillLbl ? (
+                        <span className={`text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-full border border-line ${pillCls}`}>
+                          {pillLbl}
                         </span>
-                      )}
+                      ) : <span />}
+                      <Link
+                        href={`/dashboard/projects/${p.id}`}
+                        title="Funding Readiness Score — view full engine analysis"
+                        className="inline-flex items-baseline gap-1 group shrink-0"
+                      >
+                        <span className="text-[9px] tracking-[0.14em] uppercase text-ash/50 group-hover:text-gold transition-colors font-medium">FRS</span>
+                        <span className="font-display text-[20px] leading-none text-gold group-hover:opacity-70 transition-opacity">
+                          {frs != null ? frs : "—"}
+                        </span>
+                      </Link>
                     </div>
-                    <AddToPipelineButton
-                      projectId={p.id}
-                      inPipeline={pipelineSet.has(p.id)}
-                    />
+
+                    {/* Row 2: Message + Like + Share */}
+                    <div className="flex items-center gap-2">
+                      <MessageButton
+                        projectId={p.id}
+                        producerId={user.id}
+                        filmakerId={p.owner_id}
+                        label="Message"
+                        className="btn-ghost !py-1.5 !px-3 text-[12px] gap-1.5 flex-1"
+                      />
+                      <LoveButton
+                        projectId={p.id}
+                        initialCount={p.love_count ?? 0}
+                        initialLiked={lovedSet.has(p.id)}
+                        isLoggedIn={true}
+                        size="sm"
+                      />
+                      <ShareButton
+                        projectId={p.id}
+                        title={p.title}
+                        genre={p.genre}
+                        country={p.country}
+                        size="sm"
+                      />
+                    </div>
+
+                    {/* Row 3: pipeline action */}
+                    {crm ? (
+                      <Link
+                        href="/producer/pipeline"
+                        className="block text-center text-[12px] text-gold hover:underline py-1.5"
+                      >
+                        Open in Pipeline →
+                      </Link>
+                    ) : (
+                      <form action={upsertProducerProject} className="w-full">
+                        <input type="hidden" name="project_id" value={p.id} />
+                        <input type="hidden" name="status" value="saved" />
+                        <button className="btn-ghost !py-1.5 w-full text-[12px]">+ Add to Pipeline</button>
+                      </form>
+                    )}
                   </div>
                 }
               />

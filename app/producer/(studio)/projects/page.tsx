@@ -52,12 +52,23 @@ export default async function ProducerProjectsPage({
   const { data: projects } = await query;
 
   const projectIds = (projects ?? []).map((p) => p.id);
-  const { data: crmRows } = projectIds.length
-    ? await supabase.from("producer_projects").select("project_id, status, rating")
-        .eq("producer_id", user.id).in("project_id", projectIds)
-    : { data: [] };
+  const [{ data: crmRows }, { data: intelligenceRows }] = await Promise.all([
+    projectIds.length
+      ? supabase.from("producer_projects").select("project_id, status, rating")
+          .eq("producer_id", user.id).in("project_id", projectIds)
+      : { data: [] },
+    projectIds.length
+      ? supabase.from("project_intelligence").select("project_id, funding_readiness")
+          .in("project_id", projectIds)
+      : { data: [] },
+  ]);
 
   const crmByProject = new Map((crmRows ?? []).map((r) => [r.project_id, r]));
+  const scoreMap = new Map<string, number>(
+    (intelligenceRows ?? [])
+      .filter((r: any) => r.funding_readiness?.score != null)
+      .map((r: any) => [r.project_id as string, r.funding_readiness.score as number])
+  );
 
   const display = filter === "passed"
     ? (projects ?? []).filter((p) => crmByProject.get(p.id)?.status === "passed")
@@ -109,10 +120,11 @@ export default async function ProducerProjectsPage({
       {/* Project grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {display.map((p) => {
-          const crm      = crmByProject.get(p.id);
-          const fm       = Array.isArray((p as any).filmmaker) ? (p as any).filmmaker[0] : (p as any).filmmaker;
-          const pillCls  = crm && crm.status !== "passed" ? PIPELINE_PILL[crm.status]  : null;
-          const pillLbl  = crm && crm.status !== "passed" ? PIPELINE_LABEL[crm.status] : null;
+          const crm     = crmByProject.get(p.id);
+          const fm      = Array.isArray((p as any).filmmaker) ? (p as any).filmmaker[0] : (p as any).filmmaker;
+          const pillCls = crm && crm.status !== "passed" ? PIPELINE_PILL[crm.status]  : null;
+          const pillLbl = crm && crm.status !== "passed" ? PIPELINE_LABEL[crm.status] : null;
+          const frs     = scoreMap.get(p.id);
 
           return (
             <FilmIdentity
@@ -128,7 +140,7 @@ export default async function ProducerProjectsPage({
               actions={
                 <div className="space-y-2.5">
 
-                  {/* Row 1: pipeline stage pill + engine analysis link */}
+                  {/* Row 1: pipeline stage pill + FRS score */}
                   <div className="flex items-center justify-between gap-2">
                     {pillCls && pillLbl ? (
                       <span className={`text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-full border border-line ${pillCls}`}>
@@ -137,19 +149,22 @@ export default async function ProducerProjectsPage({
                     ) : <span />}
                     <Link
                       href={`/dashboard/projects/${p.id}`}
-                      className="text-[11px] text-ash hover:text-gold transition-colors tracking-[0.06em] shrink-0"
-                      title="View FYLYMPITCH engine evaluation for this project"
+                      title="Funding Readiness Score — view full engine analysis"
+                      className="inline-flex items-baseline gap-1 group shrink-0"
                     >
-                      Engine analysis ↗
+                      <span className="text-[9px] tracking-[0.14em] uppercase text-ash/50 group-hover:text-gold transition-colors font-medium">FRS</span>
+                      <span className="font-display text-[20px] leading-none text-gold group-hover:opacity-70 transition-opacity">
+                        {frs != null ? frs : "—"}
+                      </span>
                     </Link>
                   </div>
 
-                  {/* Row 2: message + love + share */}
+                  {/* Row 2: Message + Like + Share */}
                   <div className="flex items-center gap-2">
                     <MessageButton
                       projectId={p.id}
                       producerId={user.id}
-                      filmakerId={p.owner_id}
+                      filmakerId={(p as any).owner_id}
                       label="Message"
                       className="btn-ghost !py-1.5 !px-3 text-[12px] gap-1.5 flex-1"
                     />
@@ -169,22 +184,23 @@ export default async function ProducerProjectsPage({
                     />
                   </div>
 
-                  {/* Row 3: pipeline CRM action */}
-                  {(!crm || crm.status === "passed") && (
+                  {/* Row 3: pipeline action */}
+                  {crm && crm.status !== "passed" ? (
+                    <Link
+                      href="/producer/pipeline"
+                      className="block text-center text-[12px] text-gold hover:underline py-1.5"
+                    >
+                      Open in Pipeline →
+                    </Link>
+                  ) : (
                     <form action={upsertProducerProject} className="w-full">
                       <input type="hidden" name="project_id" value={p.id} />
                       <input type="hidden" name="status" value="saved" />
-                      <button className="btn-ghost !py-1.5 w-full text-[12px]">+ Add to pipeline</button>
+                      <button className="btn-ghost !py-1.5 w-full text-[12px]">+ Add to Pipeline</button>
                     </form>
                   )}
-                  {crm && crm.status !== "passed" && (
-                    <Link
-                      href={`/producer/projects/${p.id}`}
-                      className="block text-center text-[12px] text-gold hover:underline"
-                    >
-                      Open in pipeline →
-                    </Link>
-                  )}
+
+                  {/* Pass option — only when not yet in pipeline */}
                   {!crm && (
                     <form action={upsertProducerProject}>
                       <input type="hidden" name="project_id" value={p.id} />
