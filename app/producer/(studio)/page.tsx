@@ -151,27 +151,22 @@ export default async function ProducerDiscoverPage() {
                 actions={
                   <div className="space-y-2.5">
 
-                    {/* Row 1: pipeline stage pill + FRS score */}
-                    <div className="flex items-center justify-between gap-2">
-                      {pillCls && pillLbl ? (
-                        <span className={`text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-full border border-line ${pillCls}`}>
-                          {pillLbl}
-                        </span>
-                      ) : <span />}
+                    {/* Stage pill — only when in pipeline */}
+                    {pillCls && pillLbl && (
+                      <span className={`inline-flex text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-full border border-line ${pillCls}`}>
+                        {pillLbl}
+                      </span>
+                    )}
+
+                    {/* Action row: FRS · Message · Like · Share */}
+                    <div className="flex items-center gap-2">
                       <Link
                         href={`/dashboard/projects/${p.id}`}
                         title="Funding Readiness Score — view full engine analysis"
-                        className="inline-flex items-baseline gap-1 group shrink-0"
+                        className="btn-ghost !py-1.5 !px-3 !text-[12px] !text-gold !border-gold/40 hover:!border-gold shrink-0"
                       >
-                        <span className="text-[9px] tracking-[0.14em] uppercase text-ash/50 group-hover:text-gold transition-colors font-medium">FRS</span>
-                        <span className="font-display text-[20px] leading-none text-gold group-hover:opacity-70 transition-opacity">
-                          {frs != null ? frs : "—"}
-                        </span>
+                        FRS {frs != null ? frs : "—"}
                       </Link>
-                    </div>
-
-                    {/* Row 2: Message + Like + Share */}
-                    <div className="flex items-center gap-2">
                       <MessageButton
                         projectId={p.id}
                         producerId={user.id}
@@ -195,7 +190,7 @@ export default async function ProducerDiscoverPage() {
                       />
                     </div>
 
-                    {/* Row 3: pipeline action */}
+                    {/* Pipeline action */}
                     {crm ? (
                       <Link
                         href="/producer/pipeline"
