@@ -243,7 +243,7 @@ export default async function ProducerProjectDetailPage({
       }} className="producer-detail-grid">
 
         {/* ── LEFT: Main content ─────────────────────────────── */}
-        <div style={{ paddingRight: 56, paddingTop: 44, maxWidth: 720 }}>
+        <div style={{ paddingRight: 48, paddingTop: 40 }}>
 
           {/* ── HERO — poster + title block ──────────────────── */}
           <div style={{
@@ -438,7 +438,7 @@ export default async function ProducerProjectDetailPage({
           {/* ── PITCH DECK ───────────────────────────────────── */}
           {deckUrl && (
             <div style={{
-              paddingTop: 48, paddingBottom: 48,
+              paddingTop: 40, paddingBottom: 40,
               borderBottom: `1px solid ${S.line}`,
               display: "flex", flexDirection: "column", alignItems: "center",
             }}>
