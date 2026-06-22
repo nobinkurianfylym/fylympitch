@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { calculateMatchScore } from "@/services/matching";
 import type { OpportunityIntelligenceExtras, ProducerMatchProfile } from "@/services/fylympitchEngine";
 import type { Opportunity, Project } from "@/types";
 
@@ -89,6 +88,7 @@ export async function rerunEngine(
 
   // ── STEP 1: Basic matching — written immediately ─────────────────────────
   if (opps?.length) {
+    const { calculateMatchScore } = await import("@/services/matching");
     const basicMatches = (opps as Opportunity[])
       .map((opp) => ({
         ...(() => { const m = calculateMatchScore(project as Project, opp); return {
