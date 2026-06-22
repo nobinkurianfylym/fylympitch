@@ -51,8 +51,6 @@ function CategoryBlock({
   const shown    = items.slice(0, visible);
   const remaining = items.length - visible;
 
-  if (items.length === 0) return null;
-
   return (
     <div className="border border-line rounded-[4px] overflow-hidden">
       {/* Category header row */}
@@ -83,6 +81,9 @@ function CategoryBlock({
       {/* Items */}
       {isOpen && (
         <div className="border-t border-line divide-y divide-line">
+          {items.length === 0 && (
+            <p className="px-5 py-4 text-[12px] text-ash font-normal">No entries yet — add the first one with +</p>
+          )}
           {shown.map(o => (
             <div key={o.id} className={o.is_active ? "" : "opacity-50"}>
               <OpportunityEditForm opp={o} />
