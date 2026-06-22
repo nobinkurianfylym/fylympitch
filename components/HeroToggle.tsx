@@ -100,10 +100,10 @@ export default function HeroToggle({
 
       {/* ── Scroll hint ── */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 select-none pointer-events-none">
-        <span className="text-[8px] tracking-[0.22em] text-ash/40">
+        <span className="text-[12px] tracking-[0.22em] text-ash/40">
           SC<span className="font-bold text-ash/55">ROLL</span>
         </span>
-        <span className="text-ash/30 text-[10px]">↓</span>
+        <span className="text-ash/30 text-[15px]">↓</span>
       </div>
 
       <style>{`
