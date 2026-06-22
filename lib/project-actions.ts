@@ -95,6 +95,9 @@ export async function updateProject(formData: FormData) {
     funding_needed_amount:    fundingNeededAmount,
     funding_needed_usd:       fundingNeededUSD,
     is_public:          formData.get("is_public") === "true",
+    has_script_doc:     formData.get("has_script_doc") === "true",
+    has_budget_doc:     formData.get("has_budget_doc") === "true",
+    has_lookbook:       formData.get("has_lookbook") === "true",
     updated_at:         new Date().toISOString(),
   };
 

@@ -65,6 +65,9 @@ export default function EditProjectForm({ project }: Props) {
   const [budgetError, setBudgetError]             = useState<string | null>(null);
   const [submitError, setSubmitError]             = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const [hasScript,   setHasScript]   = useState(!!(project as any).has_script_doc || !!(project as any).script_path);
+  const [hasBudget,   setHasBudget]   = useState(!!(project as any).has_budget_doc  || !!(project as any).budget_usd);
+  const [hasLookbook, setHasLookbook] = useState(!!(project as any).has_lookbook);
 
   const curSym = CURRENCIES[budgetCurrency]?.symbol ?? "$";
 
@@ -299,6 +302,36 @@ export default function EditProjectForm({ project }: Props) {
           />
           Make this project publicly visible
         </label>
+      </div>
+
+      {/* ── Package readiness ── */}
+      <div className="rounded-card border border-line bg-white/60 p-5 space-y-3">
+        <div>
+          <p className="eyebrow mb-0.5">Package</p>
+          <p className="text-[12px] text-ash">Tick what you have ready — producers see this on your project.</p>
+        </div>
+        <input type="hidden" name="has_script_doc" value={String(hasScript)} />
+        <input type="hidden" name="has_budget_doc"  value={String(hasBudget)} />
+        <input type="hidden" name="has_lookbook"    value={String(hasLookbook)} />
+        <div className="flex flex-wrap gap-2.5">
+          {([
+            { key: "script",   label: "Script",   val: hasScript,   set: setHasScript   },
+            { key: "budget",   label: "Budget",   val: hasBudget,   set: setHasBudget   },
+            { key: "lookbook", label: "Lookbook", val: hasLookbook, set: setHasLookbook },
+          ] as { key: string; label: string; val: boolean; set: (v: boolean) => void }[]).map(({ key, label, val, set }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => set(!val)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[11px] tracking-[0.12em] uppercase transition-all ${
+                val ? "border-gold bg-gold/8 text-ink" : "border-line bg-white/60 text-ash"
+              }`}
+            >
+              <span style={{ fontSize: 12, color: val ? "#BF9953" : "#C8C3BC" }}>{val ? "✓" : "○"}</span>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {submitError && (

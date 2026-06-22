@@ -19,7 +19,7 @@ export default async function MyProjectsPage() {
   // Include synopsis and pitch_deck_path — no match data needed on this page
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, title, genre, format, stage, country, language, logline, synopsis, budget_currency, funding_needed_usd, finance_secured_usd, budget_usd, poster_path, pitch_deck_path, love_count, is_public, admin_hidden, created_at, director_name")
+    .select("id, title, genre, format, stage, country, language, logline, synopsis, budget_currency, funding_needed_usd, finance_secured_usd, budget_usd, poster_path, pitch_deck_path, script_path, has_script_doc, has_budget_doc, has_lookbook, love_count, is_public, admin_hidden, created_at, director_name")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -145,6 +145,29 @@ export default async function MyProjectsPage() {
                     {p.synopsis}
                   </p>
                 )}
+
+                {/* Package */}
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {[
+                    { label: "Deck",     present: !!(p as any).pitch_deck_path },
+                    { label: "Script",   present: !!(p as any).has_script_doc || !!(p as any).script_path },
+                    { label: "Budget",   present: !!(p as any).has_budget_doc  || !!(p as any).budget_usd },
+                    { label: "Lookbook", present: !!(p as any).has_lookbook },
+                  ].map(({ label, present }) => (
+                    <span key={label} style={{
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                      fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase",
+                      padding: "3px 8px", borderRadius: 20,
+                      border: `1px solid ${present ? "rgba(191,153,83,0.3)" : "rgba(26,24,21,0.08)"}`,
+                      background: present ? "rgba(191,153,83,0.06)" : "rgba(26,24,21,0.02)",
+                      color: present ? "#7a5e1a" : "#8A857C",
+                      fontFamily: "Montserrat, sans-serif",
+                    }}>
+                      <span style={{ fontSize: 10 }}>{present ? "✓" : "✕"}</span>
+                      {label}
+                    </span>
+                  ))}
+                </div>
 
                 {/* Footer — metadata only, no scores */}
                 <div className="mt-auto pt-4 border-t border-line flex items-center justify-between gap-2 flex-wrap">

@@ -59,7 +59,7 @@ export default async function ProducerProjectDetailPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("*, profiles!projects_owner_id_fkey(id, full_name, company)")
+    .select("*, has_script_doc, has_budget_doc, has_lookbook, profiles!projects_owner_id_fkey(id, full_name, company)")
     .eq("id", id)
     .single();
   if (!project) notFound();
@@ -375,6 +375,57 @@ export default async function ProducerProjectDetailPage({
               )}
             </div>
           </div>
+
+          {/* ── PACKAGE ──────────────────────────────────────── */}
+          {(() => {
+            const pkg = [
+              { label: "Pitch Deck", present: !!project.pitch_deck_path },
+              { label: "Script",     present: !!(project as any).has_script_doc || !!project.script_path },
+              { label: "Budget",     present: !!(project as any).has_budget_doc  || !!project.budget_usd },
+              { label: "Lookbook",   present: !!(project as any).has_lookbook },
+            ];
+            return (
+              <div style={{
+                display:       "flex",
+                flexWrap:      "wrap",
+                gap:           8,
+                paddingTop:    14,
+                paddingBottom: 16,
+                borderBottom:  `1px solid ${S.line}`,
+              }}>
+                <p style={{
+                  width:         "100%",
+                  fontSize:      9,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color:         S.ash,
+                  fontWeight:    600,
+                  marginBottom:  4,
+                }}>
+                  Package
+                </p>
+                {pkg.map(({ label, present }) => (
+                  <span key={label} style={{
+                    display:       "inline-flex",
+                    alignItems:    "center",
+                    gap:           5,
+                    fontSize:      10,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    padding:       "4px 10px",
+                    borderRadius:  20,
+                    border:        `1px solid ${present ? "rgba(191,153,83,0.3)" : "rgba(26,24,21,0.08)"}`,
+                    background:    present ? "rgba(191,153,83,0.06)" : "rgba(26,24,21,0.02)",
+                    color:         present ? "#7a5e1a" : S.ash,
+                    fontFamily:    "Montserrat, sans-serif",
+                  }}>
+                    <span style={{ fontSize: 11 }}>{present ? "✓" : "✕"}</span>
+                    {label}
+                  </span>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* ── INVESTMENT METRICS STRIP ─────────────────────── */}
           <div style={{

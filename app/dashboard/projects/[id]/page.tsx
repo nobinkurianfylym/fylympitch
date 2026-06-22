@@ -55,7 +55,7 @@ export default async function ProjectDetailPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("*, profiles!projects_owner_id_fkey(full_name)")
+    .select("*, has_script_doc, has_budget_doc, has_lookbook, profiles!projects_owner_id_fkey(full_name)")
     .eq("id", id).single<Project>();
   if (!project) notFound();
   const isOwner = project.owner_id === user!.id;
@@ -361,11 +361,11 @@ export default async function ProjectDetailPage({
             </div>
           </div>
 
-          {/* DOCUMENT READINESS */}
+          {/* PACKAGE */}
           {(() => {
             const docs = [
               { label: "Pitch Deck", present: !!project.pitch_deck_path },
-              { label: "Script",     present: !!project.script_path || !!(project as any).has_script_doc },
+              { label: "Script",     present: !!(project as any).has_script_doc || !!project.script_path },
               { label: "Budget",     present: !!(project as any).has_budget_doc || !!project.budget_usd },
               { label: "Lookbook",   present: !!(project as any).has_lookbook },
             ];
