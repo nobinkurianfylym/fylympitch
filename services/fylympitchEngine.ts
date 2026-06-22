@@ -33,7 +33,7 @@
 //    sharpens the result, it's never required.
 // ============================================================
 
-import type { Project, Opportunity, OpportunityType, MatchResult } from "@/types";
+import type { Project, Opportunity, OpportunityType, ProjectStage, MatchResult } from "@/types";
 import { calculateMatchScore, tierOf } from "./matching.ts";
 import { usd } from "../lib/format.ts";
 
@@ -102,6 +102,150 @@ export function applyHybridAdjustments(
   return { ...base, score, tier: tierOf(score), reasons };
 }
 
+// ============================================================
+// STAGE-CATEGORY GATE
+// ============================================================
+// Every OpportunityType belongs to one of 9 parent FundCategories.
+// Only categories appropriate for the project's current production
+// stage are eligible — ineligible opportunities are dropped before
+// scoring as a hard pre-filter, regardless of all other signals.
+//
+// New opp_type sub-types added to the taxonomy only need a single
+// entry in OPP_TYPE_TO_CATEGORY — they automatically inherit the
+// correct stage gating from their parent category.
+//
+// Stage → Eligible Categories:
+//   development     → 1 Development, 2 Packaging & Markets,
+//                     3 Early Financing, 4 Tax Incentives,
+//                     5 Private Financing, 6 Production
+//   pre_production  → 2 Packaging & Markets, 3 Early Financing,
+//                     4 Tax Incentives, 5 Private Financing,
+//                     6 Production
+//   production      → 4 Tax Incentives, 5 Private Financing,
+//                     6 Production
+//   post_production → 7 Post-Production, 8 Buyers & Sales,
+//                     9 Release & Distribution
+//   completed       → 6 Production, 8 Buyers & Sales,
+//                     9 Release & Distribution
+
+export type FundCategory =
+  | "development"
+  | "packaging_and_markets"
+  | "early_financing"
+  | "tax_incentives"
+  | "private_financing"
+  | "production"
+  | "post_production"
+  | "buyers_and_sales"
+  | "release_and_distribution";
+
+export const OPP_TYPE_TO_CATEGORY: Record<OpportunityType, FundCategory> = {
+  // 1. Development
+  script_lab:               "development",
+  lab:                      "development",
+  residency:                "development",
+  mentorship:               "development",
+  grant:                    "development",
+  fund:                     "development",
+  writing_fellowship:       "development",
+  // 2. Packaging & Markets
+  pitch_forum:              "packaging_and_markets",
+  co_production:            "packaging_and_markets",
+  market:                   "packaging_and_markets",
+  // 3. Early Financing
+  crowdfunding:             "early_financing",
+  donation:                 "early_financing",
+  fiscal_sponsorship:       "early_financing",
+  seed_funding:             "early_financing",
+  community_funding:        "early_financing",
+  // 4. Tax Incentives
+  tax_incentive:            "tax_incentives",
+  cash_rebate:              "tax_incentives",
+  production_rebate:        "tax_incentives",
+  regional_incentive:       "tax_incentives",
+  location_incentive:       "tax_incentives",
+  // 5. Private Financing
+  investor:                 "private_financing",
+  angel_investor:           "private_financing",
+  venture_capital:          "private_financing",
+  gap_financing:            "private_financing",
+  brand_integration:        "private_financing",
+  product_placement:        "private_financing",
+  sponsor:                  "private_financing",
+  private_fund:             "private_financing",
+  // 6. Production
+  producer:                 "production",
+  co_producer:              "production",
+  production_company:       "production",
+  studio:                   "production",
+  // 7. Post-Production
+  post_production_grant:    "post_production",
+  post_production_fund:     "post_production",
+  // 8. Buyers & Sales
+  sales_agent:              "buyers_and_sales",
+  world_sales:              "buyers_and_sales",
+  broadcaster:              "buyers_and_sales",
+  streamer:                 "buyers_and_sales",
+  pre_sale:                 "buyers_and_sales",
+  content_buyer:            "buyers_and_sales",
+  music_rights:             "buyers_and_sales",
+  // 9. Release & Distribution
+  film_festival:            "release_and_distribution",
+  distribution:             "release_and_distribution",
+  theatrical_distribution:  "release_and_distribution",
+  ott_distribution:         "release_and_distribution",
+  tv_distribution:          "release_and_distribution",
+  digital_aggregator:       "release_and_distribution",
+  educational_distribution: "release_and_distribution",
+  airline_distribution:     "release_and_distribution",
+};
+
+const STAGE_ALLOWED_CATEGORIES: Record<ProjectStage, Set<FundCategory>> = {
+  development: new Set<FundCategory>([
+    "development",
+    "packaging_and_markets",
+    "early_financing",
+    "tax_incentives",
+    "private_financing",
+    "production",
+  ]),
+  pre_production: new Set<FundCategory>([
+    "packaging_and_markets",
+    "early_financing",
+    "tax_incentives",
+    "private_financing",
+    "production",
+  ]),
+  production: new Set<FundCategory>([
+    "tax_incentives",
+    "private_financing",
+    "production",
+  ]),
+  post_production: new Set<FundCategory>([
+    "post_production",
+    "buyers_and_sales",
+    "release_and_distribution",
+  ]),
+  completed: new Set<FundCategory>([
+    "production",
+    "buyers_and_sales",
+    "release_and_distribution",
+  ]),
+};
+
+/**
+ * Hard stage-category gate.
+ * Returns true if the opportunity's fund category is eligible for
+ * the project's current production stage. Unknown types pass through.
+ */
+export function stageCategoryGate(project: Project, opp: Opportunity): boolean {
+  const allowed = STAGE_ALLOWED_CATEGORIES[project.stage];
+  if (!allowed) return true; // unknown stage — pass through
+  const category = OPP_TYPE_TO_CATEGORY[opp.opp_type];
+  if (!category) return true; // unknown opp_type — pass through
+  return allowed.has(category);
+}
+
 /** Score every opportunity, apply hybrid adjustments, drop "hidden" tier, sort best-first. */
 export function rankHybridMatches(
   project: Project & { career_stage?: string | null },
@@ -109,6 +253,7 @@ export function rankHybridMatches(
   opportunityExtras?: Record<string, OpportunityIntelligenceExtras>
 ): { opportunity: Opportunity; match: MatchResult }[] {
   return opportunities
+    .filter((opportunity) => stageCategoryGate(project, opportunity))
     .map((opportunity) => {
       const base = calculateMatchScore(project, opportunity);
       const match = applyHybridAdjustments(base, project, opportunityExtras?.[opportunity.id]);
