@@ -45,6 +45,7 @@ const OPP_TYPES = [
   // ── Post Production ──────────────────────────────────────
   { value: "post_production_grant", label: "Post-Production Grant" },
   { value: "post_production_fund",  label: "Post-Production Fund" },
+  { value: "finishing_fund",        label: "Finishing Fund" },
   // ── Buyers & Sales ───────────────────────────────────────
   { value: "sales_agent",        label: "Sales Agent" },
   { value: "world_sales",        label: "World Sales" },
@@ -55,7 +56,7 @@ const OPP_TYPES = [
   { value: "music_rights",       label: "Music Rights" },
   // ── Release & Distribution ───────────────────────────────
   { value: "film_festival",            label: "Film Festival" },
-  { value: "distribution",             label: "Distribution Company" },
+  { value: "distribution",             label: "Distribution Deal" },
   { value: "theatrical_distribution",  label: "Theatrical Distribution" },
   { value: "ott_distribution",         label: "OTT Distribution" },
   { value: "tv_distribution",          label: "TV Distribution" },

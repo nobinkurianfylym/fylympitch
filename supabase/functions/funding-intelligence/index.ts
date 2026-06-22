@@ -60,7 +60,7 @@ const OPP_TYPES = [
   // Production
   "producer","co_producer","production_company","studio",
   // Post Production
-  "post_production_grant","post_production_fund",
+  "post_production_grant","post_production_fund","finishing_fund",
   // Buyers & Sales
   "sales_agent","world_sales","broadcaster","streamer","pre_sale","content_buyer","music_rights",
   // Release & Distribution
@@ -278,7 +278,7 @@ opp_type: lab | residency | mentorship | grant | fund | writing_fellowship |
           investor | angel_investor | venture_capital | gap_financing |
           brand_integration | product_placement | sponsor | private_fund |
           producer | co_producer | production_company | studio |
-          post_production_grant | post_production_fund |
+          post_production_grant | post_production_fund | finishing_fund |
           sales_agent | world_sales | broadcaster | streamer | pre_sale | content_buyer | music_rights |
           film_festival | distribution | theatrical_distribution | ott_distribution |
           tv_distribution | digital_aggregator | educational_distribution | airline_distribution

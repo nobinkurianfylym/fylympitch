@@ -84,6 +84,7 @@ const BAND_LABEL: Record<string, string> = {
   // Post Production
   post_production_grant: "POST GRANT",
   post_production_fund:  "POST FUND",
+  finishing_fund:        "FINISHING FUND",
   // Buyers & Sales
   sales_agent:           "SALES AGENT",
   world_sales:           "WORLD SALES",
@@ -149,7 +150,7 @@ export default async function FundsPage({
     tax_incentives:       ["tax_incentive", "cash_rebate", "production_rebate", "regional_incentive", "location_incentive"],
     private_financing:    ["investor", "angel_investor", "venture_capital", "gap_financing", "brand_integration", "product_placement", "sponsor", "private_fund"],
     production:           ["producer", "co_producer", "production_company", "studio"],
-    post_production:      ["post_production_grant", "post_production_fund"],
+    post_production:      ["post_production_grant", "post_production_fund", "finishing_fund"],
     buyers_sales:         ["sales_agent", "world_sales", "broadcaster", "streamer", "pre_sale", "content_buyer", "music_rights"],
     release_distribution: ["film_festival", "distribution", "theatrical_distribution", "ott_distribution", "tv_distribution", "digital_aggregator", "educational_distribution", "airline_distribution"],
   };

@@ -21,7 +21,7 @@ const ALL_TYPES = [
   // Production
   "producer", "co_producer", "production_company", "studio",
   // Post Production
-  "post_production_grant", "post_production_fund",
+  "post_production_grant", "post_production_fund", "finishing_fund",
   // Buyers & Sales
   "sales_agent", "world_sales", "broadcaster", "streamer", "pre_sale", "content_buyer", "music_rights",
   // Release & Distribution

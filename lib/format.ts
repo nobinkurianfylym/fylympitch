@@ -98,6 +98,7 @@ export const TYPE_LABEL: Record<string, string> = {
   // Post Production
   post_production_grant: "Post-Production Grant",
   post_production_fund:  "Post-Production Fund",
+  finishing_fund:        "Finishing Fund",
   // Buyers & Sales
   sales_agent:           "Sales Agent",
   world_sales:           "World Sales",
@@ -108,7 +109,7 @@ export const TYPE_LABEL: Record<string, string> = {
   music_rights:          "Music Rights",
   // Release & Distribution
   film_festival:            "Film Festival",
-  distribution:             "Distribution Company",
+  distribution:             "Distribution Deal",
   theatrical_distribution:  "Theatrical Distribution",
   ott_distribution:         "OTT Distribution",
   tv_distribution:          "TV Distribution",
@@ -158,6 +159,7 @@ export const OPP_CATEGORY_MAP: Record<string, string> = {
   // Post Production
   post_production_grant: "post_production",
   post_production_fund:  "post_production",
+  finishing_fund:        "post_production",
   // Buyers & Sales
   sales_agent:           "buyers_sales",
   world_sales:           "buyers_sales",
@@ -184,7 +186,7 @@ export const CATEGORY_CONFIG: { key: string; label: string; sub: string }[] = [
   { key: "tax_incentives",       label: "Tax Incentives",         sub: "Tax Credits · Cash Rebates · Production Rebates · Regional & Location Incentives" },
   { key: "private_financing",    label: "Private Financing",      sub: "Equity · Angel · Venture Capital · Gap · Brand · Product Placement · Sponsors · Private Funds" },
   { key: "production",           label: "Production",             sub: "Producers · Co-Producers · Production Companies · Studios" },
-  { key: "post_production",      label: "Post Production",        sub: "Post-Production Grants · Post-Production Funds" },
+  { key: "post_production",      label: "Post Production",        sub: "Post-Production Grants · Post-Production Funds · Finishing Funds" },
   { key: "buyers_sales",         label: "Buyers & Sales",         sub: "Sales Agents · World Sales · Broadcasters · Streamers · Pre-Sales · Content Buyers · Music Rights" },
   { key: "release_distribution", label: "Release & Distribution", sub: "Film Festivals · Distribution · Theatrical · OTT · TV · Digital · Educational · Airline" },
 ];
