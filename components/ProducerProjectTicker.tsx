@@ -72,7 +72,7 @@ export default function ProducerProjectTicker({
           </span>
         </div>
         <Link
-          href="/login"
+          href="/projects"
           className="text-[11px] tracking-[0.14em] uppercase text-gold hover:text-ink transition-colors"
         >
           Browse all →
@@ -101,7 +101,7 @@ export default function ProducerProjectTicker({
           {TRACK.map((p, i) => (
             <Link
               key={`${p.id}-${i}`}
-              href={`/login?next=/producer/projects/${p.id}`}
+              href={`/projects/${p.id}`}
               className="group shrink-0 mx-2 bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold/40 transition-colors"
               style={{ width: 192 }}
             >
