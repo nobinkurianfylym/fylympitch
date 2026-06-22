@@ -4,32 +4,63 @@ import { useState, useTransition } from "react";
 import { adminUpdateOpportunity, adminToggleOpportunity } from "@/lib/actions";
 
 const OPP_TYPES = [
-  // Development
+  // ── Development ──────────────────────────────────────────
   { value: "lab",                label: "Lab" },
-  { value: "grant",              label: "Grant" },
-  { value: "fund",               label: "Fund" },
-  // Packaging & Markets
-  { value: "co_production",      label: "Co-production" },
-  { value: "market",             label: "Market" },
-  // Early Financing
+  { value: "residency",          label: "Residency" },
+  { value: "mentorship",         label: "Mentorship" },
+  { value: "grant",              label: "Development Grant" },
+  { value: "fund",               label: "Development Fund" },
+  { value: "writing_fellowship", label: "Writing Fellowship" },
+  // ── Packaging & Markets ──────────────────────────────────
+  { value: "pitch_forum",        label: "Pitch Forum" },
+  { value: "co_production",      label: "Co-Production Market" },
+  { value: "market",             label: "Film Market" },
+  // ── Early Financing ──────────────────────────────────────
   { value: "crowdfunding",       label: "Crowdfunding" },
-  // Tax Incentives
-  { value: "tax_incentive",      label: "Tax Incentive" },
-  // Private Financing
-  { value: "investor",           label: "Investor" },
+  { value: "donation",           label: "Donation" },
+  { value: "fiscal_sponsorship", label: "Fiscal Sponsorship" },
+  { value: "seed_funding",       label: "Seed Funding" },
+  { value: "community_funding",  label: "Community Funding" },
+  // ── Tax Incentives ───────────────────────────────────────
+  { value: "tax_incentive",      label: "Tax Credit" },
+  { value: "cash_rebate",        label: "Cash Rebate" },
+  { value: "production_rebate",  label: "Production Rebate" },
+  { value: "regional_incentive", label: "Regional Incentive" },
+  { value: "location_incentive", label: "Location Incentive" },
+  // ── Private Financing ────────────────────────────────────
+  { value: "investor",           label: "Equity Investor" },
+  { value: "angel_investor",     label: "Angel Investor" },
+  { value: "venture_capital",    label: "Venture Capital" },
+  { value: "gap_financing",      label: "Gap Financing" },
   { value: "brand_integration",  label: "Brand Integration" },
-  { value: "sponsor",            label: "Sponsor" },
-  // Production
+  { value: "product_placement",  label: "Product Placement" },
+  { value: "sponsor",            label: "Corporate Sponsor" },
+  { value: "private_fund",       label: "Private Fund" },
+  // ── Production ───────────────────────────────────────────
   { value: "producer",           label: "Producer" },
+  { value: "co_producer",        label: "Co-Producer" },
   { value: "production_company", label: "Production Company" },
   { value: "studio",             label: "Studio" },
-  // Buyers & Sales
+  // ── Post Production ──────────────────────────────────────
+  { value: "post_production_grant", label: "Post-Production Grant" },
+  { value: "post_production_fund",  label: "Post-Production Fund" },
+  // ── Buyers & Sales ───────────────────────────────────────
   { value: "sales_agent",        label: "Sales Agent" },
+  { value: "world_sales",        label: "World Sales" },
   { value: "broadcaster",        label: "Broadcaster" },
   { value: "streamer",           label: "Streamer" },
   { value: "pre_sale",           label: "Pre-Sale" },
-  // Release & Distribution
-  { value: "distribution",       label: "Distribution" },
+  { value: "content_buyer",      label: "Content Buyer" },
+  { value: "music_rights",       label: "Music Rights" },
+  // ── Release & Distribution ───────────────────────────────
+  { value: "film_festival",            label: "Film Festival" },
+  { value: "distribution",             label: "Distribution Company" },
+  { value: "theatrical_distribution",  label: "Theatrical Distribution" },
+  { value: "ott_distribution",         label: "OTT Distribution" },
+  { value: "tv_distribution",          label: "TV Distribution" },
+  { value: "digital_aggregator",       label: "Digital Aggregator" },
+  { value: "educational_distribution", label: "Educational Distribution" },
+  { value: "airline_distribution",     label: "Airline & Inflight" },
 ];
 
 type Opportunity = {

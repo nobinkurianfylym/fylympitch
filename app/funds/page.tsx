@@ -44,24 +44,63 @@ function hashTitle(s: string): number {
 }
 
 const BAND_LABEL: Record<string, string> = {
-  grant:              "GRANT",
-  fund:               "FUND",
-  lab:                "LAB",
-  co_production:      "CO-PROD",
-  market:             "MARKET",
-  distribution:       "DISTRIBUTION",
-  investor:           "INVESTOR",
-  broadcaster:        "BROADCASTER",
-  streamer:           "STREAMING",
-  sales_agent:        "SALES AGENT",
-  producer:           "PRODUCER",
-  production_company: "PRODUCTION CO",
-  studio:             "STUDIO",
-  brand_integration:  "BRAND",
-  crowdfunding:       "CROWDFUNDING",
-  sponsor:            "SPONSOR",
-  pre_sale:           "PRE-SALE",
-  tax_incentive:      "TAX INCENTIVE",
+  // Development
+  lab:                   "LAB",
+  residency:             "RESIDENCY",
+  mentorship:            "MENTORSHIP",
+  grant:                 "GRANT",
+  fund:                  "FUND",
+  writing_fellowship:    "FELLOWSHIP",
+  // Packaging & Markets
+  pitch_forum:           "PITCH FORUM",
+  co_production:         "CO-PROD",
+  market:                "MARKET",
+  // Early Financing
+  crowdfunding:          "CROWDFUNDING",
+  donation:              "DONATION",
+  fiscal_sponsorship:    "FISCAL SPONSOR",
+  seed_funding:          "SEED FUNDING",
+  community_funding:     "COMMUNITY",
+  // Tax Incentives
+  tax_incentive:         "TAX CREDIT",
+  cash_rebate:           "CASH REBATE",
+  production_rebate:     "PROD REBATE",
+  regional_incentive:    "REGIONAL",
+  location_incentive:    "LOCATION",
+  // Private Financing
+  investor:              "EQUITY",
+  angel_investor:        "ANGEL",
+  venture_capital:       "VENTURE",
+  gap_financing:         "GAP",
+  brand_integration:     "BRAND",
+  product_placement:     "PRODUCT",
+  sponsor:               "SPONSOR",
+  private_fund:          "PRIVATE FUND",
+  // Production
+  producer:              "PRODUCER",
+  co_producer:           "CO-PRODUCER",
+  production_company:    "PRODUCTION CO",
+  studio:                "STUDIO",
+  // Post Production
+  post_production_grant: "POST GRANT",
+  post_production_fund:  "POST FUND",
+  // Buyers & Sales
+  sales_agent:           "SALES AGENT",
+  world_sales:           "WORLD SALES",
+  broadcaster:           "BROADCASTER",
+  streamer:              "STREAMING",
+  pre_sale:              "PRE-SALE",
+  content_buyer:         "CONTENT BUYER",
+  music_rights:          "MUSIC RIGHTS",
+  // Release & Distribution
+  film_festival:            "FESTIVAL",
+  distribution:             "DISTRIBUTION",
+  theatrical_distribution:  "THEATRICAL",
+  ott_distribution:         "OTT",
+  tv_distribution:          "TV",
+  digital_aggregator:       "DIGITAL",
+  educational_distribution: "EDUCATIONAL",
+  airline_distribution:     "AIRLINE",
 };
 
 function formatDeadline(deadline: string | null, note: string | null): string {
@@ -104,15 +143,15 @@ export default async function FundsPage({
 
   // Map category key → opp_type values
   const CATEGORY_TYPES: Record<string, string[]> = {
-    development:          ["lab", "grant", "fund"],
-    packaging_markets:    ["co_production", "market"],
-    early_financing:      ["crowdfunding"],
-    tax_incentives:       ["tax_incentive"],
-    private_financing:    ["investor", "sponsor", "brand_integration"],
-    production:           ["producer", "production_company", "studio"],
-    post_production:      [],
-    buyers_sales:         ["broadcaster", "streamer", "pre_sale", "sales_agent"],
-    release_distribution: ["distribution"],
+    development:          ["lab", "residency", "mentorship", "grant", "fund", "writing_fellowship"],
+    packaging_markets:    ["pitch_forum", "co_production", "market"],
+    early_financing:      ["crowdfunding", "donation", "fiscal_sponsorship", "seed_funding", "community_funding"],
+    tax_incentives:       ["tax_incentive", "cash_rebate", "production_rebate", "regional_incentive", "location_incentive"],
+    private_financing:    ["investor", "angel_investor", "venture_capital", "gap_financing", "brand_integration", "product_placement", "sponsor", "private_fund"],
+    production:           ["producer", "co_producer", "production_company", "studio"],
+    post_production:      ["post_production_grant", "post_production_fund"],
+    buyers_sales:         ["sales_agent", "world_sales", "broadcaster", "streamer", "pre_sale", "content_buyer", "music_rights"],
+    release_distribution: ["film_festival", "distribution", "theatrical_distribution", "ott_distribution", "tv_distribution", "digital_aggregator", "educational_distribution", "airline_distribution"],
   };
 
   let query = supabase

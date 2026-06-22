@@ -46,10 +46,26 @@ const OPENAI_MODEL = "gpt-4o-mini";
 
 // ─── Taxonomy ─────────────────────────────────────────────────
 const OPP_TYPES = [
-  "grant","fund","lab","co_production","market","distribution",
-  "investor","broadcaster","streamer","sales_agent","producer",
-  "brand_integration","crowdfunding","production_company","studio",
-  "sponsor","pre_sale","tax_incentive",
+  // Development
+  "lab","residency","mentorship","grant","fund","writing_fellowship",
+  // Packaging & Markets
+  "pitch_forum","co_production","market",
+  // Early Financing
+  "crowdfunding","donation","fiscal_sponsorship","seed_funding","community_funding",
+  // Tax Incentives
+  "tax_incentive","cash_rebate","production_rebate","regional_incentive","location_incentive",
+  // Private Financing
+  "investor","angel_investor","venture_capital","gap_financing",
+  "brand_integration","product_placement","sponsor","private_fund",
+  // Production
+  "producer","co_producer","production_company","studio",
+  // Post Production
+  "post_production_grant","post_production_fund",
+  // Buyers & Sales
+  "sales_agent","world_sales","broadcaster","streamer","pre_sale","content_buyer","music_rights",
+  // Release & Distribution
+  "film_festival","distribution","theatrical_distribution","ott_distribution",
+  "tv_distribution","digital_aggregator","educational_distribution","airline_distribution",
 ] as const;
 const FORMATS  = ["feature","short","documentary","series","animation"] as const;
 const STAGES   = ["development","pre_production","production","post_production","completed"] as const;
@@ -255,9 +271,17 @@ Respond ONLY with a single valid JSON object — no markdown fences, no preamble
 
 TAXONOMY — use ONLY these exact values:
 
-opp_type: grant | fund | lab | co_production | market | distribution | investor |
-          broadcaster | streamer | sales_agent | producer | brand_integration |
-          crowdfunding | production_company | studio | sponsor | pre_sale | tax_incentive
+opp_type: lab | residency | mentorship | grant | fund | writing_fellowship |
+          pitch_forum | co_production | market |
+          crowdfunding | donation | fiscal_sponsorship | seed_funding | community_funding |
+          tax_incentive | cash_rebate | production_rebate | regional_incentive | location_incentive |
+          investor | angel_investor | venture_capital | gap_financing |
+          brand_integration | product_placement | sponsor | private_fund |
+          producer | co_producer | production_company | studio |
+          post_production_grant | post_production_fund |
+          sales_agent | world_sales | broadcaster | streamer | pre_sale | content_buyer | music_rights |
+          film_festival | distribution | theatrical_distribution | ott_distribution |
+          tv_distribution | digital_aggregator | educational_distribution | airline_distribution
 
 formats: feature | short | documentary | series | animation
 

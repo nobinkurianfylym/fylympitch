@@ -8,21 +8,25 @@ export const dynamic = "force-dynamic";
 
 const ALL_TYPES = [
   // Development
-  "lab", "grant", "fund",
+  "lab", "residency", "mentorship", "grant", "fund", "writing_fellowship",
   // Packaging & Markets
-  "co_production", "market",
+  "pitch_forum", "co_production", "market",
   // Early Financing
-  "crowdfunding",
+  "crowdfunding", "donation", "fiscal_sponsorship", "seed_funding", "community_funding",
   // Tax Incentives
-  "tax_incentive",
+  "tax_incentive", "cash_rebate", "production_rebate", "regional_incentive", "location_incentive",
   // Private Financing
-  "investor", "brand_integration", "sponsor",
+  "investor", "angel_investor", "venture_capital", "gap_financing",
+  "brand_integration", "product_placement", "sponsor", "private_fund",
   // Production
-  "producer", "production_company", "studio",
+  "producer", "co_producer", "production_company", "studio",
+  // Post Production
+  "post_production_grant", "post_production_fund",
   // Buyers & Sales
-  "sales_agent", "broadcaster", "streamer", "pre_sale",
+  "sales_agent", "world_sales", "broadcaster", "streamer", "pre_sale", "content_buyer", "music_rights",
   // Release & Distribution
-  "distribution",
+  "film_festival", "distribution", "theatrical_distribution", "ott_distribution",
+  "tv_distribution", "digital_aggregator", "educational_distribution", "airline_distribution",
 ];
 
 export default async function OpportunitiesPage({ searchParams }: { searchParams: Promise<{ type?: string; q?: string; sort?: string }> }) {
