@@ -61,7 +61,7 @@ export default function HeroToggle({
   const secondary = c.secondary;
 
   return (
-    <section className="flex-1 flex flex-col justify-center max-w-6xl mx-auto w-full px-6 pb-16">
+    <section className="relative flex-1 flex flex-col justify-center max-w-6xl mx-auto w-full px-6 pb-16">
 
       {/* ── Content — fades on role change ── */}
       <div key={role} style={{ animation: "heroFadeIn 0.35s ease both" }}>
@@ -96,6 +96,14 @@ export default function HeroToggle({
         {(role === "producer" ? PRODUCER_TAGS : FILMMAKER_TAGS).map((tag) => (
           <span key={tag} className="shrink-0">{tag}</span>
         ))}
+      </div>
+
+      {/* ── Scroll hint ── */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 select-none pointer-events-none">
+        <span className="text-[8px] tracking-[0.22em] text-ash/40">
+          SC<span className="font-bold text-ash/55">ROLL</span>
+        </span>
+        <span className="text-ash/30 text-[10px]">↓</span>
       </div>
 
       <style>{`
