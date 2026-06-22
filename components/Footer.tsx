@@ -212,8 +212,8 @@ export function Footer() {
                 <li><a href="/privacy" className={LI}>Privacy</a></li>
                 <li><a href="/terms"   className={LI}>Terms</a></li>
                 <li><a href="/cookies" className={LI}>Cookies</a></li>
-                <li><a href="mailto:nobinkurian@yahoo.com" className={LI}>Contact</a></li>
-                <li><a href="mailto:nobinkurian@yahoo.com?subject=Report Issue" className={LI}>Report Issue</a></li>
+                <li><a href="mailto:hello@fylym.com" className={LI}>Contact</a></li>
+                <li><a href="mailto:hello@fylym.com?subject=Report Issue" className={LI}>Report Issue</a></li>
               </ul>
             </div>
           </div>

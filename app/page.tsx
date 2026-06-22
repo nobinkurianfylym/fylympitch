@@ -399,7 +399,7 @@ export default async function Home() {
               Festivals, funds and institutions — list your programme on PITCH.FYLYM.
             </h2>
           </div>
-          <a href="mailto:nobinkurian@yahoo.com" className="btn-ghost mt-8 md:mt-0 shrink-0">Write to us</a>
+          <a href="mailto:hello@fylym.com" className="btn-ghost mt-8 md:mt-0 shrink-0">Write to us</a>
         </div>
       </section>
 
