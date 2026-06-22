@@ -122,7 +122,8 @@ export default async function ProducerProjectDetailPage({
     stageDisplay,
   ].filter(Boolean) as string[];
 
-  // ── Design tokens ──────────────────────────────────────────
+  // ── Metrics strip column count ────────────────────────────────
+  const metricCols = [budget !== "—", securedDisplay, seeking, stageDisplay, true].filter(Boolean).length;
   const S = {
     canvas:  "#FAFAF8",
     ink:     "#1A1815",
@@ -376,15 +377,12 @@ export default async function ProducerProjectDetailPage({
           </div>
 
           {/* ── INVESTMENT METRICS STRIP ─────────────────────── */}
-          {(() => {
-            const cols = [budget !== "—", securedDisplay, seeking, stageDisplay, true].filter(Boolean).length;
-            return (
-              <div style={{
-                display:             "grid",
-                gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                borderBottom:        `1px solid ${S.line}`,
-                margin:              "0 -4px",
-              }}>
+          <div style={{
+            display:             "grid",
+            gridTemplateColumns: `repeat(${metricCols}, 1fr)`,
+            borderBottom:        `1px solid ${S.line}`,
+            margin:              "0 -4px",
+          }}>
                 {budget !== "—" && (
                   <div style={{ padding: "22px 16px 20px", borderRight: `1px solid ${S.line}` }}>
                     <p style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 8 }}>Budget</p>
@@ -432,8 +430,6 @@ export default async function ProducerProjectDetailPage({
                   <p style={{ fontSize: 12, fontWeight: 600, color: S.ash, fontFamily: "monospace", letterSpacing: "0.06em" }}>FYP-{projectId}</p>
                 </div>
               </div>
-            );
-          })()}
 
           {/* ── PITCH DECK ───────────────────────────────────── */}
           {deckUrl && (
