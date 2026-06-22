@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import { useEffect, useRef, useState } from "react";
 import { usd } from "@/lib/format";
 import FundingJourneyMini from "@/components/FundingJourneyMini";
@@ -28,7 +29,9 @@ function useCountUp(target: number, duration = 900) {
 function Modal({ onClose, title, children }: {
   onClose: () => void; title: string; children: React.ReactNode;
 }) {
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -38,11 +41,13 @@ function Modal({ onClose, title, children }: {
     };
   }, [onClose]);
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       onClick={onClose}
       style={{
-        position:       "fixed", inset: 0, zIndex: 9999,
+        position:       "fixed", inset: 0, zIndex: 99999,
         background:     "rgba(10,9,8,0.82)",
         display:        "flex", alignItems: "center", justifyContent: "center",
         padding:        24,
@@ -62,7 +67,6 @@ function Modal({ onClose, title, children }: {
           border:       "1px solid rgba(255,255,255,0.08)",
         }}
       >
-        {/* Modal header */}
         <div style={{
           display:        "flex", alignItems: "center",
           justifyContent: "space-between",
@@ -86,13 +90,12 @@ function Modal({ onClose, title, children }: {
             }}
           >✕</button>
         </div>
-
-        {/* Modal content — scrollable */}
         <div style={{ overflowY: "auto", padding: "20px 20px 24px", flex: 1 }}>
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
