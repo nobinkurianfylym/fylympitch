@@ -26,48 +26,28 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
     return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
 
-  // Not logged in — Get started with hover dropdown revealing Sign in
+  // Not logged in — always-visible Sign in + Get started
   if (!isLoggedIn) {
     const signupHref = role === "producer" ? "/signup?role=producer" : "/signup";
     return (
-      <div
-        ref={ref}
-        className="relative"
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-      >
+      <div className="flex items-center gap-4">
+        <Link
+          href="/login"
+          className="text-[11px] tracking-[0.1em] uppercase text-ash hover:text-ink transition-colors"
+        >
+          Sign in
+        </Link>
         <Link
           href={signupHref}
-          className="btn-outline !px-5 !py-2.5 !text-[11px] flex items-center gap-1.5"
+          className="btn-outline !px-5 !py-2.5 !text-[11px]"
         >
           Get started
-          <span style={{ fontSize: 8, opacity: 0.5 }}>▾</span>
         </Link>
-
-        {open && (
-          <div
-            className="absolute right-0 top-full pt-1 z-50"
-            onMouseEnter={() => setOpen(true)}
-            onMouseLeave={() => setOpen(false)}
-          >
-            <div
-              className="bg-white border border-line rounded-card overflow-hidden"
-              style={{ minWidth: 148, boxShadow: "0 4px 24px rgba(26,24,21,0.08)" }}
-            >
-              <Link
-                href="/login"
-                className="flex items-center px-4 py-3 text-[11px] tracking-[0.1em] uppercase text-ash hover:text-ink transition-colors"
-              >
-                Sign in
-              </Link>
-            </div>
-          </div>
-        )}
       </div>
     );
   }
 
-  // Derive display name + initials
+  // Logged in — derive display name + initials
   const firstName = (userName ?? "").split(" ")[0] || "Account";
   const initials  = (userName ?? "")
     .split(" ")
@@ -82,7 +62,6 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2.5 px-3 py-1.5 rounded-card border border-line hover:border-ink/30 transition-colors bg-transparent"
       >
-        {/* Avatar */}
         {avatarUrl ? (
           <img
             src={avatarUrl}
@@ -97,7 +76,6 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
             {initials}
           </span>
         )}
-        {/* Name + account type */}
         <div className="flex flex-col items-start gap-0">
           <span className="text-[11px] tracking-[0.1em] uppercase text-ink max-w-[96px] truncate leading-tight">
             {firstName}
@@ -114,7 +92,6 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
           className="absolute right-0 top-full mt-2 bg-white border border-line rounded-card overflow-hidden z-50"
           style={{ minWidth: 180, boxShadow: "0 4px 24px rgba(26,24,21,0.08)" }}
         >
-          {/* Admin Panel — admins only */}
           {accountRole === "ADMIN" && (
             <Link
               href="/admin"
@@ -126,7 +103,6 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
             </Link>
           )}
 
-          {/* Filmmaker Dashboard — filmmakers and admins only */}
           {(accountRole === "FILMMAKER" || accountRole === "ADMIN") && (
             <Link
               href="/dashboard"
@@ -137,7 +113,6 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
             </Link>
           )}
 
-          {/* Producer Studio — producers and admins only */}
           {(accountRole === "PRODUCER" || accountRole === "ADMIN") && (
             <Link
               href="/producer"
@@ -148,7 +123,6 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
             </Link>
           )}
 
-          {/* Edit Profile — role-aware */}
           <Link
             href={accountRole === "PRODUCER" ? "/producer/profile" : "/dashboard/profile"}
             onClick={() => setOpen(false)}
@@ -157,7 +131,6 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
             Edit Profile
           </Link>
 
-          {/* Sign out */}
           <form action={signOut}>
             <button
               type="submit"
