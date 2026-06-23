@@ -515,45 +515,40 @@ export default async function ProjectDetailPage({
           {isOwner && !simpleView && producerMatches.length > 0 && (
             <div style={{ paddingTop: 36, paddingBottom: 36, borderBottom: `1px solid ${S.line}` }}>
               <p style={SH}>Producers &amp; Investors</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {producerMatches.slice(0, 5).map(pm => {
                   const done = requestedProducerIds.has(pm.profile.id);
-                  const initials = pm.profile.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
                   return (
                     <div key={pm.profile.id} style={{
-                      display: "flex", alignItems: "center", gap: 12,
-                      padding: "12px 14px", borderRadius: 8,
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "10px 14px", borderRadius: 8,
                       border: `1px solid ${S.line}`, background: S.surface,
                     }}>
-                      <div style={{
-                        width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
-                        background: "rgba(26,24,21,0.06)", overflow: "hidden",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 11, color: S.ash, border: `1px solid ${S.line}`,
+                      {/* Role badge — mirrors opp_type badge in Top Matches */}
+                      <span style={{
+                        fontSize: 8, letterSpacing: "0.1em", textTransform: "uppercase",
+                        padding: "2px 7px", borderRadius: 4, flexShrink: 0,
+                        background: "rgba(191,153,83,0.08)", color: S.gold, fontWeight: 600,
                       }}>
-                        {pm.profile.avatar_url
-                          ? <img src={pm.profile.avatar_url} alt={pm.profile.full_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          : initials}
-                      </div>
+                        {pm.profile.role === "investor" ? "Investor" : pm.profile.role === "organization" ? "Org" : "Producer"}
+                      </span>
+                      {/* Name + company */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 13, color: S.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>
-                          <Link href={`/producers/${pm.profile.id}`} style={{ color: S.ink, textDecoration: "none" }}
-                            className="hover:text-gold transition-colors">
-                            {pm.profile.full_name}
-                          </Link>
+                        <p style={{ fontSize: 13, color: S.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 2 }}>
+                          {pm.profile.full_name}
                           {pm.profile.company && <span style={{ color: S.ash }}> · {pm.profile.company}</span>}
                         </p>
-                        <span style={{
-                          fontSize: 8, letterSpacing: "0.12em", textTransform: "uppercase",
-                          padding: "2px 7px", borderRadius: 100, fontWeight: 600,
-                          background: "rgba(191,153,83,0.08)", color: S.gold,
-                        }}>
-                          {pm.profile.role === "investor" ? "Investor" : pm.profile.role === "organization" ? "Org" : "Producer"}
-                        </span>
+                        {pm.profile.genres?.length > 0 && (
+                          <p style={{ fontSize: 10, color: S.ash }}>
+                            {pm.profile.genres.slice(0, 3).join(" · ")}
+                          </p>
+                        )}
                       </div>
-                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: S.gold, flexShrink: 0, marginRight: 8 }}>
+                      {/* Score — mirrors Top Matches score */}
+                      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, fontWeight: 700, color: S.gold, flexShrink: 0, minWidth: 32, textAlign: "right" }}>
                         {pm.score}
                       </div>
+                      {/* Connect action */}
                       {done
                         ? <span style={{ fontSize: 10, color: "#16a34a", whiteSpace: "nowrap", flexShrink: 0 }}>✓ Sent</span>
                         : (
@@ -562,14 +557,35 @@ export default async function ProjectDetailPage({
                             <input type="hidden" name="project_id" value={project.id} />
                             <button type="submit" style={{
                               fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
-                              padding: "6px 12px", borderRadius: 6,
+                              padding: "5px 12px", borderRadius: 6,
                               border: `1px solid rgba(26,24,21,0.2)`,
                               background: "transparent", color: S.ink,
                               cursor: "pointer", whiteSpace: "nowrap",
                               fontFamily: "Montserrat, sans-serif",
-                            }}>Connect →</button>
+                            }}>Connect</button>
                           </form>
                         )}
+                      {/* View Profile — mirrors "View →" in Top Matches */}
+                      <Link
+                        href={`/producers/${pm.profile.id}`}
+                        style={{
+                          flexShrink:     0,
+                          fontSize:       10,
+                          letterSpacing:  "0.12em",
+                          textTransform:  "uppercase",
+                          padding:        "5px 12px",
+                          borderRadius:   6,
+                          border:         `1px solid rgba(191,153,83,0.35)`,
+                          color:          S.gold,
+                          textDecoration: "none",
+                          whiteSpace:     "nowrap",
+                          fontWeight:     600,
+                          transition:     "background 0.15s",
+                        }}
+                        className="fyp-view-btn"
+                      >
+                        View →
+                      </Link>
                     </div>
                   );
                 })}
