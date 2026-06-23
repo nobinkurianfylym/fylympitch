@@ -93,7 +93,9 @@ function ProducerRow({ pm }: { pm: MatchedProducer }) {
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="text-[15px] text-ink truncate">
-          {pm.full_name}
+          <Link href={`/producers/${pm.id}`} className="hover:text-gold transition-colors">
+            {pm.full_name}
+          </Link>
           {pm.company && <span className="text-ash font-normal"> · {pm.company}</span>}
         </div>
         <div className="mt-0.5 text-[12px] tracking-[0.14em] uppercase text-ash flex flex-wrap gap-x-3">
@@ -102,12 +104,12 @@ function ProducerRow({ pm }: { pm: MatchedProducer }) {
           <span className="normal-case tracking-normal text-ash/50">via {pm.project_title}</span>
         </div>
       </div>
-      {/* Connect */}
+      {/* View Profile */}
       <Link
-        href={`/dashboard/projects/${pm.project_id}`}
+        href={`/producers/${pm.id}`}
         className="shrink-0 text-[10px] tracking-[0.12em] uppercase text-ash border border-line rounded px-3 py-1.5 hover:text-ink transition-colors"
       >
-        Connect →
+        View Profile →
       </Link>
     </div>
   );

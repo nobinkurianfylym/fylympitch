@@ -343,7 +343,9 @@ export default async function DashboardPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-[13px] text-ink leading-snug">
-                            <span className="font-medium">{producer?.full_name ?? "A producer"}</span>
+                            <Link href={`/producers/${r.producer_user_id}`} className="font-medium hover:text-gold transition-colors">
+                              {producer?.full_name ?? "A producer"}
+                            </Link>
                             {" "}requested an introduction
                           </p>
                           <p className="text-[11px] text-ash mt-0.5">
