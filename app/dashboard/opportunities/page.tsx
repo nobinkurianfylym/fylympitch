@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { usd, TYPE_LABEL, CATEGORY_CONFIG, OPP_CATEGORY_MAP } from "@/lib/format";
 import { toggleSaved } from "@/lib/actions";
-import { OpportunityCategoryBlock } from "./OpportunityCategoryBlock";
+import { OpportunityCategoryBlock, type MatchedProducer } from "./OpportunityCategoryBlock";
 
 export const dynamic = "force-dynamic";
 
@@ -118,7 +118,7 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
           ...cat,
           items: sorted.filter((o: any) => OPP_CATEGORY_MAP[o.opp_type] === cat.key),
         }))
-        .filter(g => g.items.length > 0)
+        .filter(g => g.items.length > 0 || (g.key === "production" && matchedProducers.length > 0))
     : null;
 
   // Flat-list row (used only when filter/search is active — no expand logic needed)
@@ -199,42 +199,6 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
         {(type || q) && <a href="/dashboard/opportunities" className="btn-ghost !px-5 !py-2.5 text-ash">Clear</a>}
       </form>
 
-      {/* Matched Producers — from engine, score ≥ 60 */}
-      {matchedProducers.length > 0 && !type && !q && (
-        <div className="mb-12">
-          <p className="eyebrow mb-1">Matched Producers</p>
-          <p className="text-[12px] text-ash mb-5">
-            Producers on PITCH.FYLYM whose profile matches your submitted projects — scored by the engine.
-          </p>
-          <div className="flex flex-col gap-3">
-            {matchedProducers.map(pm => (
-              <div key={pm.id} className="flex items-center justify-between gap-4 py-3 hairline">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] text-ink font-medium truncate">
-                    {pm.full_name}
-                    {pm.company && <span className="text-ash font-normal"> · {pm.company}</span>}
-                  </p>
-                  <p className="text-[11px] tracking-[0.1em] uppercase text-ash mt-0.5">
-                    {pm.role === "investor" ? "Investor" : pm.role === "organization" ? "Organisation" : "Producer"}
-                    {pm.genres.length > 0 && <span> · {pm.genres.slice(0, 2).join(", ")}</span>}
-                    <span className="text-ash/50"> · matched on {pm.project_title}</span>
-                  </p>
-                </div>
-                <div style={{ fontFamily: "'Playfair Display', serif" }} className="text-[20px] font-bold text-gold shrink-0">
-                  {pm.score}
-                </div>
-                <Link
-                  href={`/dashboard/projects/${pm.project_id}`}
-                  className="shrink-0 text-[10px] tracking-[0.12em] uppercase text-ash border border-line rounded px-3 py-1.5 hover:text-ink transition-colors"
-                >
-                  Connect →
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Categorised view — top 5 per category + expandable */}
       {grouped && (
         <div className="space-y-10">
@@ -245,6 +209,7 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
               items={cat.items}
               matchScores={matchScores}
               savedIds={savedIds}
+              matchedProducers={cat.key === "production" ? matchedProducers : []}
             />
           ))}
           {grouped.length === 0 && (
