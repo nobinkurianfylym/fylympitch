@@ -11,6 +11,10 @@ import FRSButton from "@/components/FRSButton";
 export const dynamic = "force-dynamic";
 
 export default async function ProducerProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ genre?: string; format?: string; q?: string; country?: string; language?: string; filter?: string }>;
+}) {
   // Constants inside function — avoids Worker cold-start CPU cost
   const FORMATS = ["Feature", "Documentary", "Series", "Animation"];
   const GENRES  = ["Drama", "Thriller", "Comedy", "Documentary", "Horror", "Romance", "Action", "Animation", "Sci-Fi"];
@@ -25,10 +29,6 @@ export default async function ProducerProjectsPage({
     saved: "Saved", shortlisted: "Shortlisted", in_review: "In Review",
     meeting_set: "Meeting Set", deal_active: "Deal Active",
   };
-  searchParams,
-}: {
-  searchParams: Promise<{ genre?: string; format?: string; q?: string; country?: string; language?: string; filter?: string }>;
-}) {
   const { genre, format, q, country, language, filter } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
