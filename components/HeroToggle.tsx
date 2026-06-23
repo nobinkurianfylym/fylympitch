@@ -8,11 +8,11 @@ const CONTENT = {
     eyebrow: "For filmmakers",
     headline: (
       <>
-        Where films find{" "}
-        <span className="italic text-gold">their financiers.</span>
+        Find the right funding{" "}
+        <span className="italic text-gold">for your film.</span>
       </>
     ),
-    body: "PITCH.FYLYM matches your project with the producers, funds, grants, labs, markets and investors most likely to say yes — and tells you exactly why.",
+    body: "Every pitch is analyzed against 500+ verified grants, labs, markets, and tax incentives — matched, ranked, and ready to apply. At the same time, verified producers actively searching for projects to finance, co-produce, or acquire see your pitch directly.",
     primary: { label: "Get started", href: "/signup" },
     secondary: { label: "See how it works", href: "#how" },
   },
