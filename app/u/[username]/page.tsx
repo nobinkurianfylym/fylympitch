@@ -144,7 +144,6 @@ export default async function PublicProfilePage({
   ]);
 
   // ── Derived values ─────────────────────────────────────────────────────────
-  const isOwnProfile = user?.id === profile.id;
   const viewerRole   = (me as any)?.role ?? null;
   const dashboardHref =
     viewerRole === "producer" ? "/producer" : "/dashboard";
@@ -303,14 +302,7 @@ export default async function PublicProfilePage({
                   fullName={profile.full_name}
                 />
 
-                {isOwnProfile ? (
-                  <Link
-                    href="/dashboard/profile"
-                    className="inline-flex items-center gap-2 btn-ghost px-5 py-2.5 text-[12px]"
-                  >
-                    Edit Profile
-                  </Link>
-                ) : user ? (
+                {user ? (
                   projectList.length > 0 ? (
                     <Link
                       href={`/projects/${projectList[0].slug ?? projectList[0].id}`}
@@ -545,18 +537,8 @@ export default async function PublicProfilePage({
               No public work yet
             </p>
             <p className="text-[14px] text-ash/60">
-              {isOwnProfile
-                ? "Add public projects or credits to build your profile."
-                : `${profile.full_name} hasn't published any projects yet.`}
+              {`${profile.full_name} hasn't published any projects yet.`}
             </p>
-            {isOwnProfile && (
-              <Link
-                href="/dashboard/projects"
-                className="btn-gold mt-6 inline-flex px-6 py-3 text-[12px]"
-              >
-                Add a Project
-              </Link>
-            )}
           </section>
         )}
 
