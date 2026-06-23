@@ -148,6 +148,18 @@ export function OpportunityCategoryBlock({
         <p className="text-[12px] text-ash/70 font-normal">{cat.sub}</p>
       </div>
 
+      {/* Matched producer profiles first */}
+      {matchedProducers.length > 0 && (
+        <div className={items.length > 0 ? "mb-4 pb-4 border-b border-line/50" : ""}>
+          <p className="text-[10px] tracking-[0.18em] uppercase text-ash/60 mb-1">
+            Matched Profiles on PITCH.FYLYM
+          </p>
+          {matchedProducers.map(pm => (
+            <ProducerRow key={pm.id} pm={pm} />
+          ))}
+        </div>
+      )}
+
       {/* Opportunity rows */}
       <div>
         {visible.map((o) => (
@@ -162,18 +174,6 @@ export function OpportunityCategoryBlock({
         >
           {expanded ? "Show less ↑" : `Show ${rest.length} more in ${cat.label} ↓`}
         </button>
-      )}
-
-      {/* Matched producer profiles — only in Production category */}
-      {matchedProducers.length > 0 && (
-        <div className={items.length > 0 ? "mt-4 pt-4 border-t border-line/50" : ""}>
-          <p className="text-[10px] tracking-[0.18em] uppercase text-ash/60 mb-1">
-            Matched Profiles on PITCH.FYLYM
-          </p>
-          {matchedProducers.map(pm => (
-            <ProducerRow key={pm.id} pm={pm} />
-          ))}
-        </div>
       )}
     </div>
   );
