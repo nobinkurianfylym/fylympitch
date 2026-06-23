@@ -420,7 +420,6 @@ export interface FundingObstacle {
   action_href: string;
 }
 
-const ACTOR_RE = /(actor|actress|cast|talent|starring)/i;
 const COPRODUCER_RE = /(co-?producer|production company|associate producer|studio)/i;
 
 export function computeFundingObstacles(
@@ -430,30 +429,26 @@ export function computeFundingObstacles(
   const obstacles: FundingObstacle[] = [];
   const editHref = `/dashboard/projects/${project.id}/edit`;
 
-  // Budget too high for current market: a third or more of matches
-  // carry a budget warning from the base matcher.
-  const budgetWarn = matches.filter((m) => m.match.warnings.some((w) => /budget/i.test(w)));
-  if (matches.length > 0 && budgetWarn.length / matches.length >= 0.3) {
-    obstacles.push({
-      id: "budget_high",
-      label: "Budget may be too high for currently matched sources",
-      severity: "high",
-      action_label: "Review budget",
-      action_href: `${editHref}#budget_usd`,
-    });
+  // Budget too high: only fire when a budget is actually set AND a third or more
+  // of matches specifically warn the budget exceeds the fund's maximum.
+  // Guards against null-budget projects where matching.ts emits "Add a budget to
+  // improve match accuracy" — that warning must never trigger this obstacle.
+  if (project.budget_usd != null) {
+    const budgetHigh = matches.filter((m) =>
+      m.match.warnings.some((w) => /above.*maximum|exceeds.*budget|too high/i.test(w))
+    );
+    if (matches.length > 0 && budgetHigh.length / matches.length >= 0.3) {
+      obstacles.push({
+        id: "budget_high",
+        label: "Budget may be too high for currently matched sources",
+        severity: "high",
+        action_label: "Review budget",
+        action_href: `${editHref}#budget_usd`,
+      });
+    }
   }
 
   const text = `${project.producer_info ?? ""} ${project.synopsis ?? ""}`;
-
-  if (!ACTOR_RE.test(text)) {
-    obstacles.push({
-      id: "no_actor",
-      label: "No attached actor or cast noted",
-      severity: "medium",
-      action_label: "Add cast info",
-      action_href: `${editHref}#producer_info`,
-    });
-  }
 
   if (!COPRODUCER_RE.test(text)) {
     obstacles.push({
