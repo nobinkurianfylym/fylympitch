@@ -66,6 +66,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           { href: "/dashboard/projects",      label: "My Projects" },
           { href: "/dashboard/opportunities", label: "Opportunities" },
           { href: "/dashboard/applications",  label: "Applications" },
+          { href: "/dashboard/saved",         label: "Saved" },
           ...(isIndustry ? [{ href: "/producer", label: "Producer Studio", gold: true }] : []),
           { href: "/dashboard/messages",      label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}`, gold: totalMsgUnread > 0 },
           { href: "/dashboard/notifications", label: `Notifications${(unread ?? 0) > 0 ? ` (${unread})` : ""}`, gold: (unread ?? 0) > 0 },
@@ -74,8 +75,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         ]} />
         <nav className="hidden md:flex md:flex-col md:mt-6 md:space-y-1 text-[11px] tracking-[0.16em] uppercase whitespace-nowrap">
           {[
-            { href: "/dashboard/saved", label: "Saved" },
-            { href: "/projects",        label: "Film showcase" },
+            { href: "/projects", label: "Film showcase" },
           ].map((n) => (
             <Link key={n.href} href={n.href} className="text-ash/60 hover:text-ash transition-colors" style={{ padding: "5px 0 5px 14px" }}>
               {n.label}
