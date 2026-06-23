@@ -420,8 +420,6 @@ export interface FundingObstacle {
   action_href: string;
 }
 
-const COPRODUCER_RE = /(co-?producer|production company|associate producer|studio)/i;
-
 export function computeFundingObstacles(
   project: Project,
   matches: { opportunity: Opportunity; match: MatchResult }[]
@@ -446,18 +444,6 @@ export function computeFundingObstacles(
         action_href: `${editHref}#budget_usd`,
       });
     }
-  }
-
-  const text = `${project.producer_info ?? ""} ${project.synopsis ?? ""}`;
-
-  if (!COPRODUCER_RE.test(text)) {
-    obstacles.push({
-      id: "no_coproducer",
-      label: "Missing co-producer or production company",
-      severity: "medium",
-      action_label: "Add producers",
-      action_href: `${editHref}#producer_info`,
-    });
   }
 
   // Festival strategy: only meaningful for post_production and completed stages —
