@@ -167,67 +167,123 @@ function showToast(message, ok = true) {
   setTimeout(() => t.remove(), 3200);
 }
 
-// ── Label-text matching (SmartyGrants, Fluxx, custom form builders) ──────────
-// These platforms use numeric/random IDs but always have proper <label> text.
-// We match label text keywords → fill the associated input/textarea.
+// ── Context-aware fill (SmartyGrants, Fluxx, custom form builders) ───────────
+// SmartyGrants uses <p> paragraphs as visual labels — NOT <label> elements.
+// Strategy: for every input/textarea on page, read surrounding text context,
+// match against keyword map, fill the winner.
 
 const LABEL_KEYWORDS = {
-  title:            ["project title", "title of the", "film title", "name of project", "project name"],
-  logline:          ["logline", "logline synopsis", "one-line", "one line synopsis", "elevator pitch"],
-  synopsis:         ["synopsis", "one-paragraph synopsis", "paragraph synopsis", "project description",
-                     "description of your project", "story synopsis", "brief description"],
+  title:              ["project title", "title of the", "film title", "name of project", "project name"],
+  logline:            ["logline", "logline synopsis", "one-line synopsis", "elevator pitch"],
+  synopsis:           ["one-paragraph synopsis", "paragraph synopsis", "synopsis of your project",
+                       "project description", "description of your project", "story synopsis"],
   director_statement: ["director's statement", "director statement", "creative vision", "artistic statement"],
-  director_name:    ["director", "directed by", "name of director"],
-  writer_name:      ["writer", "screenwriter", "written by", "script writer"],
-  genre:            ["genre"],
-  language:         ["language", "primary language", "original language"],
-  country:          ["country of origin", "country of production", "country of principal"],
-  budget_usd:       ["total budget", "project budget", "estimated budget", "budget"],
-  format:           ["format", "project format", "film format"],
-  stage:            ["stage of development", "production stage", "development stage"],
+  director_name:      ["director", "directed by", "name of director"],
+  writer_name:        ["writer", "screenwriter", "written by", "script writer"],
+  genre:              ["genre"],
+  language:           ["primary language", "original language", "language of"],
+  country:            ["country of origin", "country of production", "country of principal"],
+  budget_usd:         ["total budget", "project budget", "estimated budget"],
+  format:             ["project format", "film format", "format of"],
+  stage:              ["stage of development", "production stage", "development stage"],
 };
 
-function fillByLabels(project) {
+/**
+ * Get text context around an input element — checks:
+ *  1. Associated <label for="id">
+ *  2. Preceding sibling <p>, <div>, <span>, <strong>, <h3>, <h4>
+ *  3. Parent container text (excluding the input itself)
+ *  4. aria-label or placeholder attributes
+ */
+function getInputContext(input) {
+  const parts = [];
+
+  // aria-label / placeholder
+  if (input.getAttribute("aria-label"))  parts.push(input.getAttribute("aria-label"));
+  if (input.getAttribute("placeholder")) parts.push(input.getAttribute("placeholder"));
+
+  // associated <label>
+  const id = input.id;
+  if (id) {
+    const lbl = document.querySelector(`label[for="${id}"]`);
+    if (lbl) parts.push(lbl.textContent);
+  }
+
+  // preceding siblings (up to 3 levels back)
+  let prev = input.previousElementSibling;
+  let steps = 0;
+  while (prev && steps < 3) {
+    const t = prev.textContent.trim();
+    if (t.length > 2 && t.length < 400) parts.push(t);
+    prev = prev.previousElementSibling;
+    steps++;
+  }
+
+  // parent text (shallow — exclude deep children that have their own inputs)
+  const parent = input.parentElement;
+  if (parent) {
+    const parentText = Array.from(parent.childNodes)
+      .filter((n) => n.nodeType === Node.TEXT_NODE || (n.nodeName !== "INPUT" && n.nodeName !== "TEXTAREA" && n.nodeName !== "SELECT"))
+      .map((n) => n.textContent)
+      .join(" ")
+      .trim();
+    if (parentText.length > 2 && parentText.length < 400) parts.push(parentText);
+
+    // one level up
+    const grandParent = parent.parentElement;
+    if (grandParent) {
+      let prevSib = parent.previousElementSibling;
+      let s2 = 0;
+      while (prevSib && s2 < 2) {
+        const t = prevSib.textContent.trim();
+        if (t.length > 2 && t.length < 400) parts.push(t);
+        prevSib = prevSib.previousElementSibling;
+        s2++;
+      }
+    }
+  }
+
+  return parts.join(" ").toLowerCase();
+}
+
+function fillByContext(project) {
+  const inputs = Array.from(
+    document.querySelectorAll("input:not([type=hidden]):not([type=submit]):not([type=button]):not([type=checkbox]):not([type=radio]), textarea")
+  );
+
   let filled = 0;
+  const filledInputs = new Set();
 
-  // Build label→input map from the page
-  const allLabels = Array.from(document.querySelectorAll("label"));
-
+  // For each FYLYM field, find the best matching input on the page
   for (const [field, keywords] of Object.entries(LABEL_KEYWORDS)) {
     const value = project[field];
     if (value == null) continue;
 
-    for (const label of allLabels) {
-      const labelText = label.textContent.trim().toLowerCase();
-      const matches   = keywords.some((kw) => labelText.includes(kw.toLowerCase()));
-      if (!matches) continue;
+    let bestInput = null;
+    let bestScore = 0;
 
-      // Find associated input: for= attribute, or child input, or next sibling
-      let target = null;
-      const forId = label.getAttribute("for");
-      if (forId) target = document.getElementById(forId);
-      if (!target) target = label.querySelector("input, textarea, select");
-      if (!target) {
-        let sib = label.nextElementSibling;
-        while (sib && !target) {
-          target = sib.matches("input, textarea, select")
-            ? sib
-            : sib.querySelector("input, textarea, select");
-          sib = sib.nextElementSibling;
+    for (const input of inputs) {
+      if (filledInputs.has(input)) continue;
+      const context = getInputContext(input);
+      let score = 0;
+      for (const kw of keywords) {
+        if (context.includes(kw.toLowerCase())) {
+          // Longer keyword = more specific = higher score
+          score = Math.max(score, kw.length);
         }
       }
-      if (!target) {
-        // Try parent container
-        const container = label.closest("div, li, fieldset, p");
-        if (container) target = container.querySelector("input, textarea, select");
-      }
+      if (score > bestScore) { bestScore = score; bestInput = input; }
+    }
 
-      if (target && fillElement(target, value)) { filled++; break; }
+    if (bestInput && bestScore > 0 && fillElement(bestInput, value)) {
+      filledInputs.add(bestInput);
+      filled++;
     }
   }
 
   return filled;
 }
+
 
 // ── 3. Fill handler ───────────────────────────────────────────────────────────
 
@@ -261,12 +317,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         if (!hit) skipped++;
       }
 
-      // ── Strategy 3: Label-text matching — SmartyGrants, Fluxx, custom ─────
-      // Runs after strategy 2 to fill anything strategy 2 missed
-      const labelFilled = fillByLabels(project);
-      filled += labelFilled;
-      // Subtract double-fills from skipped (rough adjustment)
-      skipped = Math.max(0, skipped - labelFilled);
+      // ── Strategy 3: Context-aware fill — SmartyGrants, Fluxx, custom ─────
+      const ctxFilled = fillByContext(project);
+      filled += ctxFilled;
+      skipped = Math.max(0, skipped - ctxFilled);
     }
 
     const msg2 = filled > 0

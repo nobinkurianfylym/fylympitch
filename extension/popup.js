@@ -125,7 +125,8 @@ el.fillBtn?.addEventListener("click", async () => {
   el.fillBtn.textContent = "Fill This Form";
 
   if (res?.ok) {
-    showResult(`✦ Filled ${res.filled} field${res.filled !== 1 ? "s" : ""}`, true);
+    const count = Number(res.filled) || 0;
+    showResult(`✦ Filled ${count} field${count !== 1 ? "s" : ""}`, true);
   } else {
     showResult(res?.error ?? "Fill failed — no matching fields found", false);
   }
