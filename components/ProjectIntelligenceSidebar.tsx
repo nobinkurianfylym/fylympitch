@@ -230,19 +230,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
               </div>
 
             </div>
-            {/* Quick improvement actions */}
-            <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "10px 18px 4px", display: "flex", flexDirection: "column", gap: 6 }}>
-              {[
-                { points: "+12", label: "Add cast attachment" },
-                { points: "+8",  label: "Add production co." },
-                { points: "+5",  label: "Upload pitch deck"  },
-              ].map(({ points, label }) => (
-                <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 11, color: "rgba(245,245,240,0.55)", letterSpacing: "0.02em" }}>{label}</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: "#BF9953", letterSpacing: "0.06em", background: "rgba(191,153,83,0.12)", padding: "2px 7px", borderRadius: 20 }}>{points}</span>
-                </div>
-              ))}
-            </div>
+
           </div>
         </ClickCard>
       )}
