@@ -8,7 +8,7 @@ const FRS_ITEMS = [
   { label: "Logline",              weight: 10 },
   { label: "Synopsis",             weight: 15 },
   { label: "Director's statement", weight: 10 },
-  { label: "Producer information", weight: 10 },
+  { label: "Co-producer (if any)",  weight: 10 },
   { label: "Budget",               weight: 15 },
   { label: "Funding need",         weight: 10 },
   { label: "Pitch deck",           weight: 15 },

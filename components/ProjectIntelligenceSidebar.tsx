@@ -167,7 +167,7 @@ const FRS_FIELDS: { label: string; weight: number }[] = [
   { label: "Budget",               weight: 15 },
   { label: "Logline",              weight: 10 },
   { label: "Director's statement", weight: 10 },
-  { label: "Producer information", weight: 10 },
+  { label: "Co-producer (if any)", weight: 10 },
   { label: "Funding need",         weight: 10 },
   { label: "Script",               weight: 10 },
   { label: "Title",                weight: 5  },

@@ -274,7 +274,7 @@ const FRS_CHECKS: { ok: (p: Project) => boolean; weight: number; label: string }
   { ok: (p) => !!p.logline, weight: 10, label: "Logline" },
   { ok: (p) => !!p.synopsis, weight: 15, label: "Synopsis" },
   { ok: (p) => !!p.director_statement, weight: 10, label: "Director's statement" },
-  { ok: (p) => !!p.producer_info, weight: 10, label: "Producer information" },
+  { ok: (p) => !!p.producer_info, weight: 10, label: "Co-producer (if any)" },
   { ok: (p) => p.budget_usd != null, weight: 15, label: "Budget" },
   { ok: (p) => p.funding_needed_usd != null, weight: 10, label: "Funding need" },
   { ok: (p) => !!p.pitch_deck_path, weight: 15, label: "Pitch deck" },
