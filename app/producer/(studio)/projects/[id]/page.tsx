@@ -17,38 +17,37 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const PIPELINE_STAGES = [
-  { key: "saved",       label: "Saved"       },
-  { key: "shortlisted", label: "Shortlisted" },
-  { key: "in_review",   label: "In Review"   },
-  { key: "meeting_set", label: "Meeting Set" },
-  { key: "deal_active", label: "Deal Active" },
-];
-
-const FORMAT_LABEL: Record<string, string> = {
-  feature: "Feature", short: "Short", documentary: "Documentary",
-  series: "Series", animation: "Animation",
-};
-const STAGE_LABEL: Record<string, string> = {
-  development: "Development", pre_production: "Pre-Production",
-  production: "Production", post_production: "Post-Production", completed: "Completed",
-};
-
-// Pipeline status → visual token
-const PIPELINE_STATUS_STYLE: Record<string, { bg: string; color: string; dot: string }> = {
-  saved:        { bg: "rgba(138,133,124,0.10)", color: "#8A857C", dot: "#8A857C"  },
-  shortlisted:  { bg: "rgba(191,153,83,0.13)",  color: "#9E7C3A", dot: "#BF9953"  },
-  in_review:    { bg: "rgba(59,130,246,0.10)",  color: "#3B82F6", dot: "#3B82F6"  },
-  meeting_set:  { bg: "rgba(168,85,247,0.10)",  color: "#A855F7", dot: "#A855F7"  },
-  deal_active:  { bg: "rgba(46,107,78,0.10)",   color: "#2E6B4E", dot: "#2E6B4E"  },
-};
-
 export default async function ProducerProjectDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+
+  // Constants inside function — avoids Worker cold-start CPU cost
+  const PIPELINE_STAGES = [
+    { key: "saved",       label: "Saved"       },
+    { key: "shortlisted", label: "Shortlisted" },
+    { key: "in_review",   label: "In Review"   },
+    { key: "meeting_set", label: "Meeting Set" },
+    { key: "deal_active", label: "Deal Active" },
+  ];
+  const FORMAT_LABEL: Record<string, string> = {
+    feature: "Feature", short: "Short", documentary: "Documentary",
+    series: "Series", animation: "Animation",
+  };
+  const STAGE_LABEL: Record<string, string> = {
+    development: "Development", pre_production: "Pre-Production",
+    production: "Production", post_production: "Post-Production", completed: "Completed",
+  };
+  const PIPELINE_STATUS_STYLE: Record<string, { bg: string; color: string; dot: string }> = {
+    saved:        { bg: "rgba(138,133,124,0.10)", color: "#8A857C", dot: "#8A857C"  },
+    shortlisted:  { bg: "rgba(191,153,83,0.13)",  color: "#9E7C3A", dot: "#BF9953"  },
+    in_review:    { bg: "rgba(59,130,246,0.10)",  color: "#3B82F6", dot: "#3B82F6"  },
+    meeting_set:  { bg: "rgba(168,85,247,0.10)",  color: "#A855F7", dot: "#A855F7"  },
+    deal_active:  { bg: "rgba(46,107,78,0.10)",   color: "#2E6B4E", dot: "#2E6B4E"  },
+  };
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");

@@ -10,22 +10,23 @@ import FRSButton from "@/components/FRSButton";
 
 export const dynamic = "force-dynamic";
 
-const FORMATS = ["Feature", "Documentary", "Series", "Animation"];
-const GENRES  = ["Drama", "Thriller", "Comedy", "Documentary", "Horror", "Romance", "Action", "Animation", "Sci-Fi"];
 
-const PIPELINE_PILL: Record<string, string> = {
   saved:       "bg-parchment text-ash",
   shortlisted: "bg-blue-50 text-blue-700",
   in_review:   "bg-amber-50 text-amber-700",
   meeting_set: "bg-emerald-50 text-emerald-700",
   deal_active: "bg-gold/10 text-gold",
 };
-const PIPELINE_LABEL: Record<string, string> = {
   saved: "Saved", shortlisted: "Shortlisted", in_review: "In Review",
   meeting_set: "Meeting Set", deal_active: "Deal Active",
 };
 
 export default async function ProducerProjectsPage({
+  // Constants inside function — avoids Worker cold-start CPU cost
+  const FORMATS = ["Feature", "Documentary", "Series", "Animation"];
+  const GENRES  = ["Drama", "Thriller", "Comedy", "Documentary", "Horror", "Romance", "Action", "Animation", "Sci-Fi"];
+  const PIPELINE_PILL: Record<string, string> = {
+  const PIPELINE_LABEL: Record<string, string> = {
   searchParams,
 }: {
   searchParams: Promise<{ genre?: string; format?: string; q?: string; country?: string; language?: string; filter?: string }>;

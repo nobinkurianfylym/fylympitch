@@ -11,27 +11,19 @@ import { formatBudget } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const PIPELINE_PILL: Record<string, string> = {
-  saved:       "bg-parchment text-ash",
-  shortlisted: "bg-blue-50 text-blue-700",
-  in_review:   "bg-amber-50 text-amber-700",
-  meeting_set: "bg-emerald-50 text-emerald-700",
-  deal_active: "bg-gold/10 text-gold",
-};
-const PIPELINE_LABEL: Record<string, string> = {
-  saved: "Saved", shortlisted: "Shortlisted", in_review: "In Review",
-  meeting_set: "Meeting Set", deal_active: "Deal Active",
-};
-
+// scoreProject: all array fields guarded against null (DB JSONB may return null not [])
 function scoreProject(
   project: { genre: string | null; format: string | null; country: string | null; budget_usd: number | null },
-  profile: { genres: string[]; formats: string[]; territories: string[]; budget_range: string | null }
+  profile: { genres: string[] | null; formats: string[] | null; territories: string[] | null; budget_range: string | null }
 ): number {
+  const genres     = profile.genres     ?? [];
+  const formats    = profile.formats    ?? [];
+  const territories = profile.territories ?? [];
   let score = 0;
   const norm = (s: string | null) => (s ?? "").toLowerCase().trim();
-  if (profile.genres.length === 0 || profile.genres.some((g) => norm(g) === norm(project.genre))) score += 40;
-  if (profile.formats.length === 0 || profile.formats.some((f) => norm(f) === norm(project.format))) score += 25;
-  if (profile.territories.length === 0 || profile.territories.some((t) => norm(t) === norm(project.country))) score += 25;
+  if (genres.length === 0     || genres.some((g) => norm(g) === norm(project.genre)))       score += 40;
+  if (formats.length === 0    || formats.some((f) => norm(f) === norm(project.format)))     score += 25;
+  if (territories.length === 0 || territories.some((t) => norm(t) === norm(project.country))) score += 25;
   const ranges: Record<string, [number, number]> = {
     micro: [0, 100_000], low: [100_000, 500_000],
     mid: [500_000, 2_000_000], high: [2_000_000, Number.MAX_SAFE_INTEGER],
@@ -46,6 +38,19 @@ function scoreProject(
 }
 
 export default async function ProducerDiscoverPage() {
+  // Module-level constants moved inside function — avoids Worker cold-start CPU cost
+  const PIPELINE_PILL: Record<string, string> = {
+    saved:       "bg-parchment text-ash",
+    shortlisted: "bg-blue-50 text-blue-700",
+    in_review:   "bg-amber-50 text-amber-700",
+    meeting_set: "bg-emerald-50 text-emerald-700",
+    deal_active: "bg-gold/10 text-gold",
+  };
+  const PIPELINE_LABEL: Record<string, string> = {
+    saved: "Saved", shortlisted: "Shortlisted", in_review: "In Review",
+    meeting_set: "Meeting Set", deal_active: "Deal Active",
+  };
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");

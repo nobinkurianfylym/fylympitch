@@ -6,17 +6,17 @@ import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 
 export const dynamic = "force-dynamic";
 
-const PIPELINE_STAGES = [
-  { key: "saved",        label: "Saved",       color: "text-ash" },
-  { key: "shortlisted",  label: "Shortlisted", color: "text-blue-700" },
-  { key: "in_review",    label: "In review",   color: "text-amber-700" },
-  { key: "meeting_set",  label: "Meeting set", color: "text-emerald-700" },
-  { key: "deal_active",  label: "Deal active", color: "text-gold" },
-] as const;
-
-type Stage = typeof PIPELINE_STAGES[number]["key"];
+type Stage = "saved" | "shortlisted" | "in_review" | "meeting_set" | "deal_active";
 
 export default async function ProducerPipelinePage() {
+  // Moved inside function — avoids Worker cold-start CPU cost
+  const PIPELINE_STAGES = [
+    { key: "saved"       as Stage, label: "Saved",       color: "text-ash" },
+    { key: "shortlisted" as Stage, label: "Shortlisted", color: "text-blue-700" },
+    { key: "in_review"   as Stage, label: "In review",   color: "text-amber-700" },
+    { key: "meeting_set" as Stage, label: "Meeting set", color: "text-emerald-700" },
+    { key: "deal_active" as Stage, label: "Deal active", color: "text-gold" },
+  ];
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");

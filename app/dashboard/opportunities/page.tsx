@@ -84,6 +84,7 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
     for (const row of intelRows ?? []) {
       const proj = (projects ?? []).find((p: any) => p.id === row.project_id);
       for (const pm of (row.producer_matches ?? [])) {
+        if (!pm?.profile?.id) continue; // guard against deleted/malformed profiles
         const existing = producerMap.get(pm.profile.id);
         if (!existing || pm.score > existing.score) {
           producerMap.set(pm.profile.id, {
