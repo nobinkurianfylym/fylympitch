@@ -26,7 +26,8 @@ export async function middleware(request: NextRequest) {
   const isProtected =
     path.startsWith("/dashboard") ||
     path.startsWith("/admin") ||
-    path.startsWith("/producer");
+    path.startsWith("/producer") ||
+    path.startsWith("/apply-packet");
 
   const isAuthPage = path === "/login" || path === "/signup";
   // Not logged in → login
@@ -83,6 +84,7 @@ export const config = {
     "/admin/:path*",
     "/producer/:path*",
     "/producer",
+    "/apply-packet/:path*",
     "/onboarding",
     "/login",
     "/signup",

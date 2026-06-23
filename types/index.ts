@@ -116,6 +116,12 @@ export interface Opportunity {
   app_link?: string | null;
   /** Free-text deadline cycle, e.g. "Annual — Jan/Feb. Check thewhickers.com" */
   deadline_note?: string | null;
+  /** How a filmmaker applies — drives badge + packet UX (migration 045) */
+  apply_method?: 'one_click' | 'export_packet' | 'manual' | 'api' | null;
+  /** Direct URL to fund application form (one_click / export_packet) */
+  form_url?: string | null;
+  /** Maps fund form field selectors → FYLYM project fields */
+  form_field_map?: Record<string, string> | null;
 }
 
 export interface Application {

@@ -52,21 +52,25 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
   const savedSet    = new Set(savedIds);
   const projectIds  = (projects ?? []).map((p: any) => p.id);
 
-  // Best match score per opportunity
+  // Best match score per opportunity + best project per opportunity
   const matchScores: Record<string, number> = {};
+  const bestProjectForOpp: Record<string, string> = {};
   if (projectIds.length && sort === "match") {
     const { data: matchRows } = await supabase
       .from("matches")
-      .select("score, opportunity_id")
+      .select("score, opportunity_id, project_id")
       .in("project_id", projectIds)
       .order("score", { ascending: false });
 
     for (const m of matchRows ?? []) {
       if (!matchScores[m.opportunity_id] || m.score > matchScores[m.opportunity_id]) {
         matchScores[m.opportunity_id] = m.score;
+        bestProjectForOpp[m.opportunity_id] = m.project_id;
       }
     }
   }
+  // Fallback: if no match rows, use first project for export packet
+  const fallbackProjectId = projectIds[0] ?? null;
 
   // Producer matches from engine — aggregate across all projects, keep highest score per producer
   type MatchedProducer = {
@@ -211,6 +215,11 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
               matchScores={matchScores}
               savedIds={savedIds}
               matchedProducers={cat.key === "production" ? matchedProducers : []}
+              bestProjectId={
+                cat.items.find(o => bestProjectForOpp[o.id])
+                  ? bestProjectForOpp[cat.items.find(o => bestProjectForOpp[o.id])!.id]
+                  : fallbackProjectId ?? undefined
+              }
             />
           ))}
           {grouped.length === 0 && (

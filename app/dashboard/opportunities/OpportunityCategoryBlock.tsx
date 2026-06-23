@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { toggleSaved } from "@/lib/actions";
 import { TYPE_LABEL } from "@/lib/format";
+import { ExportPacketButton } from "@/components/ExportPacketButton";
 
 const TOP_N = 5;
 
@@ -15,6 +16,8 @@ type Opp = {
   region: string | null;
   max_award_usd: number | null;
   deadline: string | null;
+  apply_method?: string | null;
+  form_url?: string | null;
 };
 
 export type MatchedProducer = {
@@ -40,7 +43,7 @@ function usd(n: number) {
   return `$${n}`;
 }
 
-function OppRow({ o, score, saved }: { o: Opp; score: number | undefined; saved: boolean }) {
+function OppRow({ o, score, saved, bestProjectId }: { o: Opp; score: number | undefined; saved: boolean; bestProjectId?: string }) {
   const days = o.deadline
     ? Math.ceil((new Date(o.deadline).getTime() - Date.now()) / 86_400_000)
     : null;
@@ -56,14 +59,41 @@ function OppRow({ o, score, saved }: { o: Opp; score: number | undefined; saved:
           <span className="text-[11px] text-ash/30">—</span>
         )}
       </div>
-      <Link href={`/dashboard/opportunities/${o.id}`} className="flex-1 min-w-0 group">
-        <div className="font-normal text-[15px] group-hover:text-gold transition-colors truncate">{o.title}</div>
-        <div className="mt-0.5 text-[12px] tracking-[0.14em] uppercase text-ash flex flex-wrap gap-x-3">
-          <span>{TYPE_LABEL[o.opp_type] ?? o.opp_type}</span>
-          {o.region ? <span>{o.region}</span> : o.country ? <span>{o.country}</span> : <span>Worldwide</span>}
-          {o.max_award_usd ? <span className="text-gold">up to {usd(o.max_award_usd)}</span> : null}
-        </div>
-      </Link>
+      <div className="flex-1 min-w-0">
+        <Link href={`/dashboard/opportunities/${o.id}`} className="group">
+          <div className="font-normal text-[15px] group-hover:text-gold transition-colors truncate">{o.title}</div>
+          <div className="mt-0.5 text-[12px] tracking-[0.14em] uppercase text-ash flex flex-wrap gap-x-3">
+            <span>{TYPE_LABEL[o.opp_type] ?? o.opp_type}</span>
+            {o.region ? <span>{o.region}</span> : o.country ? <span>{o.country}</span> : <span>Worldwide</span>}
+            {o.max_award_usd ? <span className="text-gold">up to {usd(o.max_award_usd)}</span> : null}
+          </div>
+        </Link>
+        {/* Apply method badge */}
+        {bestProjectId && (
+          <div className="mt-1.5 flex items-center gap-2">
+            {o.apply_method === "one_click" ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5
+                  bg-gold/10 border border-gold/30 rounded-sm
+                  text-gold text-[10px] font-medium tracking-[0.14em] uppercase">
+                  <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+                  One Click Apply
+                </span>
+                <a
+                  href={`${o.form_url}?fylym=1`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] tracking-[0.14em] uppercase text-ash hover:text-gold transition-colors"
+                >
+                  Open →
+                </a>
+              </>
+            ) : (
+              <ExportPacketButton projectId={bestProjectId} opportunityId={o.id} />
+            )}
+          </div>
+        )}
+      </div>
       {days != null && (
         <span className={`shrink-0 text-[11px] tracking-[0.08em] px-2 py-0.5 rounded-full border hidden md:inline-block ${
           days <= 7  ? "bg-red-50 border-red-200 text-red-600"
@@ -121,12 +151,14 @@ export function OpportunityCategoryBlock({
   matchScores,
   savedIds,
   matchedProducers = [],
+  bestProjectId,
 }: {
   cat: { key: string; label: string; sub: string };
   items: Opp[];
   matchScores: Record<string, number>;
   savedIds: string[];
   matchedProducers?: MatchedProducer[];
+  bestProjectId?: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const savedSet = new Set(savedIds);
@@ -165,7 +197,13 @@ export function OpportunityCategoryBlock({
       {/* Opportunity rows */}
       <div>
         {visible.map((o) => (
-          <OppRow key={o.id} o={o} score={matchScores[o.id]} saved={savedSet.has(o.id)} />
+          <OppRow
+            key={o.id}
+            o={o}
+            score={matchScores[o.id]}
+            saved={savedSet.has(o.id)}
+            bestProjectId={bestProjectId}
+          />
         ))}
       </div>
 

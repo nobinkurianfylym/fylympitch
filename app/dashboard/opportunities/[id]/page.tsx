@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import MatchBadge from "@/components/MatchBadge";
 import { usd, TYPE_LABEL, STAGE_LABEL } from "@/lib/format";
 import { applyToOpportunity, toggleSaved } from "@/lib/actions";
+import { ExportPacketButton } from "@/components/ExportPacketButton";
 import type { Opportunity, Project } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -94,6 +95,27 @@ export default async function OpportunityDetailPage({
           )}
 
           <div className="hairline mt-8 pt-7">
+            {/* Apply method badge */}
+            {selected && (opp.apply_method === "one_click" || opp.app_link || opp.url) && (
+              <div className="mb-6 flex items-center gap-3 flex-wrap">
+                {opp.apply_method === "one_click" && opp.form_url ? (
+                  <a
+                    href={`${opp.form_url}?fylym=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2
+                      bg-gold/10 border border-gold/40 rounded-sm
+                      text-gold text-[11px] tracking-[0.14em] uppercase font-medium
+                      hover:bg-gold/20 transition-colors"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+                    One Click Apply →
+                  </a>
+                ) : null}
+                <ExportPacketButton projectId={selected.id} opportunityId={opp.id} />
+              </div>
+            )}
+
             {/* Direct link to fund's official site — always shown */}
             {(opp.url || opp.app_link) && (
               <div className="mb-6 p-4 rounded-card bg-parchment border border-line">
