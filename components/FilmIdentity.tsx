@@ -51,7 +51,7 @@ export interface FilmIdentityProject {
   seeking?: string[];
   territory?: string | null;
   expected_delivery?: string | null;
-  filmmaker?: { full_name: string; career_stage?: string | null } | null;
+  filmmaker?: { full_name: string; username?: string | null; career_stage?: string | null } | null;
 }
 
 export interface FilmIdentityProps {
@@ -108,14 +108,25 @@ function MetadataRow({
 
 /** Director / filmmaker name — rendered directly below MetadataRow on every surface */
 function DirectorLine({ project }: { project: FilmIdentityProject }) {
-  const name = project.director_name ?? project.filmmaker?.full_name ?? null;
+  const name     = project.director_name ?? project.filmmaker?.full_name ?? null;
+  const username = project.filmmaker?.username ?? null;
   if (!name) return null;
   return (
     <p className="text-[12px] text-ash leading-tight mt-1.5">
       <span className="text-[10px] font-medium tracking-[0.08em] uppercase text-ash/60 mr-1">
         Dir.
       </span>
-      {name}
+      {username ? (
+        <Link
+          href={`/u/${username}`}
+          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          className="text-ash hover:text-gold transition-colors underline-offset-2 hover:underline"
+        >
+          {name}
+        </Link>
+      ) : (
+        name
+      )}
     </p>
   );
 }

@@ -114,11 +114,17 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
                 formatStage(p.stage),
               ].filter(Boolean).join(" · ")}
             </p>
-            {/* L3: Director */}
+            {/* L3: Director — links to filmmaker profile if username available */}
             {(p.director_name || filmmaker?.full_name) && (
               <p className="mt-3 text-[13px] text-ash">
                 <span className="text-[10px] tracking-[0.08em] uppercase mr-1.5">Dir.</span>
-                <span className="text-ink font-medium">{p.director_name ?? filmmaker?.full_name}</span>
+                {filmmaker?.username ? (
+                  <Link href={`/u/${filmmaker.username}`} className="text-ink font-medium hover:text-gold transition-colors">
+                    {p.director_name ?? filmmaker.full_name}
+                  </Link>
+                ) : (
+                  <span className="text-ink font-medium">{p.director_name ?? filmmaker?.full_name}</span>
+                )}
               </p>
             )}
           </div>
@@ -145,22 +151,55 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
         {/* Filmmaker card */}
         {filmmaker && (
           <div className="mt-8 p-5 border border-line rounded-card bg-white/60 flex items-start gap-4">
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center shrink-0">
-              {filmmaker.avatar_url ? (
-                <img src={filmmaker.avatar_url} alt={filmmaker.full_name} className="w-full h-full object-cover" />
-              ) : (
-                <span className="font-display text-[14px] text-ash">
-                  {filmmaker.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
-                </span>
-              )}
-            </div>
+            {/* Avatar — links to profile */}
+            {filmmaker.username ? (
+              <Link href={`/u/${filmmaker.username}`} className="shrink-0 block">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center hover:border-gold transition-colors">
+                  {filmmaker.avatar_url ? (
+                    <img src={filmmaker.avatar_url} alt={filmmaker.full_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="font-display text-[14px] text-ash">
+                      {filmmaker.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ) : (
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center shrink-0">
+                {filmmaker.avatar_url ? (
+                  <img src={filmmaker.avatar_url} alt={filmmaker.full_name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="font-display text-[14px] text-ash">
+                    {filmmaker.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                  </span>
+                )}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
-              <p className="text-[15px] font-medium text-ink">{filmmaker.full_name}</p>
-              {filmmaker.career_stage && (
-                <p className="text-[12px] tracking-[0.12em] uppercase text-ash mt-0.5">
-                  {CAREER_LABEL[filmmaker.career_stage] ?? filmmaker.career_stage}
-                </p>
-              )}
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  {filmmaker.username ? (
+                    <Link href={`/u/${filmmaker.username}`} className="text-[15px] font-medium text-ink hover:text-gold transition-colors">
+                      {filmmaker.full_name}
+                    </Link>
+                  ) : (
+                    <p className="text-[15px] font-medium text-ink">{filmmaker.full_name}</p>
+                  )}
+                  {filmmaker.career_stage && (
+                    <p className="text-[12px] tracking-[0.12em] uppercase text-ash mt-0.5">
+                      {CAREER_LABEL[filmmaker.career_stage] ?? filmmaker.career_stage}
+                    </p>
+                  )}
+                </div>
+                {filmmaker.username && (
+                  <Link
+                    href={`/u/${filmmaker.username}`}
+                    className="shrink-0 text-[11px] tracking-[0.12em] uppercase text-ash hover:text-gold border border-line hover:border-gold/40 rounded-full px-3 py-1 transition-colors"
+                  >
+                    View Profile →
+                  </Link>
+                )}
+              </div>
               {/* Top credits */}
               {(filmmakerCredits ?? []).length > 0 && (
                 <div className="mt-3 space-y-1.5">

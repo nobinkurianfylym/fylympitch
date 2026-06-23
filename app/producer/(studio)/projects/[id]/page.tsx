@@ -58,7 +58,7 @@ export default async function ProducerProjectDetailPage({
 
   const { data: project } = await supabase
     .from("projects")
-    .select("*, has_script_doc, has_budget_doc, has_lookbook, profiles!projects_owner_id_fkey(id, full_name, company)")
+    .select("*, has_script_doc, has_budget_doc, has_lookbook, profiles!projects_owner_id_fkey(id, full_name, username, avatar_url, career_stage, company)")
     .eq("id", id)
     .single();
   if (!project) notFound();
@@ -327,14 +327,24 @@ export default async function ProducerProjectDetailPage({
                 </p>
               )}
 
-              {/* Director */}
+              {/* Director — links to filmmaker profile */}
               {director && (
                 <p style={{ fontSize: 13, color: S.ash, marginBottom: 18 }}>
                   <span style={{
                     letterSpacing: "0.06em", fontSize: 10,
                     textTransform: "uppercase", marginRight: 6,
                   }}>Dir.</span>
-                  <span style={{ color: S.ink, fontWeight: 500 }}>{director}</span>
+                  {filmmaker?.username ? (
+                    <Link
+                      href={`/u/${filmmaker.username}`}
+                      style={{ color: S.ink, fontWeight: 500, textDecoration: "none" }}
+                      className="hover:text-gold transition-colors"
+                    >
+                      {director}
+                    </Link>
+                  ) : (
+                    <span style={{ color: S.ink, fontWeight: 500 }}>{director}</span>
+                  )}
                 </p>
               )}
 
@@ -817,9 +827,88 @@ export default async function ProducerProjectDetailPage({
 
           <div style={{ height: 1, background: S.line, margin: "0 0 24px" }} />
 
-          {/* ── 5. CONTACT FILMMAKER — primary CTA ─────────── */}
+          {/* ── 5. FILMMAKER PROFILE + CONTACT CTA ─────────── */}
           {filmmaker && (
             <div style={{ marginBottom: 10 }}>
+
+              {/* Mini filmmaker card with profile link */}
+              <div style={{
+                display:       "flex",
+                alignItems:    "center",
+                gap:           10,
+                marginBottom:  12,
+                padding:       "10px 12px",
+                background:    "rgba(26,24,21,0.03)",
+                borderRadius:  6,
+                border:        `1px solid ${S.line}`,
+              }}>
+                {/* Avatar */}
+                <div style={{
+                  width:        36,
+                  height:       36,
+                  borderRadius: "50%",
+                  overflow:     "hidden",
+                  background:   "#F1EDE4",
+                  border:       `1px solid ${S.line}`,
+                  flexShrink:   0,
+                  display:      "flex",
+                  alignItems:   "center",
+                  justifyContent: "center",
+                }}>
+                  {(filmmaker as any).avatar_url ? (
+                    <img
+                      src={(filmmaker as any).avatar_url}
+                      alt={filmmaker.full_name}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 11, color: S.ash }}>
+                      {filmmaker.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                {/* Name + stage */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{
+                    fontSize:     13,
+                    fontWeight:   600,
+                    color:        S.ink,
+                    overflow:     "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace:   "nowrap",
+                  }}>
+                    {filmmaker.full_name}
+                  </p>
+                  {(filmmaker as any).career_stage && (
+                    <p style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: S.ash, marginTop: 1 }}>
+                      {(filmmaker as any).career_stage.replace("_", " ")}
+                    </p>
+                  )}
+                </div>
+                {/* View profile link */}
+                {(filmmaker as any).username && (
+                  <Link
+                    href={`/u/${(filmmaker as any).username}`}
+                    style={{
+                      fontSize:      9,
+                      letterSpacing: "0.16em",
+                      textTransform: "uppercase",
+                      color:         S.ash,
+                      textDecoration:"none",
+                      padding:       "4px 8px",
+                      border:        `1px solid ${S.line}`,
+                      borderRadius:  4,
+                      whiteSpace:    "nowrap",
+                      flexShrink:    0,
+                    }}
+                    className="hover:text-gold hover:border-gold/40 transition-colors"
+                  >
+                    Profile →
+                  </Link>
+                )}
+              </div>
+
+              {/* Primary contact CTA */}
               <MessageButton
                 projectId={project.id}
                 producerId={user.id}

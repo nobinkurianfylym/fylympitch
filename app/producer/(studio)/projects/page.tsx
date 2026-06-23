@@ -38,7 +38,7 @@ export default async function ProducerProjectsPage({
 
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, country, language, director_name, logline, budget_usd, finance_secured_usd, funding_needed_usd, poster_path, is_public, created_at, owner_id, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+    .select("id, title, genre, format, stage, country, language, director_name, logline, budget_usd, finance_secured_usd, funding_needed_usd, poster_path, is_public, created_at, owner_id, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, username, career_stage)")
     .eq("admin_hidden", false)
     .order("created_at", { ascending: false })
     .limit(100);
