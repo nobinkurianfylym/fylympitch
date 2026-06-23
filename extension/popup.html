@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=320" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- Header -->
+    <div id="header">
+      <span class="wordmark">PITCH.FYLYM</span>
+      <button id="refresh-btn" title="Refresh data" class="icon-btn">↻</button>
+    </div>
+
+    <!-- Loading -->
+    <div id="screen-loading" class="screen">
+      <p class="muted center">Loading…</p>
+    </div>
+
+    <!-- Not connected -->
+    <div id="screen-disconnected" class="screen hidden">
+      <div class="hero">
+        <p class="eyebrow">One Click Apply</p>
+        <p class="body-text">Connect to fill fund application forms instantly with your project data.</p>
+      </div>
+      <button id="connect-btn" class="btn-primary">Connect to PITCH.FYLYM →</button>
+    </div>
+
+    <!-- Connected -->
+    <div id="screen-connected" class="screen hidden">
+
+      <!-- Status bar -->
+      <div id="status-bar">
+        <span class="dot-active"></span>
+        <span id="user-label" class="muted-sm">Connected</span>
+        <button id="disconnect-btn" class="text-btn">Disconnect</button>
+      </div>
+
+      <!-- Fund match indicator -->
+      <div id="fund-match" class="hidden">
+        <p class="eyebrow">Detected</p>
+        <p id="fund-name" class="fund-label">—</p>
+      </div>
+      <div id="no-match" class="muted-sm hidden">
+        Not on a mapped fund form.
+        <br>Export Packet still works.
+      </div>
+
+      <!-- Project selector -->
+      <div id="project-section">
+        <label class="field-label" for="project-select">Fill as project</label>
+        <select id="project-select" class="field-select">
+          <option value="">No projects found</option>
+        </select>
+      </div>
+
+      <!-- Fill button -->
+      <button id="fill-btn" class="btn-gold" disabled>Fill This Form</button>
+
+      <!-- Result message -->
+      <p id="result-msg" class="result hidden"></p>
+
+    </div>
+
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
