@@ -167,6 +167,68 @@ function showToast(message, ok = true) {
   setTimeout(() => t.remove(), 3200);
 }
 
+// ── Label-text matching (SmartyGrants, Fluxx, custom form builders) ──────────
+// These platforms use numeric/random IDs but always have proper <label> text.
+// We match label text keywords → fill the associated input/textarea.
+
+const LABEL_KEYWORDS = {
+  title:            ["project title", "title of the", "film title", "name of project", "project name"],
+  logline:          ["logline", "logline synopsis", "one-line", "one line synopsis", "elevator pitch"],
+  synopsis:         ["synopsis", "one-paragraph synopsis", "paragraph synopsis", "project description",
+                     "description of your project", "story synopsis", "brief description"],
+  director_statement: ["director's statement", "director statement", "creative vision", "artistic statement"],
+  director_name:    ["director", "directed by", "name of director"],
+  writer_name:      ["writer", "screenwriter", "written by", "script writer"],
+  genre:            ["genre"],
+  language:         ["language", "primary language", "original language"],
+  country:          ["country of origin", "country of production", "country of principal"],
+  budget_usd:       ["total budget", "project budget", "estimated budget", "budget"],
+  format:           ["format", "project format", "film format"],
+  stage:            ["stage of development", "production stage", "development stage"],
+};
+
+function fillByLabels(project) {
+  let filled = 0;
+
+  // Build label→input map from the page
+  const allLabels = Array.from(document.querySelectorAll("label"));
+
+  for (const [field, keywords] of Object.entries(LABEL_KEYWORDS)) {
+    const value = project[field];
+    if (value == null) continue;
+
+    for (const label of allLabels) {
+      const labelText = label.textContent.trim().toLowerCase();
+      const matches   = keywords.some((kw) => labelText.includes(kw.toLowerCase()));
+      if (!matches) continue;
+
+      // Find associated input: for= attribute, or child input, or next sibling
+      let target = null;
+      const forId = label.getAttribute("for");
+      if (forId) target = document.getElementById(forId);
+      if (!target) target = label.querySelector("input, textarea, select");
+      if (!target) {
+        let sib = label.nextElementSibling;
+        while (sib && !target) {
+          target = sib.matches("input, textarea, select")
+            ? sib
+            : sib.querySelector("input, textarea, select");
+          sib = sib.nextElementSibling;
+        }
+      }
+      if (!target) {
+        // Try parent container
+        const container = label.closest("div, li, fieldset, p");
+        if (container) target = container.querySelector("input, textarea, select");
+      }
+
+      if (target && fillElement(target, value)) { filled++; break; }
+    }
+  }
+
+  return filled;
+}
+
 // ── 3. Fill handler ───────────────────────────────────────────────────────────
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -178,7 +240,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     let skipped = 0;
 
     if (fieldMap && Object.keys(fieldMap).length > 0) {
-      // ── Mapped fill: use fund-specific field map ───────────────────────────
+      // ── Strategy 1: Mapped fill — fund-specific CSS selector map ──────────
       for (const [selector, projectField] of Object.entries(fieldMap)) {
         const value = project[projectField];
         if (value == null) { skipped++; continue; }
@@ -187,7 +249,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         else skipped++;
       }
     } else {
-      // ── Smart fill: try common patterns as fallback ────────────────────────
+      // ── Strategy 2: Smart fill — common name/id/placeholder selectors ─────
       for (const [field, selectors] of Object.entries(SMART_PATTERNS)) {
         const value = project[field];
         if (value == null) continue;
@@ -198,6 +260,13 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         }
         if (!hit) skipped++;
       }
+
+      // ── Strategy 3: Label-text matching — SmartyGrants, Fluxx, custom ─────
+      // Runs after strategy 2 to fill anything strategy 2 missed
+      const labelFilled = fillByLabels(project);
+      filled += labelFilled;
+      // Subtract double-fills from skipped (rough adjustment)
+      skipped = Math.max(0, skipped - labelFilled);
     }
 
     const msg2 = filled > 0
