@@ -208,6 +208,27 @@ export default function ProducerProfilePage() {
             <section className="card p-6 space-y-5">
               <p className="text-[11px] tracking-[0.22em] uppercase text-ash">Identity</p>
               <AvatarUpload currentUrl={avatarUrl || null} userId={userId} name={name} onUpload={setAvatarUrl} />
+
+              {/* Username — top of identity, this is your public profile URL */}
+              <div className="pb-5 border-b border-line">
+                <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-1">Your profile URL</p>
+                <p className="text-[12px] text-ash mb-3">
+                  pitch.fylym.com/u/<span className="text-ink font-medium">{username || "yourhandle"}</span>
+                </p>
+                <form action={usernameAction} className="flex items-center gap-3">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-ash select-none">@</span>
+                    <input name="username" className="field !pl-7 w-full" defaultValue={username} placeholder="yourhandle" minLength={3} maxLength={30} pattern="[a-z0-9_]+" />
+                  </div>
+                  <button className="btn-ghost !py-2.5" disabled={usernamePending}>
+                    {usernamePending ? "Saving…" : "Save"}
+                  </button>
+                </form>
+                {usernameState?.error && <p className="mt-2 text-[12px] text-red-700">{usernameState.error}</p>}
+                {usernameState?.ok    && <p className="mt-2 text-[12px] text-[#8A6F3E]">Username updated.</p>}
+                <p className="mt-1.5 text-[11px] text-ash/60">Lowercase letters, numbers and underscores only.</p>
+              </div>
+
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="field-label mb-1 block">Full name</label>
@@ -228,24 +249,6 @@ export default function ProducerProfilePage() {
               <div>
                 <label className="field-label mb-1 block">IMDb URL</label>
                 <input type="url" name="imdb_url" value={imdb} onChange={(e) => setImdb(e.target.value)} placeholder="https://www.imdb.com/name/…" className="field w-full" />
-              </div>
-              <div className="pt-4 border-t border-line">
-                <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-1">Username</p>
-                <p className="text-[12px] text-ash mb-3">
-                  pitch.fylym.com/u/<span className="text-ink">{username || "yourhandle"}</span>
-                </p>
-                <form action={usernameAction} className="flex items-center gap-3">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] text-ash select-none">@</span>
-                    <input name="username" className="field !pl-7 w-full" defaultValue={username} placeholder="yourhandle" minLength={3} maxLength={30} pattern="[a-z0-9_]+" />
-                  </div>
-                  <button className="btn-ghost !py-2.5" disabled={usernamePending}>
-                    {usernamePending ? "Saving…" : "Update"}
-                  </button>
-                </form>
-                {usernameState?.error && <p className="mt-2 text-[12px] text-red-700">{usernameState.error}</p>}
-                {usernameState?.ok    && <p className="mt-2 text-[12px] text-[#8A6F3E]">Username updated.</p>}
-                <p className="mt-1.5 text-[11px] text-ash">Lowercase letters, numbers and underscores only.</p>
               </div>
             </section>
 
