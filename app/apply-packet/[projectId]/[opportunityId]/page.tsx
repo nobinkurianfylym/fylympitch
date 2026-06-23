@@ -103,7 +103,7 @@ export default async function ApplyPacketPage({
       .single<Project & { filmmaker: { full_name: string; email: string | null; company: string | null } | null }>(),
     supabase
       .from("opportunities")
-      .select("id, title, opp_type, description, deadline, max_award_usd, url, app_link, apply_method, form_url")
+      .select("id, title, opp_type, description, deadline, max_award_usd, url, app_link")
       .eq("id", opportunityId)
       .single<Opportunity>(),
   ]);
