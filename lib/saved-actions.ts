@@ -30,13 +30,14 @@ export async function toggleSavedOpportunity(
     if (projectId) revalidatePath(`/dashboard/projects/${projectId}`);
     return { saved: false };
   } else {
+    const payload: Record<string, unknown> = {
+      user_id:        user.id,
+      opportunity_id: opportunityId,
+    };
+    if (projectId) payload.project_id = projectId;
     const { error } = await supabase
       .from("saved_opportunities")
-      .insert({
-        user_id:        user.id,
-        opportunity_id: opportunityId,
-        project_id:     projectId ?? null,
-      });
+      .insert(payload);
     if (error) return { saved: false, error: error.message };
     revalidatePath("/dashboard/saved");
     revalidatePath("/dashboard/opportunities");
