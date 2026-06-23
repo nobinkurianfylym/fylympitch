@@ -144,6 +144,12 @@ export async function createProject(formData: FormData) {
       has_coproducer: formData.get("has_coproducer") === "true",
       career_stage: str(formData, "career_stage") || null,
       is_public: formData.get("is_public") !== "false",
+      runtime_minutes:  num(formData, "runtime_minutes")   ?? null,
+      director_name:    str(formData, "director_name")     || null,
+      director_email:   str(formData, "director_email")    || null,
+      director_phone:   str(formData, "director_phone")    || null,
+      producer_name:    str(formData, "producer_name")     || null,
+      producer_company: str(formData, "producer_company")  || null,
     })
     .select("id")
     .single();
