@@ -645,44 +645,29 @@ export default async function ProjectDetailPage({
           {isOwner && !simpleView && obstacles.length > 0 && (
             <div style={{ paddingTop: 28, paddingBottom: 28, borderTop: `1px solid ${S.line}` }}>
               <p style={SH}>Strengthen Before Applying</p>
-              <p style={{ fontSize: 12, color: S.ash, marginBottom: 18 }}>
-                Each issue below reduces your funding readiness score. Fix them to unlock better matches.
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {obstacles.map((ob: FundingObstacle) => {
-                  const pts = ob.severity === "high" ? "+12" : ob.severity === "medium" ? "+8" : "+5";
-                  const explanation = ob.severity === "high"
-                    ? "This significantly reduces eligibility across matched opportunities."
-                    : ob.severity === "medium"
-                    ? "This moderately affects your match scores and application strength."
-                    : "Addressing this will improve overall profile completeness.";
-                  const badgeBg = ob.severity === "high" ? "rgba(220,38,38,0.08)" : ob.severity === "medium" ? "rgba(234,179,8,0.08)" : S.mist;
-                  const badgeColor = ob.severity === "high" ? "#b91c1c" : ob.severity === "medium" ? "#854d0e" : S.ash;
-                  return (
-                    <div key={ob.id} style={{
-                      padding: "14px 16px", borderRadius: 10,
-                      border: `1px solid ${S.line}`, background: S.surface,
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                          <span style={{ fontSize: 8, letterSpacing: "0.14em", textTransform: "uppercase", padding: "2px 7px", borderRadius: 100, fontWeight: 600, background: badgeBg, color: badgeColor, flexShrink: 0 }}>
-                            {ob.severity} impact
-                          </span>
-                          <span style={{ fontSize: 13, color: S.ink, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ob.label}</span>
-                        </div>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: "#2E6B4E", background: "rgba(46,107,78,0.08)", padding: "2px 8px", borderRadius: 20, flexShrink: 0, whiteSpace: "nowrap" }}>{pts} pts</span>
-                      </div>
-                      <p style={{ fontSize: 12, color: S.ash, lineHeight: 1.55, marginBottom: ob.action_href ? 10 : 0 }}>{explanation}</p>
-                      {ob.action_href && (
-                        <Link href={ob.action_href} style={{
-                          display: "inline-block", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
-                          color: S.ink, textDecoration: "none", fontWeight: 600,
-                          padding: "5px 12px", border: `1px solid rgba(26,24,21,0.2)`, borderRadius: 6,
-                        }}>Fix now →</Link>
-                      )}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {obstacles.map((ob: FundingObstacle) => (
+                  <div key={ob.id} style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    gap: 12, padding: "10px 14px", borderRadius: 8,
+                    border: `1px solid ${S.line}`, background: S.surface,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                      <span style={{
+                        width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                        border: `1.5px solid rgba(26,24,21,0.18)`,
+                        background: "transparent", display: "inline-block",
+                      }} />
+                      <span style={{ fontSize: 13, color: S.ink, lineHeight: 1.4 }}>{ob.label}</span>
                     </div>
-                  );
-                })}
+                    {ob.action_href && (
+                      <Link href={ob.action_href} style={{
+                        flexShrink: 0, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase",
+                        color: S.ash, textDecoration: "none", whiteSpace: "nowrap",
+                      }}>Fix →</Link>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}

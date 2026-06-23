@@ -228,9 +228,7 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
                   transition: "width 1100ms cubic-bezier(0.4,0,0.2,1)",
                 }} />
               </div>
-              <p style={{ fontSize: 10, color: "rgba(245,245,240,0.60)", letterSpacing: "0.1em", textAlign: "center" }}>
-                {scoreVal >= 80 ? "Strong readiness" : scoreVal >= 60 ? "Good readiness" : scoreVal >= 40 ? "Building readiness" : "Early stage"}
-              </p>
+
             </div>
             {/* Quick improvement actions */}
             <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "10px 18px 4px", display: "flex", flexDirection: "column", gap: 6 }}>
