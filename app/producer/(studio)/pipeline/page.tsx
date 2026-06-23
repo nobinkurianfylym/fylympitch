@@ -164,8 +164,8 @@ export default async function ProducerPipelinePage() {
       {/* Stats — bottom of page */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-10">
         {[
-          { label: "In pipeline", val: (rows ?? []).length },
-          { label: "Shortlisted", val: (byStage.shortlisted?.length ?? 0) + (byStage.in_review?.length ?? 0) },
+          { label: "In pipeline",  val: (rows ?? []).length },
+          { label: "In progress",  val: (byStage.shortlisted?.length ?? 0) + (byStage.in_review?.length ?? 0) },
           { label: "Meetings set", val: byStage.meeting_set?.length ?? 0 },
           { label: "Deals active", val: byStage.deal_active?.length ?? 0 },
         ].map((s) => (

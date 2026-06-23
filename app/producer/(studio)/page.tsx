@@ -111,7 +111,7 @@ export default async function ProducerDiscoverPage() {
         <div>
           <p className="eyebrow mb-2">PITCH.FYLYM Engine · Producer Studio</p>
           <h1 className="font-display text-[32px]">Discover</h1>
-          <p className="text-[14px] text-ash mt-1">Your top 9 matches today</p>
+          <p className="text-[14px] text-ash mt-1">Top 9 projects matched to your taste profile</p>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/producer/pipeline" className="btn-ghost relative">
@@ -147,7 +147,6 @@ export default async function ProducerDiscoverPage() {
                 variant="compact-card"
                 project={{ ...p, filmmaker }}
                 supabaseUrl={supabaseUrl}
-                matchScore={p._score}
                 href={`/producer/projects/${p.id}`}
                 actions={
                   <div className="space-y-2.5">

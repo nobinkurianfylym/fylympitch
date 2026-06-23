@@ -379,10 +379,11 @@ export default async function ProducerProjectDetailPage({
           {/* ── PACKAGE ──────────────────────────────────────── */}
           {(() => {
             const pkg = [
-              { label: "Pitch Deck", present: !!project.pitch_deck_path },
-              { label: "Script",     present: !!(project as any).has_script_doc || !!project.script_path },
-              { label: "Budget",     present: !!(project as any).has_budget_doc  || !!project.budget_usd },
-              { label: "Lookbook",   present: !!(project as any).has_lookbook },
+              { label: "Pitch Deck",   present: !!project.pitch_deck_path },
+              { label: "Script",       present: !!(project as any).has_script_doc || !!project.script_path },
+              { label: "Budget",       present: !!(project as any).has_budget_doc  || !!project.budget_usd },
+              { label: "Lookbook",     present: !!(project as any).has_lookbook },
+              { label: "Co-Producer",  present: !!(project as any).has_coproducer },
             ];
             return (
               <div style={{

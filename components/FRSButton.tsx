@@ -199,9 +199,9 @@ export default function FRSButton({ score, missing, fundRequirements = [], proje
               fontSize: 11, color: "rgba(138,133,124,0.5)", marginTop: 24,
               lineHeight: 1.6, borderTop: "1px solid rgba(229,224,213,0.08)", paddingTop: 20,
             }}>
-              A score above 70 means your project is competitive for most matched funding sources.
-              Below 60, focus on completing your pitch deck, adding co-production attachments,
-              and clarifying your budget structure.
+              A score above 70 means this project is competitive for most matched funding sources.
+              Below 60, the filmmaker should focus on completing their pitch deck, adding a budget,
+              and filling in the synopsis and director's statement.
             </p>
           </div>
         </div>
