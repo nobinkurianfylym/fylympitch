@@ -275,7 +275,9 @@ function getInputContext(input) {
 
 function fillByContext(project) {
   const inputs = Array.from(
-    document.querySelectorAll("input:not([type=hidden]):not([type=submit]):not([type=button]):not([type=checkbox]):not([type=radio]), textarea")
+    document.querySelectorAll(
+      "input:not([type=hidden]):not([type=submit]):not([type=button]):not([type=checkbox]):not([type=radio]), textarea, select"
+    )
   );
 
   let filled = 0;
