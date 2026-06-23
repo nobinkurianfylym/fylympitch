@@ -20,15 +20,16 @@ export async function toggleSavedOpportunity(
     .maybeSingle();
 
   if (existing) {
-    // Unsave
-    await supabase
+    const { error } = await supabase
       .from("saved_opportunities")
       .delete()
       .eq("id", existing.id);
+    if (error) return { saved: true, error: error.message };
     revalidatePath("/dashboard/saved");
+    revalidatePath("/dashboard/opportunities");
+    if (projectId) revalidatePath(`/dashboard/projects/${projectId}`);
     return { saved: false };
   } else {
-    // Save
     const { error } = await supabase
       .from("saved_opportunities")
       .insert({
@@ -38,6 +39,8 @@ export async function toggleSavedOpportunity(
       });
     if (error) return { saved: false, error: error.message };
     revalidatePath("/dashboard/saved");
+    revalidatePath("/dashboard/opportunities");
+    if (projectId) revalidatePath(`/dashboard/projects/${projectId}`);
     return { saved: true };
   }
 }

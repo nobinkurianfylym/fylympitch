@@ -14,15 +14,14 @@ export default function BookmarkButton({
   initialSaved?: boolean;
   size?: number;
 }) {
-  const [saved, setSaved]       = useState(initialSaved);
-  const [pending, startT]       = useTransition();
-  const [burst, setBurst]       = useState(false);   // pop animation trigger
-  const [label, setLabel]       = useState<"saved" | "removed" | null>(null);
+  const [saved, setSaved]     = useState(initialSaved);
+  const [pending, startT]     = useTransition();
+  const [burst, setBurst]     = useState(false);
+  const [label, setLabel]     = useState<"saved" | "removed" | "error" | null>(null);
 
-  // Clear label after 1.6s
   useEffect(() => {
     if (!label) return;
-    const t = setTimeout(() => setLabel(null), 1600);
+    const t = setTimeout(() => setLabel(null), 1800);
     return () => clearTimeout(t);
   }, [label]);
 
@@ -30,19 +29,34 @@ export default function BookmarkButton({
     e.preventDefault();
     e.stopPropagation();
 
-    // Optimistic — instant feedback before server round-trip
     const next = !saved;
+    // Optimistic
     setSaved(next);
     setBurst(true);
     setTimeout(() => setBurst(false), 300);
-    setLabel(next ? "saved" : "removed");
 
     startT(async () => {
       const result = await toggleSavedOpportunity(opportunityId, projectId);
-      // Roll back if server disagrees
-      if (result.error !== undefined) setSaved(!next);
+      if (result.error !== undefined) {
+        // Roll back
+        setSaved(!next);
+        setLabel("error");
+        console.error("[BookmarkButton] save failed:", result.error);
+      } else {
+        setLabel(result.saved ? "saved" : "removed");
+      }
     });
   }
+
+  const labelColor =
+    label === "saved"   ? "#BF9953" :
+    label === "removed" ? "#8A857C" :
+    label === "error"   ? "#b91c1c" : "#8A857C";
+
+  const labelText =
+    label === "saved"   ? "Saved" :
+    label === "removed" ? "Removed" :
+    label === "error"   ? "Error" : "";
 
   return (
     <span style={{ position: "relative", display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
@@ -54,7 +68,7 @@ export default function BookmarkButton({
         style={{
           background: "transparent",
           border:     "none",
-          cursor:     "pointer",
+          cursor:     pending ? "wait" : "pointer",
           padding:    4,
           display:    "flex",
           alignItems: "center",
@@ -78,29 +92,28 @@ export default function BookmarkButton({
         </svg>
       </button>
 
-      {/* Floating confirm label */}
       {label && (
         <span style={{
-          position:   "absolute",
-          bottom:     "calc(100% + 4px)",
-          left:       "50%",
-          transform:  "translateX(-50%)",
-          whiteSpace: "nowrap",
-          fontSize:   9,
+          position:      "absolute",
+          bottom:        "calc(100% + 4px)",
+          left:          "50%",
+          transform:     "translateX(-50%)",
+          whiteSpace:    "nowrap",
+          fontSize:      9,
           letterSpacing: "0.14em",
           textTransform: "uppercase",
-          color:      label === "saved" ? "#BF9953" : "#8A857C",
+          color:         labelColor,
           pointerEvents: "none",
-          animation:  "bm-fade 1.6s ease forwards",
+          animation:     "bm-fade 1.8s ease forwards",
         }}>
-          {label === "saved" ? "Saved" : "Removed"}
+          {labelText}
         </span>
       )}
 
       <style>{`
         @keyframes bm-fade {
           0%   { opacity: 0; transform: translateX(-50%) translateY(4px); }
-          15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+          12%  { opacity: 1; transform: translateX(-50%) translateY(0); }
           70%  { opacity: 1; }
           100% { opacity: 0; transform: translateX(-50%) translateY(-4px); }
         }
