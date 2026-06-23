@@ -460,19 +460,23 @@ export function computeFundingObstacles(
     });
   }
 
-  // Festival strategy: no market / distribution / sales-agent match
-  // clearing "possible" (60+).
-  const festivalReady = matches.some(
-    (m) => ["market", "distribution", "sales_agent"].includes(m.opportunity.opp_type) && m.match.score >= 60
-  );
-  if (!festivalReady) {
-    obstacles.push({
-      id: "no_festival_strategy",
-      label: "No festival or market strategy identified yet",
-      severity: "low",
-      action_label: "Explore festivals",
-      action_href: `/dashboard/projects/${project.id}#festival-strategy`,
-    });
+  // Festival strategy: only meaningful for post_production and completed stages —
+  // earlier stages don't have market/distribution/sales_agent in their eligible
+  // category set, so they never score 60+ and the check would always fire falsely.
+  const FESTIVAL_STAGES: ProjectStage[] = ["post_production", "completed"];
+  if (FESTIVAL_STAGES.includes(project.stage)) {
+    const festivalReady = matches.some(
+      (m) => ["market", "distribution", "sales_agent"].includes(m.opportunity.opp_type) && m.match.score >= 60
+    );
+    if (!festivalReady) {
+      obstacles.push({
+        id: "no_festival_strategy",
+        label: "No festival or market strategy identified yet",
+        severity: "low",
+        action_label: "Explore festivals",
+        action_href: `/dashboard/projects/${project.id}#festival-strategy`,
+      });
+    }
   }
 
   return obstacles;

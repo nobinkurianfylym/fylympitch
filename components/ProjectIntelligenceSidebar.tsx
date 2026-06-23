@@ -141,7 +141,6 @@ function ClickCard({ children, onClick }: { children: React.ReactNode; onClick: 
       }}
     >
       {children}
-      {/* Subtle "tap to learn more" hint */}
       <div style={{
         padding:        "5px 18px 8px",
         display:        "flex",
@@ -160,19 +159,33 @@ function ClickCard({ children, onClick }: { children: React.ReactNode; onClick: 
   );
 }
 
+// ── Actual FRS fields mirroring engine FRS_CHECKS ─────────────────────────
+// Labels must match exactly what computeFundingReadiness() puts in missing[].
+const FRS_FIELDS: { label: string; weight: number }[] = [
+  { label: "Pitch deck",           weight: 15 },
+  { label: "Synopsis",             weight: 15 },
+  { label: "Budget",               weight: 15 },
+  { label: "Logline",              weight: 10 },
+  { label: "Director's statement", weight: 10 },
+  { label: "Producer information", weight: 10 },
+  { label: "Funding need",         weight: 10 },
+  { label: "Script",               weight: 10 },
+  { label: "Title",                weight: 5  },
+];
+
 // ── Props ──────────────────────────────────────────────────────────────────
 type Props = {
   discovery: FundingDiscovery;
   readiness: FundingReadiness | null;
-  dream:     DreamScenario | null;
+  dream?:    DreamScenario | null;  // kept for type compat — not rendered
   roadmap?:  any;
 };
 
-export default function ProjectIntelligenceSidebar({ discovery, readiness, dream, roadmap }: Props) {
+export default function ProjectIntelligenceSidebar({ discovery, readiness, roadmap }: Props) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { const t = setTimeout(() => setMounted(true), 120); return () => clearTimeout(t); }, []);
 
-  const [modal, setModal] = useState<"readiness" | "engine" | "dream" | null>(null);
+  const [modal, setModal] = useState<"readiness" | "engine" | null>(null);
 
   const score    = useCountUp(mounted ? (readiness?.score ?? 0) : 0, 1100);
   const scoreVal = readiness?.score ?? 0;
@@ -187,10 +200,12 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
     color: "rgba(245,245,240,0.72)", fontWeight: 600, marginBottom: 14,
   };
 
-  // Realistic range (5–15% of ceiling)
+  // Realistic range (5–15% of ceiling) — honest industry estimate
   const realisticLow  = discovery.total_usd * 0.05;
   const realisticHigh = discovery.total_usd * 0.15;
-  const breakdown = (readiness as any)?.breakdown ?? [];
+
+  // Which FRS fields are missing vs completed
+  const missingSet = new Set(readiness?.missing ?? []);
 
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
@@ -228,25 +243,21 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
                   transition: "width 1100ms cubic-bezier(0.4,0,0.2,1)",
                 }} />
               </div>
-
             </div>
-
           </div>
         </ClickCard>
       )}
 
-      {/* ── BOX 2: ENGINE — REALISTIC VALUE AS HEADER ────────────── */}
+      {/* ── BOX 2: ENGINE — REALISTIC FUNDING RANGE ──────────────── */}
       <ClickCard onClick={() => setModal("engine")}>
         <div style={{ padding: "16px 18px 10px" }}>
           <p style={{ fontSize: 8, letterSpacing: "0.26em", textTransform: "uppercase", color: "rgba(245,245,240,0.72)", fontWeight: 600, marginBottom: 6 }}>
             PITCH.FYLYM ENGINE™
           </p>
-          {/* Realistic range — primary header */}
           <p style={{ fontSize: 10, color: "rgba(245,245,240,0.50)", marginBottom: 4 }}>Realistic funding range</p>
           <p style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 26, fontWeight: 700, color: "#F5F5F0", lineHeight: 1, marginBottom: 4, letterSpacing: "-0.01em" }}>
             {usd(realisticLow)} – {usd(realisticHigh)}
           </p>
-          {/* Theoretical ceiling as context */}
           <p style={{ fontSize: 10, color: "rgba(245,245,240,0.35)", marginBottom: 14 }}>
             of {usd(discovery.total_usd)} ceiling · {discovery.source_counts?.total ?? 0} matched sources
           </p>
@@ -263,49 +274,14 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
         </div>
       </ClickCard>
 
-      {/* ── BOX 3: DREAM SCENARIO ────────────────────────────────────── */}
-      {dream && (
-        <ClickCard onClick={() => setModal("dream")}>
-          <div style={{ padding: "16px 18px 10px" }}>
-            <p style={HDR}>Funding Forecast</p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7, marginBottom: 12 }}>
-              {([
-                ["Total funding",     usd(dream.funding_usd)],
-                ["Production start",  dream.production_start],
-                ["Festival premiere", dream.festival_premiere],
-                ["Projected ROI",     `${dream.projected_roi}×`],
-              ] as [string, string][]).map(([label, val]) => (
-                <div key={label} style={{ borderRadius: 7, padding: "9px 10px", background: "rgba(255,255,255,0.05)" }}>
-                  <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 15, color: "#BF9953", marginBottom: 3 }}>{val}</div>
-                  <div style={{ fontSize: 7, letterSpacing: "0.13em", textTransform: "uppercase", color: "rgba(245,245,240,0.55)" }}>{label}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 10, borderTop: "0.5px solid rgba(255,255,255,0.07)" }}>
-              <div style={{ flex: 1, height: 3, background: "rgba(255,255,255,0.08)", borderRadius: 2, overflow: "hidden" }}>
-                <div style={{
-                  height: "100%", background: "#BF9953", borderRadius: 2,
-                  width: mounted ? `${dream.distribution_probability}%` : "0%",
-                  transition: "width 1100ms cubic-bezier(0.4,0,0.2,1)",
-                }} />
-              </div>
-              <span style={{ fontSize: 9, color: "rgba(245,245,240,0.55)", whiteSpace: "nowrap" }}>
-                {dream.distribution_probability}% distribution
-              </span>
-            </div>
-          </div>
-        </ClickCard>
-      )}
-
       {/* ── FUNDING JOURNEY MINI ─────────────────────────────────────── */}
       <FundingJourneyMini readiness={readiness} roadmap={roadmap} />
 
       {/* ══ MODALS ═══════════════════════════════════════════════════════ */}
 
-      {/* Readiness Modal */}
+      {/* Readiness Modal — actual FRS fields only */}
       {modal === "readiness" && readiness && (
         <Modal title="Funding Readiness Score" onClose={() => setModal(null)}>
-          {/* Big score */}
           <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 6 }}>
             <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 56, color: "#BF9953", lineHeight: 1, fontWeight: 700 }}>
               {scoreVal}
@@ -314,36 +290,49 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
           </div>
           <p style={{ fontSize: 14, color: "rgba(245,245,240,0.55)", marginBottom: 20 }}>
             {scoreVal >= 80 ? "Your project is strongly positioned for most matched opportunities."
-              : scoreVal >= 60 ? "Good foundation — strengthen the weaker areas to improve your win rate."
-              : scoreVal >= 40 ? "Your project is building readiness. Focus on the factors below."
-              : "Early stage — address the fundamentals first to unlock more opportunities."}
+              : scoreVal >= 60 ? "Good foundation — complete the remaining fields to improve your match rate."
+              : scoreVal >= 40 ? "Fill in the missing fields below to raise your score."
+              : "Complete the fundamentals first to unlock more matched opportunities."}
           </p>
 
           <MDivider />
           <p style={{ fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(245,245,240,0.45)", marginBottom: 14 }}>
-            How it's calculated
+            Profile completeness
           </p>
 
-          {breakdown.length > 0
-            ? breakdown.map((b: any) => <MRow key={b.factor} label={b.factor} value={`${b.score}/100`} bar={b.score} />)
-            : <>
-                <MRow label="Script & Story Development"  value="20% weight" bar={scoreVal} />
-                <MRow label="Budget Structure & Clarity"  value="20% weight" bar={Math.min(100, scoreVal + 5)} />
-                <MRow label="Creative Team Experience"    value="20% weight" bar={Math.max(0, scoreVal - 7)} />
-                <MRow label="Market & Genre Fit"          value="20% weight" bar={Math.min(100, scoreVal + 2)} />
-                <MRow label="Financing Plan Completeness" value="20% weight" bar={Math.max(0, scoreVal - 4)} />
-              </>
-          }
+          {FRS_FIELDS.map(({ label, weight }) => {
+            const done = !missingSet.has(label);
+            return (
+              <div key={label} style={{ marginBottom: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{
+                      fontSize: 13, fontWeight: 700, lineHeight: 1,
+                      color: done ? "#BF9953" : "rgba(245,245,240,0.25)",
+                    }}>{done ? "✓" : "✕"}</span>
+                    <span style={{ fontSize: 12, color: done ? "rgba(245,245,240,0.75)" : "rgba(245,245,240,0.4)" }}>{label}</span>
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: done ? "#BF9953" : "rgba(245,245,240,0.25)" }}>
+                    {weight}pts
+                  </span>
+                </div>
+                <div style={{ height: 2, background: "rgba(255,255,255,0.06)", borderRadius: 1, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: done ? "100%" : "0%", background: "#BF9953", borderRadius: 1 }} />
+                </div>
+              </div>
+            );
+          })}
+
           <MDivider />
           <p style={{ fontSize: 11, color: "rgba(245,245,240,0.4)", lineHeight: 1.65 }}>
-            A score above 70 means your project is competitive for most of the {discovery.source_counts?.total ?? 0} sources matched to it. Below 60, focus on completing your pitch deck, adding co-production attachments, and clarifying your budget structure.
+            Score is calculated from profile completeness only — each field above contributes its stated points. A score above 70 means the profile is competitive for most of the {discovery.source_counts?.total ?? 0} matched sources.
           </p>
         </Modal>
       )}
 
       {/* Engine Modal */}
       {modal === "engine" && (
-        <Modal title="PITCH.FYLYM ENGINE™ — Can Raise" onClose={() => setModal(null)}>
+        <Modal title="PITCH.FYLYM ENGINE™ — Funding Range" onClose={() => setModal(null)}>
           <p style={{ fontSize: 12, color: "rgba(245,245,240,0.5)", marginBottom: 12 }}>Realistic funding range</p>
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
             <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, color: "#F5F5F0", lineHeight: 1, fontWeight: 700 }}>
@@ -376,49 +365,6 @@ export default function ProjectIntelligenceSidebar({ discovery, readiness, dream
           <MDivider />
           <p style={{ fontSize: 11, color: "rgba(245,245,240,0.4)", lineHeight: 1.65 }}>
             The theoretical ceiling assumes winning every matched opportunity — which never happens in practice. Industry data shows filmmakers typically secure 5–15% of their total match ceiling through active applications over 18–24 months.
-          </p>
-        </Modal>
-      )}
-
-      {/* Dream Scenario Modal */}
-      {modal === "dream" && dream && (
-        <Modal title="Funding Forecast — AI Projection" onClose={() => setModal(null)}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
-            {([
-              ["Total Funding",     usd(dream.funding_usd),          "Sum of top 10 match ceiling"],
-              ["Production Start",  dream.production_start,           "Genre & stage timeline average"],
-              ["Festival Premiere", dream.festival_premiere,          "Comparable film premiere data"],
-              ["Projected ROI",     `${dream.projected_roi}×`,        "Production cost vs. distribution"],
-            ] as [string, string, string][]).map(([label, val, note]) => (
-              <div key={label} style={{ borderRadius: 8, padding: "12px 14px", background: "rgba(255,255,255,0.05)" }}>
-                <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: "#BF9953", marginBottom: 4 }}>{val}</div>
-                <div style={{ fontSize: 9, letterSpacing: "0.1em", textTransform: "uppercase", color: "rgba(245,245,240,0.7)", marginBottom: 4 }}>{label}</div>
-                <div style={{ fontSize: 9, color: "rgba(245,245,240,0.35)", lineHeight: 1.4 }}>{note}</div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontSize: 11, color: "rgba(245,245,240,0.6)" }}>Distribution probability</span>
-              <span style={{ fontSize: 14, color: "#BF9953", fontWeight: 700 }}>{dream.distribution_probability}%</span>
-            </div>
-            <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 3, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${dream.distribution_probability}%`, background: "#BF9953", borderRadius: 3 }} />
-            </div>
-          </div>
-
-          <MDivider />
-          <p style={{ fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: "rgba(245,245,240,0.45)", marginBottom: 14 }}>
-            How it's calculated
-          </p>
-          <MRow label="Funding basis"         value="Top 10 match combination" />
-          <MRow label="Comparables database"  value="Similar genre & budget films" />
-          <MRow label="Timeline method"       value="Stage & market averages" />
-          <MRow label="ROI methodology"       value="Production cost vs. typical distribution revenue" />
-          <MDivider />
-          <p style={{ fontSize: 11, color: "rgba(245,245,240,0.4)", lineHeight: 1.65 }}>
-            This is an optimistic but achievable target based on your highest-scoring matches. Actual outcomes depend on applications submitted, jury decisions, and market conditions. Use it as a north star, not a guarantee.
           </p>
         </Modal>
       )}

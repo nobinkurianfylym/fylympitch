@@ -45,7 +45,7 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
     { data: projects },
   ] = await Promise.all([
     supabase.from("saved_opportunities").select("opportunity_id").eq("user_id", user!.id),
-    supabase.from("projects").select("id").eq("owner_id", user!.id),
+    supabase.from("projects").select("id, title").eq("owner_id", user!.id),
   ]);
 
   const savedIds    = (saved ?? []).map((s) => s.opportunity_id);
@@ -67,6 +67,43 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
       }
     }
   }
+
+  // Producer matches from engine — aggregate across all projects, keep highest score per producer
+  type MatchedProducer = {
+    id: string; full_name: string; company: string | null;
+    score: number; project_id: string; project_title: string;
+    genres: string[]; role: string;
+  };
+  const producerMap = new Map<string, MatchedProducer>();
+  if (projectIds.length) {
+    const { data: intelRows } = await supabase
+      .from("project_intelligence")
+      .select("producer_matches, project_id")
+      .in("project_id", projectIds);
+
+    for (const row of intelRows ?? []) {
+      const proj = (projects ?? []).find((p: any) => p.id === row.project_id);
+      for (const pm of (row.producer_matches ?? [])) {
+        const existing = producerMap.get(pm.profile.id);
+        if (!existing || pm.score > existing.score) {
+          producerMap.set(pm.profile.id, {
+            id:            pm.profile.id,
+            full_name:     pm.profile.full_name,
+            company:       pm.profile.company ?? null,
+            score:         pm.score,
+            project_id:    row.project_id,
+            project_title: proj?.title ?? "your project",
+            genres:        pm.profile.genres ?? [],
+            role:          pm.profile.role ?? "producer",
+          });
+        }
+      }
+    }
+  }
+  const matchedProducers = [...producerMap.values()]
+    .filter(p => p.score >= 60)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 8);
 
   const sorted = sort === "match"
     ? [...(opps ?? [])].sort((a, b) => (matchScores[b.id] ?? 0) - (matchScores[a.id] ?? 0))
@@ -161,6 +198,42 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
         <button className="btn-ghost !px-5 !py-2.5">Filter</button>
         {(type || q) && <a href="/dashboard/opportunities" className="btn-ghost !px-5 !py-2.5 text-ash">Clear</a>}
       </form>
+
+      {/* Matched Producers — from engine, score ≥ 60 */}
+      {matchedProducers.length > 0 && !type && !q && (
+        <div className="mb-12">
+          <p className="eyebrow mb-1">Matched Producers</p>
+          <p className="text-[12px] text-ash mb-5">
+            Producers on PITCH.FYLYM whose profile matches your submitted projects — scored by the engine.
+          </p>
+          <div className="flex flex-col gap-3">
+            {matchedProducers.map(pm => (
+              <div key={pm.id} className="flex items-center justify-between gap-4 py-3 hairline">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] text-ink font-medium truncate">
+                    {pm.full_name}
+                    {pm.company && <span className="text-ash font-normal"> · {pm.company}</span>}
+                  </p>
+                  <p className="text-[11px] tracking-[0.1em] uppercase text-ash mt-0.5">
+                    {pm.role === "investor" ? "Investor" : pm.role === "organization" ? "Organisation" : "Producer"}
+                    {pm.genres.length > 0 && <span> · {pm.genres.slice(0, 2).join(", ")}</span>}
+                    <span className="text-ash/50"> · matched on {pm.project_title}</span>
+                  </p>
+                </div>
+                <div style={{ fontFamily: "'Playfair Display', serif" }} className="text-[20px] font-bold text-gold shrink-0">
+                  {pm.score}
+                </div>
+                <Link
+                  href={`/dashboard/projects/${pm.project_id}`}
+                  className="shrink-0 text-[10px] tracking-[0.12em] uppercase text-ash border border-line rounded px-3 py-1.5 hover:text-ink transition-colors"
+                >
+                  Connect →
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Categorised view — top 5 per category + expandable */}
       {grouped && (
