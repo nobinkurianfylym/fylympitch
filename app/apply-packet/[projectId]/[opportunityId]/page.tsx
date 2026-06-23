@@ -87,23 +87,12 @@ export default async function ApplyPacketPage({
   const [{ data: project }, { data: opp }] = await Promise.all([
     supabase
       .from("projects")
-      .select(
-        `
-        id, title, logline, synopsis, director_statement,
-        stage, genre, format, language, country_of_origin,
-        budget_usd, budget_currency, budget_amount,
-        finance_secured_usd, funding_needed_usd,
-        director_name, writer_name, runtime_minutes,
-        has_script_doc, has_budget_doc, has_lookbook, has_coproducer,
-        producer_info, owner_id,
-        filmmaker:profiles!projects_owner_id_fkey(full_name, email, company)
-      `
-      )
+      .select(`*, filmmaker:profiles!projects_owner_id_fkey(full_name, email, company)`)
       .eq("id", projectId)
       .single<Project & { filmmaker: { full_name: string; email: string | null; company: string | null } | null }>(),
     supabase
       .from("opportunities")
-      .select("id, title, opp_type, description, deadline, max_award_usd, url, app_link")
+      .select("*")
       .eq("id", opportunityId)
       .single<Opportunity>(),
   ]);
