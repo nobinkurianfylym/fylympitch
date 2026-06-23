@@ -378,7 +378,7 @@ export default function ProjectForm() {
   const ai = (k: keyof Fields) => aiFilled[k] ? "border-gold/60 bg-gold/4" : "";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-7 max-w-2xl">
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
       <input type="hidden" name="pitch_deck_path"  value={deckPath} />
       <input type="hidden" name="script_path"       value={scriptPath} />
       <input type="hidden" name="poster_path"       value={posterPath} />
@@ -390,7 +390,6 @@ export default function ProjectForm() {
       {/* ── STEP 1: PITCH DECK ── */}
       <div className="rounded-card border border-line bg-white/60 p-6 space-y-4">
         <div>
-          <p className="eyebrow text-gold mb-1">Step 1</p>
           <h3 className="font-display text-[20px] leading-snug">Upload your pitch deck</h3>
           <p className="text-[13px] text-ash mt-1">
             Upload a PDF and PITCH.FYLYM AI will read it and fill the form for you.
@@ -412,8 +411,7 @@ export default function ProjectForm() {
         {/* Asset Readiness */}
         <div className="pt-4 border-t border-line">
           <p className="eyebrow text-ash mb-3">
-            Attached assets{" "}
-            <span className="normal-case tracking-normal font-normal text-ash/70">— tick what you have ready</span>
+            Tick what you have ready, if asked
           </p>
           <div className="flex flex-wrap gap-3">
             {([
@@ -435,7 +433,7 @@ export default function ProjectForm() {
       </div>
 
       {/* ── TITLE + LOGLINE ── */}
-      <div className="space-y-5">
+      <div className="space-y-4">
         <div>
           <label className="field-label" htmlFor="title">Title *</label>
           <input id="title" name="title" className={`field ${ai("title")}`} required maxLength={200}
@@ -465,10 +463,10 @@ export default function ProjectForm() {
         </button>
 
         {showAdvanced && (
-          <div className="px-5 pb-6 space-y-8 border-t border-line pt-6">
+          <div className="px-5 pb-5 space-y-6 border-t border-line pt-5">
 
             {/* ── PROJECT BASICS ── */}
-            <div className="space-y-5">
+            <div className="space-y-4">
               <SectionHeader label="Project Basics" />
 
               <div className="grid sm:grid-cols-2 gap-5">
@@ -480,7 +478,6 @@ export default function ProjectForm() {
                     <option value="documentary">Documentary</option>
                     <option value="series">Series</option>
                     <option value="animation">Animation</option>
-                    <option value="short">Short</option>
                   </select>
                 </div>
                 <div>
@@ -537,7 +534,7 @@ export default function ProjectForm() {
             </div>
 
             {/* ── TEAM ── */}
-            <div className="space-y-5">
+            <div className="space-y-4">
               <SectionHeader label="Team" />
 
               <div>
@@ -573,7 +570,7 @@ export default function ProjectForm() {
             </div>
 
             {/* ── BUDGET & FINANCES ── */}
-            <div className="space-y-5">
+            <div className="space-y-4">
               <SectionHeader label="Budget & Finances" />
 
               {/* Currency converter */}
@@ -651,7 +648,7 @@ export default function ProjectForm() {
             </div>
 
             {/* ── PRODUCER / CO-PRODUCER ── */}
-            <div className="space-y-5">
+            <div className="space-y-4">
               <SectionHeader label="Producer / Co-producer" sub="if any" />
 
               <div className="grid sm:grid-cols-2 gap-5">
@@ -675,8 +672,7 @@ export default function ProjectForm() {
             </div>
 
             {/* ── POSTER & VISIBILITY ── */}
-            <div className="space-y-5">
-              <SectionHeader label="Poster & Visibility" />
+            <div className="space-y-4">
 
               <div>
                 <label className="field-label" htmlFor="poster">
@@ -712,7 +708,7 @@ export default function ProjectForm() {
                       </svg>
                       Private
                     </span>
-                    <span className="text-[13px] text-ash">Only visible to you.</span>
+                    <span className="text-[13px] text-ash">Only visible to you and verified producers.</span>
                   </label>
                 </div>
               </div>
