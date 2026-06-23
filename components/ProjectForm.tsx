@@ -152,6 +152,7 @@ export default function ProjectForm() {
   const [hasScript,    setHasScript]    = useState(false);
   const [hasBudget,    setHasBudget]    = useState(false);
   const [hasLookbook,  setHasLookbook]  = useState(false);
+  const [hasCoproducer, setHasCoproducer] = useState(false);
 
   // ── Live USD previews ────────────────────────────────────────────────────
   const { usd: budgetUSD, source: budgetSrc } = useLiveUSD(fields.budget_usd, fields.budget_currency);
@@ -440,6 +441,7 @@ export default function ProjectForm() {
       <input type="hidden" name="has_script_doc" value={String(hasScript || !!scriptPath)} />
       <input type="hidden" name="has_budget_doc" value={String(hasBudget)} />
       <input type="hidden" name="has_lookbook"   value={String(hasLookbook)} />
+      <input type="hidden" name="has_coproducer" value={String(hasCoproducer)} />
 
       {/* ── 1. PITCH DECK — first, triggers AI ── */}
       <div className="rounded-card border border-line bg-white/60 p-6 space-y-4">
@@ -471,9 +473,10 @@ export default function ProjectForm() {
           <p className="eyebrow text-ash mb-3">Attached assets <span className="normal-case tracking-normal font-normal text-ash/70">— tick what you have ready</span></p>
           <div className="flex flex-wrap gap-3">
             {([
-              { key: "script",   label: "Script",   val: hasScript,   set: setHasScript   },
-              { key: "budget",   label: "Budget",   val: hasBudget,   set: setHasBudget   },
-              { key: "lookbook", label: "Lookbook", val: hasLookbook, set: setHasLookbook },
+              { key: "script",      label: "Script",      val: hasScript,      set: setHasScript      },
+              { key: "budget",      label: "Budget",      val: hasBudget,      set: setHasBudget      },
+              { key: "lookbook",    label: "Lookbook",    val: hasLookbook,    set: setHasLookbook    },
+              { key: "coproducer",  label: "Co-Producer", val: hasCoproducer,  set: setHasCoproducer  },
             ] as { key: string; label: string; val: boolean; set: (v: boolean) => void }[]).map(({ key, label, val, set }) => (
               <button
                 key={key}

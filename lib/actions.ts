@@ -141,6 +141,7 @@ export async function createProject(formData: FormData) {
       has_script_doc: formData.get("has_script_doc") === "true",
       has_budget_doc: formData.get("has_budget_doc") === "true",
       has_lookbook:   formData.get("has_lookbook")   === "true",
+      has_coproducer: formData.get("has_coproducer") === "true",
       career_stage: str(formData, "career_stage") || null,
       is_public: formData.get("is_public") !== "false",
     })

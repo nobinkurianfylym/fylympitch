@@ -221,6 +221,17 @@ export function calculateMatchScore(
     }
   }
 
+  // Co-producer eligibility gate: if the fund explicitly requires one,
+  // having one attached is a concrete advantage; not having one is a real warning.
+  if (opportunity.copro_required) {
+    if ((project as any).has_coproducer) {
+      score += 8;
+      reasons.push("Co-producer attached — meets fund requirement");
+    } else {
+      warnings.push("This fund requires a confirmed co-producer");
+    }
+  }
+
   score = Math.max(0, Math.min(99, Math.round(score)));
 
   const confidence: MatchResult["confidence"] =

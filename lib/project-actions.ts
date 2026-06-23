@@ -98,6 +98,7 @@ export async function updateProject(formData: FormData) {
     has_script_doc:     formData.get("has_script_doc") === "true",
     has_budget_doc:     formData.get("has_budget_doc") === "true",
     has_lookbook:       formData.get("has_lookbook") === "true",
+    has_coproducer:     formData.get("has_coproducer") === "true",
     updated_at:         new Date().toISOString(),
   };
 

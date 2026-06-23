@@ -304,7 +304,7 @@ export function computeFundingReadiness(
   if (topMatches?.length) {
     const top3 = topMatches.slice(0, 3);
     for (const { opportunity: opp } of top3) {
-      if (opp.copro_required && !project.producer_info?.toLowerCase().includes("co-produc")) {
+      if (opp.copro_required && !project.has_coproducer) {
         fund_requirements.push(`${opp.title} requires a confirmed co-producer`);
       }
       if (opp.gender_focus && !project.director_statement) {

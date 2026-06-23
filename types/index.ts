@@ -78,6 +78,7 @@ export interface Project {
   has_script_doc: boolean;
   has_budget_doc: boolean;
   has_lookbook: boolean;
+  has_coproducer: boolean;
   is_public: boolean;
   created_at: string;
   /** e.g. "First-time", "Emerging", "Established" — hybrid matching bonus (fylympitchEngine.ts) */
