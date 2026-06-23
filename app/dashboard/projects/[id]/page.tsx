@@ -537,7 +537,10 @@ export default async function ProjectDetailPage({
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontSize: 13, color: S.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 3 }}>
-                          {pm.profile.full_name}
+                          <Link href={`/producers/${pm.profile.id}`} style={{ color: S.ink, textDecoration: "none" }}
+                            className="hover:text-gold transition-colors">
+                            {pm.profile.full_name}
+                          </Link>
                           {pm.profile.company && <span style={{ color: S.ash }}> · {pm.profile.company}</span>}
                         </p>
                         <span style={{
