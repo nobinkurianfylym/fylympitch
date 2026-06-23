@@ -173,19 +173,65 @@ function showToast(message, ok = true) {
 // match against keyword map, fill the winner.
 
 const LABEL_KEYWORDS = {
-  title:              ["project title", "title of the", "film title", "name of project", "project name"],
-  logline:            ["logline", "logline synopsis", "one-line synopsis", "elevator pitch"],
-  synopsis:           ["one-paragraph synopsis", "paragraph synopsis", "synopsis of your project",
-                       "project description", "description of your project", "story synopsis"],
-  director_statement: ["director's statement", "director statement", "creative vision", "artistic statement"],
-  director_name:      ["director", "directed by", "name of director"],
-  writer_name:        ["writer", "screenwriter", "written by", "script writer"],
-  genre:              ["genre"],
-  language:           ["primary language", "original language", "language of"],
-  country:            ["country of origin", "country of production", "country of principal"],
-  budget_usd:         ["total budget", "project budget", "estimated budget"],
-  format:             ["project format", "film format", "format of"],
-  stage:              ["stage of development", "production stage", "development stage"],
+  title: [
+    "project title", "film title", "title of the project", "title of your project",
+    "name of project", "project name", "name of film", "title of film",
+    "name of the project", "what is the title",
+  ],
+  logline: [
+    "logline", "logline synopsis", "one-line synopsis", "one line synopsis",
+    "elevator pitch", "one sentence", "25 words or less", "50 words or less",
+  ],
+  synopsis: [
+    "one-paragraph synopsis", "paragraph synopsis", "synopsis of your project",
+    "project description", "description of your project", "story synopsis",
+    "synopsis of the project", "brief synopsis", "project synopsis",
+    "about your project", "describe your project",
+  ],
+  director_statement: [
+    "director's statement", "director statement", "creative vision",
+    "artistic statement", "creative statement", "your vision",
+  ],
+  director_name: [
+    "director", "directed by", "name of director", "director's name",
+    "director full name", "key creative: director", "lead director",
+    "director/filmmaker",
+  ],
+  writer_name: [
+    "writer", "screenwriter", "written by", "script writer",
+    "writer's name", "writer/creator", "name of writer", "author",
+    "screenplay by", "key creative: writer",
+  ],
+  producer_info: [
+    "producer", "production company", "producing entity",
+    "key producer", "lead producer", "producer's name",
+  ],
+  genre: [
+    "genre", "primary genre", "film genre", "project genre",
+    "type of project", "what genre",
+  ],
+  language: [
+    "primary language", "original language", "language of",
+    "principal language", "main language", "dialogue language",
+  ],
+  country: [
+    "country of origin", "country of production", "country of principal",
+    "country of filming", "production country", "principal country",
+  ],
+  budget_usd: [
+    "total budget", "project budget", "estimated budget",
+    "total project budget", "production budget", "budget of the project",
+    "total cost", "what is the budget", "budget amount",
+  ],
+  format: [
+    "project format", "film format", "format of the project",
+    "format of project", "what format", "type of content",
+  ],
+  stage: [
+    "stage of development", "production stage", "development stage",
+    "current stage", "what stage", "stage of production",
+    "where is the project", "project stage",
+  ],
 };
 
 /**
