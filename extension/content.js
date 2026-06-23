@@ -198,49 +198,30 @@ const LABEL_KEYWORDS = {
 function getInputContext(input) {
   const parts = [];
 
-  // aria-label / placeholder
+  // Direct attributes
   if (input.getAttribute("aria-label"))  parts.push(input.getAttribute("aria-label"));
   if (input.getAttribute("placeholder")) parts.push(input.getAttribute("placeholder"));
+  if (input.getAttribute("name"))        parts.push(input.getAttribute("name").replace(/[_-]/g, " "));
 
   // associated <label>
-  const id = input.id;
-  if (id) {
-    const lbl = document.querySelector(`label[for="${id}"]`);
+  if (input.id) {
+    const lbl = document.querySelector(`label[for="${input.id}"]`);
     if (lbl) parts.push(lbl.textContent);
   }
 
-  // preceding siblings (up to 3 levels back)
-  let prev = input.previousElementSibling;
-  let steps = 0;
-  while (prev && steps < 3) {
-    const t = prev.textContent.trim();
-    if (t.length > 2 && t.length < 400) parts.push(t);
-    prev = prev.previousElementSibling;
-    steps++;
-  }
-
-  // parent text (shallow — exclude deep children that have their own inputs)
-  const parent = input.parentElement;
-  if (parent) {
-    const parentText = Array.from(parent.childNodes)
-      .filter((n) => n.nodeType === Node.TEXT_NODE || (n.nodeName !== "INPUT" && n.nodeName !== "TEXTAREA" && n.nodeName !== "SELECT"))
-      .map((n) => n.textContent)
-      .join(" ")
-      .trim();
-    if (parentText.length > 2 && parentText.length < 400) parts.push(parentText);
-
-    // one level up
-    const grandParent = parent.parentElement;
-    if (grandParent) {
-      let prevSib = parent.previousElementSibling;
-      let s2 = 0;
-      while (prevSib && s2 < 2) {
-        const t = prevSib.textContent.trim();
-        if (t.length > 2 && t.length < 400) parts.push(t);
-        prevSib = prevSib.previousElementSibling;
-        s2++;
-      }
-    }
+  // Climb DOM tree up to 6 levels — collect text of siblings/ancestors
+  // that don't contain the input itself (catches SmartyGrants <p> labels)
+  let el = input.parentElement;
+  let levels = 0;
+  while (el && levels < 6) {
+    const siblings = Array.from(el.childNodes).filter(
+      (n) => n !== input && !n.contains?.(input)
+    );
+    const text = siblings.map((n) => n.textContent ?? "").join(" ")
+      .replace(/\s+/g, " ").trim();
+    if (text.length > 3 && text.length < 500) parts.push(text);
+    el = el.parentElement;
+    levels++;
   }
 
   return parts.join(" ").toLowerCase();
