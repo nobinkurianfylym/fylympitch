@@ -69,6 +69,7 @@ export default async function ProducerDiscoverPage() {
       .from("projects")
       .select("id, title, genre, format, stage, country, language, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, logline, poster_path, love_count, is_public, director_name, owner_id, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
       .eq("admin_hidden", false)
+      .is("target_producer_id", null)
       .order("created_at", { ascending: false })
       .limit(50),
     supabase

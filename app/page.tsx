@@ -89,6 +89,7 @@ export default async function Home() {
       .from("projects")
       .select("id, title, genre, format, stage, country, budget_usd")
       .eq("is_public", true)
+    .is("target_producer_id", null)
       .order("created_at", { ascending: false })
       .limit(40);
     trendingProjects = (raw ?? []).map((p: any) => {
