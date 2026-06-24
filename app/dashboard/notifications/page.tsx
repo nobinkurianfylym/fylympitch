@@ -5,14 +5,15 @@ import { markAllRead, deleteNotification, deleteAllNotifications } from "@/lib/a
 
 export const dynamic = "force-dynamic";
 
-const KIND_META: Record<string, { label: string; dot: string }> = {
-  producer_interest:  { label: "Producer Interest", dot: "bg-gold" },
-  offer_received:     { label: "Offer",             dot: "bg-emerald-500" },
-  match_found:        { label: "New Match",         dot: "bg-blue-500" },
-  application_update: { label: "Application",       dot: "bg-violet-500" },
-  new_opportunity:    { label: "Producer Brief",    dot: "bg-gold" },
-  new_fund:           { label: "New Fund",          dot: "bg-blue-500" },
-  system:             { label: "System",            dot: "bg-ash" },
+const KIND_META: Record<string, { label: string; dot: string; icon: string; iconBg: string }> = {
+  producer_interest:  { label: "Producer Interest", dot: "bg-gold",         icon: "◆", iconBg: "bg-gold/10 text-gold" },
+  offer_received:     { label: "Offer",             dot: "bg-emerald-500",  icon: "✦", iconBg: "bg-emerald-50 text-emerald-600" },
+  match_found:        { label: "New Match",         dot: "bg-blue-500",     icon: "▲", iconBg: "bg-blue-50 text-blue-500" },
+  new_project:        { label: "New Project",       dot: "bg-blue-500",     icon: "▶", iconBg: "bg-blue-50 text-blue-500" },
+  application_update: { label: "Application",       dot: "bg-violet-500",   icon: "●", iconBg: "bg-violet-50 text-violet-500" },
+  new_opportunity:    { label: "Producer Brief",    dot: "bg-gold",         icon: "◉", iconBg: "bg-gold/10 text-gold" },
+  new_fund:           { label: "New Fund",          dot: "bg-blue-500",     icon: "◈", iconBg: "bg-blue-50 text-blue-500" },
+  system:             { label: "System",            dot: "bg-ash",          icon: "◎", iconBg: "bg-parchment text-ash" },
 };
 
 export default async function NotificationsPage() {
@@ -33,12 +34,24 @@ export default async function NotificationsPage() {
       .single(),
   ]);
 
-  // Fetch poster thumbnails for notifications that have a project_id
+  // ── Thumbnails: projects ─────────────────────────────────────────────────
   const projectIds = (items ?? []).map((n: any) => n.project_id).filter(Boolean);
   const { data: projectData } = projectIds.length
     ? await supabase.from("projects").select("id, poster_path").in("id", projectIds)
     : { data: [] };
   const posterMap = new Map((projectData ?? []).map((p: any) => [p.id, p.poster_path]));
+
+  // ── Thumbnails: opportunities (new_opportunity / new_fund) ────────────────
+  // Extract slug from links like /opportunities/some-slug-abc123
+  const oppSlugs = (items ?? [])
+    .filter((n: any) => n.link?.startsWith("/opportunities/"))
+    .map((n: any) => n.link.replace("/opportunities/", "").split("/")[0])
+    .filter(Boolean);
+  const uniqueOppSlugs = [...new Set(oppSlugs)];
+  const { data: oppData } = uniqueOppSlugs.length
+    ? await supabase.from("opportunities").select("slug, poster_url").in("slug", uniqueOppSlugs)
+    : { data: [] };
+  const oppPosterMap = new Map((oppData ?? []).map((o: any) => [o.slug, o.poster_url as string | null]));
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
@@ -120,12 +133,23 @@ export default async function NotificationsPage() {
       {/* ── List ── */}
       <div className="mt-8 divide-y divide-line">
         {(items ?? []).map((n: any) => {
-          const meta = KIND_META[n.kind] ?? KIND_META.system;
+          const meta     = KIND_META[n.kind] ?? KIND_META.system;
           const isUnread = !n.read;
-          const posterPath = n.project_id ? posterMap.get(n.project_id) : null;
-          const posterUrl = posterPath
+
+          // ── Resolve thumbnail ──────────────────────────────────────────────
+          // 1. Project poster (producer_interest, offer_received, match_found…)
+          const posterPath   = n.project_id ? posterMap.get(n.project_id) : null;
+          const projectThumb = posterPath
             ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`
             : null;
+
+          // 2. Opportunity poster (new_opportunity, new_fund)
+          const oppSlug   = n.link?.startsWith("/opportunities/")
+            ? n.link.replace("/opportunities/", "").split("/")[0]
+            : null;
+          const oppThumb  = oppSlug ? (oppPosterMap.get(oppSlug) ?? null) : null;
+
+          const thumbUrl  = projectThumb || oppThumb;
 
           // Inner row — shared between linked and plain variants
           const inner = (
@@ -137,12 +161,16 @@ export default async function NotificationsPage() {
                 <span className={`block w-2 h-2 rounded-full ${isUnread ? meta.dot : "bg-transparent"}`} />
               </div>
 
-              {/* Poster thumbnail */}
-              {posterUrl && (
-                <div className="shrink-0 w-14 h-[3.5rem] rounded-[4px] overflow-hidden border border-line bg-parchment">
-                  <img src={posterUrl} alt="" className="w-full h-full object-cover" />
-                </div>
-              )}
+              {/* Thumbnail — always rendered, image or fallback icon */}
+              <div className="shrink-0 w-[52px] h-[68px] rounded-[4px] overflow-hidden border border-line bg-parchment flex items-center justify-center">
+                {thumbUrl ? (
+                  <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className={`w-full h-full flex items-center justify-center ${meta.iconBg}`}>
+                    <span className="text-[18px] leading-none select-none">{meta.icon}</span>
+                  </div>
+                )}
+              </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
@@ -153,7 +181,7 @@ export default async function NotificationsPage() {
                   {n.title}
                 </p>
                 {n.body && (
-                  <p className="mt-1 text-[13px] text-ash leading-relaxed">{n.body}</p>
+                  <p className="mt-1 text-[13px] text-ash leading-relaxed line-clamp-2">{n.body}</p>
                 )}
               </div>
 
