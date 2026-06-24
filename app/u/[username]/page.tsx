@@ -1,3 +1,4 @@
+import React from "react";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -228,195 +229,190 @@ export default async function PublicProfilePage({
     return (
       <>
         <style>{`
-          @keyframes pFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-          .pf{animation:pFade 0.5s ease-out forwards}
-          .pf2{animation:pFade 0.5s 0.08s ease-out both}
-          .pf3{animation:pFade 0.5s 0.16s ease-out both}
-          .chip-lt{display:inline-flex;align-items:center;padding:3px 11px;border-radius:100px;font-size:11px;letter-spacing:.04em;font-weight:500;border:1px solid rgba(26,24,21,.1);color:#8A857C;background:transparent}
-          .chip-gd{display:inline-flex;align-items:center;padding:3px 11px;border-radius:100px;font-size:11px;letter-spacing:.04em;font-weight:500;border:1px solid rgba(191,153,83,.3);color:#8A6F3E;background:transparent}
-          .sl{font-size:9px;letter-spacing:.26em;text-transform:uppercase;font-weight:600;color:rgba(26,24,21,.3);margin-bottom:14px;display:block}
-          .psec{padding:32px 0;border-bottom:1px solid rgba(26,24,21,.07)}
-          .psec:last-child{border-bottom:none}
-          .pf-nav{transition:opacity 150ms}.pf-nav:hover{opacity:1!important}
-          @media(max-width:768px){.pf-hero-inner{flex-direction:column!important;gap:20px!important}.pf-two-col{grid-template-columns:1fr!important}}
+          @keyframes arrive { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+          .arrive   { animation: arrive 0.65s cubic-bezier(0.16,1,0.3,1) forwards; }
+          .arrive-2 { animation: arrive 0.65s 0.1s cubic-bezier(0.16,1,0.3,1) both; }
+          .pnav-lnk { transition: opacity 120ms; } .pnav-lnk:hover { opacity:1 !important; }
+          .lnk-gd   { transition: opacity 150ms; } .lnk-gd:hover { opacity:0.7; }
+          @media (max-width:640px) { .p-hero { flex-direction:column !important; gap:16px !important; } }
         `}</style>
-        <div style={{background:"#F5F5F0",minHeight:"100vh",fontFamily:"'Montserrat',sans-serif"}}>
 
-          {/* Nav — clean ivory */}
-          <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:50,height:52,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 40px",background:"rgba(245,245,240,.92)",backdropFilter:"blur(16px)",WebkitBackdropFilter:"blur(16px)",borderBottom:"1px solid rgba(26,24,21,.07)"}}>
+        <div style={{ background:"#F5F5F0", minHeight:"100vh", fontFamily:"'Montserrat',sans-serif" }}>
+
+          {/* Nav — minimal, almost invisible */}
+          <nav style={{
+            position:"fixed", top:0, left:0, right:0, zIndex:50, height:48,
+            display:"flex", alignItems:"center", justifyContent:"space-between",
+            padding:"0 48px",
+            background:"rgba(245,245,240,0.95)",
+            backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)",
+            borderBottom:"1px solid rgba(26,24,21,0.05)",
+          }}>
             <Wordmark href="/" size="sm" />
-            <div style={{display:"flex",alignItems:"center",gap:24}}>
-              {user
-                ? <Link href={dashboardHref} className="pf-nav" style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,.4)"}}>Studio</Link>
-                : <Link href="/login" style={{fontSize:10,letterSpacing:".16em",textTransform:"uppercase",fontWeight:700,color:"#F5F5F0",background:"#1A1815",padding:"7px 18px",borderRadius:100,textDecoration:"none"}}>Sign in</Link>
-              }
-            </div>
+            {user && (
+              <Link href={dashboardHref} className="pnav-lnk"
+                style={{ fontSize:10, letterSpacing:".18em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.32)", textDecoration:"none" }}>
+                Studio
+              </Link>
+            )}
           </nav>
 
-          {/* Hero — ivory, no dark band */}
-          <div style={{paddingTop:52,borderBottom:"1px solid rgba(26,24,21,.07)"}}>
-            <div style={{maxWidth:960,margin:"0 auto",padding:"56px 40px 48px"}}>
-              <div className="pf-hero-inner" style={{display:"flex",alignItems:"flex-start",gap:28}}>
+          {/* Editorial column */}
+          <div style={{ maxWidth:680, margin:"0 auto", padding:"108px 40px 120px" }}>
 
-                {/* Avatar */}
-                <div className="pf" style={{flexShrink:0}}>
-                  <div style={{width:72,height:72,borderRadius:"50%",overflow:"hidden",border:"1px solid rgba(26,24,21,.1)",background:"rgba(26,24,21,.04)",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    {avatarSrc
-                      ? <img src={avatarSrc} alt={profile.full_name} style={{width:"100%",height:"100%",objectFit:"cover"}} />
-                      : <span style={{fontFamily:"'Playfair Display',serif",fontSize:24,color:"rgba(26,24,21,.25)"}}>{initials}</span>}
-                  </div>
-                </div>
+            {/* ── Identity block ── */}
+            <div className="arrive">
 
-                {/* Name block */}
-                <div className="pf2" style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"baseline",gap:12,flexWrap:"wrap",marginBottom:6}}>
-                    <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(24px,3.5vw,36px)",color:"#1A1815",fontWeight:700,lineHeight:1.1,margin:0}}>
-                      {profile.full_name}
-                    </h1>
-                    {isVerified && (
-                      <span style={{fontSize:9,letterSpacing:".2em",textTransform:"uppercase",fontWeight:700,color:"#BF9953",border:"1px solid rgba(191,153,83,.35)",padding:"2px 8px",borderRadius:100}}>✦ Verified</span>
-                    )}
+              {/* Role eyebrow */}
+              <p style={{ fontSize:9, letterSpacing:".32em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.28)", margin:"0 0 22px" }}>
+                {isVerified ? "✦ Verified Producer" : "Producer"}
+              </p>
+
+              {/* Avatar + Name */}
+              <div className="p-hero" style={{ display:"flex", alignItems:"flex-start", gap:20, marginBottom:18 }}>
+                {avatarSrc && (
+                  <div style={{ flexShrink:0, width:54, height:54, borderRadius:"50%", overflow:"hidden", border:"1px solid rgba(26,24,21,0.08)", marginTop:6 }}>
+                    <img src={avatarSrc} alt={profile.full_name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
                   </div>
-                  <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:"4px 16px",marginTop:4}}>
-                    {profile.company && <span style={{fontSize:13,fontWeight:600,color:"#BF9953"}}>{profile.company}</span>}
-                    {profile.country && <span style={{fontSize:12,color:"#8A857C"}}>{profile.country}</span>}
-                    {yearsExp && <span style={{fontSize:12,color:"#8A857C"}}>{yearsExp} years</span>}
-                  </div>
-                  {profile.bio && (
-                    <p style={{fontSize:13,lineHeight:1.8,color:"rgba(26,24,21,.55)",marginTop:16,maxWidth:600}}>{profile.bio}</p>
+                )}
+                <div>
+                  <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:"clamp(30px,5vw,50px)", fontWeight:700, lineHeight:1.06, color:"#1A1815", margin:0, letterSpacing:"-0.015em" }}>
+                    {profile.full_name}
+                  </h1>
+                  {profile.company && (
+                    <p style={{ fontSize:13, fontWeight:600, color:"#BF9953", margin:"7px 0 0", letterSpacing:".03em" }}>
+                      {profile.company}
+                    </p>
                   )}
                 </div>
+              </div>
 
-                {/* Links + share */}
-                <div className="pf3" style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:10,flexShrink:0,paddingTop:4}}>
+              {/* Meta — country · years · links */}
+              <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", columnGap:18, rowGap:6, marginBottom:36 }}>
+                {profile.country && <span style={{ fontSize:12, color:"#8A857C" }}>{profile.country}</span>}
+                {yearsExp && <span style={{ fontSize:12, color:"#8A857C" }}>{yearsExp} years</span>}
+                {profile.imdb_url && (
+                  <a href={profile.imdb_url} target="_blank" rel="noopener noreferrer" className="lnk-gd"
+                    style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:700, color:"#BF9953", textDecoration:"none" }}>IMDb ↗</a>
+                )}
+                {profile.website && (
+                  <a href={profile.website} target="_blank" rel="noopener noreferrer" className="lnk-gd"
+                    style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.38)", textDecoration:"none" }}>Website ↗</a>
+                )}
+                {linkedin && (
+                  <a href={linkedin} target="_blank" rel="noopener noreferrer" className="lnk-gd"
+                    style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.38)", textDecoration:"none" }}>LinkedIn ↗</a>
+                )}
+                <span style={{ marginLeft:"auto" }}>
                   <ProfileShareButton username={profile.username} name={profile.full_name} />
-                  <div style={{display:"flex",gap:16}}>
-                    {profile.imdb_url && <a href={profile.imdb_url} target="_blank" rel="noopener noreferrer" style={{fontSize:10,letterSpacing:".14em",textTransform:"uppercase",fontWeight:700,color:"#BF9953",textDecoration:"none"}}>IMDb ↗</a>}
-                    {profile.website  && <a href={profile.website}  target="_blank" rel="noopener noreferrer" style={{fontSize:10,letterSpacing:".14em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,.4)",textDecoration:"none"}}>Web ↗</a>}
-                    {linkedin         && <a href={linkedin}          target="_blank" rel="noopener noreferrer" style={{fontSize:10,letterSpacing:".14em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,.4)",textDecoration:"none"}}>LinkedIn ↗</a>}
-                  </div>
-                </div>
+                </span>
               </div>
-            </div>
-          </div>
 
-          {/* Snapshot — numbers inline, no box */}
-          {(uniqueMarkets.length > 0 || yearsExp || festivals.length > 0) && (
-            <div style={{borderBottom:"1px solid rgba(26,24,21,.07)",background:"#fff"}}>
-              <div style={{maxWidth:960,margin:"0 auto",padding:"0 40px",display:"flex"}}>
-                {[
-                  {val:uniqueMarkets.length > 0 ? String(uniqueMarkets.length) : null, label:"Markets"},
-                  {val:yearsExp ? `${yearsExp}y` : null, label:"Experience"},
-                  {val:festivals.length > 0 ? String(festivals.length) : null, label:"Festivals"},
-                ].filter(s => s.val).map((stat, i) => (
-                  <div key={stat.label} style={{padding:"22px 32px 22px",borderRight:"1px solid rgba(26,24,21,.07)",paddingLeft:i===0?0:32}}>
-                    <span style={{fontFamily:"'Playfair Display',serif",fontSize:26,color:"#1A1815",fontWeight:700,marginRight:6}}>{stat.val}</span>
-                    <span style={{fontSize:9,letterSpacing:".22em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,.3)"}}>{stat.label}</span>
-                  </div>
-                ))}
+              {/* Bio — the centrepiece */}
+              {profile.bio && (
+                <p style={{ fontSize:15, lineHeight:1.88, color:"rgba(26,24,21,0.58)", margin:0, fontWeight:400 }}>
+                  {profile.bio}
+                </p>
+              )}
+            </div>
+
+            {/* ── Rule ── */}
+            <div style={{ height:1, background:"rgba(26,24,21,0.07)", margin:"52px 0" }} />
+
+            {/* ── Pitch status ── */}
+            <div className="arrive-2" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12, marginBottom:52 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:9 }}>
+                <span style={{ width:5, height:5, borderRadius:"50%", background:acceptingPitches ? "#5aab7a" : "rgba(26,24,21,0.18)", flexShrink:0 }} />
+                <span style={{ fontSize:12, fontWeight:600, color:acceptingPitches ? "rgba(26,24,21,0.6)" : "rgba(26,24,21,0.28)", letterSpacing:".02em" }}>
+                  {acceptingPitches ? "Accepting pitches" : "Not accepting pitches"}
+                </span>
+                {responseTime && (
+                  <span style={{ fontSize:11, color:"rgba(26,24,21,0.28)", marginLeft:2 }}>— {responseTime}</span>
+                )}
               </div>
+              {user && user.id !== profile.id && acceptingPitches && (
+                <Link href="/producer/messages" className="lnk-gd" style={{
+                  fontSize:10, letterSpacing:".16em", textTransform:"uppercase", fontWeight:700,
+                  color:"#8A6F3E", textDecoration:"none",
+                  border:"1px solid rgba(191,153,83,0.35)",
+                  padding:"8px 18px", borderRadius:100,
+                }}>
+                  Send message
+                </Link>
+              )}
             </div>
-          )}
 
-          {/* Main */}
-          <div style={{maxWidth:960,margin:"0 auto",padding:"40px 40px 80px"}}>
-            <div className="pf-two-col" style={{display:"grid",gridTemplateColumns:"1fr 260px",gap:56,alignItems:"start"}}>
-
-              {/* Left — sections separated by thin rules, no cards */}
-              <div>
-                {(genres.length > 0 || formats.length > 0) && (
-                  <div className="psec">
-                    <span className="sl">Genres</span>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                      {genres.map(g => <span key={g} className="chip-lt">{g}</span>)}
-                      {formats.map(f => <span key={f} className="chip-lt" style={{color:"rgba(26,24,21,.35)",borderColor:"rgba(26,24,21,.08)"}}>{f}</span>)}
-                    </div>
+            {/* ── Data sections ── */}
+            <div className="arrive-2">
+              {([
+                (genres.length > 0 || formats.length > 0) && {
+                  label:"Genres",
+                  node:<p style={{ fontSize:14, color:"rgba(26,24,21,0.6)", lineHeight:1.7, margin:0 }}>
+                    {[...genres, ...formats].join(", ")}
+                  </p>
+                },
+                lookingFor.length > 0 && {
+                  label:"Currently Looking For",
+                  node:<div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+                    {lookingFor.map((l: string) => (
+                      <span key={l} style={{ fontSize:11, letterSpacing:".02em", fontWeight:500, color:"#8A6F3E", border:"1px solid rgba(191,153,83,0.28)", padding:"4px 13px", borderRadius:100 }}>{l}</span>
+                    ))}
                   </div>
-                )}
-                {lookingFor.length > 0 && (
-                  <div className="psec">
-                    <span className="sl">Currently Looking For</span>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                      {lookingFor.map(l => <span key={l} className="chip-gd">{l}</span>)}
-                    </div>
-                  </div>
-                )}
-                {(CAPACITY_MAP[capacity] || fundingRoles.length > 0 || stages.length > 0) && (
-                  <div className="psec">
-                    <span className="sl">Investment Profile</span>
+                },
+                (CAPACITY_MAP[capacity] || fundingRoles.length > 0) && {
+                  label:"Investment",
+                  node:<div style={{ display:"flex", flexDirection:"column" as const, gap:6 }}>
                     {CAPACITY_MAP[capacity] && (
-                      <p style={{fontSize:16,fontWeight:700,color:"#1A1815",margin:"0 0 10px",fontFamily:"'Playfair Display',serif"}}>
-                        {CAPACITY_MAP[capacity]}
-                        {BUDGET_MAP[budget] && <span style={{fontSize:13,fontWeight:400,color:"#8A857C",fontFamily:"Montserrat,sans-serif"}}> · {BUDGET_MAP[budget]}</span>}
+                      <p style={{ margin:0 }}>
+                        <span style={{ fontFamily:"'Playfair Display',serif", fontSize:17, fontWeight:700, color:"#1A1815" }}>{CAPACITY_MAP[capacity]}</span>
+                        {BUDGET_MAP[budget] && <span style={{ fontSize:13, color:"rgba(26,24,21,0.35)", marginLeft:8 }}>{BUDGET_MAP[budget]}</span>}
                       </p>
                     )}
-                    {(fundingRoles.length > 0 || stages.length > 0) && (
-                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                        {fundingRoles.map(r => <span key={r} className="chip-lt">{FUNDING_ROLES_MAP[r] ?? r}</span>)}
-                        {stages.map(s => <span key={s} className="chip-lt">{STAGES_MAP[s] ?? s}</span>)}
-                      </div>
+                    {fundingRoles.length > 0 && (
+                      <p style={{ fontSize:13, color:"rgba(26,24,21,0.45)", margin:0 }}>
+                        {fundingRoles.map((r: string) => FUNDING_ROLES_MAP[r] ?? r).join(", ")}
+                      </p>
+                    )}
+                    {stages.length > 0 && (
+                      <p style={{ fontSize:12, color:"rgba(26,24,21,0.35)", margin:0 }}>
+                        {stages.map((s: string) => STAGES_MAP[s] ?? s).join(", ")}
+                      </p>
                     )}
                   </div>
-                )}
-                {uniqueMarkets.length > 0 && (
-                  <div className="psec">
-                    <span className="sl">Market Experience</span>
-                    <p style={{fontSize:13,color:"#8A857C",lineHeight:2,margin:0}}>{uniqueMarkets.join(" · ")}</p>
-                  </div>
-                )}
-                {festivals.length > 0 && (
-                  <div className="psec">
-                    <span className="sl">Festival Pedigree</span>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                      {festivals.map(f => <span key={f} className="chip-lt">{f}</span>)}
+                },
+                uniqueMarkets.length > 0 && {
+                  label:"Markets",
+                  node:<p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{uniqueMarkets.join(" · ")}</p>
+                },
+                festivals.length > 0 && {
+                  label:"Festival Pedigree",
+                  node:<p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{festivals.join(", ")}</p>
+                },
+                languages.length > 0 && {
+                  label:"Languages",
+                  node:<p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{languages.join(", ")}</p>
+                },
+              ] as ({ label: string; node: React.ReactNode } | false)[])
+                .filter(Boolean)
+                .map((sec, i, arr) => {
+                  const s = sec as { label: string; node: React.ReactNode };
+                  return (
+                    <div key={s.label} style={{ paddingBottom:36, borderBottom: i < arr.length - 1 ? "1px solid rgba(26,24,21,0.06)" : "none", marginBottom: i < arr.length - 1 ? 36 : 0 }}>
+                      <p style={{ fontSize:9, letterSpacing:".28em", textTransform:"uppercase" as const, fontWeight:600, color:"rgba(26,24,21,0.26)", margin:"0 0 14px" }}>
+                        {s.label}
+                      </p>
+                      {s.node}
                     </div>
-                  </div>
-                )}
-                {languages.length > 0 && (
-                  <div className="psec">
-                    <span className="sl">Languages</span>
-                    <p style={{fontSize:13,color:"#8A857C",lineHeight:2,margin:0}}>{languages.join(" · ")}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Right sidebar — minimal, no dark fill */}
-              <div style={{position:"sticky",top:72}}>
-
-                {/* Submissions */}
-                <div style={{padding:"24px 0",borderBottom:"1px solid rgba(26,24,21,.07)",marginBottom:24}}>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-                    <span style={{fontSize:9,letterSpacing:".26em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,.3)"}}>Submissions</span>
-                    <div style={{display:"flex",alignItems:"center",gap:5}}>
-                      <span style={{width:5,height:5,borderRadius:"50%",background:acceptingPitches?"#4ade80":"rgba(26,24,21,.2)"}} />
-                      <span style={{fontSize:11,fontWeight:600,color:acceptingPitches?"#2e7d52":"rgba(26,24,21,.4)"}}>
-                        {acceptingPitches ? "Open" : "Closed"}
-                      </span>
-                    </div>
-                  </div>
-                  {responseTime && (
-                    <p style={{fontSize:11,color:"rgba(26,24,21,.35)",margin:"0 0 16px"}}>{responseTime}</p>
-                  )}
-                  {user && user.id !== profile.id && acceptingPitches && (
-                    <Link href="/producer/messages" style={{display:"block",textAlign:"center",padding:"9px 16px",borderRadius:8,border:"1px solid rgba(191,153,83,.4)",color:"#8A6F3E",fontSize:11,letterSpacing:".12em",textTransform:"uppercase",fontWeight:700,textDecoration:"none",background:"rgba(191,153,83,.06)"}}>
-                      Send message
-                    </Link>
-                  )}
-                </div>
-
-                {/* Links */}
-                {(profile.imdb_url || profile.website || linkedin) && (
-                  <div style={{paddingBottom:24}}>
-                    <span className="sl">Links</span>
-                    <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                      {profile.imdb_url && <a href={profile.imdb_url} target="_blank" rel="noopener noreferrer" style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#8A857C",textDecoration:"none"}}><span style={{fontSize:9,letterSpacing:".14em",textTransform:"uppercase",fontWeight:700,color:"rgba(26,24,21,.3)"}}>IMDb</span><span style={{color:"#BF9953",fontSize:10}}>↗</span></a>}
-                      {profile.website  && <a href={profile.website}  target="_blank" rel="noopener noreferrer" style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#8A857C",textDecoration:"none"}}><span style={{fontSize:9,letterSpacing:".14em",textTransform:"uppercase",fontWeight:700,color:"rgba(26,24,21,.3)"}}>Website</span><span style={{color:"rgba(26,24,21,.3)",fontSize:10}}>↗</span></a>}
-                      {linkedin         && <a href={linkedin}          target="_blank" rel="noopener noreferrer" style={{display:"flex",justifyContent:"space-between",fontSize:12,color:"#8A857C",textDecoration:"none"}}><span style={{fontSize:9,letterSpacing:".14em",textTransform:"uppercase",fontWeight:700,color:"rgba(26,24,21,.3)"}}>LinkedIn</span><span style={{color:"rgba(26,24,21,.3)",fontSize:10}}>↗</span></a>}
-                    </div>
-                  </div>
-                )}
-              </div>
+                  );
+                })
+              }
             </div>
+
+            {/* ── Footer ── */}
+            <div style={{ height:1, background:"rgba(26,24,21,0.06)", margin:"64px 0 40px" }} />
+            <p style={{ fontSize:9, letterSpacing:".28em", textTransform:"uppercase", color:"rgba(26,24,21,0.18)", fontWeight:600, margin:0 }}>
+              Pitch.Fylym
+            </p>
           </div>
         </div>
       </>
