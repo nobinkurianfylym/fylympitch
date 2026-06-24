@@ -84,7 +84,7 @@ export default async function ProjectsPage({
           {/* Format filters + search */}
           <div className="mt-7 flex flex-wrap gap-2 items-center">
             <Link
-              href={`/projects${q ? `?q=${encodeURIComponent(q)}` : ""}`}
+              href={`/filmprojects${q ? `?q=${encodeURIComponent(q)}` : ""}`}
               className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-4 py-2 border transition-colors ${
                 !format ? "bg-ink text-ivory border-ink" : "border-line text-ash hover:border-ink hover:text-ink"
               }`}>
@@ -93,7 +93,7 @@ export default async function ProjectsPage({
             {FORMATS.map((f) => (
               <Link
                 key={f}
-                href={`/projects?format=${f.toLowerCase()}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+                href={`/filmprojects?format=${f.toLowerCase()}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
                 className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-4 py-2 border transition-colors ${
                   format?.toLowerCase() === f.toLowerCase()
                     ? "bg-ink text-ivory border-ink"
@@ -132,7 +132,7 @@ export default async function ProjectsPage({
                     financing_secured_usd: p.finance_secured_usd ?? null,
                   }}
                   supabaseUrl={supabaseUrl}
-                  href={`/projects/${p.id}`}
+                  href={`/filmprojects/${p.id}`}
                   actions={
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">

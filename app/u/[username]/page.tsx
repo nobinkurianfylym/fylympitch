@@ -574,7 +574,7 @@ export default async function PublicProfilePage({
                   <span className="fksl">Projects</span>
                   <div style={{display:"flex",flexDirection:"column",gap:10}}>
                     {projectList.map((p:any) => (
-                      <Link key={p.id} href={`/projects/${p.slug ?? p.id}`}
+                      <Link key={p.id} href={`/filmprojects/${p.slug ?? p.id}`}
                         style={{display:"flex",alignItems:"center",gap:12,textDecoration:"none",padding:"8px 0",borderBottom:"1px solid rgba(26,24,21,0.06)"}}>
                         {p.poster_path && (
                           <div style={{width:40,height:54,borderRadius:6,overflow:"hidden",flexShrink:0,background:"rgba(26,24,21,0.06)"}}>

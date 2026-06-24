@@ -101,7 +101,7 @@ export default function ProducerProjectTicker({
           {TRACK.map((p, i) => (
             <Link
               key={`${p.id}-${i}`}
-              href={`/projects/${p.id}`}
+              href={`/filmprojects/${p.id}`}
               className="group shrink-0 mx-2 bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold/40 transition-colors"
               style={{ width: 192 }}
             >

@@ -45,7 +45,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   if (isUuid) {
     const { data: slugRow } = await supabase
       .from("projects").select("slug").eq("id", id).eq("is_public", true).single();
-    if (slugRow?.slug) redirect(`/projects/${slugRow.slug}`);
+    if (slugRow?.slug) redirect(`/filmprojects/${slugRow.slug}`);
   }
 
   const { data: p } = await supabase.from("projects")

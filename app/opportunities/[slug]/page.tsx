@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `https://pitch.fylym.com/funds/${slug}`,
+      url: `https://pitch.fylym.com/opportunities/${slug}`,
       siteName: "PITCH.FYLYM",
       type: "website",
     },
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
     },
     alternates: {
-      canonical: `https://pitch.fylym.com/funds/${slug}`,
+      canonical: `https://pitch.fylym.com/opportunities/${slug}`,
     },
   };
 }
@@ -102,13 +102,13 @@ export default async function FundDetailPage({ params }: Props) {
 
   // ── JSON-LD structured data ───────────────────────────────────────────────
   const BASE = "https://pitch.fylym.com";
-  const pageUrl = `${BASE}/funds/${(opp as any).slug}`;
+  const pageUrl = `${BASE}/opportunities/${(opp as any).slug}`;
 
   // BreadcrumbList — always present
   const breadcrumb = {
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Funds", "item": `${BASE}/funds` },
+      { "@type": "ListItem", "position": 1, "name": "Funds", "item": `${BASE}/opportunities` },
       { "@type": "ListItem", "position": 2, "name": opp.title, "item": pageUrl },
     ],
   };

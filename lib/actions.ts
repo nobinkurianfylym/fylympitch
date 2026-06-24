@@ -238,7 +238,7 @@ export async function createProject(formData: FormData) {
   revalidatePath("/filmprojects");
   revalidatePath("/dashboard/projects");
   if (formData.get("is_public") !== "false") {
-    revalidatePath(`/projects/${slug}`);
+    revalidatePath(`/filmprojects/${slug}`);
     revalidatePath("/sitemap.xml");
   }
   // Notify approved producers if project is public
@@ -454,7 +454,7 @@ export async function adminToggleOpportunity(formData: FormData) {
   });
   const { data: toggled } = await supabase
     .from("opportunities").select("slug").eq("id", id).single();
-  if ((toggled as any)?.slug) revalidatePath(`/funds/${(toggled as any).slug}`);
+  if ((toggled as any)?.slug) revalidatePath(`/opportunities/${(toggled as any).slug}`);
   revalidatePath("/admin/opportunities");
   revalidatePath("/opportunities");
   revalidatePath("/sitemap.xml");
@@ -679,7 +679,7 @@ export async function adminUpdateOpportunity(formData: FormData) {
   // Revalidate the specific fund detail page for instant SEO update
   const { data: updatedOpp } = await supabase
     .from("opportunities").select("slug").eq("id", id).single();
-  if ((updatedOpp as any)?.slug) revalidatePath(`/funds/${(updatedOpp as any).slug}`);
+  if ((updatedOpp as any)?.slug) revalidatePath(`/opportunities/${(updatedOpp as any).slug}`);
   revalidatePath("/admin/opportunities");
   revalidatePath("/opportunities");
   revalidatePath("/sitemap.xml");
@@ -1107,7 +1107,7 @@ export async function toggleProjectLove(projectId: string) {
     await supabase.from("project_loves").insert({ user_id: user.id, project_id: projectId });
   }
 
-  revalidatePath(`/projects/${projectId}`);
+  revalidatePath(`/filmprojects/${projectId}`);
   revalidatePath("/filmprojects");
 }
 

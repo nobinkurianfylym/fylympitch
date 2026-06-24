@@ -16,12 +16,12 @@ export const metadata: Metadata = {
     title: "Film Funds, Grants & Opportunities — PITCH.FYLYM",
     description:
       "Discover 180+ film grants, labs, funds, co-productions, sales agents, distributors, tax incentives and investors from 38+ countries.",
-    url: "https://pitch.fylym.com/funds",
+    url: "https://pitch.fylym.com/opportunities",
     siteName: "PITCH.FYLYM",
     type: "website",
   },
   alternates: {
-    canonical: "https://pitch.fylym.com/funds",
+    canonical: "https://pitch.fylym.com/opportunities",
   },
 };
 
@@ -183,8 +183,8 @@ export default async function FundsPage({
             {TABS.map((tab) => {
               const isActive = (!type && tab.value === "") || type === tab.value;
               const href = tab.value
-                ? `/funds?type=${tab.value}${q ? `&q=${encodeURIComponent(q)}` : ""}`
-                : `/funds${q ? `?q=${encodeURIComponent(q)}` : ""}`;
+                ? `/opportunities?type=${tab.value}${q ? `&q=${encodeURIComponent(q)}` : ""}`
+                : `/opportunities${q ? `?q=${encodeURIComponent(q)}` : ""}`;
               return (
                 <Link key={tab.value} href={href}
                   className={`text-[12px] tracking-[0.12em] uppercase rounded-full px-5 py-2.5 border transition-colors ${
@@ -223,7 +223,7 @@ export default async function FundsPage({
 
               return (
                 <Link key={o.id}
-                  href={`/funds/${(o as any).slug}`}
+                  href={`/opportunities/${(o as any).slug}`}
                   className="group flex flex-col bg-white border border-line rounded-[14px] overflow-hidden hover:border-gold/50 hover:shadow-sm transition-all no-underline"
                   style={{ textDecoration: "none", color: "inherit" }}>
 
