@@ -119,7 +119,6 @@ function DirectorLine({ project }: { project: FilmIdentityProject }) {
       {username ? (
         <Link
           href={`/u/${username}`}
-          onClick={(e: React.MouseEvent) => e.stopPropagation()}
           className="text-ash hover:text-gold transition-colors underline-offset-2 hover:underline"
         >
           {name}
