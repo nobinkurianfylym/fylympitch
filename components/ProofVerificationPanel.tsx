@@ -186,20 +186,38 @@ export function ProofVerificationPanel({
                     {viewerRole === "filmmaker" && (
                       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
 
-                        {/* Copy verify link */}
-                        <button
-                          onClick={() => copyVerifyLink(proof.sha256_hash, proof.id)}
-                          style={{
-                            width: "100%", padding: "7px 0",
-                            background: "rgba(255,255,255,0.05)",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            borderRadius: 6, cursor: "pointer",
-                            fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase",
-                            color: copiedId === proof.id ? "#BF9953" : "rgba(255,255,255,0.5)",
-                          }}
-                        >
-                          {copiedId === proof.id ? "✓ Link Copied" : "⎘ Copy Verification Link"}
-                        </button>
+                        {/* Verify link row — Open + Copy */}
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <a
+                            href={`/verify/${proof.sha256_hash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              flex: 1, padding: "7px 0", textAlign: "center",
+                              background: "rgba(191,153,83,0.1)",
+                              border: "1px solid rgba(191,153,83,0.25)",
+                              borderRadius: 6, cursor: "pointer",
+                              fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase",
+                              color: "#BF9953", textDecoration: "none",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                            }}
+                          >
+                            ↗ View Proof
+                          </a>
+                          <button
+                            onClick={() => copyVerifyLink(proof.sha256_hash, proof.id)}
+                            style={{
+                              flex: 1, padding: "7px 0",
+                              background: "rgba(255,255,255,0.05)",
+                              border: "1px solid rgba(255,255,255,0.1)",
+                              borderRadius: 6, cursor: "pointer",
+                              fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase",
+                              color: copiedId === proof.id ? "#BF9953" : "rgba(255,255,255,0.5)",
+                            }}
+                          >
+                            {copiedId === proof.id ? "✓ Copied" : "⎘ Copy Link"}
+                          </button>
+                        </div>
 
                         {/* Download .ots */}
                         <button

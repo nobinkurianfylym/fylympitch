@@ -21,6 +21,7 @@ interface ProofNotification {
     bitcoin_block_height: number | null;
     version: number;
     proof_type: string;
+    sha256_hash: string;
     ots_anchored_path: string | null;
     ots_pending_path: string | null;
   } | null;
@@ -66,6 +67,7 @@ export function ProofNotificationThread({
             bitcoin_block_height,
             version,
             proof_type,
+            sha256_hash,
             ots_anchored_path,
             ots_pending_path
           )
@@ -334,20 +336,31 @@ export function ProofNotificationThread({
                   </div>
 
                   {/* Download button */}
+                  <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                    <a
+                      href={`/verify/${proof.sha256_hash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-[#BF9953]/40 text-[#BF9953] text-[11px] uppercase tracking-[0.12em] hover:bg-[#BF9953]/10 transition-colors"
+                      style={{ textDecoration: "none" }}
+                    >
+                      ↗ View Proof
+                    </a>
                   <button
                     onClick={() => downloadCertificate(proof.id)}
                     disabled={downloadingId === proof.id}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#1A1815] text-[#F5F5F0] text-[11px] uppercase tracking-[0.12em] hover:bg-[#BF9953] transition-colors disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#1A1815] text-[#F5F5F0] text-[11px] uppercase tracking-[0.12em] hover:bg-[#BF9953] transition-colors disabled:opacity-50"
                   >
                     {downloadingId === proof.id ? (
                       "Generating link…"
                     ) : (
                       <>
                         <span>↓</span>
-                        Download .ots Certificate
+                        Download .ots
                       </>
                     )}
                   </button>
+                  </div>
                 </div>
               )}
 
