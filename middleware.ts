@@ -38,17 +38,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Logged in but profile not completed → onboarding
-  // (except if they're already on /onboarding or a nested path)
-  if (user && !error && isProtected && !path.startsWith("/onboarding")) {
+  // Logged in but profile not completed → role-aware onboarding
+  // Producers go to /producer/onboarding, filmmakers to /onboarding
+  if (user && !error && isProtected &&
+      !path.startsWith("/onboarding") &&
+      !path.startsWith("/producer/onboarding")) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("profile_completed")
+      .select("profile_completed, role")
       .eq("id", user.id)
       .single();
     if (profile && profile.profile_completed === false) {
       const url = request.nextUrl.clone();
-      url.pathname = "/onboarding";
+      url.pathname = profile.role === "producer" ? "/producer/onboarding" : "/onboarding";
       return NextResponse.redirect(url);
     }
   }

@@ -29,7 +29,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   // Safe fallback if profile row is missing (trigger race or DB error).
   const role = profile?.role ?? "filmmaker";
-  const isIndustry = role === "producer" || role === "investor" || role === "organization";
+
+  // Producers have their own studio — redirect them away from filmmaker dashboard
+  if (role === "producer") redirect("/producer");
+
+  const isIndustry = role === "investor" || role === "organization";
 
 
 
