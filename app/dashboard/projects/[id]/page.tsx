@@ -100,7 +100,7 @@ export default async function ProjectDetailPage({
     .eq("project_id", id)
     .order("score", { ascending: false })) as { data: MatchDbRow[] | null };
 
-  const COMPLETED_TYPES = new Set(["broadcaster","streamer","pre_sale","sales_agent","distribution"]);
+  const COMPLETED_TYPES = new Set(["broadcaster","streamer","pre_sale","sales_agent","distribution","film_festival"]);
   const isCompleted = project.stage === "completed";
 
   let ranked: MatchRow[] = [];
