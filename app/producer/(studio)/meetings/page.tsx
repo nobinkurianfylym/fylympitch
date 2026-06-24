@@ -7,9 +7,9 @@ import { timeAgo } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 const STATUS_STYLE: Record<string, string> = {
-  pending:   "bg-amber-50 text-amber-700 border border-amber-200",
-  accepted:  "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  declined:  "bg-red-50 text-red-700 border border-red-200",
+  pending:   "bg-gold/8 text-[#8A6F3E] border border-gold/30",
+  accepted:  "bg-[rgba(46,107,78,0.08)] text-[#2E6B4E] border border-[rgba(46,107,78,0.2)]",
+  declined:  "bg-[rgba(26,24,21,0.05)] text-ash border border-line",
   completed: "bg-parchment text-ash border border-line",
 };
 const STATUS_LABEL: Record<string, string> = {
@@ -109,7 +109,7 @@ export default async function MeetingsNotesPage() {
                             {m.status === "completed" ? "Update notes" : "Mark complete"}
                           </button>
                           {m.status === "completed" && (
-                            <span className="text-[11px] text-emerald-600">✓ Completed</span>
+                            <span className="text-[11px] text-[#2E6B4E] font-medium">✓ Completed</span>
                           )}
                         </div>
                       </form>

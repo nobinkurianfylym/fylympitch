@@ -31,10 +31,10 @@ const PREV: Record<StageKey, StageKey | null> = {
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  accepted:    "bg-emerald-50 text-emerald-700 border-emerald-200",
-  shortlisted: "bg-amber-50 text-amber-700 border-amber-200",
-  rejected:    "bg-red-50 text-red-700 border-red-200",
-  under_review:"bg-sky-50 text-sky-700 border-sky-200",
+  accepted:    "bg-[rgba(46,107,78,0.08)] text-[#2E6B4E] border-[rgba(46,107,78,0.2)]",
+  shortlisted: "bg-gold/8 text-[#8A6F3E] border-gold/30",
+  rejected:    "bg-[rgba(26,24,21,0.05)] text-ash border-line",
+  under_review:"bg-parchment text-ash border-line",
 };
 
 export default async function ApplicationsPage() {
