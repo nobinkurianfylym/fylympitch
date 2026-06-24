@@ -898,15 +898,27 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
   const funding_roles        = formData.getAll("funding_roles").map(String);
   const contribution_capacity = str(formData, "contribution_capacity") ?? null;
 
-  // Update identity on profiles table
-  const name = str(formData, "name");
-  const company = str(formData, "company");
-  const avatar_url = str(formData, "avatar_url");
+  // New fields from migration 048
+  const looking_for        = formData.getAll("looking_for").map(String);
+  const accepting_pitches  = formData.get("accepting_pitches") !== "false";
+  const response_time      = str(formData, "response_time") || null;
+  const years_experience   = formData.get("years_experience") ? Number(formData.get("years_experience")) : null;
 
-  const profileUpdate: Record<string, string> = {};
-  if (name)       profileUpdate.full_name  = name;
+  // Update identity on profiles table
+  const name        = str(formData, "name");
+  const company     = str(formData, "company");
+  const avatar_url  = str(formData, "avatar_url");
+  const bio         = str(formData, "bio") || null;
+  const website     = str(formData, "website") || null;
+  const linkedin_url = str(formData, "linkedin_url") || null;
+
+  const profileUpdate: Record<string, unknown> = {};
+  if (name)       profileUpdate.full_name   = name;
   if (company !== null && company !== undefined) profileUpdate.company = company;
-  if (avatar_url) profileUpdate.avatar_url = avatar_url;
+  if (avatar_url) profileUpdate.avatar_url  = avatar_url;
+  if (bio         !== undefined) profileUpdate.bio         = bio;
+  if (website     !== undefined) profileUpdate.website     = website;
+  if (linkedin_url !== undefined) profileUpdate.linkedin_url = linkedin_url;
 
   if (Object.keys(profileUpdate).length > 0) {
     await supabase.from("profiles").update(profileUpdate).eq("id", user.id);
@@ -926,6 +938,10 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
     language_preferences,
     funding_roles,
     contribution_capacity,
+    looking_for,
+    accepting_pitches,
+    response_time,
+    years_experience: Number.isFinite(years_experience) ? years_experience : null,
     is_public: formData.get("is_public") === "true",
     updated_at: new Date().toISOString(),
   };
