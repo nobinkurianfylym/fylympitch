@@ -8,6 +8,7 @@ import PitchDeckTile from "@/components/PitchDeckTile";
 import PipelineStageForm from "@/components/PipelineStageForm";
 import StarRatingForm from "@/components/StarRatingForm";
 import PrivateNotesForm from "@/components/PrivateNotesForm";
+import PassAndAdvanceButton from "@/components/PassAndAdvanceButton";
 import {
   formatBudgetDisplay,
   formatShortId,
@@ -70,6 +71,29 @@ export default async function ProducerProjectDetailPage({
   const { data: meeting } = await supabase
     .from("meeting_requests").select("*")
     .eq("producer_id", user.id).eq("project_id", id).maybeSingle();
+
+  // Next project — first unreviewed project (not passed, not current) by created_at
+  const { data: nextProjects } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("admin_hidden", false)
+    .is("target_producer_id", null)
+    .neq("id", id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  // Find first project the producer hasn't passed on
+  const passedIds = new Set<string>();
+  if (nextProjects && nextProjects.length > 0) {
+    const { data: passedRows } = await supabase
+      .from("producer_projects")
+      .select("project_id")
+      .eq("producer_id", user.id)
+      .eq("status", "passed")
+      .in("project_id", nextProjects.map((p: any) => p.id));
+    (passedRows ?? []).forEach((r: any) => passedIds.add(r.project_id));
+  }
+  const nextProjectId = (nextProjects ?? []).find((p: any) => !passedIds.has(p.id))?.id ?? null;
 
   // Related projects — same genre, different project
   let relatedProjects: any[] = [];
@@ -825,43 +849,13 @@ export default async function ProducerProjectDetailPage({
           <div style={{ height: 1, background: S.line, margin: "0 0 24px" }} />
 
           {/* ── 5. PASS ON PROJECT ──────────────────────────── */}
-          {crm?.status !== "passed" ? (
-            <form action={upsertProducerProject} style={{ marginBottom: 24 }}>
-              <input type="hidden" name="project_id" value={project.id} />
-              <input type="hidden" name="status"     value="passed" />
-              <input type="hidden" name="rating"     value={crm?.rating ?? ""} />
-              <input type="hidden" name="notes"      value={crm?.notes ?? ""} />
-              <button type="submit" className="fyp-pass-btn" style={{
-                width:         "100%",
-                padding:       "9px 0",
-                background:    "transparent",
-                border:        `1px solid rgba(26,24,21,0.09)`,
-                borderRadius:  6,
-                fontSize:      10,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                color:         "rgba(138,133,124,0.45)",
-                cursor:        "pointer",
-                fontFamily:    "Montserrat, sans-serif",
-                textAlign:     "center",
-                transition:    "all 0.15s",
-              }}>
-                Pass on this project
-              </button>
-            </form>
-          ) : (
-            <div style={{
-              textAlign:     "center",
-              padding:       "9px 0",
-              marginBottom:  24,
-              fontSize:      10,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color:         "rgba(138,133,124,0.35)",
-            }}>
-              Passed
-            </div>
-          )}
+          <PassAndAdvanceButton
+            projectId={project.id}
+            currentStatus={crm?.status}
+            currentRating={crm?.rating}
+            currentNotes={crm?.notes}
+            nextProjectId={nextProjectId}
+          />
 
           <div style={{ height: 1, background: S.line, margin: "0 0 24px" }} />
 
