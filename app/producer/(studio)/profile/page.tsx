@@ -232,12 +232,27 @@ export default function ProducerProfilePage() {
           <p className="eyebrow">Producer Profile</p>
           <h1 className="font-display text-[22px] mt-0.5">{name || "Your Profile"}</h1>
         </div>
-        {username && (
-          <Link href={`/u/${username}`} target="_blank" rel="noopener noreferrer"
-            className="btn-ghost !py-2 !px-4 text-[11px] tracking-[0.12em] gap-1.5">
-            View public profile ↗
-          </Link>
-        )}
+        {/* Avatar — links to public profile */}
+        <Link
+          href={username ? `/u/${username}` : "#"}
+          target={username ? "_blank" : undefined}
+          rel="noopener noreferrer"
+          title={username ? "View public profile" : "Set a username to view public profile"}
+          className="shrink-0 hover:opacity-80 transition-opacity"
+        >
+          <div className="w-10 h-10 rounded-full overflow-hidden border border-line bg-parchment flex items-center justify-center">
+            {avatarUrl
+              ? <img
+                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${avatarUrl}`}
+                  alt={name}
+                  className="w-full h-full object-cover"
+                />
+              : <span className="font-display text-[13px] text-ash">
+                  {name ? name.split(" ").map((w: string) => w[0]).join("").slice(0,2).toUpperCase() : "—"}
+                </span>
+            }
+          </div>
+        </Link>
       </div>
 
       {/* ── Edit panel ── */}
