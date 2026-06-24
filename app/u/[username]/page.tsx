@@ -257,8 +257,8 @@ export default async function PublicProfilePage({
           </nav>
 
           {/* Identity zone — warm parchment card */}
-          <div style={{ maxWidth:680, margin:"0 auto", padding:"0 40px" }}>
-            <div style={{ background:"#EDE8DF", borderRadius:24, padding:"48px 40px 44px", marginTop:28 }}>
+          <div style={{ maxWidth:680, margin:"0 auto", padding:"0 16px" }}>
+            <div style={{ background:"#EDE8DF", borderRadius:24, padding:"48px 44px 44px", marginTop:28 }}>
               <div className="arrive">
 
                 <p style={{ fontSize:9, letterSpacing:".32em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.35)", margin:"0 0 24px" }}>
@@ -314,11 +314,22 @@ export default async function PublicProfilePage({
                 </span>
                 {responseTime && <span style={{ fontSize:11, color:"rgba(26,24,21,0.28)", marginLeft:2 }}>— {responseTime}</span>}
               </div>
-              {user && user.id !== profile.id && acceptingPitches && (
-                <Link href="/producer/messages" className="lnk-gd" style={{ fontSize:10, letterSpacing:".16em", textTransform:"uppercase", fontWeight:700, color:"#8A6F3E", textDecoration:"none", border:"1px solid rgba(191,153,83,0.35)", padding:"8px 18px", borderRadius:100 }}>
-                  Send message
-                </Link>
-              )}
+              <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                {user && user.id !== profile.id && acceptingPitches && (
+                  <Link href={`/dashboard/projects/new?producer=${profile.username}`} style={{
+                    fontSize:10, letterSpacing:".16em", textTransform:"uppercase", fontWeight:700,
+                    color:"#F5F5F0", textDecoration:"none", background:"#1A1815",
+                    padding:"8px 18px", borderRadius:100,
+                  }}>
+                    Send Pitch
+                  </Link>
+                )}
+                {user && user.id !== profile.id && acceptingPitches && (
+                  <Link href="/producer/messages" className="lnk-gd" style={{ fontSize:10, letterSpacing:".16em", textTransform:"uppercase", fontWeight:700, color:"#8A6F3E", textDecoration:"none", border:"1px solid rgba(191,153,83,0.35)", padding:"8px 18px", borderRadius:100 }}>
+                    Message
+                  </Link>
+                )}
+              </div>
             </div>
 
             {/* Data sections — white curved cards */}

@@ -154,7 +154,7 @@ function fmtUSD(n: number | null): string {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export default function ProjectForm() {
+export default function ProjectForm({ targetProducerId = null }: { targetProducerId?: string | null }) {
   const [fields, setFields]         = useState<Fields>(DEFAULT_FIELDS);
   const [aiFilled, setAiFilled]     = useState<AiFilled>({});
   const [aiLoading, setAiLoading]   = useState(false);
@@ -386,6 +386,7 @@ export default function ProjectForm() {
       <input type="hidden" name="has_budget_doc"    value={String(hasBudget)} />
       <input type="hidden" name="has_lookbook"      value={String(hasLookbook)} />
       <input type="hidden" name="has_coproducer"    value={String(hasCoproducer)} />
+      {targetProducerId && <input type="hidden" name="target_producer_id" value={targetProducerId} />}
 
       {/* ── STEP 1: PITCH DECK ── */}
       <div className="rounded-card border border-line bg-white/60 p-6 space-y-4">

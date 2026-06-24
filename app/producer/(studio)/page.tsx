@@ -82,12 +82,21 @@ export default async function ProducerDiscoverPage() {
       .eq("user_id", user.id),
   ]);
 
+  // Exclusive pitches — projects pitched directly to this producer
+  const { data: exclusivePitches } = await supabase
+    .from("projects")
+    .select("id, title, genre, format, stage, country, language, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, logline, poster_path, love_count, is_public, director_name, owner_id, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+    .eq("target_producer_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const exclusiveSet = new Set((exclusivePitches ?? []).map((p: any) => p.id));
+
   const pipelineCount   = pipelineRows?.length ?? 0;
   const crmByProject    = new Map((pipelineRows ?? []).map((r: any) => [r.project_id, r]));
   const lovedSet        = new Set((loves ?? []).map((r: any) => r.project_id));
 
-  // Score all 50, take top 9
-  const top9 = (projects ?? [])
+  // Score all 50, take top 9 (exclude already-shown exclusive pitches)
+  const top9 = (projects ?? []).filter((p: any) => !exclusiveSet.has(p.id))
     .map((p) => ({ ...p, _score: scoreProject(p, producerProfile) }))
     .sort((a, b) => b._score - a._score)
     .slice(0, 9);
@@ -117,7 +126,11 @@ export default async function ProducerDiscoverPage() {
         <div>
           <p className="eyebrow mb-2">PITCH.FYLYM Engine · Producer Studio</p>
           <h1 className="font-display text-[32px]">Discover</h1>
-          <p className="text-[14px] text-ash mt-1">Top 9 projects matched to your taste profile</p>
+          <p className="text-[14px] text-ash mt-1">
+            {(exclusivePitches ?? []).length > 0
+              ? `${(exclusivePitches ?? []).length} exclusive pitch${(exclusivePitches ?? []).length > 1 ? "es" : ""} · Top 9 matched projects`
+              : "Top 9 projects matched to your taste profile"}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/producer/pipeline" className="btn-ghost relative">
@@ -132,13 +145,62 @@ export default async function ProducerDiscoverPage() {
         </div>
       </div>
 
-      {top9.length === 0 ? (
+      {/* ── Exclusive pitches — no limit ── */}
+      {(exclusivePitches ?? []).length > 0 && (
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] tracking-[0.14em] uppercase font-semibold bg-gold/10 text-gold border border-gold/30">
+              ✦ Exclusive Pitches
+            </span>
+            <span className="text-[12px] text-ash">Submitted directly to you</span>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {(exclusivePitches ?? []).map((p: any) => {
+              const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
+              const crm       = crmByProject.get(p.id);
+              const pillCls   = crm ? PIPELINE_PILL[crm.status] : null;
+              const pillLbl   = crm ? PIPELINE_LABEL[crm.status] : null;
+              const frs       = frsMap.get(p.id);
+              return (
+                <FilmIdentity
+                  key={p.id}
+                  variant="compact-card"
+                  project={{
+                    id: p.id, title: p.title, genre: p.genre, format: p.format,
+                    stage: p.stage, country: p.country, language: p.language,
+                    logline: p.logline, poster_path: p.poster_path,
+                    budget_usd: p.budget_usd, budget_currency: p.budget_currency,
+                    financing_secured_usd: p.finance_secured_usd ?? null,
+                    funding_needed_usd: p.funding_needed_usd ?? null,
+                    is_public: p.is_public, director_name: p.director_name ?? null,
+                    filmmaker: filmmaker ? { full_name: filmmaker.full_name, username: filmmaker.username ?? null, career_stage: filmmaker.career_stage ?? null } : null,
+                  }}
+                  supabaseUrl={supabaseUrl}
+                  actions={
+                    <div className="flex flex-col gap-1.5 w-full">
+                      {pillCls && pillLbl ? (
+                        <Link href="/producer/pipeline" className={`block text-center text-[12px] ${pillCls} rounded-full px-3 py-1.5`}>{pillLbl}</Link>
+                      ) : (
+                        <SaveToPipelineButton projectId={p.id} />
+                      )}
+                      <MessageButton projectId={p.id} producerId={user.id} filmakerId={p.owner_id} filmmakerName={filmmaker?.full_name ?? ""} size="sm" />
+                    </div>
+                  }
+                />
+              );
+            })}
+          </div>
+          {top9.length > 0 && <div className="h-px bg-line mt-10 mb-8" />}
+        </div>
+      )}
+
+      {top9.length === 0 && (exclusivePitches ?? []).length === 0 ? (
         <div className="card py-16 text-center">
           <p className="font-display text-[22px] mb-3">No public projects yet</p>
           <p className="text-ash text-[15px] mb-6">Check back soon as filmmakers submit their work.</p>
           <Link href="/producer/profile" className="btn-ghost">Update taste profile</Link>
         </div>
-      ) : (
+      ) : top9.length > 0 ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {top9.map((p: any) => {
             const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;

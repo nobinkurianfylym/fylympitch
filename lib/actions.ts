@@ -150,6 +150,7 @@ export async function createProject(formData: FormData) {
       director_phone:   str(formData, "director_phone")    || null,
       producer_name:    str(formData, "producer_name")     || null,
       producer_company: str(formData, "producer_company")  || null,
+      target_producer_id: str(formData, "target_producer_id") || null,
     })
     .select("id")
     .single();
