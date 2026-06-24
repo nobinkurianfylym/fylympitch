@@ -5,6 +5,7 @@ import { flushSync } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 import { createProject } from "@/lib/actions";
 import { CURRENCIES } from "@/lib/format";
+import { hashFile } from "@/lib/proofUtils";
 
 const GENRES = ["Drama","Comedy","Thriller","Horror","Romance","Action","Documentary","Family","Crime","Sci-Fi","Fantasy","Musical"];
 
@@ -163,7 +164,9 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
   const [busy, setBusy]             = useState(false);
   const [engineStep, setEngineStep] = useState(0);
   const [uploading, setUploading]   = useState<string | null>(null);
-  const [deckPath, setDeckPath]     = useState("");
+  const [deckPath, setDeckPath]         = useState("");
+  const [deckHash, setDeckHash]         = useState("");
+  const [deckFileName, setDeckFileName] = useState("");
   const [scriptPath, setScriptPath] = useState("");
   const [posterPath, setPosterPath] = useState("");
   const [visibility, setVisibility] = useState<"true" | "false">("true");
@@ -295,6 +298,8 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
     if (!file) return;
     setError(null); setAiError(null);
     setUploading("pitch-decks"); setAiLoading(true);
+    // Hash the file client-side for OTS proof (runs in parallel with upload)
+    hashFile(file).then((h) => { setDeckHash(h); setDeckFileName(file.name); }).catch(() => {});
     // Fetch user profile for fallback name
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -395,7 +400,9 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
-      <input type="hidden" name="pitch_deck_path"  value={deckPath} />
+      <input type="hidden" name="pitch_deck_path"     value={deckPath} />
+      <input type="hidden" name="pitch_deck_hash"     value={deckHash} />
+      <input type="hidden" name="pitch_deck_filename" value={deckFileName} />
       <input type="hidden" name="script_path"       value={scriptPath} />
       <input type="hidden" name="poster_path"       value={posterPath} />
       <input type="hidden" name="has_script_doc"    value={String(hasScript || !!scriptPath)} />
