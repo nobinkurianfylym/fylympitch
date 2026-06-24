@@ -36,21 +36,13 @@ function num(fd: FormData, key: string): number | null {
 export async function completeFilmmakerOnboarding(formData: FormData) {
   const { supabase, user } = await requireUser();
 
-  const full_name      = str(formData, "full_name")?.trim();
-  const country        = str(formData, "country")?.trim();
-  const imdb_url       = str(formData, "imdb_url")?.trim() || null;
-  const career_stage   = str(formData, "career_stage");
-  const next           = str(formData, "next") || "/dashboard";
+  const full_name    = str(formData, "full_name")?.trim();
+  const country      = str(formData, "country")?.trim();
+  const imdb_url     = str(formData, "imdb_url")?.trim() || null;
+  const career_stage = str(formData, "career_stage") || "filmmaker";
 
-  let filmmaker_formats: string[] = [];
-  try {
-    const raw = str(formData, "filmmaker_formats");
-    if (raw) filmmaker_formats = JSON.parse(raw);
-  } catch {}
-
-  if (!full_name)    return { error: "Please enter your name." };
-  if (!country)      return { error: "Please enter your country." };
-  if (!career_stage) return { error: "Please select your career stage." };
+  if (!full_name) return { error: "Please enter your name." };
+  if (!country)   return { error: "Please enter your country." };
 
   const { error } = await supabase
     .from("profiles")
@@ -59,7 +51,6 @@ export async function completeFilmmakerOnboarding(formData: FormData) {
       country,
       imdb_url,
       career_stage,
-      filmmaker_formats,
       profile_completed: true,
       onboarded_at: new Date().toISOString(),
     })
@@ -67,7 +58,7 @@ export async function completeFilmmakerOnboarding(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  redirect(next);
+  redirect("/dashboard");
 }
 
 export async function createProject(formData: FormData) {
