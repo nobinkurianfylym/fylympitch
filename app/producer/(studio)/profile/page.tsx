@@ -232,40 +232,17 @@ export default function ProducerProfilePage() {
           <p className="eyebrow">Producer Profile</p>
           <h1 className="font-display text-[22px] mt-0.5">{name || "Your Profile"}</h1>
         </div>
-        <div className="flex items-center gap-3">
-          {username && (
-            <Link href={`/u/${username}`} target="_blank" rel="noopener noreferrer"
-              className="btn-ghost !py-2 !px-4 text-[11px] tracking-[0.12em] gap-1.5">
-              Public view ↗
-            </Link>
-          )}
-        </div>
+        {username && (
+          <Link href={`/u/${username}`} target="_blank" rel="noopener noreferrer"
+            className="btn-ghost !py-2 !px-4 text-[11px] tracking-[0.12em] gap-1.5">
+            View public profile ↗
+          </Link>
+        )}
       </div>
 
-      {/* ── Two-column body ── */}
-      <div className="flex-1 grid grid-cols-1 xl:grid-cols-[1fr_400px] overflow-hidden">
-
-        {/* ══ LEFT: Public profile (live iframe) ══ */}
-        <div className="relative overflow-hidden bg-parchment/20" style={{ minHeight: 0 }}>
-          {username ? (
-            <iframe
-              src={`/u/${username}`}
-              title="Public profile"
-              className="w-full border-0 block"
-              style={{ height: "calc(100vh - 85px)" }}
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full gap-4 p-10 text-center" style={{ minHeight: 400 }}>
-              <p className="font-display text-[20px] text-ink">Set a username to preview</p>
-              <p className="text-[13px] text-ash max-w-[260px] leading-relaxed">
-                Save a username in the Identity tab — your public profile will appear here.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* ══ RIGHT: Edit panel ══ */}
-        <div className="border-l border-line overflow-y-auto bg-ivory">
+      {/* ── Edit panel ── */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto bg-ivory max-w-2xl mx-auto">
 
           <form action={formAction}>
             {/* Hidden fields */}
