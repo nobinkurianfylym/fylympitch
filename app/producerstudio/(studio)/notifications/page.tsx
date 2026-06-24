@@ -24,7 +24,16 @@ export default async function ProducerNotificationsPage() {
     .order("created_at", { ascending: false })
     .limit(60);
 
-  const unreadCount = (items ?? []).filter((n) => !n.read).length;
+  // Fetch poster thumbnails for notifications that have a project_id
+  const projectIds = (items ?? []).map((n: any) => n.project_id).filter(Boolean);
+  const { data: projectData } = projectIds.length
+    ? await supabase.from("projects").select("id, poster_path").in("id", projectIds)
+    : { data: [] };
+  const posterMap = new Map((projectData ?? []).map((p: any) => [p.id, p.poster_path]));
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
+  const unreadCount = (items ?? []).filter((n: any) => !n.read).length;
   const hasAny = (items ?? []).length > 0;
 
   return (
@@ -60,56 +69,73 @@ export default async function ProducerNotificationsPage() {
 
       {/* ── List ── */}
       <div>
-        {(items ?? []).map((n) => (
-          <div
-            key={n.id}
-            className={`hairline py-5 flex items-start justify-between gap-4 group ${
-              !n.read ? "border-l-2 border-gold pl-4 -ml-4" : ""
-            }`}
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] tracking-[0.14em] uppercase text-ash">
-                  {KIND_LABEL[n.kind] ?? n.kind}
-                </span>
-                {!n.read && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+        {(items ?? []).map((n: any) => {
+          const posterPath = n.project_id ? posterMap.get(n.project_id) : null;
+          const posterUrl = posterPath
+            ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`
+            : null;
+
+          const rowContent = (
+            <div
+              className={`hairline py-4 flex items-start gap-3 group ${
+                !n.read ? "border-l-2 border-gold pl-4 -ml-4" : ""
+              }`}
+            >
+              {/* Poster thumbnail */}
+              {posterUrl && (
+                <div className="shrink-0 w-14 h-[3.5rem] rounded-[4px] overflow-hidden border border-line bg-parchment">
+                  <img
+                    src={posterUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] tracking-[0.14em] uppercase text-ash">
+                    {KIND_LABEL[n.kind] ?? n.kind}
+                  </span>
+                  {!n.read && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+                  )}
+                </div>
+                <p className={`text-[14px] group-hover:text-gold transition-colors ${n.read ? "text-ash" : "text-ink font-normal"}`}>
+                  {n.title}
+                </p>
+                {n.body && (
+                  <p className="mt-1 text-[13px] text-ash">{n.body}</p>
                 )}
               </div>
-              <p className={`text-[14px] ${n.read ? "text-ash" : "text-ink font-normal"}`}>
-                {n.title}
-              </p>
-              {n.body && (
-                <p className="mt-1 text-[13px] text-ash">{n.body}</p>
-              )}
-              {n.link && (
-                <Link
-                  href={n.link}
-                  className="mt-2 inline-block text-[12px] tracking-[0.14em] uppercase text-gold hover:text-ink transition-colors"
-                >
-                  View →
-                </Link>
-              )}
-            </div>
 
-            {/* Timestamp + delete */}
-            <div className="flex items-center gap-3 shrink-0 mt-0.5">
-              <span className="text-[12px] text-ash whitespace-nowrap">
-                {timeAgo(n.created_at)}
-              </span>
-              <form action={deleteNotification}>
-                <input type="hidden" name="notification_id" value={n.id} />
-                <button
-                  type="submit"
-                  title="Delete"
-                  className="w-8 h-8 flex items-center justify-center rounded text-[20px] leading-none text-ash/50 hover:text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  ×
-                </button>
-              </form>
+              {/* Timestamp + delete */}
+              <div className="flex items-center gap-3 shrink-0 mt-0.5">
+                <span className="text-[12px] text-ash whitespace-nowrap">
+                  {timeAgo(n.created_at)}
+                </span>
+                <form action={deleteNotification}>
+                  <input type="hidden" name="notification_id" value={n.id} />
+                  <button
+                    type="submit"
+                    title="Delete"
+                    className="w-8 h-8 flex items-center justify-center rounded text-[20px] leading-none text-ash/50 hover:text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    ×
+                  </button>
+                </form>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+
+          return n.link ? (
+            <Link key={n.id} href={n.link} className="block hover:no-underline">
+              {rowContent}
+            </Link>
+          ) : (
+            <div key={n.id}>{rowContent}</div>
+          );
+        })}
 
         {(!items || items.length === 0) && (
           <p className="hairline py-10 text-[14px] text-ash">All quiet for now.</p>

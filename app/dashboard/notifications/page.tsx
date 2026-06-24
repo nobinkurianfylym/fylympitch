@@ -31,6 +31,15 @@ export default async function NotificationsPage() {
       .single(),
   ]);
 
+  // Fetch poster thumbnails for notifications that have a project_id
+  const projectIds = (items ?? []).map((n: any) => n.project_id).filter(Boolean);
+  const { data: projectData } = projectIds.length
+    ? await supabase.from("projects").select("id, poster_path").in("id", projectIds)
+    : { data: [] };
+  const posterMap = new Map((projectData ?? []).map((p) => [p.id, p.poster_path]));
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
   const completionFields = [
     profile?.full_name, profile?.country, profile?.bio,
     profile?.company, (profile as any)?.website || (profile as any)?.imdb_url,
@@ -103,15 +112,19 @@ export default async function NotificationsPage() {
         {(items ?? []).map((n: any) => {
           const meta = KIND_META[n.kind] ?? KIND_META.system;
           const isUnread = !n.read;
-          return (
+          const posterPath = n.project_id ? posterMap.get(n.project_id) : null;
+          const posterUrl = posterPath
+            ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`
+            : null;
+
+          const rowContent = (
             <div
-              key={n.id}
-              className={`py-5 flex items-start gap-4 group transition-colors ${
+              className={`py-4 flex items-start gap-3 group transition-colors ${
                 isUnread ? "bg-parchment/60 -mx-3 px-3 rounded-card" : ""
               }`}
             >
               {/* Unread dot */}
-              <div className="mt-2 shrink-0">
+              <div className="mt-2.5 shrink-0 w-2">
                 <span
                   className={`block w-2 h-2 rounded-full ${
                     isUnread ? meta.dot : "bg-transparent"
@@ -119,13 +132,24 @@ export default async function NotificationsPage() {
                 />
               </div>
 
+              {/* Poster thumbnail */}
+              {posterUrl && (
+                <div className="shrink-0 w-14 h-[3.5rem] rounded-[4px] overflow-hidden border border-line bg-parchment">
+                  <img
+                    src={posterUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] tracking-[0.18em] uppercase text-ash mb-1">
                   {meta.label}
                 </p>
                 <p
-                  className={`text-[14px] leading-snug ${
+                  className={`text-[14px] leading-snug group-hover:text-gold transition-colors ${
                     isUnread ? "text-ink font-medium" : "text-ash"
                   }`}
                 >
@@ -133,14 +157,6 @@ export default async function NotificationsPage() {
                 </p>
                 {n.body && (
                   <p className="mt-1 text-[13px] text-ash leading-relaxed">{n.body}</p>
-                )}
-                {n.link && (
-                  <Link
-                    href={n.link}
-                    className="mt-2 inline-block text-[11px] tracking-[0.14em] uppercase text-gold hover:text-ink transition-colors"
-                  >
-                    Open →
-                  </Link>
                 )}
               </div>
 
@@ -154,6 +170,7 @@ export default async function NotificationsPage() {
                   <button
                     type="submit"
                     title="Delete"
+                    onClick={(e) => e.stopPropagation()}
                     className="w-8 h-8 flex items-center justify-center rounded text-[20px] leading-none text-ash/50 hover:text-red-600 hover:bg-red-50 transition-colors"
                   >
                     ×
@@ -161,6 +178,14 @@ export default async function NotificationsPage() {
                 </form>
               </div>
             </div>
+          );
+
+          return n.link ? (
+            <Link key={n.id} href={n.link} className="block hover:no-underline">
+              {rowContent}
+            </Link>
+          ) : (
+            <div key={n.id}>{rowContent}</div>
           );
         })}
 

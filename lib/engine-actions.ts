@@ -215,6 +215,7 @@ export async function rerunEngine(
       title:   "Intelligence report ready",
       body:    `Your FYLYMPITCH report for "${(project as Project).title}" is ready.`,
       link:    `/dashboard/projects/${projectId}`,
+      project_id: projectId,
       read:    false,
     });
   } catch (e) {
