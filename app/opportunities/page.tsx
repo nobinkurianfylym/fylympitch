@@ -137,7 +137,7 @@ export default async function FundsPage({
 
   let query = supabase
     .from("opportunities")
-    .select("id, slug, title, opp_type, description, country, region, deadline, deadline_note, languages, url, app_link")
+    .select("id, slug, title, opp_type, description, country, region, deadline, deadline_note, languages, url, app_link, is_producer_post, poster_url, key_person")
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(user ? 500 : 100);
@@ -227,17 +227,32 @@ export default async function FundsPage({
                   className="group flex flex-col bg-white border border-line rounded-[14px] overflow-hidden hover:border-gold/50 hover:shadow-sm transition-all no-underline"
                   style={{ textDecoration: "none", color: "inherit" }}>
 
+                  {/* Poster — producer briefs only */}
+                  {o.is_producer_post && o.poster_url && (
+                    <div className="h-[140px] overflow-hidden border-b border-line">
+                      <img src={o.poster_url} alt={o.title} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+                    </div>
+                  )}
+
                   <div className="p-6 flex flex-col flex-1">
-                    {/* Type pill */}
-                    <div className="flex items-start justify-between gap-3 mb-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] tracking-[0.18em] uppercase font-semibold bg-ink text-ivory">
-                        {bandLabel}
-                      </span>
-                      {isClosing && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] tracking-[0.12em] uppercase font-semibold border border-gold/40 text-gold">
-                          Closing soon
-                        </span>
-                      )}
+                    {/* Type pill + badges */}
+                    <div className="flex items-start justify-between gap-2 mb-4 flex-wrap">
+                      <div className="flex gap-2 flex-wrap">
+                        {o.is_producer_post ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] tracking-[0.18em] uppercase font-semibold border border-gold/60 text-gold bg-gold/8">
+                            Producer Brief
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] tracking-[0.18em] uppercase font-semibold bg-ink text-ivory">
+                            {bandLabel}
+                          </span>
+                        )}
+                        {isClosing && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] tracking-[0.12em] uppercase font-semibold border border-gold/40 text-gold">
+                            Closing soon
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Title */}
@@ -245,9 +260,11 @@ export default async function FundsPage({
                       {o.title}
                     </h2>
 
-                    {/* Location */}
+                    {/* Producer name OR location */}
                     <p className="text-[11px] tracking-[0.1em] uppercase text-ash/60 mb-3">
-                      {location}{langs.length > 0 ? ` · ${langs[0]}` : ""}
+                      {o.is_producer_post && o.key_person
+                        ? o.key_person
+                        : `${location}${langs.length > 0 ? ` · ${langs[0]}` : ""}`}
                     </p>
 
                     {/* Description */}
@@ -260,10 +277,10 @@ export default async function FundsPage({
                     {/* Footer */}
                     <div className="mt-4 pt-4 border-t border-line flex items-center justify-between gap-2">
                       <span className={`text-[12px] font-medium ${isClosing ? "text-gold" : "text-ink/70"}`}>
-                        {deadline}
+                        {o.is_producer_post ? (deadline !== "Ongoing" ? `Deadline ${deadline}` : "Open brief") : deadline}
                       </span>
                       <span className="text-[10px] tracking-[0.1em] uppercase text-ash/40 group-hover:text-gold transition-colors">
-                        View →
+                        {o.is_producer_post ? "Submit →" : "View →"}
                       </span>
                     </div>
                   </div>

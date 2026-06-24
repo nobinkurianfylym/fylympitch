@@ -32,13 +32,15 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
 
   const nav = [
     { href: "https://pitch.fylym.com/", label: "Home" },
-    { href: "/producerstudio",               label: "Discover" },
-    { href: "/producerstudio/pipeline",      label: "Pipeline" },
-    { href: "/producerstudio/projects",      label: "All Projects" },
-    { href: "/producerstudio/meetings",      label: "Meetings & Notes" },
-    { href: "/producerstudio/messages",      label: totalMsgUnread > 0 ? `Messages (${totalMsgUnread})` : "Messages" },
-    { href: "/producerstudio/notifications", label: (unreadNotif ?? 0) > 0 ? `Notifications (${unreadNotif})` : "Notifications" },
-    { href: "/producerstudio/profile",       label: "My Profile" },
+    { href: "/producerstudio",                        label: "Discover" },
+    { href: "/producerstudio/pipeline",               label: "Pipeline" },
+    { href: "/producerstudio/projects",               label: "All Projects" },
+    { href: "/producerstudio/create-opportunity",     label: "Create an Opportunity" },
+    { href: "/producerstudio/my-opportunities",       label: "My Opportunities" },
+    { href: "/producerstudio/meetings",               label: "Meetings & Notes" },
+    { href: "/producerstudio/messages",               label: totalMsgUnread > 0 ? `Messages (${totalMsgUnread})` : "Messages" },
+    { href: "/producerstudio/notifications",          label: (unreadNotif ?? 0) > 0 ? `Notifications (${unreadNotif})` : "Notifications" },
+    { href: "/producerstudio/profile",                label: "My Profile" },
   ];
 
   return (
@@ -52,12 +54,14 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
         <nav className="flex md:flex-col gap-5 md:gap-0 md:mt-12 md:space-y-5 text-[12px] tracking-[0.16em] uppercase whitespace-nowrap">
           {nav.map((n) => (
             <Link key={n.href} href={n.href}
-              className={`hover:text-ink transition-colors ${
-                n.href === "/producerstudio/notifications" && (unreadNotif ?? 0) > 0
-                  ? "text-gold hover:text-gold/80"
+              className={`transition-colors ${
+                n.href === "/producerstudio/create-opportunity"
+                  ? "text-gold hover:text-gold/80 border border-gold/40 px-2 py-1 rounded-sm -mx-2 -my-0.5"
+                  : n.href === "/producerstudio/notifications" && (unreadNotif ?? 0) > 0
+                  ? "text-gold hover:text-gold/80 hover:text-ink"
                   : n.href === "/producerstudio/messages" && totalMsgUnread > 0
-                  ? "text-gold hover:text-gold/80"
-                  : "text-ash"
+                  ? "text-gold hover:text-gold/80 hover:text-ink"
+                  : "text-ash hover:text-ink"
               }`}>
               {n.label}
             </Link>

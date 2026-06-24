@@ -65,7 +65,7 @@ export default async function FundDetailPage({ params }: Props) {
     .select("*")
     .eq("slug", slug)
     .eq("is_active", true)
-    .single<Opportunity & { slug: string; key_person?: string | null; contact_email?: string | null; gender_focus?: string | null; copro_required?: boolean; festival_affiliated?: boolean; ott_affiliated?: boolean; deadline_note?: string | null; app_link?: string | null }>();
+    .single<Opportunity & { slug: string; key_person?: string | null; contact_email?: string | null; gender_focus?: string | null; copro_required?: boolean; festival_affiliated?: boolean; ott_affiliated?: boolean; deadline_note?: string | null; app_link?: string | null; posted_by_producer_id?: string | null; poster_url?: string | null; is_producer_post?: boolean }>();
 
   if (!opp) notFound();
 
@@ -74,6 +74,17 @@ export default async function FundDetailPage({ params }: Props) {
   if (user) {
     const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
     if ((me as any)?.role === "producer") dashboardHref = "/producerstudio";
+  }
+
+  // For producer-posted opportunities, fetch producer display info
+  let producerInfo: { full_name: string | null; username: string | null; company: string | null } | null = null;
+  if ((opp as any).posted_by_producer_id) {
+    const { data: pData } = await supabase
+      .from("profiles")
+      .select("full_name, username, company")
+      .eq("id", (opp as any).posted_by_producer_id)
+      .single();
+    producerInfo = pData ?? null;
   }
 
   const typeLabel  = TYPE_LABEL[opp.opp_type] ?? opp.opp_type;
@@ -216,8 +227,31 @@ export default async function FundDetailPage({ params }: Props) {
           ← All funds
         </Link>
 
+        {/* Producer Brief Banner */}
+        {(opp as any).is_producer_post && producerInfo && (
+          <div className="mt-8 flex items-center gap-3 px-4 py-3 bg-gold/8 border border-gold/30 rounded-sm">
+            <span className="text-[10px] tracking-[0.2em] uppercase text-gold font-medium shrink-0">Producer Brief</span>
+            <span className="text-ash text-[12px]">—</span>
+            <span className="text-[12px] text-ink">
+              {producerInfo.company || producerInfo.full_name}
+              {producerInfo.username && (
+                <a href={`/u/${producerInfo.username}`} className="ml-2 text-gold hover:underline text-[11px] tracking-[0.12em] uppercase">
+                  View profile →
+                </a>
+              )}
+            </span>
+          </div>
+        )}
+
         {/* Hero */}
-        <div className="mt-8 pb-10 border-b border-line">
+        <div className={(opp as any).is_producer_post ? "mt-6 pb-10 border-b border-line flex gap-8" : "mt-8 pb-10 border-b border-line"}>
+          {/* Poster — only for producer-posted briefs */}
+          {(opp as any).is_producer_post && (opp as any).poster_url && (
+            <div className="shrink-0 w-[120px] h-[168px] rounded-sm overflow-hidden border border-line hidden sm:block">
+              <img src={(opp as any).poster_url} alt={opp.title} className="w-full h-full object-cover" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
           <p className="eyebrow mb-4">{typeLabel} · {location}</p>
           <h1 className="font-display text-[46px] md:text-[58px] font-[400] leading-[1.1] text-ink">
             {opp.title}
@@ -254,6 +288,7 @@ export default async function FundDetailPage({ params }: Props) {
               </div>
             )}
           </div>
+          </div>{/* flex-1 min-w-0 */}
         </div>
 
         {/* Description */}
@@ -296,27 +331,53 @@ export default async function FundDetailPage({ params }: Props) {
           </div>
         )}
 
-        {/* PITCH.FYLYM CTA */}
-        <div className="mt-12 card p-8">
-          <p className="eyebrow mb-3">Apply through PITCH.FYLYM</p>
-          <h2 className="font-display text-[24px] font-[400] mb-2">
-            Is {opp.title} right for your film?
-          </h2>
-          <p className="text-[14px] text-ash mb-6 max-w-md">
-            Submit your project and the PITCH.FYLYM engine scores your match against
-            {` ${opp.title}`} and hundreds of other funds, labs and co-producers worldwide.
-          </p>
-          {user ? (
-            <Link href="/dashboard" className="btn-gold">
-              Go to your dashboard →
-            </Link>
-          ) : (
-            <div className="flex flex-wrap gap-3">
-              <Link href="/signup" className="btn-gold">Submit your project</Link>
-              <Link href="/login" className="btn-ghost">Sign in</Link>
-            </div>
-          )}
-        </div>
+        {/* CTA — producer brief vs. standard fund */}
+        {(opp as any).is_producer_post ? (
+          <div className="mt-12 card p-8 border-gold/30">
+            <p className="eyebrow mb-3 text-gold">Exclusive Submission</p>
+            <h2 className="font-display text-[24px] font-[400] mb-2">
+              Submit your project directly to {producerInfo?.company || producerInfo?.full_name || "this producer"}
+            </h2>
+            <p className="text-[14px] text-ash mb-6 max-w-md leading-relaxed">
+              This is a producer-posted brief. When you submit, your project goes
+              directly and exclusively to{" "}
+              <span className="text-ink">{producerInfo?.company || producerInfo?.full_name}</span>{" "}
+              — identical to pitching via their producer profile. They will see your
+              full project, FRS score, and match analysis.
+            </p>
+            {user ? (
+              <Link href="/dashboard" className="btn-gold">
+                Submit your project →
+              </Link>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                <Link href="/signup" className="btn-gold">Create account & submit</Link>
+                <Link href="/login" className="btn-ghost">Sign in</Link>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="mt-12 card p-8">
+            <p className="eyebrow mb-3">Apply through PITCH.FYLYM</p>
+            <h2 className="font-display text-[24px] font-[400] mb-2">
+              Is {opp.title} right for your film?
+            </h2>
+            <p className="text-[14px] text-ash mb-6 max-w-md">
+              Submit your project and the PITCH.FYLYM engine scores your match against
+              {` ${opp.title}`} and hundreds of other funds, labs and co-producers worldwide.
+            </p>
+            {user ? (
+              <Link href="/dashboard" className="btn-gold">
+                Go to your dashboard →
+              </Link>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                <Link href="/signup" className="btn-gold">Submit your project</Link>
+                <Link href="/login" className="btn-ghost">Sign in</Link>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Official website — bottom anchor */}
         {officialLink && (

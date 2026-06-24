@@ -305,11 +305,94 @@ export async function applyToOpportunity(formData: FormData) {
     return { error: error.message };
   }
 
+  // ── Exclusive submission: producer-posted opportunity ─────────────────────
+  // If the opportunity was posted by a producer, mark this project as an
+  // exclusive pitch to that producer — identical to submitting via their
+  // public profile page. Only set if not already assigned to another producer.
+  const oppData = opp as Opportunity;
+  if (oppData.posted_by_producer_id && !(project as Project & { target_producer_id?: string | null }).target_producer_id) {
+    await supabase.from("projects")
+      .update({ target_producer_id: oppData.posted_by_producer_id })
+      .eq("id", project_id)
+      .eq("owner_id", user.id);
+  }
+
   await supabase.from("activity_logs").insert({
     user_id: user.id, action: "application_sent", entity: "opportunity", entity_id: opportunity_id,
   });
   revalidatePath("/dashboard/applications");
   redirect("/dashboard/applications");
+}
+
+// ── PRODUCER: CREATE OPPORTUNITY ─────────────────────────────────────────────
+
+export async function createProducerOpportunity(formData: FormData) {
+  const { supabase, user } = await requireUser();
+
+  // Confirm producer/admin role + approval
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, approval_status, username, full_name, company")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile) return { error: "Profile not found." };
+  if (!["producer", "admin"].includes((profile as any).role)) return { error: "Access denied." };
+  if ((profile as any).approval_status !== "approved") return { error: "Your account must be verified before posting opportunities." };
+
+  const title = str(formData, "title")?.trim();
+  if (!title) return { error: "Title is required." };
+
+  const description = str(formData, "description")?.trim() || null;
+  const opp_type    = str(formData, "opp_type") || "producer";
+  const country     = str(formData, "country")?.trim() || null;
+  const region      = str(formData, "region")?.trim() || null;
+  const url         = str(formData, "url")?.trim() || null;
+  const deadline    = str(formData, "deadline") || null;
+  const poster_url  = str(formData, "poster_url") || null;
+
+  const genres   = formData.getAll("genres").map((v) => String(v)).filter(Boolean);
+  const formats  = formData.getAll("formats").map((v) => String(v)).filter(Boolean);
+  const stages   = formData.getAll("stages").map((v) => String(v)).filter(Boolean);
+
+  const max_award_raw = str(formData, "max_award");
+  const max_award_usd = max_award_raw ? Number(max_award_raw) : null;
+
+  // Generate slug: title → kebab-case + producer username + timestamp suffix
+  const base = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+  const suffix = Date.now().toString(36);
+  const slug = `${base}-${suffix}`;
+
+  const { data: opp, error } = await supabase.from("opportunities").insert({
+    title,
+    slug,
+    description,
+    opp_type,
+    country,
+    region,
+    url,
+    deadline: deadline || null,
+    genres:   genres.length  ? genres  : [],
+    formats:  formats.length ? formats : [],
+    stages:   stages.length  ? stages  : [],
+    max_award_usd,
+    is_active:             true,
+    opp_approval_status:   "approved",
+    is_producer_post:      true,
+    posted_by_producer_id: user.id,
+    poster_url,
+    // Producer name for display
+    key_person: (profile as any).full_name ?? null,
+  }).select("id, slug").single();
+
+  if (error) {
+    if (error.code === "23505") return { error: "An opportunity with this title already exists. Please choose a different title." };
+    return { error: error.message };
+  }
+
+  revalidatePath("/opportunities");
+  revalidatePath("/producerstudio");
+  redirect(`/producerstudio/my-opportunities`);
 }
 
 export async function updateFilmmakerStage(formData: FormData) {

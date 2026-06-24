@@ -122,6 +122,10 @@ export interface Opportunity {
   form_url?: string | null;
   /** Maps fund form field selectors → FYLYM project fields */
   form_field_map?: Record<string, string> | null;
+  /** Producer-posted brief fields (migration 055) */
+  posted_by_producer_id?: string | null;
+  poster_url?: string | null;
+  is_producer_post?: boolean;
 }
 
 export interface Application {
