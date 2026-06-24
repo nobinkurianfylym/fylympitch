@@ -256,9 +256,9 @@ export default async function PublicProfilePage({
             )}
           </nav>
 
-          {/* Identity zone — warm parchment separation */}
-          <div style={{ background:"#EDE8DF", paddingTop:48, borderRadius:"0 0 24px 24px" }}>
-            <div style={{ maxWidth:680, margin:"0 auto", padding:"60px 40px 56px" }}>
+          {/* Identity zone — warm parchment card */}
+          <div style={{ maxWidth:680, margin:"0 auto", padding:"0 40px" }}>
+            <div style={{ background:"#EDE8DF", borderRadius:24, padding:"48px 40px 44px", marginTop:28 }}>
               <div className="arrive">
 
                 <p style={{ fontSize:9, letterSpacing:".32em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.35)", margin:"0 0 24px" }}>
