@@ -13,7 +13,7 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
 
   // Parallelise — saves one sequential round-trip on every producer page load
   const [{ data: profile }, { data: producerProfile }, { count: unreadNotif }, { data: msgUnreadData }] = await Promise.all([
-    supabase.from("profiles").select("id, full_name, avatar_url").eq("id", user.id).single(),
+    supabase.from("profiles").select("id, full_name, avatar_url, role").eq("id", user.id).single(),
     supabase.from("producer_profiles").select("user_id").eq("user_id", user.id).single(),
     supabase.from("notifications").select("id", { count: "exact", head: true })
       .eq("user_id", user.id).eq("read", false),
@@ -23,6 +23,11 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
   const totalMsgUnread = (msgUnreadData as number | null) ?? 0;
 
   if (!profile) redirect("/dashboard");
+
+  // Only producers and admins may access Producer Studio
+  const role = (profile as any).role ?? "filmmaker";
+  if (role !== "producer" && role !== "admin") redirect("/dashboard");
+
   if (!producerProfile) redirect("/producer/onboarding");
 
   const nav = [
