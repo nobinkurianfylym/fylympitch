@@ -243,7 +243,7 @@ export default function ProducerProfilePage() {
           <div className="w-10 h-10 rounded-full overflow-hidden border border-line bg-parchment flex items-center justify-center">
             {avatarUrl
               ? <img
-                  src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${avatarUrl}`}
+                  src={avatarUrl}
                   alt={name}
                   className="w-full h-full object-cover"
                 />
