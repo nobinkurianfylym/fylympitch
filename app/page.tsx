@@ -203,6 +203,78 @@ export default async function Home() {
         <HomepageDemo />
       </section>
 
+      {/* PROOF OF EXISTENCE */}
+      <section className="bg-deep text-ivory">
+        <div className="max-w-3xl mx-auto px-6 py-24 md:py-32 text-center">
+
+          {/* Trust label */}
+          <p className="text-[10px] tracking-[0.28em] uppercase text-ivory/30 mb-5">
+            The most trusted place to submit your film project
+          </p>
+
+          {/* Eyebrow */}
+          <p className="eyebrow text-gold mb-8">Proof of Existence</p>
+
+          {/* Main headline */}
+          <h2 className="font-display text-[30px] md:text-[46px] leading-[1.12] font-normal mb-12">
+            Before your project reaches a producer, it receives a permanent,{" "}
+            <span className="italic text-gold">Bitcoin-verified proof of its existence.</span>
+          </h2>
+
+          {/* Hash specimen */}
+          <div
+            className="inline-flex flex-wrap justify-center items-center gap-x-5 gap-y-2 mb-14 px-6 py-4"
+            style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+          >
+            <span className="text-[10px] tracking-[0.22em] uppercase text-ivory/30">SHA-256</span>
+            <span className="font-mono text-[12px] text-gold/50 tracking-wider">3a7f2c9b·1e48d6f2·a09c3b7e···</span>
+            <span className="text-[10px] tracking-[0.15em] uppercase text-ivory/30">Block #893,441</span>
+            <span className="text-[10px] tracking-[0.15em] uppercase text-ivory/30">14 Jun 2025 · 09:41 UTC</span>
+          </div>
+
+          {/* Body copy */}
+          <div className="text-left space-y-6 mb-16">
+            <p className="text-[16px] md:text-[17px] leading-[1.85] text-ivory/60">
+              Every project uploaded to Pitch.Fylym is cryptographically hashed and anchored to the Bitcoin
+              blockchain — the world&apos;s most secure and enduring public ledger. Your project itself is never
+              published or exposed. Only its unique digital fingerprint is recorded, creating independent proof
+              that your work existed in that exact form at that exact moment in time.
+            </p>
+            <p className="text-[16px] md:text-[17px] leading-[1.85] text-ivory/60">
+              No central authority. No intermediary. No expiry date. Just a permanent, independently verifiable
+              record that anyone can verify, anywhere in the world.
+            </p>
+          </div>
+
+          {/* Three pillars */}
+          <div
+            className="grid grid-cols-3 max-w-xl mx-auto mb-16"
+            style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+          >
+            {[
+              { label: "No central authority", sub: "Bitcoin-anchored" },
+              { label: "No intermediary",      sub: "Direct chain record" },
+              { label: "No expiry date",       sub: "Permanent & verifiable" },
+            ].map((item, i) => (
+              <div
+                key={item.label}
+                className="py-6 px-4"
+                style={{ borderLeft: i > 0 ? "1px solid rgba(255,255,255,0.08)" : undefined }}
+              >
+                <p className="text-[13px] text-ivory/70 mb-1.5">{item.label}</p>
+                <p className="text-[10px] tracking-[0.18em] uppercase text-gold/50">{item.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Closing line */}
+          <p className="font-display text-[26px] md:text-[34px] italic text-gold">
+            Pitch with confidence.
+          </p>
+
+        </div>
+      </section>
+
       {/* FOR FILMMAKERS */}
       <section className="bg-parchment">
         <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">
