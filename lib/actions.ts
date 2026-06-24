@@ -64,6 +64,24 @@ export async function completeFilmmakerOnboarding(formData: FormData) {
 export async function createProject(formData: FormData) {
   const { supabase, user } = await requireUser();
 
+  // ── Project submission limit: max 3 per filmmaker (admins exempt) ──
+  const { data: callerProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (callerProfile?.role !== "admin") {
+    const { count: projectCount } = await supabase
+      .from("projects")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", user.id);
+
+    if ((projectCount ?? 0) >= 3) {
+      return { error: "Project limit reached. Filmmakers may submit a maximum of 3 projects." };
+    }
+  }
+
   // Safety net: ensure profile row exists (with username) before inserting a project.
   const displayName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email?.split("@")[0] ?? "Filmmaker";
   const { data: generatedUsername } = await supabase.rpc("generate_unique_username", { base_name: displayName });

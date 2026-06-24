@@ -18,7 +18,7 @@ export interface JourneyOpp {
 
 type StageStatus = "completed" | "current" | "ready" | "upcoming" | "locked";
 
-const MAX_MATCHES = 25;
+const MAX_MATCHES = 100;
 
 // ── 9 Master Categories ──────────────────────────────────────────────────────
 const CATEGORY_DEFS = [
