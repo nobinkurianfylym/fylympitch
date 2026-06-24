@@ -96,16 +96,12 @@ function formatDeadline(deadline: string | null, note: string | null): string {
 }
 
 const TABS = [
-  { label: "All",                    value: ""                      },
-  { label: "Development",            value: "development"           },
-  { label: "Packaging & Markets",    value: "packaging_markets"     },
-  { label: "Early Financing",        value: "early_financing"       },
-  { label: "Tax Incentives",         value: "tax_incentives"        },
-  { label: "Private Financing",      value: "private_financing"     },
-  { label: "Production",             value: "production"            },
-  { label: "Post Production",        value: "post_production"       },
-  { label: "Buyers & Sales",         value: "buyers_sales"          },
-  { label: "Release & Distribution", value: "release_distribution"  },
+  { label: "All",              value: ""                },
+  { label: "Development",      value: "development"     },
+  { label: "Production",       value: "production"      },
+  { label: "Post Production",  value: "post_production" },
+  { label: "Buyers",           value: "buyers"          },
+  { label: "Distribution",     value: "distribution"    },
 ];
 
 export default async function FundsPage({
@@ -126,15 +122,17 @@ export default async function FundsPage({
 
   // Map category key → opp_type values
   const CATEGORY_TYPES: Record<string, string[]> = {
-    development:          ["lab", "residency", "mentorship", "grant", "fund", "writing_fellowship"],
-    packaging_markets:    ["pitch_forum", "co_production", "market"],
-    early_financing:      ["crowdfunding", "donation", "fiscal_sponsorship", "seed_funding", "community_funding"],
-    tax_incentives:       ["tax_incentive", "cash_rebate", "production_rebate", "regional_incentive", "location_incentive"],
-    private_financing:    ["investor", "angel_investor", "venture_capital", "gap_financing", "brand_integration", "product_placement", "sponsor", "private_fund"],
-    production:           ["producer", "co_producer", "production_company", "studio"],
-    post_production:      ["post_production_grant", "post_production_fund", "finishing_fund"],
-    buyers_sales:         ["sales_agent", "world_sales", "broadcaster", "streamer", "pre_sale", "content_buyer", "music_rights"],
-    release_distribution: ["film_festival", "distribution", "theatrical_distribution", "ott_distribution", "tv_distribution", "digital_aggregator", "educational_distribution", "airline_distribution"],
+    development:     ["lab", "residency", "mentorship", "grant", "fund", "writing_fellowship"],
+    production:      ["pitch_forum", "co_production", "market", "crowdfunding", "donation",
+                      "fiscal_sponsorship", "seed_funding", "community_funding",
+                      "tax_incentive", "cash_rebate", "production_rebate", "regional_incentive",
+                      "location_incentive", "investor", "angel_investor", "venture_capital",
+                      "gap_financing", "brand_integration", "product_placement", "sponsor",
+                      "private_fund", "producer", "co_producer", "production_company", "studio"],
+    post_production: ["post_production_grant", "post_production_fund", "finishing_fund"],
+    buyers:          ["sales_agent", "world_sales", "broadcaster", "streamer", "pre_sale", "content_buyer", "music_rights"],
+    distribution:    ["film_festival", "distribution", "theatrical_distribution", "ott_distribution",
+                      "tv_distribution", "digital_aggregator", "educational_distribution", "airline_distribution"],
   };
 
   let query = supabase
