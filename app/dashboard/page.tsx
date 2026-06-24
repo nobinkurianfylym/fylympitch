@@ -109,18 +109,19 @@ export default async function DashboardPage() {
         <Link href="/dashboard/projects/new" className="btn-gold shrink-0 mt-2">+ New project</Link>
       </div>
 
-      {/* Stats row */}
+      {/* Stats row — each box links to its page */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
-        {[
-          { label: "Projects",    value: projects?.length ?? 0 },
-          { label: "Matches",     value: totalMatches },
-          { label: "Applications", value: appCount ?? 0 },
-          { label: "Loves ♥",    value: totalLoves },
-        ].map((s) => (
-          <div key={s.label} className="card p-4">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-ash mb-1">{s.label}</p>
+        {([
+          { label: "Projects",     value: projects?.length ?? 0, href: "/dashboard/projects"      },
+          { label: "Matches",      value: totalMatches,           href: "/dashboard/opportunities" },
+          { label: "Applications", value: appCount ?? 0,          href: "/dashboard/applications"  },
+          { label: "Loves ♥",     value: totalLoves,             href: "/dashboard/projects"      },
+        ] as { label: string; value: number; href: string }[]).map((s) => (
+          <Link key={s.label} href={s.href}
+            className="card p-4 hover:border-gold hover:shadow-sm transition-all group">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-ash mb-1 group-hover:text-gold transition-colors">{s.label}</p>
             <p className="font-display text-[28px] text-ink leading-none">{s.value}</p>
-          </div>
+          </Link>
         ))}
       </div>
 
