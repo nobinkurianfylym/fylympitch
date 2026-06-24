@@ -247,8 +247,8 @@ export function ProofVerificationPanel({
         borderTop: "1px solid rgba(255,255,255,0.06)",
       }}>
         <p style={{ fontSize: 9, color: "rgba(255,255,255,0.22)", lineHeight: 1.6 }}>
-          Cryptographic proof of submission date, independently verifiable via Bitcoin.
-          Not a substitute for copyright registration.
+          Your submission date is now part of Bitcoin's permanent record —
+          independently verifiable by anyone, anywhere, forever.
         </p>
       </div>
     </div>
