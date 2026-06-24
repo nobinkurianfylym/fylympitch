@@ -11,10 +11,8 @@ import type { Profile } from "@/types";
 export const dynamic = "force-dynamic";
 
 const CAREER_STAGES = [
-  { key: "debut",       label: "Debut",       sub: "First feature or series" },
-  { key: "second_film", label: "Second Film",  sub: "One credit" },
-  { key: "established", label: "Established",  sub: "Multiple credits, festivals" },
-  { key: "veteran",     label: "Veteran",      sub: "10+ years" },
+  { key: "debut",       label: "Debut",       sub: "First or second feature" },
+  { key: "established", label: "Established", sub: "Multiple credits, festivals" },
 ];
 
 const SECTIONS = [
@@ -111,20 +109,20 @@ export default async function ProfilePage({
                 <p className="field-label mb-1">Career Stage</p>
                 <p className="text-[12px] text-ash mb-4">Used by the matching engine to find the right opportunities.</p>
                 <form action={updateCareerStage}>
-                  <div className="grid grid-cols-2 gap-3 mb-4">
+                  <div className="grid grid-cols-2 gap-3 mb-5">
                     {CAREER_STAGES.map(s => (
                       <label key={s.key}
-                        className={`cursor-pointer px-4 py-3 rounded-card border text-left transition-all ${
+                        className={`cursor-pointer px-5 py-5 rounded-card border text-left transition-all flex flex-col gap-1 ${
                           (profile as any).career_stage === s.key
                             ? "border-gold bg-gold/8"
                             : "border-line bg-white hover:border-ink/30"
                         }`}>
                         <input type="radio" name="career_stage" value={s.key}
                           defaultChecked={(profile as any).career_stage === s.key} className="hidden" />
-                        <p className={`text-[13px] font-medium ${(profile as any).career_stage === s.key ? "text-ink" : "text-ash"}`}>
+                        <p className={`text-[15px] font-display ${(profile as any).career_stage === s.key ? "text-ink" : "text-ash"}`}>
                           {s.label}
                         </p>
-                        <p className="text-[11px] text-ash mt-0.5">{s.sub}</p>
+                        <p className="text-[12px] text-ash leading-snug">{s.sub}</p>
                       </label>
                     ))}
                   </div>
