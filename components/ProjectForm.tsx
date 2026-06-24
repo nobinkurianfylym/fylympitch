@@ -295,6 +295,18 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
     if (!file) return;
     setError(null); setAiError(null);
     setUploading("pitch-decks"); setAiLoading(true);
+    // Fetch user profile for fallback name
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    let userFullName = "";
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+      userFullName = profile?.full_name?.trim() ?? "";
+    }
     const [path, text] = await Promise.all([uploadFile(file, "pitch-decks"), extractPDFText(file).catch(() => "")]);
     if (path) setDeckPath(path);
     setUploading(null);
@@ -313,6 +325,10 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
       if (res.ok) {
         const data = await res.json();
         const filled: AiFilled = {};
+        // Fallback: if director_name not in deck, use logged-in user's full name
+        if ((!data.director_name || data.director_name.trim() === "") && userFullName) {
+          data.director_name = userFullName;
+        }
         setFields((prev) => {
           const next = { ...prev };
           const keys: (keyof Fields)[] = [

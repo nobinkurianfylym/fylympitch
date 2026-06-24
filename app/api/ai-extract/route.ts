@@ -16,6 +16,8 @@ const EXTRACTION_PROMPT = `Extract film project information and return a JSON ob
   "stage": "exactly one of: development, pre_production, production, post_production, completed",
   "logline": "one sentence logline, max 480 characters",
   "synopsis": "2-4 paragraph story synopsis",
+  "director_name": "full name of the director if explicitly stated in the deck, else empty string",
+  "writer_name": "full name of the writer or screenwriter if explicitly stated in the deck, else empty string",
   "director_statement": "director vision statement if present, else empty string",
   "producer_info": "producer and production company info if present, else empty string"
 }
