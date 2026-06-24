@@ -7,6 +7,7 @@ import MessageButton from "@/components/MessageButton";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
 import FRSButton from "@/components/FRSButton";
+import SaveToPipelineButton from "@/components/SaveToPipelineButton";
 
 export const dynamic = "force-dynamic";
 
@@ -187,11 +188,7 @@ export default async function ProducerProjectsPage({
                       Open in Pipeline →
                     </Link>
                   ) : (
-                    <form action={upsertProducerProject} className="w-full">
-                      <input type="hidden" name="project_id" value={p.id} />
-                      <input type="hidden" name="status" value="saved" />
-                      <button className="btn-ghost !py-1.5 w-full text-[12px]">+ Add to Pipeline</button>
-                    </form>
+                    <SaveToPipelineButton projectId={p.id} />
                   )}
 
                   {/* Pass — only when not yet in pipeline */}
