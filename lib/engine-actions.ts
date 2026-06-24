@@ -50,13 +50,15 @@ export async function rerunEngine(
     festivals: string[] | null;
     open_to_coproduction: boolean | null;
     open_to_ep: boolean | null;
+    accepting_pitches: boolean | null;
     profiles: { full_name: string; company: string | null; avatar_url: string | null } | null;
   };
 
   const { data: ppRows } = await supabase
     .from("producer_profiles")
-    .select("user_id, genres, formats, territories, budget_range, festivals, open_to_coproduction, open_to_ep, profiles!producer_profiles_user_id_fkey(full_name, company, avatar_url)")
-    .eq("is_public", true);
+    .select("user_id, genres, formats, territories, budget_range, festivals, open_to_coproduction, open_to_ep, accepting_pitches, profiles!producer_profiles_user_id_fkey(full_name, company, avatar_url)")
+    .eq("is_public", true)
+    .eq("accepting_pitches", true);
 
   const BUDGET_RANGES: Record<string, [number, number]> = {
     micro: [0, 100_000],
