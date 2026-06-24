@@ -5,6 +5,7 @@ import ProfileForm from "@/components/ProfileForm";
 import UsernameForm from "@/components/UsernameForm";
 import ExpandableCredit from "@/components/ExpandableCredit";
 import AddCreditForm from "@/components/AddCreditForm";
+import DeleteAccountModal from "@/components/DeleteAccountModal";
 import { updateCareerStage } from "@/lib/actions";
 import type { Profile } from "@/types";
 
