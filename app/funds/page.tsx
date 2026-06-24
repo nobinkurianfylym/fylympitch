@@ -25,24 +25,6 @@ export const metadata: Metadata = {
   },
 };
 
-const PALETTES = [
-  { bg: "#FDF5E4", band: "#F5E8C0", tx: "#7B5E1A" },
-  { bg: "#E8F3EC", band: "#C8E4D0", tx: "#2A5E3A" },
-  { bg: "#FDE8E4", band: "#F5C8C0", tx: "#8A3028" },
-  { bg: "#E4EEF8", band: "#C0D4F0", tx: "#1E3A82" },
-  { bg: "#EEE8F8", band: "#D4C8F0", tx: "#4A2888" },
-  { bg: "#FEF0D8", band: "#F5DEB0", tx: "#885010" },
-  { bg: "#F8E8F0", band: "#ECC0D8", tx: "#882848" },
-  { bg: "#E8F0E8", band: "#C8DCC8", tx: "#2A5040" },
-  { bg: "#E0E8F4", band: "#BCC8E8", tx: "#183060" },
-];
-
-function hashTitle(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
 const BAND_LABEL: Record<string, string> = {
   // Development
   lab:                   "LAB",
@@ -233,63 +215,60 @@ export default async function FundsPage({
             {q ? `No funds found for "${q}".` : `No opportunities found${type ? " in this category" : ""}.`}
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {(opps as any[]).map((o) => {
-              const p         = PALETTES[hashTitle(o.title) % PALETTES.length];
               const location  = o.country || o.region || "Worldwide";
               const bandLabel = BAND_LABEL[o.opp_type] ?? (o.opp_type as string).toUpperCase();
               const langs     = (o.languages as string[] | null) ?? [];
-              const link      = (o.app_link as string | null) || (o.url as string | null) || undefined;
+              const deadline  = formatDeadline(o.deadline as string | null, o.deadline_note as string | null);
+              const isClosing = o.deadline && (new Date(o.deadline).getTime() - Date.now()) < 30 * 86400000;
 
               return (
                 <Link key={o.id}
                   href={`/funds/${(o as any).slug}`}
-                  className="group flex flex-col bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold hover:shadow-sm transition-all"
+                  className="group flex flex-col bg-white border border-line rounded-[14px] overflow-hidden hover:border-gold/50 hover:shadow-sm transition-all no-underline"
                   style={{ textDecoration: "none", color: "inherit" }}>
 
-                  <div style={{
-                    background: p.bg, aspectRatio: "3/2",
-                    position: "relative", display: "flex",
-                    alignItems: "center", justifyContent: "center", padding: "24px",
-                  }}>
-                    <div style={{ position:"absolute", top:12,   left:12,  width:7, height:7, borderRadius:2, background:p.band }} />
-                    <div style={{ position:"absolute", top:12,   right:12, width:7, height:7, borderRadius:2, background:p.band }} />
-                    <p className="font-display text-[22px] font-[400] text-center leading-snug" style={{ color: p.tx }}>
-                      {o.title}
-                    </p>
-                  </div>
-
-                  <div style={{ background: p.band, position: "relative" }}
-                    className="px-4 py-3 flex items-center justify-center">
-                    <div style={{ position:"absolute", bottom:10, left:12,  width:7, height:7, borderRadius:2, background:p.bg }} />
-                    <div style={{ position:"absolute", bottom:10, right:12, width:7, height:7, borderRadius:2, background:p.bg }} />
-                    <span className="text-[10px] tracking-[0.14em] uppercase font-[600]" style={{ color: p.tx }}>
-                      {bandLabel}
-                    </span>
-                  </div>
-
                   <div className="p-6 flex flex-col flex-1">
-                    <p className="text-[11px] tracking-[0.24em] uppercase text-ash mb-2">
-                      {TYPE_LABEL[o.opp_type as string] ?? o.opp_type} · {location}
-                    </p>
-                    <h2 className="font-display text-[24px] font-[400] mb-3 group-hover:text-gold transition-colors leading-snug">
+                    {/* Type pill */}
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[9px] tracking-[0.18em] uppercase font-semibold bg-ink text-ivory">
+                        {bandLabel}
+                      </span>
+                      {isClosing && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] tracking-[0.12em] uppercase font-semibold border border-gold/40 text-gold">
+                          Closing soon
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Title */}
+                    <h2 className="font-display text-[20px] font-[600] leading-[1.2] text-ink mb-2 group-hover:text-gold transition-colors">
                       {o.title}
                     </h2>
+
+                    {/* Location */}
+                    <p className="text-[11px] tracking-[0.1em] uppercase text-ash/60 mb-3">
+                      {location}{langs.length > 0 ? ` · ${langs[0]}` : ""}
+                    </p>
+
+                    {/* Description */}
                     {o.description && (
-                      <p className="font-display italic text-[14px] leading-[1.55] text-ash line-clamp-3 flex-1">
-                        &ldquo;{o.description as string}&rdquo;
+                      <p className="text-[13px] leading-[1.65] text-ash line-clamp-2 flex-1">
+                        {o.description as string}
                       </p>
                     )}
-                    <div className="mt-4 pt-4 border-t border-line flex flex-col gap-1 text-[12px]">
-                      <span className="text-ink font-[500]">
-                        {formatDeadline(o.deadline as string | null, o.deadline_note as string | null)}
+
+                    {/* Footer */}
+                    <div className="mt-4 pt-4 border-t border-line flex items-center justify-between gap-2">
+                      <span className={`text-[12px] font-medium ${isClosing ? "text-gold" : "text-ink/70"}`}>
+                        {deadline}
                       </span>
-                      <span className="text-ash">
-                        {location}{langs.length > 0 ? ` · ${langs[0]}` : ""}
+                      <span className="text-[10px] tracking-[0.1em] uppercase text-ash/40 group-hover:text-gold transition-colors">
+                        View →
                       </span>
                     </div>
                   </div>
-
                 </Link>
               );
             })}
