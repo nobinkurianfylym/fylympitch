@@ -560,7 +560,6 @@ export default function ProducerProfilePage() {
                   <DeleteAccountModal />
                 </div>
               )}
-            )}
 
             {/* Save footer */}
             <div className="sticky bottom-0 border-t border-line bg-ivory px-6 py-4 flex items-center gap-3">
