@@ -234,6 +234,30 @@ export async function createProject(formData: FormData) {
   // ProjectAnalysisLoader auto-triggers rerunEngine() on mount, showing a
   // live "Analysing…" state. This keeps form submit instant (<1s).
 
+  // ── OTS Proof of Existence — fire and forget, never blocks submit ──────────
+  {
+    const { triggerProjectProof } = await import("@/lib/proof-actions");
+    triggerProjectProof({
+      projectId: data.id,
+      projectData: {
+        title,
+        logline,
+        synopsis:         str(formData, "synopsis") || null,
+        genre:            str(formData, "genre") || null,
+        format:           str(formData, "format") || null,
+        budget_amount:    budgetAmount,
+        budget_currency:  budgetCurrency,
+        production_stage: str(formData, "stage") || null,
+        director:         str(formData, "director_name") || null,
+        writer:           str(formData, "writer_name") || null,
+        country_of_origin: str(formData, "country") || null,
+        language:         str(formData, "language") || null,
+      },
+      pitchDeckHash:     str(formData, "pitch_deck_hash") || null,
+      pitchDeckFileName: str(formData, "pitch_deck_filename") || null,
+    }).catch((e) => console.error("[Proof] createProject trigger failed:", e));
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/filmprojects");
   revalidatePath("/dashboard/projects");

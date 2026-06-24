@@ -21,6 +21,7 @@ import ProjectThumbnail from "@/components/ProjectThumbnail";
 import ProjectIntelligenceSidebar from "@/components/ProjectIntelligenceSidebar";
 import FilmmakerWorkspace, { type WorkspaceDeadline } from "@/components/FilmmakerWorkspace";
 import FilmmakerMotivation from "@/components/FilmmakerMotivation";
+import { ProofVerificationPanel } from "@/components/ProofVerificationPanel";
 import {
   formatBudgetDisplay, formatShortId, formatCountry, STAGE_BADGE,
 } from "@/lib/film-identity";
@@ -59,6 +60,13 @@ export default async function ProjectDetailPage({
     .eq("id", id).single<Project>();
   if (!project) notFound();
   const isOwner = project.owner_id === user!.id;
+
+  // ── Proof of Existence records ──────────────────────────────────────────
+  const { data: proofs } = await supabase
+    .from("project_proofs")
+    .select("id, version, file_name, proof_type, sha256_hash, ots_status, bitcoin_block_height, bitcoin_block_hash, anchored_at, created_at")
+    .eq("project_id", id)
+    .order("created_at", { ascending: false });
 
   const { data: intel } = await supabase
     .from("project_intelligence").select("*").eq("project_id", id).single();
@@ -796,6 +804,16 @@ export default async function ProjectDetailPage({
               dream={dream}
               roadmap={roadmap}
             />
+            {/* ── Proof of Existence ─────────────────────── */}
+            {(proofs ?? []).length > 0 && (
+              <div className="mt-4">
+                <ProofVerificationPanel
+                  proofs={(proofs ?? []) as any}
+                  projectTitle={project.title}
+                  viewerRole="filmmaker"
+                />
+              </div>
+            )}
           </div>
         )}
 

@@ -12,6 +12,7 @@ import { ConversationHeader } from "./ConversationHeader";
 import { MessageList } from "./MessageList";
 import { PremiumComposer } from "./PremiumComposer";
 import { EmptyState } from "./EmptyState";
+import { ProofNotificationThread } from "./ProofNotificationThread";
 
 interface Props {
   currentUserId:        string;
@@ -20,19 +21,25 @@ interface Props {
   initialConversationId: string | null;
   /** Path prefix for inbox URL: "/dashboard/messages" or "/producerstudio/messages" */
   inboxPath: string;
+  /** Unread proof notification count, passed from server */
+  initialProofUnreadCount?: number;
 }
+
+const PROOF_THREAD_ID = "proof-notifications";
 
 export default function InboxShell({
   currentUserId,
   initialConversations,
   initialConversationId,
   inboxPath,
+  initialProofUnreadCount = 0,
 }: Props) {
   const router   = useRouter();
   const pathname = usePathname();
 
   const [selectedId,      setSelectedId]      = useState<string | null>(initialConversationId);
   const [mobileShowPanel, setMobileShowPanel] = useState(!!initialConversationId);
+  const [proofUnreadCount, setProofUnreadCount] = useState(initialProofUnreadCount);
 
   const {
     messages,
@@ -84,6 +91,29 @@ export default function InboxShell({
           h-full
         `}
       >
+        {/* ── PITCH.FYLYM system thread — pinned above conversations ── */}
+        <div className="shrink-0 border-b border-line">
+          <button
+            onClick={() => { setSelectedId(PROOF_THREAD_ID); setMobileShowPanel(true); }}
+            className={`w-full flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-gold/5 ${
+              selectedId === PROOF_THREAD_ID ? "bg-gold/8 border-l-2 border-l-gold" : "border-l-2 border-l-transparent"
+            }`}
+          >
+            <div className="w-8 h-8 rounded-full bg-ink flex items-center justify-center shrink-0">
+              <span className="text-gold text-[13px]">₿</span>
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-[12px] font-medium text-ink truncate">PITCH.FYLYM</p>
+              <p className="text-[10px] text-ash truncate">Proof of Existence Certificates</p>
+            </div>
+            {proofUnreadCount > 0 && (
+              <span className="bg-gold text-white text-[9px] rounded-full px-1.5 py-0.5 font-mono">
+                {proofUnreadCount}
+              </span>
+            )}
+          </button>
+        </div>
+
         <ConversationList
           conversations={conversations}
           selectedId={selectedId}
@@ -101,12 +131,17 @@ export default function InboxShell({
         `}
         aria-label="Message panel"
       >
-        {!selected ? (
+        {!selected && selectedId !== PROOF_THREAD_ID ? (
           <EmptyState variant="no-selection" />
+        ) : selectedId === PROOF_THREAD_ID ? (
+          <ProofNotificationThread
+            filmakerId={currentUserId}
+            onUnreadChange={setProofUnreadCount}
+          />
         ) : (
           <>
             <ConversationHeader
-              conversation={selected}
+              conversation={selected!}
               onBack={handleBack}
             />
 

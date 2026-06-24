@@ -44,6 +44,13 @@ export default async function MessagesPage({
     toConversationListItem(row, user.id)
   );
 
+  // Proof notification unread count for the pinned PITCH.FYLYM thread
+  const { count: proofUnreadCount } = await supabase
+    .from("proof_notifications")
+    .select("*", { count: "exact", head: true })
+    .eq("filmmaker_id", user.id)
+    .eq("is_read", false);
+
   return (
     // Escape the dashboard layout's px-6 md:px-8 py-10 padding
     <div className="-mx-6 md:-mx-8 -my-10">
@@ -52,6 +59,7 @@ export default async function MessagesPage({
         initialConversations={conversations}
         initialConversationId={initialConvId ?? null}
         inboxPath="/dashboard/messages"
+        initialProofUnreadCount={proofUnreadCount ?? 0}
       />
     </div>
   );

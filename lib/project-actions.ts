@@ -104,6 +104,30 @@ export async function updateProject(formData: FormData) {
 
   await supabase.from("projects").update(patch).eq("id", id).eq("owner_id", user.id);
 
+  // ── OTS Proof of Existence — fire and forget, never blocks update ──────────
+  {
+    const { triggerProjectProof } = await import("@/lib/proof-actions");
+    triggerProjectProof({
+      projectId: id,
+      projectData: {
+        title:            patch.title as string,
+        logline:          patch.logline as string | null,
+        synopsis:         patch.synopsis as string | null,
+        genre:            patch.genre as string | null,
+        format:           patch.format as string | null,
+        budget_amount:    budgetAmount,
+        budget_currency:  budgetCurrency,
+        production_stage: patch.stage as string | null,
+        director:         patch.director_name as string | null,
+        writer:           patch.writer_name as string | null,
+        country_of_origin: patch.country as string | null,
+        language:         patch.language as string | null,
+      },
+      pitchDeckHash:     (formData.get("pitch_deck_hash") as string) || null,
+      pitchDeckFileName: (formData.get("pitch_deck_filename") as string) || null,
+    }).catch((e) => console.error("[Proof] updateProject trigger failed:", e));
+  }
+
   // Revalidate public-facing pages if project is public
   const { data: updated } = await supabase
     .from("projects").select("slug, is_public").eq("id", id).single();

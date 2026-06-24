@@ -9,6 +9,7 @@ import PipelineStageForm from "@/components/PipelineStageForm";
 import StarRatingForm from "@/components/StarRatingForm";
 import PrivateNotesForm from "@/components/PrivateNotesForm";
 import PassAndAdvanceButton from "@/components/PassAndAdvanceButton";
+import { ProofVerificationPanel } from "@/components/ProofVerificationPanel";
 import {
   formatBudgetDisplay,
   formatShortId,
@@ -63,6 +64,13 @@ export default async function ProducerProjectDetailPage({
     .eq("id", id)
     .single();
   if (!project) notFound();
+
+  // ── Proof of Existence records (producer read-only view) ───────────────
+  const { data: proofs } = await supabase
+    .from("project_proofs")
+    .select("id, version, file_name, proof_type, sha256_hash, ots_status, bitcoin_block_height, bitcoin_block_hash, anchored_at, created_at")
+    .eq("project_id", id)
+    .order("created_at", { ascending: false });
 
   const { data: crm } = await supabase
     .from("producer_projects").select("*")
@@ -876,6 +884,17 @@ export default async function ProducerProjectDetailPage({
               initialNotes={crm?.notes}
             />
           </div>
+
+          {/* ── Proof of Existence (producer read-only) ─────── */}
+          {(proofs ?? []).length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <ProofVerificationPanel
+                proofs={(proofs ?? []) as any}
+                projectTitle={project.title}
+                viewerRole="producer"
+              />
+            </div>
+          )}
         </div>
       </div>
 
