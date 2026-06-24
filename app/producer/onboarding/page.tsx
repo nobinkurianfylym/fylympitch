@@ -106,9 +106,7 @@ export default function ProducerOnboardingPage() {
             <p className="text-[10px] tracking-[0.28em] uppercase text-ash">PITCH.FYLYM</p>
             <p className="text-[12px] tracking-[0.18em] uppercase text-ink mt-0.5">Producer Studio</p>
           </div>
-          <Link href="/dashboard" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors">
-            ← Back to dashboard
-          </Link>
+
         </div>
       </header>
 
@@ -247,70 +245,9 @@ export default function ProducerOnboardingPage() {
             {formats.map((f) => <input key={f} type="hidden" name="formats" value={f} />)}
           </section>
 
-          {/* 5. Budget */}
-          <section>
-            <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Budget range you typically engage</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {BUDGET_RANGES.map((b) => (
-                <button key={b.key} type="button" onClick={() => setBudget(budget === b.key ? "" : b.key)}
-                  className={`px-4 py-3 rounded-card border text-left transition-all
-                    ${budget === b.key ? "border-gold bg-gold/10" : "border-line bg-white hover:border-ink/30"}`}>
-                  <p className={`text-[13px] font-medium ${budget === b.key ? "text-ink" : "text-ash"}`}>{b.label}</p>
-                  <p className="text-[11px] text-ash mt-0.5">{b.sub}</p>
-                </button>
-              ))}
-            </div>
-            <input type="hidden" name="budget_range" value={budget} />
-          </section>
 
-          {/* 6. Territories */}
-          <section>
-            <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Territories of interest</p>
-            <div className="flex flex-wrap gap-2">
-              {COUNTRIES.slice(0, 20).map((c) => (
-                <button key={c} type="button" onClick={() => setTerritories(toggle(territories, c))}
-                  className={`px-3 py-1.5 rounded-full text-[11px] tracking-[0.08em] border transition-all
-                    ${territories.includes(c) ? "bg-ink text-ivory border-ink" : "bg-white border-line text-ash hover:border-ink/40 hover:text-ink"}`}>
-                  {c}
-                </button>
-              ))}
-            </div>
-            {territories.map((t) => <input key={t} type="hidden" name="territories" value={t} />)}
-          </section>
 
-          {/* 7. Festivals */}
-          <section>
-            <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">Festivals you're active in</p>
-            <div className="flex flex-wrap gap-2">
-              {FESTIVALS.map((f) => (
-                <button key={f} type="button" onClick={() => setFestivals(toggle(festivals, f))}
-                  className={`px-4 py-2 rounded-full text-[12px] border transition-all
-                    ${festivals.includes(f) ? "bg-ink text-ivory border-ink" : "bg-white border-line text-ash hover:border-ink/40 hover:text-ink"}`}>
-                  {f}
-                </button>
-              ))}
-            </div>
-            {festivals.map((f) => <input key={f} type="hidden" name="festivals" value={f} />)}
-          </section>
 
-          {/* 8. What you bring */}
-          <section>
-            <p className="text-[11px] tracking-[0.22em] uppercase text-ash mb-4">What do you bring?</p>
-            <div className="flex flex-wrap gap-3">
-              {[
-                { label: "Open to co-production", active: coproduction, set: setCoproduction },
-                { label: "Can attach as EP",       active: attachEP,     set: setAttachEP },
-                { label: "Bringing territory funding", active: bringFunding, set: setBringFunding },
-              ].map((item) => (
-                <button key={item.label} type="button" onClick={() => item.set(!item.active)}
-                  className={`px-5 py-2.5 rounded-full text-[13px] border transition-all
-                    ${item.active ? "bg-gold text-white border-gold" : "bg-white border-line text-ash hover:border-gold/50 hover:text-ink"}`}>
-                  {item.active && <span className="mr-1.5">✓</span>}
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </section>
 
           {/* 9. Be found */}
           <section>

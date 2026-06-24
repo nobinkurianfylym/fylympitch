@@ -315,15 +315,19 @@ export default async function PublicProfilePage({
                 {responseTime && <span style={{ fontSize:11, color:"rgba(26,24,21,0.28)", marginLeft:2 }}>— {responseTime}</span>}
               </div>
               <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                {user && user.id !== profile.id && acceptingPitches && (
-                  <Link href={`/dashboard/projects/new?producer=${profile.username}`} style={{
-                    fontSize:10, letterSpacing:".16em", textTransform:"uppercase", fontWeight:700,
-                    color:"#F5F5F0", textDecoration:"none", background:"#1A1815",
-                    padding:"8px 18px", borderRadius:100,
-                  }}>
+                {/* Send Pitch — visible to everyone when accepting pitches */}
+                {acceptingPitches && (
+                  <Link
+                    href={user ? `/dashboard/projects/new?producer=${profile.username}` : `/login?next=/dashboard/projects/new?producer=${profile.username}`}
+                    style={{
+                      fontSize:10, letterSpacing:".16em", textTransform:"uppercase", fontWeight:700,
+                      color:"#F5F5F0", textDecoration:"none", background:"#1A1815",
+                      padding:"8px 18px", borderRadius:100,
+                    }}>
                     Send Pitch
                   </Link>
                 )}
+                {/* Message — only for logged-in non-owners */}
                 {user && user.id !== profile.id && acceptingPitches && (
                   <Link href="/producer/messages" className="lnk-gd" style={{ fontSize:10, letterSpacing:".16em", textTransform:"uppercase", fontWeight:700, color:"#8A6F3E", textDecoration:"none", border:"1px solid rgba(191,153,83,0.35)", padding:"8px 18px", borderRadius:100 }}>
                     Message
