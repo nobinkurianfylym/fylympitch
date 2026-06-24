@@ -48,6 +48,9 @@ export default async function NotificationsPage() {
     (completionFields.filter(Boolean).length / completionFields.length) * 100
   );
 
+  const unreadCount = (items ?? []).filter((n: any) => !n.read).length;
+  const hasAny      = (items ?? []).length > 0;
+
   // Runtime link rewrite — catches any stale links already in the DB
   function safeLink(link: string | null): string | null {
     if (!link) return null;
