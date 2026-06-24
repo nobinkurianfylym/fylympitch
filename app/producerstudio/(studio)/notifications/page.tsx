@@ -54,9 +54,7 @@ export default async function ProducerNotificationsPage() {
         <div className="flex items-center gap-3 mb-8">
           {unreadCount > 0 && (
             <form action={markAllRead}>
-              <button className="btn-ghost !px-4 !py-2 text-[12px]">
-                Mark all read
-              </button>
+              <button className="btn-ghost !px-4 !py-2 text-[12px]">Mark all read</button>
             </form>
           )}
           <form action={deleteAllNotifications}>
@@ -75,20 +73,14 @@ export default async function ProducerNotificationsPage() {
             ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`
             : null;
 
-          const rowContent = (
-            <div
-              className={`hairline py-4 flex items-start gap-3 group ${
-                !n.read ? "border-l-2 border-gold pl-4 -ml-4" : ""
-              }`}
-            >
+          const inner = (
+            <div className={`hairline py-4 flex items-start gap-3 pr-10 group ${
+              !n.read ? "border-l-2 border-gold pl-4 -ml-4" : ""
+            }`}>
               {/* Poster thumbnail */}
               {posterUrl && (
                 <div className="shrink-0 w-14 h-[3.5rem] rounded-[4px] overflow-hidden border border-line bg-parchment">
-                  <img
-                    src={posterUrl}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={posterUrl} alt="" className="w-full h-full object-cover" />
                 </div>
               )}
 
@@ -97,11 +89,11 @@ export default async function ProducerNotificationsPage() {
                   <span className="text-[10px] tracking-[0.14em] uppercase text-ash">
                     {KIND_LABEL[n.kind] ?? n.kind}
                   </span>
-                  {!n.read && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
-                  )}
+                  {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />}
                 </div>
-                <p className={`text-[14px] group-hover:text-gold transition-colors ${n.read ? "text-ash" : "text-ink font-normal"}`}>
+                <p className={`text-[14px] group-hover:text-gold transition-colors ${
+                  n.read ? "text-ash" : "text-ink font-normal"
+                }`}>
                   {n.title}
                 </p>
                 {n.body && (
@@ -109,31 +101,36 @@ export default async function ProducerNotificationsPage() {
                 )}
               </div>
 
-              {/* Timestamp + delete */}
-              <div className="flex items-center gap-3 shrink-0 mt-0.5">
-                <span className="text-[12px] text-ash whitespace-nowrap">
-                  {timeAgo(n.created_at)}
-                </span>
+              <span className="text-[12px] text-ash whitespace-nowrap mt-0.5 shrink-0">
+                {timeAgo(n.created_at)}
+              </span>
+            </div>
+          );
+
+          return (
+            <div key={n.id} className="relative group">
+              {n.link ? (
+                <Link href={n.link} className="block hover:no-underline">
+                  {inner}
+                </Link>
+              ) : (
+                inner
+              )}
+
+              {/* Delete button — outside the Link, absolutely positioned */}
+              <div className="absolute top-4 right-0">
                 <form action={deleteNotification}>
                   <input type="hidden" name="notification_id" value={n.id} />
                   <button
                     type="submit"
                     title="Delete"
-                    className="w-8 h-8 flex items-center justify-center rounded text-[20px] leading-none text-ash/50 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded text-[20px] leading-none text-ash/30 hover:text-red-600 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
                   >
                     ×
                   </button>
                 </form>
               </div>
             </div>
-          );
-
-          return n.link ? (
-            <Link key={n.id} href={n.link} className="block hover:no-underline">
-              {rowContent}
-            </Link>
-          ) : (
-            <div key={n.id}>{rowContent}</div>
           );
         })}
 

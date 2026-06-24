@@ -36,7 +36,7 @@ export default async function NotificationsPage() {
   const { data: projectData } = projectIds.length
     ? await supabase.from("projects").select("id, poster_path").in("id", projectIds)
     : { data: [] };
-  const posterMap = new Map((projectData ?? []).map((p) => [p.id, p.poster_path]));
+  const posterMap = new Map((projectData ?? []).map((p: any) => [p.id, p.poster_path]));
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
@@ -117,42 +117,29 @@ export default async function NotificationsPage() {
             ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`
             : null;
 
-          const rowContent = (
-            <div
-              className={`py-4 flex items-start gap-3 group transition-colors ${
-                isUnread ? "bg-parchment/60 -mx-3 px-3 rounded-card" : ""
-              }`}
-            >
+          // Inner row — shared between linked and plain variants
+          const inner = (
+            <div className={`py-4 flex items-start gap-3 pr-10 ${
+              isUnread ? "bg-parchment/60 -mx-3 px-3 rounded-card" : ""
+            }`}>
               {/* Unread dot */}
               <div className="mt-2.5 shrink-0 w-2">
-                <span
-                  className={`block w-2 h-2 rounded-full ${
-                    isUnread ? meta.dot : "bg-transparent"
-                  }`}
-                />
+                <span className={`block w-2 h-2 rounded-full ${isUnread ? meta.dot : "bg-transparent"}`} />
               </div>
 
               {/* Poster thumbnail */}
               {posterUrl && (
                 <div className="shrink-0 w-14 h-[3.5rem] rounded-[4px] overflow-hidden border border-line bg-parchment">
-                  <img
-                    src={posterUrl}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={posterUrl} alt="" className="w-full h-full object-cover" />
                 </div>
               )}
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] tracking-[0.18em] uppercase text-ash mb-1">
-                  {meta.label}
-                </p>
-                <p
-                  className={`text-[14px] leading-snug group-hover:text-gold transition-colors ${
-                    isUnread ? "text-ink font-medium" : "text-ash"
-                  }`}
-                >
+                <p className="text-[10px] tracking-[0.18em] uppercase text-ash mb-1">{meta.label}</p>
+                <p className={`text-[14px] leading-snug group-hover:text-gold transition-colors ${
+                  isUnread ? "text-ink font-medium" : "text-ash"
+                }`}>
                   {n.title}
                 </p>
                 {n.body && (
@@ -160,32 +147,38 @@ export default async function NotificationsPage() {
                 )}
               </div>
 
-              {/* Timestamp + delete */}
-              <div className="flex items-center gap-3 shrink-0 mt-1">
-                <span className="text-[12px] text-ash whitespace-nowrap">
-                  {timeAgo(n.created_at)}
-                </span>
+              {/* Timestamp */}
+              <span className="text-[12px] text-ash whitespace-nowrap mt-1 shrink-0">
+                {timeAgo(n.created_at)}
+              </span>
+            </div>
+          );
+
+          return (
+            // Wrapper: relative so the delete button can be abs-positioned outside the Link
+            <div key={n.id} className="relative group">
+              {n.link ? (
+                <Link href={n.link} className="block hover:no-underline">
+                  {inner}
+                </Link>
+              ) : (
+                inner
+              )}
+
+              {/* Delete button — absolutely positioned, never inside the Link */}
+              <div className="absolute top-4 right-0">
                 <form action={deleteNotification}>
                   <input type="hidden" name="notification_id" value={n.id} />
                   <button
                     type="submit"
                     title="Delete"
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-8 h-8 flex items-center justify-center rounded text-[20px] leading-none text-ash/50 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded text-[20px] leading-none text-ash/30 hover:text-red-600 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
                   >
                     ×
                   </button>
                 </form>
               </div>
             </div>
-          );
-
-          return n.link ? (
-            <Link key={n.id} href={n.link} className="block hover:no-underline">
-              {rowContent}
-            </Link>
-          ) : (
-            <div key={n.id}>{rowContent}</div>
           );
         })}
 
