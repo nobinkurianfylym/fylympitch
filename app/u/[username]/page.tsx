@@ -439,701 +439,204 @@ export default async function PublicProfilePage({
     );
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Render (filmmaker) ─────────────────────────────────────────────────────
+  const filmakerFmts: string[] = (profile as any).filmmaker_formats ?? [];
+  const avatarSrc = profile.avatar_url || null;
+  const initials  = profile.full_name.split(" ").map((w: string) => w[0]).join("").slice(0,2).toUpperCase();
+
+  const CAREER_LABEL: Record<string,string> = {
+    debut:"Debut Filmmaker", second_film:"2nd Film",
+    established:"Established Filmmaker", veteran:"Veteran Filmmaker",
+  };
+  const FORMAT_LABEL: Record<string,string> = {
+    documentary:"Documentary", narrative:"Narrative", feature:"Feature",
+    short:"Short Film", series:"Series", animation:"Animation",
+  };
+
   return (
     <>
       <style>{`
-        @keyframes heroFade {
-          from { opacity: 0; transform: translateY(14px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .hero-in { animation: heroFade 0.75s ease-out forwards; }
-        .hero-in-2 { animation: heroFade 0.75s 0.12s ease-out both; }
-        .hero-in-3 { animation: heroFade 0.75s 0.24s ease-out both; }
-
-        .poster-card { transition: transform 150ms ease; }
-        .poster-card:hover { transform: scale(1.02); }
-
-        /* Mobile swipe for projects */
-        @media (max-width: 768px) {
-          .projects-row {
-            display: flex !important;
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-            gap: 16px;
-            padding-bottom: 16px;
-          }
-          .projects-row::-webkit-scrollbar { display: none; }
-          .project-card-wrap {
-            flex: none;
-            width: 280px;
-            scroll-snap-align: start;
-          }
-        }
-
-        /* Nav link hover */
-        .nav-link { transition: opacity 150ms; }
-        .nav-link:hover { opacity: 1 !important; }
+        @keyframes fkarr{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .fka{animation:fkarr 0.55s cubic-bezier(0.16,1,0.3,1) forwards}
+        .fka2{animation:fkarr 0.55s 0.08s cubic-bezier(0.16,1,0.3,1) both}
+        .fklnk{transition:opacity 140ms}.fklnk:hover{opacity:0.65}
+        .fkcard{background:#fff;border-radius:14px;border:1px solid rgba(26,24,21,0.08);padding:24px 28px}
+        .fksl{font-size:9px;letter-spacing:.26em;text-transform:uppercase;font-weight:600;color:#BF9953;margin:0 0 12px;display:block}
+        @media(max-width:768px){.fk-two{grid-template-columns:1fr!important}.fk-id{position:static!important}}
       `}</style>
 
-      <div style={{ background: S.ivory, minHeight: "100vh", fontFamily: "'Montserrat', sans-serif" }}>
+      <div style={{background:"#F5F5F0",minHeight:"100vh",fontFamily:"'Montserrat',sans-serif"}}>
 
-        {/* ── FIXED NAV ─────────────────────────────────────────── */}
-        <nav style={{
-          position:       "fixed",
-          top:            0,
-          left:           0,
-          right:          0,
-          zIndex:         50,
-          height:         52,
-          display:        "flex",
-          alignItems:     "center",
-          justifyContent: "space-between",
-          padding:        "0 40px",
-          background:     "rgba(26,24,21,0.55)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-        }}>
-          <Wordmark light />
-          <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
-            <Link href="/projects" className="nav-link" style={{
-              fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
-              color: "rgba(245,245,240,0.55)", textDecoration: "none",
-            }}>
-              Films
+        {/* Nav */}
+        <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:50,height:48,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 40px",background:"rgba(245,245,240,0.95)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderBottom:"1px solid rgba(26,24,21,0.05)"}}>
+          <Wordmark href="/" size="sm" />
+          {user && (
+            <Link href={dashboardHref} className="fklnk"
+              style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.35)",textDecoration:"none"}}>
+              {viewerRole === "producer" ? "Producer Studio" : "Dashboard"}
             </Link>
-            <Link href="/funds" className="nav-link" style={{
-              fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
-              color: "rgba(245,245,240,0.55)", textDecoration: "none",
-            }}>
-              Funds
-            </Link>
-            {user ? (
-              <Link href={dashboardHref} className="nav-link" style={{
-                fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
-                color: "rgba(245,245,240,0.55)", textDecoration: "none",
-              }}>
-                {viewerRole === "producer" ? "Studio" : "Dashboard"}
-              </Link>
-            ) : (
-              <Link href={`/login?next=/u/${username}`} style={{
-                fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase",
-                color: S.gold, textDecoration: "none", border: `1px solid rgba(191,153,83,0.5)`,
-                padding: "5px 14px", borderRadius: 6,
-              }}>
-                Log in
-              </Link>
-            )}
-          </div>
+          )}
         </nav>
 
-        {/* ══ HERO ══════════════════════════════════════════════ */}
-        <section style={{
-          position:   "relative",
-          minHeight:  "100svh",
-          background: S.ink,
-          display:    "flex",
-          alignItems: "center",
-          overflow:   "hidden",
-        }}>
-          {/* Blurred cover — filmmaker's own work as the backdrop */}
-          {coverUrl && (
-            <div aria-hidden style={{
-              position:           "absolute",
-              inset:              "-10%",
-              backgroundImage:    `url(${coverUrl})`,
-              backgroundSize:     "cover",
-              backgroundPosition: "center",
-              filter:             "blur(32px) saturate(0.7)",
-              opacity:            0.28,
-              transform:          "scale(1.08)",
-            }} />
-          )}
-          {/* Overlay — no gradient, just flat opacity */}
-          <div aria-hidden style={{
-            position: "absolute",
-            inset:    0,
-            background: S.ink,
-            opacity:  coverUrl ? 0.60 : 0.95,
-          }} />
+        {/* Two-column layout */}
+        <div style={{maxWidth:1100,margin:"0 auto",padding:"72px 32px 80px"}}>
+          <div className="fk-two" style={{display:"grid",gridTemplateColumns:"360px 1fr",gap:24,alignItems:"start"}}>
 
-          {/* Hero content */}
-          <div style={{
-            position: "relative",
-            zIndex:   10,
-            width:    "100%",
-            maxWidth: 1100,
-            margin:   "0 auto",
-            padding:  "100px 40px 80px",
-            display:  "grid",
-            gridTemplateColumns: "140px 1fr auto",
-            gap:      "0 56px",
-            alignItems: "center",
-          }} className="hero-grid">
+            {/* ═══ LEFT — Identity card (sticky) ═══ */}
+            <div className="fk-id fka" style={{position:"sticky",top:64}}>
+              <div style={{background:"#EDE8DF",borderRadius:20,padding:"36px 32px 32px"}}>
 
-            {/* ── Col 1: Avatar ──────────────────────────────── */}
-            <div className="hero-in" style={{ justifySelf: "center" }}>
-              {profile.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.full_name}
-                  style={{
-                    width:        136,
-                    height:       136,
-                    borderRadius: "50%",
-                    objectFit:    "cover",
-                    border:       "2px solid rgba(245,245,240,0.18)",
-                    display:      "block",
-                  }}
-                />
-              ) : (
-                <div style={{
-                  width:          136,
-                  height:         136,
-                  borderRadius:   "50%",
-                  background:     "rgba(245,245,240,0.08)",
-                  border:         "2px solid rgba(245,245,240,0.14)",
-                  display:        "flex",
-                  alignItems:     "center",
-                  justifyContent: "center",
-                }}>
-                  <span style={{
-                    fontFamily: "'Playfair Display', Georgia, serif",
-                    fontSize:   42,
-                    color:      "rgba(245,245,240,0.5)",
-                    lineHeight: 1,
-                  }}>
-                    {profile.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
-                  </span>
+                {/* Eyebrow + Share */}
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+                  <p style={{fontSize:9,letterSpacing:".3em",textTransform:"uppercase",fontWeight:700,color:"#BF9953",margin:0}}>
+                    {CAREER_LABEL[(profile as any).career_stage] ?? "Filmmaker"}
+                  </p>
+                  <ProfileShareButton username={profile.username} name={profile.full_name} />
                 </div>
-              )}
-            </div>
 
-            {/* ── Col 2: Identity ─────────────────────────────── */}
-            <div style={{ minWidth: 0 }}>
-              {/* Career stage label */}
-              {profile.career_stage && (
-                <p className="hero-in" style={{
-                  fontSize:      11,
-                  letterSpacing: "0.26em",
-                  textTransform: "uppercase",
-                  color:         S.gold,
-                  marginBottom:  16,
-                  fontWeight:    500,
-                }}>
-                  {CAREER_LABEL[profile.career_stage] ?? "Filmmaker"}
-                </p>
-              )}
+                {/* Avatar + Name */}
+                <div style={{display:"flex",alignItems:"flex-start",gap:18,marginBottom:20}}>
+                  <div style={{flexShrink:0,width:80,height:80,borderRadius:"50%",overflow:"hidden",border:"2px solid rgba(26,24,21,0.1)",background:"rgba(26,24,21,0.06)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    {avatarSrc
+                      ? <img src={avatarSrc} alt={profile.full_name} style={{width:"100%",height:"100%",objectFit:"cover"}} />
+                      : <span style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:700,color:"rgba(26,24,21,0.3)"}}>{initials}</span>
+                    }
+                  </div>
+                  <div style={{paddingTop:4}}>
+                    <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(22px,3vw,32px)",fontWeight:700,lineHeight:1.08,color:"#1A1815",margin:0,letterSpacing:"-0.01em"}}>
+                      {profile.full_name}
+                    </h1>
+                    {profile.company && (
+                      <p style={{fontSize:13,fontWeight:600,color:"#BF9953",margin:"5px 0 0"}}>{profile.company}</p>
+                    )}
+                  </div>
+                </div>
 
-              {/* Name */}
-              <h1 className="hero-in-2" style={{
-                fontFamily:    "'Playfair Display', Georgia, serif",
-                fontSize:      "clamp(38px, 5vw, 56px)",
-                fontWeight:    400,
-                color:         S.ivory,
-                lineHeight:    1.04,
-                letterSpacing: "-0.02em",
-                margin:        "0 0 16px",
-              }}>
-                {profile.full_name}
-              </h1>
+                {/* Meta row */}
+                <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:"6px 16px",marginBottom:profile.bio ? 20 : 0}}>
+                  {profile.country && (
+                    <span style={{fontSize:12,color:"rgba(26,24,21,0.5)"}}>{profile.country}</span>
+                  )}
+                  {filmakerFmts.length > 0 && (
+                    <span style={{fontSize:12,color:"rgba(26,24,21,0.5)"}}>
+                      {filmakerFmts.map((f:string) => FORMAT_LABEL[f] ?? f).join(", ")}
+                    </span>
+                  )}
+                  {profile.imdb_url && (
+                    <a href={profile.imdb_url} target="_blank" rel="noopener noreferrer" className="fklnk"
+                      style={{fontSize:10,letterSpacing:".1em",textTransform:"uppercase",fontWeight:700,color:"#BF9953",textDecoration:"none"}}>
+                      IMDb ↗
+                    </a>
+                  )}
+                  {profile.website && (
+                    <a href={profile.website} target="_blank" rel="noopener noreferrer" className="fklnk"
+                      style={{fontSize:10,letterSpacing:".1em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.4)",textDecoration:"none"}}>
+                      Website ↗
+                    </a>
+                  )}
+                  {(profile as any).linkedin_url && (
+                    <a href={(profile as any).linkedin_url} target="_blank" rel="noopener noreferrer" className="fklnk"
+                      style={{fontSize:10,letterSpacing:".1em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.4)",textDecoration:"none"}}>
+                      LinkedIn ↗
+                    </a>
+                  )}
+                </div>
 
-              {/* Meta row */}
-              <p className="hero-in-2" style={{
-                fontSize:      16,
-                color:         "rgba(245,245,240,0.50)",
-                marginBottom:  tagline ? 20 : 32,
-                letterSpacing: "0.01em",
-              }}>
-                {[
-                  profile.career_stage
-                    ? null
-                    : "Filmmaker",
-                  profile.country,
-                ].filter(Boolean).join("  ·  ")}
-                {!profile.career_stage && !profile.country && "Filmmaker"}
-              </p>
-
-              {/* Tagline */}
-              {tagline && (
-                <p className="hero-in-2" style={{
-                  fontFamily:  "'Playfair Display', Georgia, serif",
-                  fontStyle:   "italic",
-                  fontSize:    "clamp(16px, 1.6vw, 20px)",
-                  color:       "rgba(245,245,240,0.72)",
-                  lineHeight:  1.55,
-                  marginBottom: 36,
-                  maxWidth:    540,
-                }}>
-                  &ldquo;{tagline}&rdquo;
-                </p>
-              )}
-
-              {/* CTA buttons */}
-              <div className="hero-in-3" style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                {/* Primary */}
-                {user ? (
-                  projectList.length > 0 ? (
-                    <Link href={`/projects/${(projectList[0] as any).slug ?? (projectList[0] as any).id}`} style={{
-                      display:       "inline-flex",
-                      alignItems:    "center",
-                      gap:           6,
-                      fontSize:      12,
-                      letterSpacing: "0.14em",
-                      textTransform: "uppercase",
-                      fontWeight:    500,
-                      color:         S.ink,
-                      background:    S.ivory,
-                      border:        "none",
-                      borderRadius:  10,
-                      padding:       "11px 22px",
-                      textDecoration:"none",
-                      transition:    "opacity 150ms",
-                    }}>
-                      View Projects
-                    </Link>
-                  ) : null
-                ) : (
-                  <Link href={`/login?next=/u/${username}`} style={{
-                    display:       "inline-flex",
-                    alignItems:    "center",
-                    fontSize:      12,
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    fontWeight:    500,
-                    color:         S.ink,
-                    background:    S.ivory,
-                    borderRadius:  10,
-                    padding:       "11px 22px",
-                    textDecoration:"none",
-                  }}>
-                    Connect
-                  </Link>
+                {/* Bio */}
+                {profile.bio && (
+                  <p style={{fontSize:13,lineHeight:1.85,color:"rgba(26,24,21,0.6)",margin:0}}>{profile.bio}</p>
                 )}
-
-                {/* Share */}
-                <div style={{ display: "inline-flex" }}>
-                  <ProfileShareButton username={profile.username} fullName={profile.full_name} />
-                </div>
               </div>
             </div>
 
-            {/* ── Col 3: Stats ─────────────────────────────────── */}
-            <div className="hero-in-3" style={{
-              display:  "flex",
-              flexDirection: "column",
-              gap:      32,
-              alignItems: "flex-end",
-              flexShrink: 0,
-            }}>
-              {[
-                { n: projectList.length, label: "Projects" },
-                { n: awardsCount,        label: "Awards" },
-                { n: festsCount,         label: "Selections" },
-              ].map(({ n, label }) => (
-                <div key={label} style={{ textAlign: "right" }}>
-                  <p style={{
-                    fontFamily:    "'Playfair Display', Georgia, serif",
-                    fontSize:      "clamp(32px, 4vw, 48px)",
-                    fontWeight:    400,
-                    color:         n > 0 ? S.ivory : "rgba(245,245,240,0.2)",
-                    lineHeight:    1,
-                    letterSpacing: "-0.03em",
-                    margin:        0,
-                  }}>
-                    {n}
-                  </p>
-                  <p style={{
-                    fontSize:      10,
-                    letterSpacing: "0.22em",
-                    textTransform: "uppercase",
-                    color:         "rgba(245,245,240,0.38)",
-                    marginTop:     5,
-                    fontWeight:    500,
-                  }}>
-                    {label}
-                  </p>
+            {/* ═══ RIGHT — Detail cards ═══ */}
+            <div className="fka2" style={{display:"flex",flexDirection:"column",gap:12}}>
+
+              {/* Stats card */}
+              {(projectList.length > 0 || awardsCount > 0 || festsCount > 0) && (
+                <div className="fkcard" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:0}}>
+                  {[
+                    {val:projectList.length, label:"Projects"},
+                    {val:festsCount,         label:"Selections"},
+                    {val:awardsCount,        label:"Awards"},
+                  ].map((s,i) => (
+                    <div key={s.label} style={{textAlign:"center",padding:"8px 0",borderRight:i<2?"1px solid rgba(26,24,21,0.07)":"none"}}>
+                      <p style={{fontFamily:"'Playfair Display',serif",fontSize:28,fontWeight:700,color:"#1A1815",lineHeight:1,margin:"0 0 4px"}}>{s.val}</p>
+                      <p style={{fontSize:9,letterSpacing:".2em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.32)",margin:0}}>{s.label}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              )}
 
-          {/* Scroll hint */}
-          <div aria-hidden style={{
-            position:  "absolute",
-            bottom:    32,
-            left:      "50%",
-            transform: "translateX(-50%)",
-            display:   "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap:       6,
-            opacity:   0.3,
-          }}>
-            <div style={{
-              width:  1,
-              height: 40,
-              background: `linear-gradient(to bottom, transparent, ${S.ivory})`,
-            }} />
-            <p style={{
-              fontSize:      9,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color:         S.ivory,
-            }}>Scroll</p>
-          </div>
-        </section>
-
-        {/* ══ FEATURED PROJECTS ════════════════════════════════ */}
-        {projectList.length > 0 && (
-          <section style={{ background: S.ivory, padding: "80px 40px" }}>
-            <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-              <p style={{
-                fontSize:      11,
-                letterSpacing: "0.26em",
-                textTransform: "uppercase",
-                color:         S.ash,
-                fontWeight:    500,
-                marginBottom:  40,
-              }}>
-                Featured Projects
-              </p>
-
-              <div
-                className="projects-row"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: `repeat(${Math.min(projectList.length, 3)}, 1fr)`,
-                  gap: 32,
-                }}
-              >
-                {projectList.slice(0, 3).map((p: any) => (
-                  <div key={p.id} className="project-card-wrap">
-                    <Link
-                      href={`/projects/${p.slug ?? p.id}`}
-                      style={{ textDecoration: "none", display: "block" }}
-                    >
-                      {/* Poster */}
-                      <div style={{
-                        borderRadius:  12,
-                        overflow:      "hidden",
-                        aspectRatio:   "2/3",
-                        background:    S.parchment,
-                        marginBottom:  24,
-                      }} className="poster-card">
-                        {p.poster_path ? (
-                          <img
-                            src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${p.poster_path}`}
-                            alt={p.title}
-                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                          />
-                        ) : (
-                          // Minimal pastel fallback — no text, just a clean tinted rect
-                          <div style={{
-                            width:    "100%",
-                            height:   "100%",
-                            background: `${S.parchment}`,
-                            display:  "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}>
-                            <p style={{
-                              fontFamily:  "'Playfair Display', Georgia, serif",
-                              fontSize:    22,
-                              color:       S.ash,
-                              opacity:     0.4,
-                              textAlign:   "center",
-                              padding:     24,
-                              lineHeight:  1.3,
-                            }}>
-                              {p.title}
-                            </p>
+              {/* Featured Projects */}
+              {projectList.length > 0 && (
+                <div className="fkcard">
+                  <span className="fksl">Projects</span>
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    {projectList.map((p:any) => (
+                      <Link key={p.id} href={`/projects/${p.slug ?? p.id}`}
+                        style={{display:"flex",alignItems:"center",gap:12,textDecoration:"none",padding:"8px 0",borderBottom:"1px solid rgba(26,24,21,0.06)"}}>
+                        {p.poster_path && (
+                          <div style={{width:40,height:54,borderRadius:6,overflow:"hidden",flexShrink:0,background:"rgba(26,24,21,0.06)"}}>
+                            <img src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${p.poster_path}`}
+                              alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover"}} />
                           </div>
                         )}
-                      </div>
-
-                      {/* Info */}
-                      <div style={{ padding: "0 4px" }}>
-                        {/* Genre */}
-                        {p.genre && (
-                          <p style={{
-                            fontSize:      11,
-                            letterSpacing: "0.22em",
-                            textTransform: "uppercase",
-                            color:         S.ash,
-                            marginBottom:  8,
-                            fontWeight:    500,
-                          }}>
-                            {p.genre}
-                          </p>
-                        )}
-
-                        {/* Title */}
-                        <h3 style={{
-                          fontFamily:    "'Playfair Display', Georgia, serif",
-                          fontSize:      24,
-                          fontWeight:    400,
-                          color:         S.ink,
-                          lineHeight:    1.15,
-                          letterSpacing: "-0.01em",
-                          margin:        "0 0 12px",
-                        }}>
-                          {p.title}
-                        </h3>
-
-                        {/* Stage badge */}
-                        {p.stage && (
-                          <span style={{
-                            display:       "inline-block",
-                            fontSize:      10,
-                            letterSpacing: "0.14em",
-                            textTransform: "uppercase",
-                            fontWeight:    500,
-                            padding:       "4px 10px",
-                            borderRadius:  6,
-                            background:    STAGE_COLOR[p.stage] ?? STAGE_COLOR.development,
-                            color:         S.ink,
-                            marginBottom:  14,
-                          }}>
-                            {STAGE_LABEL[p.stage] ?? p.stage}
-                          </span>
-                        )}
-
-                        {/* Logline */}
-                        {p.logline && (
-                          <p style={{
-                            fontFamily:  "'Playfair Display', Georgia, serif",
-                            fontStyle:   "italic",
-                            fontSize:    15,
-                            color:       S.ash,
-                            lineHeight:  1.65,
-                            marginTop:   p.stage ? 0 : 0,
-                            marginBottom:16,
-                            display:     "-webkit-box",
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: "vertical",
-                            overflow:    "hidden",
-                          } as React.CSSProperties}>
-                            {p.logline}
-                          </p>
-                        )}
-
-                        {/* Link */}
-                        <p style={{
-                          fontSize:      12,
-                          letterSpacing: "0.1em",
-                          textTransform: "uppercase",
-                          color:         S.gold,
-                          fontWeight:    500,
-                        }}>
-                          View Project →
-                        </p>
-                      </div>
-                    </Link>
+                        <div style={{flex:1,minWidth:0}}>
+                          <p style={{fontFamily:"'Playfair Display',serif",fontSize:15,fontWeight:700,color:"#1A1815",margin:"0 0 3px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</p>
+                          <p style={{fontSize:11,color:"rgba(26,24,21,0.45)",margin:0}}>{[p.genre,p.format].filter(Boolean).join(" · ")}</p>
+                        </div>
+                        <span style={{fontSize:12,color:"rgba(26,24,21,0.2)",flexShrink:0}}>→</span>
+                      </Link>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ══ CAREER HIGHLIGHTS ════════════════════════════════ */}
-        {highlights.length >= 2 && (
-          <section style={{
-            borderTop:    `1px solid ${S.line}`,
-            borderBottom: `1px solid ${S.line}`,
-            background:   S.parchment,
-            padding:      "40px 40px",
-          }}>
-            <div style={{
-              maxWidth: 1100,
-              margin:   "0 auto",
-              display:  "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              gap:      "0",
-            }}>
-              {highlights.map((h, i) => (
-                <div key={i} style={{
-                  display:    "flex",
-                  alignItems: "center",
-                  gap:        10,
-                  padding:    "0 32px",
-                  borderRight: i < highlights.length - 1 ? `1px solid ${S.line}` : "none",
-                  ...(i === 0 ? { paddingLeft: 0 } : {}),
-                }}>
-                  <span style={{ fontSize: 18, lineHeight: 1 }}>{h.icon}</span>
-                  <p style={{
-                    fontSize:      16,
-                    color:         S.ink,
-                    fontWeight:    400,
-                    whiteSpace:    "nowrap",
-                  }}>
-                    {h.text}
-                  </p>
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
+              )}
 
-        {/* ══ ABOUT ════════════════════════════════════════════ */}
-        {aboutText && (
-          <section style={{
-            background: S.ivory,
-            padding:    "80px 40px",
-          }}>
-            <div style={{ maxWidth: 680, margin: "0 auto" }}>
-              <p style={{
-                fontSize:      11,
-                letterSpacing: "0.26em",
-                textTransform: "uppercase",
-                color:         S.ash,
-                fontWeight:    500,
-                marginBottom:  32,
-              }}>
-                About
-              </p>
-              <p style={{
-                fontSize:   16,
-                lineHeight: 1.85,
-                color:      S.ink,
-                fontWeight: 400,
-              }}>
-                {aboutText}
-              </p>
-            </div>
-          </section>
-        )}
+              {/* Credits */}
+              {creditList.length > 0 && (
+                <div className="fkcard">
+                  <span className="fksl">Credits</span>
+                  <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                    {creditList.slice(0,5).map((c:any) => (
+                      <div key={c.id} style={{display:"flex",alignItems:"baseline",justifyContent:"space-between",gap:12,padding:"6px 0",borderBottom:"1px solid rgba(26,24,21,0.06)"}}>
+                        <div style={{minWidth:0}}>
+                          <p style={{fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:700,color:"#1A1815",margin:"0 0 2px"}}>{c.title}</p>
+                          {(c.festivals?.length > 0 || c.awards?.length > 0) && (
+                            <p style={{fontSize:11,color:"rgba(26,24,21,0.4)",margin:0}}>
+                              {c.awards?.length > 0 && <span style={{color:"#BF9953"}}>🏆 {c.awards.slice(0,1).join("")} · </span>}
+                              {c.festivals?.slice(0,2).join(" · ")}
+                            </p>
+                          )}
+                        </div>
+                        {c.year && <span style={{fontSize:12,color:"rgba(26,24,21,0.3)",flexShrink:0}}>{c.year}</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-        {/* ══ CONTACT ══════════════════════════════════════════ */}
-        {(profile.website || profile.imdb_url) && (
-          <section style={{
-            borderTop:  `1px solid ${S.line}`,
-            background: S.ivory,
-            padding:    "56px 40px",
-          }}>
-            <div style={{
-              maxWidth:   1100,
-              margin:     "0 auto",
-              display:    "flex",
-              alignItems: "center",
-              gap:        40,
-              flexWrap:   "wrap",
-            }}>
-              <p style={{
-                fontSize:      11,
-                letterSpacing: "0.26em",
-                textTransform: "uppercase",
-                color:         S.ash,
-                fontWeight:    500,
-                flexShrink:    0,
-              }}>
-                Contact
-              </p>
+              {/* Message / connect CTA — only for logged-in non-owners */}
+              {user && user.id !== profile.id && (
+                <div className="fkcard" style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+                  <div>
+                    <p style={{fontSize:13,fontWeight:600,color:"#1A1815",margin:"0 0 2px"}}>Connect with {profile.full_name.split(" ")[0]}</p>
+                    <p style={{fontSize:11,color:"rgba(26,24,21,0.4)",margin:0}}>Send a message or pitch a collaboration</p>
+                  </div>
+                  <Link href="/dashboard/messages"
+                    style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:10,letterSpacing:".14em",textTransform:"uppercase",fontWeight:700,color:"#F5F5F0",textDecoration:"none",background:"#1A1815",padding:"9px 18px",borderRadius:100}}>
+                    Message
+                  </Link>
+                </div>
+              )}
 
-              <div style={{ display: "flex", alignItems: "center", gap: 32, flexWrap: "wrap" }}>
-                {profile.website && (
-                  <a
-                    href={profile.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      fontSize:      13,
-                      letterSpacing: "0.08em",
-                      color:         S.ink,
-                      textDecoration:"none",
-                      display:       "flex",
-                      alignItems:    "center",
-                      gap:           7,
-                      transition:    "color 150ms",
-                    }}
-                    className="nav-link"
-                    onMouseEnter={undefined}
-                  >
-                    {/* Globe icon */}
-                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2">
-                      <circle cx="7.5" cy="7.5" r="6.5"/>
-                      <ellipse cx="7.5" cy="7.5" rx="2.8" ry="6.5"/>
-                      <line x1="1" y1="7.5" x2="14" y2="7.5"/>
-                      <line x1="7.5" y1="1" x2="7.5" y2="14"/>
-                    </svg>
-                    Website ↗
-                  </a>
-                )}
-
-                {profile.imdb_url && (
-                  <a
-                    href={profile.imdb_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      fontSize:      13,
-                      letterSpacing: "0.08em",
-                      color:         S.ink,
-                      textDecoration:"none",
-                      display:       "flex",
-                      alignItems:    "center",
-                      gap:           7,
-                      transition:    "color 150ms",
-                    }}
-                  >
-                    {/* Film icon */}
-                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2">
-                      <rect x="1" y="3" width="13" height="9" rx="1"/>
-                      <line x1="4" y1="3" x2="4" y2="12"/>
-                      <line x1="11" y1="3" x2="11" y2="12"/>
-                      <line x1="1" y1="6" x2="4" y2="6"/>
-                      <line x1="11" y1="6" x2="14" y2="6"/>
-                      <line x1="1" y1="9" x2="4" y2="9"/>
-                      <line x1="11" y1="9" x2="14" y2="9"/>
-                    </svg>
-                    IMDb ↗
-                  </a>
-                )}
-              </div>
-
-              {/* Pitch.Fylym link — subtle attribution */}
-              <div style={{ marginLeft: "auto" }}>
-                <Link href="/" style={{
-                  fontSize:      10,
-                  letterSpacing: "0.18em",
-                  textTransform: "uppercase",
-                  color:         S.ash,
-                  opacity:       0.45,
-                  textDecoration:"none",
-                }}>
-                  PITCH.FYLYM
-                </Link>
+              {/* Footer */}
+              <div style={{paddingTop:4}}>
+                <p style={{fontSize:9,letterSpacing:".26em",textTransform:"uppercase",color:"rgba(26,24,21,0.18)",fontWeight:600,margin:0}}>Pitch.Fylym</p>
               </div>
             </div>
-          </section>
-        )}
-
-        {/* Mobile hero layout overrides */}
-        <style>{`
-          @media (max-width: 768px) {
-            .hero-grid {
-              grid-template-columns: 1fr !important;
-              text-align: center;
-              gap: 32px !important;
-              padding: 88px 24px 64px !important;
-            }
-            .hero-grid > div:last-child {
-              flex-direction: row !important;
-              align-items: center;
-              justify-content: center;
-              gap: 40px !important;
-            }
-            .hero-grid > div:last-child > div {
-              text-align: center !important;
-            }
-          }
-          @media (max-width: 640px) {
-            section { padding-left: 24px !important; padding-right: 24px !important; }
-          }
-        `}</style>
+          </div>
+        </div>
       </div>
     </>
   );
