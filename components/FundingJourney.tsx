@@ -364,6 +364,51 @@ export default function FundingJourney({
       <p style={{ marginTop: "12px", fontSize: "11px", color: "#8A857C", textAlign: "center" }}>
         Progressing through categories in order significantly increases your success rate in securing funding.
       </p>
+
+      {/* Data disclaimer */}
+      <div style={{
+        marginTop: "20px",
+        padding: "12px 18px",
+        background: "rgba(26,24,21,0.03)",
+        border: "0.5px solid rgba(26,24,21,0.08)",
+        borderRadius: "8px",
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "8px 20px",
+      }}>
+        <p style={{
+          margin: 0,
+          fontSize: "10.5px",
+          color: "#8A857C",
+          lineHeight: 1.65,
+          fontFamily: "'Montserrat',sans-serif",
+          letterSpacing: "0.01em",
+        }}>
+          <span style={{ color: "#6b6761", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", fontSize: "9px", marginRight: "6px" }}>Note</span>
+          Deadlines, award amounts and eligibility criteria are subject to change without notice.
+          Always verify details on each fund&apos;s official website before applying.
+          We curate and update this data regularly, but cannot guarantee real-time accuracy.
+        </p>
+        <a
+          href="mailto:hello@fylym.com?subject=Data%20Error%20Report&body=Hi%20PITCH.FYLYM%20team%2C%0A%0AI%20found%20an%20error%20in%20the%20following%20opportunity%3A%0A%0AFund%20name%3A%0AError%20description%3A%0A%0AThanks"
+          style={{
+            fontSize: "10px",
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "#BF9953",
+            textDecoration: "none",
+            fontFamily: "'Montserrat',sans-serif",
+            whiteSpace: "nowrap",
+            borderBottom: "0.5px solid rgba(191,153,83,0.4)",
+            paddingBottom: "1px",
+            flexShrink: 0,
+          }}
+        >
+          Report an error →
+        </a>
+      </div>
     </div>
   );
 }
