@@ -24,13 +24,6 @@ const FUNDING_ROLES = [
   { key: "grant_access",       label: "Grant Access" },
 ];
 
-const CONTRIBUTION_CAPACITY = [
-  { key: "under_50k", label: "Under $50K",   sub: "Micro" },
-  { key: "50k_250k",  label: "$50K–$250K",  sub: "Partial co-finance" },
-  { key: "250k_1m",   label: "$250K–$1M",   sub: "Significant stake" },
-  { key: "1m_plus",   label: "$1M+",         sub: "Lead financier" },
-];
-
 const BUDGET_RANGES = [
   { key: "micro", label: "Micro",  sub: "< $100K" },
   { key: "low",   label: "Low",    sub: "$100K–$500K" },
@@ -38,17 +31,12 @@ const BUDGET_RANGES = [
   { key: "high",  label: "High",   sub: "$2M+" },
 ];
 
-const FESTIVALS_LIST = [
-  "Cannes","Berlin","Venice","Sundance","TIFF","Rotterdam","Tribeca",
-  "IFFR","Hot Docs","Busan","MAMI","IFFK","IFFI",
-];
-
 const LANGUAGES = [
   "Arabic","Bengali","Cantonese","Danish","Dutch","English","Finnish","French",
-  "German","Greek","Hebrew","Hindi","Indonesian","Italian","Japanese","Korean",
-  "Mandarin","Norwegian","Persian / Farsi","Polish","Portuguese","Romanian",
-  "Russian","Spanish","Swahili","Swedish","Tamil","Telugu","Thai","Turkish",
-  "Ukrainian","Urdu","Vietnamese",
+  "German","Greek","Hebrew","Hindi","Indonesian","Italian","Japanese","Kannada",
+  "Konkani","Korean","Malayalam","Mandarin","Marathi","Norwegian","Persian / Farsi",
+  "Polish","Portuguese","Romanian","Russian","Spanish","Swahili","Swedish",
+  "Tamil","Telugu","Thai","Tulu","Turkish","Ukrainian","Urdu","Vietnamese","Others",
 ];
 
 const LOOKING_FOR_OPTIONS = [
@@ -65,16 +53,12 @@ const STAGES = [
   { key: "completed",      label: "Acquisition" },
 ];
 
-const RESPONSE_TIMES = [
-  "Within 1 week","Within 2 weeks","Within 1 month","Within 3 months",
-];
-
 const BASE_COUNTRIES = [
   "India","United States","United Kingdom","France","Germany","Italy","Spain",
   "Japan","South Korea","Brazil","Mexico","Australia","Canada","Nigeria","Kenya",
   "Egypt","Iran","Indonesia","Philippines","Argentina","Poland","Sweden",
   "Denmark","Norway","Netherlands","Belgium","Switzerland","South Africa",
-  "Turkey","China","Hong Kong","Taiwan",
+  "Turkey","China","Hong Kong","Taiwan","Others",
 ];
 
 const TERRITORY_GROUPS = [
@@ -208,11 +192,11 @@ export default function ProducerProfilePage() {
   }
 
   const sections: { key: string; label: string }[] = [
-    { key: "identity",    label: "Identity" },
-    { key: "interests",   label: "Interests" },
-    { key: "investment",  label: "Investment" },
-    { key: "markets",     label: "Markets" },
-    { key: "visibility",  label: "Visibility" },
+    { key: "identity",   label: "Identity" },
+    { key: "interests",  label: "Focus" },
+    { key: "investment", label: "Investment" },
+    { key: "markets",    label: "Markets" },
+    { key: "visibility", label: "Settings" },
   ];
 
   if (loading) {
@@ -300,8 +284,13 @@ export default function ProducerProfilePage() {
               <div className="p-6 space-y-5">
                 <AvatarUpload currentUrl={avatarUrl || null} userId={userId} name={name} onUpload={setAvatarUrl} />
 
-                {/* Username */}
-                <div className="pb-5 border-b border-line">
+                <div>
+                  <label className="field-label mb-1 block">Full name</label>
+                  <input value={name} onChange={e => setName(e.target.value)} className="field w-full" placeholder="Your name" />
+                </div>
+
+                {/* Username — under name */}
+                <div className="pb-2">
                   <p className="text-[10px] tracking-[0.2em] uppercase text-ash/60 font-semibold mb-1">Profile URL</p>
                   <p className="text-[12px] text-ash mb-2.5">
                     pitch.fylym.com/u/<span className="text-ink font-medium">{username || "yourhandle"}</span>
@@ -319,11 +308,6 @@ export default function ProducerProfilePage() {
                   </form>
                   {usernameState?.error && <p className="mt-1.5 text-[11px] text-red-600">{usernameState.error}</p>}
                   {usernameState?.ok    && <p className="mt-1.5 text-[11px] text-emerald-600">✓ Saved</p>}
-                </div>
-
-                <div>
-                  <label className="field-label mb-1 block">Full name</label>
-                  <input value={name} onChange={e => setName(e.target.value)} className="field w-full" placeholder="Your name" />
                 </div>
                 <div>
                   <label className="field-label mb-1 block">Production company</label>
@@ -408,18 +392,6 @@ export default function ProducerProfilePage() {
                 </div>
 
                 <div>
-                  <p className="field-label mb-2">Festival interests</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {FESTIVALS_LIST.map(f => (
-                      <button key={f} type="button" onClick={() => setFestivals(toggle(festivals, f))}
-                        className={`px-3 py-1.5 rounded-full text-[11px] tracking-[0.06em] border transition-all ${
-                          festivals.includes(f) ? "bg-ink border-ink text-ivory" : "bg-white border-line text-ash hover:border-ink/40"
-                        }`}>{f}</button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
                   <p className="field-label mb-2">Languages</p>
                   {languages.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-2">
@@ -465,21 +437,6 @@ export default function ProducerProfilePage() {
                         className={`px-3 py-1.5 rounded-full text-[11px] tracking-[0.06em] border transition-all ${
                           fundingRoles.includes(r.key) ? "bg-ink border-ink text-ivory" : "bg-white border-line text-ash hover:border-ink/40"
                         }`}>{r.label}</button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="field-label mb-2">Contribution capacity</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {CONTRIBUTION_CAPACITY.map(c => (
-                      <button key={c.key} type="button" onClick={() => setCapacity(capacity === c.key ? "" : c.key)}
-                        className={`px-3 py-3 rounded-card border text-left transition-all ${
-                          capacity === c.key ? "border-gold bg-gold/8" : "border-line bg-white hover:border-ink/20"
-                        }`}>
-                        <p className={`text-[12px] font-semibold ${capacity === c.key ? "text-ink" : "text-ash"}`}>{c.label}</p>
-                        <p className="text-[10px] text-ash/60 mt-0.5">{c.sub}</p>
-                      </button>
                     ))}
                   </div>
                 </div>
@@ -590,18 +547,6 @@ export default function ProducerProfilePage() {
                   </div>
                 </div>
 
-                {/* Response time */}
-                <div>
-                  <p className="field-label mb-2">Typical response time</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {RESPONSE_TIMES.map(rt => (
-                      <button key={rt} type="button" onClick={() => setResponseTime(responseTime === rt ? "" : rt)}
-                        className={`px-3 py-1.5 rounded-full text-[11px] border transition-all ${
-                          responseTime === rt ? "bg-ink border-ink text-ivory" : "bg-white border-line text-ash hover:border-ink/40"
-                        }`}>{rt}</button>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
 
