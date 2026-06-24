@@ -33,6 +33,14 @@ export default async function ProducerNotificationsPage() {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
+  // Runtime link rewrite — catches any stale links already in the DB
+  function safeLink(link: string | null): string | null {
+    if (!link) return null;
+    if (link === "/projects" || link === "/producer/projects") return "/producerstudio/projects";
+    if (link.startsWith("/filmprojects/")) return link.replace("/filmprojects/", "/producerstudio/projects/");
+    return link;
+  }
+
   const unreadCount = (items ?? []).filter((n: any) => !n.read).length;
   const hasAny = (items ?? []).length > 0;
 
@@ -109,8 +117,8 @@ export default async function ProducerNotificationsPage() {
 
           return (
             <div key={n.id} className="relative group">
-              {n.link ? (
-                <Link href={n.link} className="block hover:no-underline">
+              {safeLink(n.link) ? (
+                <Link href={safeLink(n.link)!} className="block hover:no-underline">
                   {inner}
                 </Link>
               ) : (
