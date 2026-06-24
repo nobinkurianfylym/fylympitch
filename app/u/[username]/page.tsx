@@ -251,7 +251,7 @@ export default async function PublicProfilePage({
             {user && (
               <Link href={dashboardHref} className="pnav-lnk"
                 style={{ fontSize:10, letterSpacing:".18em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.32)", textDecoration:"none" }}>
-                Studio
+                Producer Studio
               </Link>
             )}
           </nav>
