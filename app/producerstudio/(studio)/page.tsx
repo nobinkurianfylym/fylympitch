@@ -180,9 +180,10 @@ export default async function ProducerDiscoverPage({
               </span>
             )}
             {pillCls && pillLbl && !showPassedBadge && (
-              <span className={`inline-flex text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-full border border-line ${pillCls}`}>
-                {pillLbl}
-              </span>
+              <Link href="/producerstudio/pipeline"
+                className={`inline-flex text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-full border border-line hover:opacity-80 transition-opacity ${pillCls}`}>
+                {pillLbl} →
+              </Link>
             )}
             <div className="flex items-center gap-2">
               <FRSButton

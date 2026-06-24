@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -30,19 +31,19 @@ export default async function AdminHome() {
   const offerSuccess = offers > 0 ? Math.round((offersAccepted / offers) * 100) : 0;
 
   const stats = [
-    { label: "Registered users", value: users },
-    { label: "Pending verifications", value: pending, accent: pending > 0 },
-    { label: "Projects submitted", value: projects },
-    { label: "Active opportunities", value: opps },
-    { label: "Applications sent", value: applications },
-    { label: "Opportunity views", value: views },
-    { label: "Match success rate", value: `${matchSuccess}%` },
+    { label: "Registered users",      value: users,                   href: "/admin/users" },
+    { label: "Pending verifications", value: pending, accent: pending > 0, href: "/admin/producers" },
+    { label: "Projects submitted",    value: projects,                href: "/admin/projects" },
+    { label: "Active opportunities",  value: opps,                    href: "/admin/opportunities" },
+    { label: "Applications sent",     value: applications,            href: "/admin/audit" },
+    { label: "Opportunity views",     value: views,                   href: "/admin/audit" },
+    { label: "Match success rate",    value: `${matchSuccess}%` },
     { label: "Offer acceptance rate", value: `${offerSuccess}%` },
   ];
 
   const { data: recent } = await supabase
     .from("activity_logs")
-    .select("action, entity, created_at, profiles!activity_logs_user_id_fkey(full_name)")
+    .select("action, entity, created_at, user_id, profiles!activity_logs_user_id_fkey(full_name)")
     .order("created_at", { ascending: false })
     .limit(12);
 
@@ -52,12 +53,25 @@ export default async function AdminHome() {
       <h1 className="font-display text-[30px] font-normal mt-1">Analytics</h1>
 
       <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <div key={s.label} className="card p-5">
-            <p className={`text-[30px] font-normal ${s.accent ? "text-gold" : "text-ink"}`}>{s.value}</p>
-            <p className="mt-1 text-[12px] uppercase tracking-[0.14em] text-ash font-normal">{s.label}</p>
-          </div>
-        ))}
+        {stats.map((s) => {
+          const inner = (
+            <>
+              <p className={`text-[30px] font-normal ${s.accent ? "text-gold" : "text-ink"}`}>{s.value}</p>
+              <p className="mt-1 text-[12px] uppercase tracking-[0.14em] text-ash font-normal group-hover:text-gold transition-colors">{s.label}</p>
+            </>
+          );
+          return (s as any).href ? (
+            <Link key={s.label} href={(s as any).href}
+              className="card p-5 hover:border-gold hover:shadow-sm transition-all group block">
+              {inner}
+            </Link>
+          ) : (
+            <div key={s.label} className="card p-5">
+              <p className={`text-[30px] font-normal ${s.accent ? "text-gold" : "text-ink"}`}>{s.value}</p>
+              <p className="mt-1 text-[12px] uppercase tracking-[0.14em] text-ash font-normal">{s.label}</p>
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-10">
@@ -66,12 +80,13 @@ export default async function AdminHome() {
           {(recent ?? []).map((r, i) => {
             const who = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles;
             return (
-              <div key={i} className="px-5 py-3 flex items-center justify-between text-[14px] font-normal">
+              <Link key={i} href={`/admin/users`}
+                className="px-5 py-3 flex items-center justify-between text-[14px] font-normal hover:bg-parchment transition-colors">
                 <span className="text-ink">
                   {who?.full_name ?? "Someone"} · {r.action.replaceAll("_", " ")} {r.entity}
                 </span>
                 <span className="text-ash text-[12px]">{new Date(r.created_at).toLocaleString()}</span>
-              </div>
+              </Link>
             );
           })}
           {(!recent || recent.length === 0) && (

@@ -204,9 +204,10 @@ export default async function ProducerProjectsPage({
 
                     {/* Pipeline stage pill */}
                     {pillCls && pillLbl && (
-                      <span className={`inline-flex text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-full border border-line ${pillCls}`}>
-                        {pillLbl}
-                      </span>
+                      <Link href="/producerstudio/pipeline"
+                        className={`inline-flex text-[10px] font-medium tracking-[0.1em] uppercase px-2.5 py-1 rounded-full border border-line hover:opacity-80 transition-opacity ${pillCls}`}>
+                        {pillLbl} →
+                      </Link>
                     )}
 
                     {/* Action row: FRS · Message · Like · Share */}

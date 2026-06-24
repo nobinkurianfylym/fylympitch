@@ -335,7 +335,8 @@ export default async function DashboardPage() {
                     const initials = (producer?.full_name ?? "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
                     const ago = Math.floor((Date.now() - new Date(r.created_at).getTime()) / 3_600_000);
                     return (
-                      <div key={r.id} className="card p-4 flex items-start gap-3">
+                      <Link key={r.id} href="/dashboard/messages"
+                        className="card p-4 flex items-start gap-3 hover:border-gold hover:shadow-sm transition-all group">
                         <div className="w-9 h-9 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center shrink-0">
                           {producer?.avatar_url
                             ? <img src={producer.avatar_url} alt={producer.full_name} className="w-full h-full object-cover" />
@@ -344,9 +345,9 @@ export default async function DashboardPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-[13px] text-ink leading-snug">
-                            <Link href={`/producers/${r.producer_user_id}`} className="font-medium hover:text-gold transition-colors">
+                            <span className="font-medium group-hover:text-gold transition-colors">
                               {producer?.full_name ?? "A producer"}
-                            </Link>
+                            </span>
                             {" "}requested an introduction
                           </p>
                           <p className="text-[11px] text-ash mt-0.5">
@@ -355,7 +356,7 @@ export default async function DashboardPage() {
                             {ago < 24 ? ` · ${ago}h ago` : ` · ${Math.floor(ago / 24)}d ago`}
                           </p>
                         </div>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>
