@@ -510,55 +510,61 @@ export default function ProducerProfilePage() {
 
             {/* ── VISIBILITY section ── */}
             {editSection === "visibility" && (
-              <>
-                <div className="p-6 space-y-5">
-                  {/* Listed toggle */}
-                  <button type="button" onClick={() => setIsPublic(!isPublic)}
-                    className={`w-full text-left p-5 rounded-card border-2 transition-all ${
-                      isPublic ? "border-gold bg-gold/5" : "border-line bg-white hover:border-ink/20"
+              <div className="p-6 space-y-5">
+                {/* Listed toggle */}
+                <button type="button" onClick={() => setIsPublic(!isPublic)}
+                  className={`w-full text-left p-5 rounded-card border-2 transition-all ${
+                    isPublic ? "border-gold bg-gold/5" : "border-line bg-white hover:border-ink/20"
+                  }`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[13px] font-semibold text-ink mb-1">
+                        Listed in Producer Network
+                      </p>
+                      <p className="text-[12px] text-ash leading-relaxed">
+                        Filmmakers see your profile in their project intelligence report when your interests match their project.
+                      </p>
+                    </div>
+                    <div className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                      isPublic ? "bg-gold border-gold" : "border-line"
                     }`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[13px] font-semibold text-ink mb-1">
-                          Listed in Producer Network
-                        </p>
-                        <p className="text-[12px] text-ash leading-relaxed">
-                          Filmmakers see your profile in their project intelligence report when your interests match their project.
-                        </p>
-                      </div>
-                      <div className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                        isPublic ? "bg-gold border-gold" : "border-line"
-                      }`}>
-                        {isPublic && <span className="text-white text-[10px]">✓</span>}
-                      </div>
+                      {isPublic && <span className="text-white text-[10px]">✓</span>}
                     </div>
-                  </button>
+                  </div>
+                </button>
 
-                  {/* Accepting pitches */}
-                  <div>
-                    <p className="field-label mb-2">Submission status</p>
-                    <div className="flex gap-2">
-                      {[true, false].map(val => (
-                        <button key={String(val)} type="button" onClick={() => setAccepting(val)}
-                          className={`flex-1 py-2.5 rounded-card border text-[12px] font-medium transition-all ${
-                            acceptingPitches === val ? "bg-ink border-ink text-ivory" : "bg-white border-line text-ash hover:border-ink/30"
-                          }`}>
-                          {val ? "Accepting pitches" : "Not accepting"}
-                        </button>
-                      ))}
-                    </div>
+                {/* Accepting pitches */}
+                <div>
+                  <p className="field-label mb-2">Submission status</p>
+                  <div className="flex gap-2">
+                    {[true, false].map(val => (
+                      <button key={String(val)} type="button" onClick={() => setAccepting(val)}
+                        className={`flex-1 py-2.5 rounded-card border text-[12px] font-medium transition-all ${
+                          acceptingPitches === val ? "bg-ink border-ink text-ivory" : "bg-white border-line text-ash hover:border-ink/30"
+                        }`}>
+                        {val ? "Accepting pitches" : "Not accepting"}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* ── Danger zone ── */}
-                <div className="px-6 pt-4 pb-6 border-t border-line">
-                  <p className="text-[9px] tracking-[0.26em] uppercase font-semibold text-ash/40 mb-3">Danger zone</p>
-                  <p className="text-[12px] text-ash mb-3 leading-relaxed">
-                    Permanently delete your account and all associated data.
-                  </p>
-                  <DeleteAccountModal />
+                {/* View public profile */}
+                <div className="pt-1">
+                  <p className="field-label mb-2">Public profile</p>
+                  {username ? (
+                    <Link
+                      href={`/u/${username}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-ghost !py-2 !px-4 text-[12px] inline-flex items-center gap-1.5"
+                    >
+                      View public profile ↗
+                    </Link>
+                  ) : (
+                    <p className="text-[12px] text-ash">Set a username in Identity to enable your public profile.</p>
+                  )}
                 </div>
-              </>
+              </div>
             )}
 
             {/* Save footer */}
@@ -572,6 +578,17 @@ export default function ProducerProfilePage() {
               )}
             </div>
           </form>
+
+          {/* ── Danger zone — below save, settings tab only ── */}
+          {editSection === "visibility" && (
+            <div className="px-6 pt-5 pb-8 border-t border-line">
+              <p className="text-[9px] tracking-[0.26em] uppercase font-semibold text-ash/40 mb-3">Danger zone</p>
+              <p className="text-[12px] text-ash mb-3 leading-relaxed">
+                Permanently delete your account and all associated data.
+              </p>
+              <DeleteAccountModal />
+            </div>
+          )}
         </div>
       </div>
     </div>
