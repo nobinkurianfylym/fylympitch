@@ -18,18 +18,20 @@ const CAREER_STAGES = [
   { key: "veteran",     label: "Veteran",      sub: "10+ years" },
 ];
 
-const CAREER_LABEL: Record<string, string> = {
-  debut: "Debut Filmmaker", second_film: "2nd Film",
-  established: "Established Filmmaker", veteran: "Veteran Filmmaker",
-};
+const SECTIONS = [
+  { key: "identity", label: "Identity" },
+  { key: "career",   label: "Career" },
+  { key: "credits",  label: "Credits" },
+  { key: "settings", label: "Settings" },
+];
 
-const FORMAT_LABEL: Record<string, string> = {
-  documentary: "Documentary", narrative: "Narrative",
-  feature: "Feature", short: "Short Film",
-  series: "Series", animation: "Animation", both: "Documentary & Narrative",
-};
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const { tab = "identity" } = await searchParams;
 
-export default async function ProfilePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -43,275 +45,148 @@ export default async function ProfilePage() {
 
   if (!profile) return null;
 
-  const supabaseUrl   = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const filmmakerFmts: string[] = (profile as any).filmmaker_formats ?? [];
+  const activeTab = SECTIONS.some(s => s.key === tab) ? tab : "identity";
 
   return (
-    <div>
-      {/* ── Page header ─────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4 mb-8">
+    <div className="flex flex-col h-full" style={{ minHeight: "calc(100vh - 1px)" }}>
+
+      {/* ── Header ── */}
+      <div className="shrink-0 px-8 py-5 border-b border-line flex items-center justify-between gap-4 bg-ivory">
         <div>
-          <p className="eyebrow mb-2">Filmmaker · {profile.username}</p>
-          <h1 className="font-display text-[34px] font-[400]">Your Profile</h1>
-          <p className="text-[13px] text-ash mt-1">
-            How producers and funds see you. Keep it complete and current.
-          </p>
+          <p className="eyebrow">Filmmaker Profile</p>
+          <h1 className="font-display text-[22px] mt-0.5">{profile.full_name || "Your Profile"}</h1>
         </div>
-        {profile.username && (
-          <Link
-            href={`/u/${profile.username}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 btn-ghost !py-2 !px-4 text-[12px] flex items-center gap-1.5"
-          >
-            View public profile ↗
-          </Link>
-        )}
+        {/* Avatar — links to public profile */}
+        <Link
+          href={profile.username ? `/u/${profile.username}` : "#"}
+          target={profile.username ? "_blank" : undefined}
+          rel="noopener noreferrer"
+          title="View public profile"
+          className="shrink-0 hover:opacity-80 transition-opacity"
+        >
+          <div className="w-10 h-10 rounded-full overflow-hidden border border-line bg-parchment flex items-center justify-center">
+            {profile.avatar_url
+              ? <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+              : <span className="font-display text-[13px] text-ash">
+                  {profile.full_name
+                    ? profile.full_name.split(" ").map((w: string) => w[0]).join("").slice(0,2).toUpperCase()
+                    : "—"}
+                </span>
+            }
+          </div>
+        </Link>
       </div>
 
-      {/* ── Two-column layout ───────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-10 items-start">
+      {/* ── Tabs + content ── */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto bg-ivory max-w-2xl mx-auto">
 
-        {/* ══ LEFT — Profile Preview ══════════════════════════ */}
-        <div className="space-y-0">
-          <p className="eyebrow mb-5">Profile preview</p>
+          {/* Tab nav */}
+          <div className="sticky top-0 z-10 bg-ivory border-b border-line flex overflow-x-auto">
+            {SECTIONS.map(s => (
+              <Link
+                key={s.key}
+                href={`/dashboard/profile?tab=${s.key}`}
+                className={`shrink-0 px-4 py-3.5 text-[10px] tracking-[0.18em] uppercase font-semibold transition-colors whitespace-nowrap ${
+                  activeTab === s.key
+                    ? "text-ink border-b-2 border-ink"
+                    : "text-ash hover:text-ink"
+                }`}
+              >
+                {s.label}
+              </Link>
+            ))}
+          </div>
 
-          {/* Profile card */}
-          <div className="rounded-card border border-line bg-white/60 overflow-hidden">
-
-            {/* Hero */}
-            <div className="px-7 pt-7 pb-6 border-b border-line">
-              <div className="flex items-start gap-5">
-                {/* Avatar */}
-                <div className="shrink-0">
-                  {profile.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt={profile.full_name}
-                      className="w-[72px] h-[72px] rounded-full object-cover border border-line"
-                    />
-                  ) : (
-                    <div className="w-[72px] h-[72px] rounded-full bg-parchment border border-line flex items-center justify-center">
-                      <span className="font-display text-[22px] text-ash/70 select-none">
-                        {profile.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Identity */}
-                <div className="flex-1 min-w-0">
-                  <p className="eyebrow mb-1.5">
-                    {CAREER_LABEL[(profile as any).career_stage] ?? "Filmmaker"}
-                  </p>
-                  <h2 className="font-display text-[28px] font-[400] leading-tight mb-1">
-                    {profile.full_name}
-                  </h2>
-                  <p className="text-[12px] text-ash">
-                    @{profile.username}
-                    {profile.company && <><span className="mx-1.5 opacity-30">·</span>{profile.company}</>}
-                    {profile.country && <><span className="mx-1.5 opacity-30">·</span>{profile.country}</>}
-                  </p>
-                </div>
+          {/* ── IDENTITY ── */}
+          {activeTab === "identity" && (
+            <div className="p-6 space-y-6">
+              <ProfileForm profile={profile} />
+              <div className="pt-4 border-t border-line">
+                <p className="field-label mb-1">Profile URL</p>
+                <p className="text-[12px] text-ash mb-2.5">
+                  pitch.fylym.com/u/<span className="text-ink font-medium">{profile.username || "yourhandle"}</span>
+                </p>
+                <UsernameForm profile={profile} />
               </div>
-
-              {/* Bio */}
-              {profile.bio ? (
-                <p className="mt-4 text-[14px] leading-relaxed text-ink/75">
-                  {profile.bio}
-                </p>
-              ) : (
-                <p className="mt-4 text-[13px] text-ash/50 italic">
-                  No bio yet — add one in the edit panel.
-                </p>
-              )}
-
-              {/* Format tags */}
-              {filmmakerFmts.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {filmmakerFmts.map((fmt: string) => (
-                    <span
-                      key={fmt}
-                      className="text-[11px] tracking-[0.14em] uppercase px-3 py-1 rounded-full border border-line bg-parchment text-ash"
-                    >
-                      {FORMAT_LABEL[fmt] ?? fmt}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* External links */}
-              {(profile.website || profile.imdb_url) && (
-                <div className="flex items-center gap-5 mt-4">
-                  {profile.website && (
-                    <a
-                      href={profile.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] tracking-[0.12em] uppercase text-ash hover:text-gold transition-colors"
-                    >
-                      Website ↗
-                    </a>
-                  )}
-                  {profile.imdb_url && (
-                    <a
-                      href={profile.imdb_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] tracking-[0.12em] uppercase text-ash hover:text-gold transition-colors"
-                    >
-                      IMDb ↗
-                    </a>
-                  )}
-                </div>
-              )}
             </div>
+          )}
 
-            {/* Credits */}
-            <div className="px-7 py-6">
-              <p className="eyebrow mb-4">
-                Filmography
-                <span className="ml-2 text-ash/50 normal-case tracking-normal font-normal">
-                  {(credits ?? []).length} credit{(credits ?? []).length !== 1 ? "s" : ""}
-                </span>
-              </p>
-
-              {(credits ?? []).length === 0 ? (
-                <p className="text-[13px] text-ash/50 italic">
-                  No credits yet — add them in the edit panel.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {(credits ?? []).map((c: any) => (
-                    <div
-                      key={c.id}
-                      className="flex flex-col gap-1.5 py-3 border-b border-line last:border-0"
-                    >
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-display text-[16px] font-[400]">{c.title}</span>
-                        {c.year && <span className="text-[12px] text-ash">{c.year}</span>}
-                        {c.format && (
-                          <span className="text-[10px] tracking-[0.1em] uppercase bg-parchment text-ash px-2 py-0.5 rounded-full border border-line">
-                            {c.format}
-                          </span>
-                        )}
-                        {c.is_featured && (
-                          <span className="text-[9px] tracking-[0.14em] uppercase text-gold border border-gold/30 bg-gold/5 px-2 py-0.5 rounded-full">
-                            Featured
-                          </span>
-                        )}
-                      </div>
-                      {(c.festivals ?? []).length > 0 && (
-                        <p className="text-[11px] text-ash">
-                          {(c.festivals as string[]).slice(0, 4).join(" · ")}
-                          {c.festivals.length > 4 && <span className="text-ash/50"> +{c.festivals.length - 4}</span>}
+          {/* ── CAREER ── */}
+          {activeTab === "career" && (
+            <div className="p-6 space-y-6">
+              <div>
+                <p className="field-label mb-1">Career Stage</p>
+                <p className="text-[12px] text-ash mb-4">Used by the matching engine to find the right opportunities.</p>
+                <form action={updateCareerStage}>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {CAREER_STAGES.map(s => (
+                      <label key={s.key}
+                        className={`cursor-pointer px-4 py-3 rounded-card border text-left transition-all ${
+                          (profile as any).career_stage === s.key
+                            ? "border-gold bg-gold/8"
+                            : "border-line bg-white hover:border-ink/30"
+                        }`}>
+                        <input type="radio" name="career_stage" value={s.key}
+                          defaultChecked={(profile as any).career_stage === s.key} className="hidden" />
+                        <p className={`text-[13px] font-medium ${(profile as any).career_stage === s.key ? "text-ink" : "text-ash"}`}>
+                          {s.label}
                         </p>
-                      )}
-                      {(c.awards ?? []).length > 0 && (
-                        <p className="text-[11px] text-gold">
-                          🏆 {(c.awards as string[]).slice(0, 2).join(" · ")}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                        <p className="text-[11px] text-ash mt-0.5">{s.sub}</p>
+                      </label>
+                    ))}
+                  </div>
+                  <button type="submit" className="btn-ghost !py-2 text-[12px]">Save stage</button>
+                </form>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Completeness hint */}
-          <div className="mt-4 px-5 py-3 rounded-card border border-line bg-parchment/50 flex items-center gap-3">
-            <span className="text-[14px]">
-              {[profile.bio, profile.avatar_url, profile.website, profile.country].filter(Boolean).length >= 3
-                ? "✓" : "○"}
-            </span>
-            <p className="text-[12px] text-ash">
-              {[profile.bio, profile.avatar_url, profile.website, profile.country].filter(Boolean).length >= 3
-                ? "Profile looks good — producers can assess you properly."
-                : "Add a bio, avatar, country and website to build credibility with producers."}
-            </p>
-          </div>
-        </div>
-
-        {/* ══ RIGHT — Edit Panel ═══════════════════════════════ */}
-        <div className="space-y-10">
-          <p className="eyebrow">Edit profile</p>
-
-          {/* ── Identity form ─────────────────────────────────── */}
-          <div>
-            <h2 className="font-display text-[20px] font-[400] mb-5">Identity</h2>
-            <ProfileForm profile={profile} />
-          </div>
-
-          {/* ── Username ──────────────────────────────────────── */}
-          <div className="pt-8 border-t border-line">
-            <h2 className="font-display text-[20px] font-[400] mb-5">Username</h2>
-            <UsernameForm profile={profile} />
-          </div>
-
-          {/* ── Career stage ──────────────────────────────────── */}
-          <div className="pt-8 border-t border-line">
-            <h2 className="font-display text-[20px] font-[400] mb-1">Career Stage</h2>
-            <p className="text-[12px] text-ash mb-5">
-              Used by the matching engine to find the right opportunities.
-            </p>
-            <form action={updateCareerStage}>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                {CAREER_STAGES.map((s) => (
-                  <label
-                    key={s.key}
-                    className={`cursor-pointer px-4 py-3 rounded-card border text-left transition-all ${
-                      (profile as any).career_stage === s.key
-                        ? "border-gold bg-gold/8"
-                        : "border-line bg-white hover:border-ink/30"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="career_stage"
-                      value={s.key}
-                      defaultChecked={(profile as any).career_stage === s.key}
-                      className="hidden"
-                    />
-                    <p className={`text-[13px] font-medium ${(profile as any).career_stage === s.key ? "text-ink" : "text-ash"}`}>
-                      {s.label}
-                    </p>
-                    <p className="text-[11px] text-ash mt-0.5">{s.sub}</p>
-                  </label>
-                ))}
+          {/* ── CREDITS ── */}
+          {activeTab === "credits" && (
+            <div className="p-6 space-y-6">
+              <div>
+                <p className="field-label mb-1">Credits</p>
+                <p className="text-[12px] text-ash mb-5">
+                  Festival selections and awards build credibility on every project card.
+                </p>
+                {(credits ?? []).length > 0 && (
+                  <div className="space-y-3 mb-6">
+                    {(credits ?? []).map((c: any) => (
+                      <ExpandableCredit key={c.id} credit={c} />
+                    ))}
+                  </div>
+                )}
+                <AddCreditForm />
               </div>
-              <button type="submit" className="btn-ghost !py-2 text-[12px]">
-                Save stage
-              </button>
-            </form>
-          </div>
+            </div>
+          )}
 
-          {/* ── Credits ───────────────────────────────────────── */}
-          <div className="pt-8 border-t border-line">
-            <h2 className="font-display text-[20px] font-[400] mb-1">Credits</h2>
-            <p className="text-[12px] text-ash mb-6">
-              Festival selections and awards build credibility on every project card.
-            </p>
-
-            {(credits ?? []).length > 0 && (
-              <div className="space-y-3 mb-6">
-                {(credits ?? []).map((c: any) => (
-                  <ExpandableCredit key={c.id} credit={c} />
-                ))}
+          {/* ── SETTINGS ── */}
+          {activeTab === "settings" && (
+            <>
+              <div className="p-6">
+                <p className="field-label mb-1">Public visibility</p>
+                <p className="text-[12px] text-ash mb-3">
+                  Your filmmaker profile is always public — producers and funds can discover you.
+                </p>
+                {profile.username && (
+                  <Link href={`/u/${profile.username}`} target="_blank" rel="noopener noreferrer"
+                    className="btn-ghost !py-2 !px-4 text-[12px] inline-flex items-center gap-1.5">
+                    View public profile ↗
+                  </Link>
+                )}
               </div>
-            )}
 
-            <AddCreditForm />
-          </div>
-
-          {/* ── Danger zone ── */}
-          <div className="pt-8 border-t border-line">
-            <h2 className="font-display text-[20px] font-[400] mb-1">Danger zone</h2>
-            <p className="text-[12px] text-ash mb-4">
-              Permanently delete your account and all associated data.
-            </p>
-            <DeleteAccountModal />
-          </div>
+              <div className="px-6 pt-4 pb-8 border-t border-line">
+                <p className="text-[9px] tracking-[0.26em] uppercase font-semibold text-ash/40 mb-3">Danger zone</p>
+                <p className="text-[12px] text-ash mb-3 leading-relaxed">
+                  Permanently delete your account and all associated data.
+                </p>
+                <DeleteAccountModal />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
