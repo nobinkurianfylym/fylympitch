@@ -94,276 +94,6 @@ const TERRITORY_GROUPS = [
 
 // ── Profile Preview Component ──────────────────────────────────────────────────
 
-function Chip({ label, active = true, small = false }: { label: string; active?: boolean; small?: boolean }) {
-  if (!active) return null;
-  return (
-    <span className={`inline-flex items-center border border-line text-ash rounded-full ${small ? "px-2.5 py-0.5 text-[10px]" : "px-3 py-1 text-[11px]"} tracking-[0.06em] font-medium bg-white/60`}>
-      {label}
-    </span>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[9px] font-semibold tracking-[0.28em] uppercase text-ash/60 mb-3">
-      {children}
-    </p>
-  );
-}
-
-function PreviewSection({ children, noBorder = false }: { children: React.ReactNode; noBorder?: boolean }) {
-  return (
-    <div className={`px-8 py-6 ${noBorder ? "" : "border-b border-line"}`}>
-      {children}
-    </div>
-  );
-}
-
-interface PreviewProps {
-  name: string; company: string; avatarUrl: string; country: string;
-  bio: string; imdb: string; website: string; linkedin: string;
-  genres: string[]; formats: string[]; festivals: string[];
-  territories: string[]; languages: string[]; fundingRoles: string[];
-  capacity: string; budget: string; stages: string[]; lookingFor: string[];
-  acceptingPitches: boolean; responseTime: string; yearsExp: string;
-  isPublic: boolean; username: string; supabaseUrl: string;
-  isVerified: boolean;
-}
-
-function ProfilePreview({
-  name, company, avatarUrl, country, bio, imdb, website, linkedin,
-  genres, formats, festivals, territories, languages, fundingRoles,
-  capacity, budget, stages, lookingFor, acceptingPitches, responseTime,
-  yearsExp, isPublic, username, supabaseUrl, isVerified,
-}: PreviewProps) {
-
-  const capacityLabel = CONTRIBUTION_CAPACITY.find(c => c.key === capacity)?.label ?? null;
-  const budgetLabel = BUDGET_RANGES.find(b => b.key === budget)?.label ?? null;
-  const budgetSub = BUDGET_RANGES.find(b => b.key === budget)?.sub ?? null;
-
-  // Abbreviate territories to regions
-  const regionMap: Record<string, string> = {};
-  TERRITORY_GROUPS.forEach(tg => {
-    tg.territories.forEach(t => { regionMap[t] = tg.group; });
-  });
-  const uniqueRegions = [...new Set(territories.map(t => regionMap[t]).filter(Boolean))].slice(0, 6);
-
-  const displayMarkets = uniqueRegions.length
-    ? uniqueRegions.map(r => r.replace(" & Ireland","").replace("United Kingdom","UK").replace("& Southeast Asia","").replace(" (SEAS)","").trim())
-    : [];
-
-  const avatarSrc = avatarUrl
-    ? `${supabaseUrl}/storage/v1/object/public/avatars/${avatarUrl}`
-    : null;
-
-  const initials = name ? name.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase() : "—";
-
-  return (
-    <div className="bg-white rounded-[18px] border border-line overflow-hidden shadow-sm">
-
-      {/* ── Hero ── */}
-      <div style={{ background: "#1A1815" }} className="px-8 pt-10 pb-8">
-
-        {/* Avatar + Name row */}
-        <div className="flex items-start gap-5 mb-6">
-          <div className="shrink-0 w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-white/10 bg-white/10 flex items-center justify-center">
-            {avatarSrc
-              ? <img src={avatarSrc} alt={name} className="w-full h-full object-cover" />
-              : <span className="font-display text-[22px] text-white/60">{initials}</span>
-            }
-          </div>
-
-          <div className="flex-1 min-w-0 pt-1">
-            <div className="flex items-center gap-2.5 flex-wrap mb-1">
-              <h2 className="font-display text-[22px] text-white leading-tight">
-                {name || "Your Name"}
-              </h2>
-              {isVerified && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] tracking-[0.18em] uppercase font-semibold"
-                  style={{ background: "rgba(191,153,83,0.15)", color: "#BF9953", border: "1px solid rgba(191,153,83,0.3)" }}>
-                  ✦ Verified
-                </span>
-              )}
-              {isPublic && !isVerified && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] tracking-[0.18em] uppercase font-semibold"
-                  style={{ background: "rgba(245,245,240,0.08)", color: "rgba(245,245,240,0.5)", border: "1px solid rgba(245,245,240,0.12)" }}>
-                  Listed
-                </span>
-              )}
-            </div>
-            {company && (
-              <p className="text-[13px] font-medium" style={{ color: "#BF9953" }}>{company}</p>
-            )}
-            {country && (
-              <p className="text-[12px] mt-0.5" style={{ color: "rgba(245,245,240,0.45)" }}>{country}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Links row */}
-        {(imdb || website || linkedin) && (
-          <div className="flex items-center gap-4 mb-6">
-            {imdb && (
-              <a href={imdb} target="_blank" rel="noopener noreferrer"
-                className="text-[10px] tracking-[0.14em] uppercase font-semibold flex items-center gap-1.5 transition-opacity hover:opacity-70"
-                style={{ color: "#BF9953" }}>
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M0 1.5A1.5 1.5 0 011.5 0h7A1.5 1.5 0 0110 1.5v7A1.5 1.5 0 018.5 10h-7A1.5 1.5 0 010 8.5v-7zM2 2v6h1.25V2H2zm2 0v6h1V5.5L6.25 8h1V2H6v2.5L4.75 2H4zm3.5 0v6H9V2H7.5z"/></svg>
-                IMDb
-              </a>
-            )}
-            {website && (
-              <a href={website} target="_blank" rel="noopener noreferrer"
-                className="text-[10px] tracking-[0.14em] uppercase font-semibold transition-opacity hover:opacity-70"
-                style={{ color: "rgba(245,245,240,0.5)" }}>
-                Website ↗
-              </a>
-            )}
-            {linkedin && (
-              <a href={linkedin} target="_blank" rel="noopener noreferrer"
-                className="text-[10px] tracking-[0.14em] uppercase font-semibold transition-opacity hover:opacity-70"
-                style={{ color: "rgba(245,245,240,0.5)" }}>
-                LinkedIn ↗
-              </a>
-            )}
-          </div>
-        )}
-
-        {/* Bio */}
-        {bio ? (
-          <p className="text-[13px] leading-[1.7]" style={{ color: "rgba(245,245,240,0.65)" }}>
-            {bio.length > 280 ? bio.slice(0, 280) + "…" : bio}
-          </p>
-        ) : (
-          <p className="text-[13px] italic" style={{ color: "rgba(245,245,240,0.25)" }}>
-            Add a bio in the settings panel.
-          </p>
-        )}
-      </div>
-
-      {/* ── Snapshot stats ── */}
-      <PreviewSection>
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: "Markets", value: territories.length > 0 ? `${[...new Set(territories.map(t => regionMap[t]).filter(Boolean))].length}` : "—" },
-            { label: "Experience", value: yearsExp ? `${yearsExp}y` : "—" },
-            { label: "Festivals", value: festivals.length > 0 ? `${festivals.length}` : "—" },
-          ].map(stat => (
-            <div key={stat.label} className="text-center">
-              <p className="font-display text-[26px] text-ink leading-none mb-1">{stat.value}</p>
-              <p className="text-[9px] tracking-[0.2em] uppercase text-ash/60 font-medium">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </PreviewSection>
-
-      {/* ── Genres ── */}
-      {genres.length > 0 && (
-        <PreviewSection>
-          <SectionLabel>Genres</SectionLabel>
-          <div className="flex flex-wrap gap-1.5">
-            {genres.map(g => <Chip key={g} label={g} />)}
-            {formats.map(f => <Chip key={f} label={f} small />)}
-          </div>
-        </PreviewSection>
-      )}
-
-      {/* ── Looking For ── */}
-      {lookingFor.length > 0 && (
-        <PreviewSection>
-          <SectionLabel>Currently Looking For</SectionLabel>
-          <div className="flex flex-wrap gap-1.5">
-            {lookingFor.map(l => (
-              <span key={l} className="inline-flex items-center px-3 py-1 rounded-full text-[11px] tracking-[0.06em] font-medium border"
-                style={{ background: "rgba(191,153,83,0.07)", borderColor: "rgba(191,153,83,0.3)", color: "#8A6F3E" }}>
-                {l}
-              </span>
-            ))}
-          </div>
-        </PreviewSection>
-      )}
-
-      {/* ── Investment Profile ── */}
-      {(capacityLabel || fundingRoles.length > 0 || stages.length > 0) && (
-        <PreviewSection>
-          <SectionLabel>Investment Profile</SectionLabel>
-          <div className="space-y-3">
-            {(capacityLabel || budgetLabel) && (
-              <div className="flex items-baseline gap-2">
-                <span className="text-[13px] font-semibold text-ink">{capacityLabel ?? budgetLabel}</span>
-                {capacityLabel && budgetLabel && (
-                  <span className="text-[11px] text-ash">· budget pref: {budgetSub}</span>
-                )}
-              </div>
-            )}
-            {fundingRoles.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {fundingRoles.map(r => {
-                  const label = FUNDING_ROLES.find(f => f.key === r)?.label ?? r;
-                  return <Chip key={r} label={label} small />;
-                })}
-              </div>
-            )}
-            {stages.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {stages.map(s => {
-                  const label = STAGES.find(x => x.key === s)?.label ?? s;
-                  return <Chip key={s} label={label} small />;
-                })}
-              </div>
-            )}
-          </div>
-        </PreviewSection>
-      )}
-
-      {/* ── Market Experience ── */}
-      {displayMarkets.length > 0 && (
-        <PreviewSection>
-          <SectionLabel>Market Experience</SectionLabel>
-          <p className="text-[13px] text-ash leading-relaxed">
-            {displayMarkets.join(" · ")}
-          </p>
-        </PreviewSection>
-      )}
-
-      {/* ── Festival Interests ── */}
-      {festivals.length > 0 && (
-        <PreviewSection>
-          <SectionLabel>Festival Pedigree</SectionLabel>
-          <div className="flex flex-wrap gap-1.5">
-            {festivals.map(f => <Chip key={f} label={f} />)}
-          </div>
-        </PreviewSection>
-      )}
-
-      {/* ── Languages ── */}
-      {languages.length > 0 && (
-        <PreviewSection>
-          <SectionLabel>Languages</SectionLabel>
-          <p className="text-[13px] text-ash">
-            {languages.join(" · ")}
-          </p>
-        </PreviewSection>
-      )}
-
-      {/* ── Response ── */}
-      <PreviewSection noBorder>
-        <SectionLabel>Submissions</SectionLabel>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className={`w-1.5 h-1.5 rounded-full ${acceptingPitches ? "bg-emerald-500" : "bg-red-400"}`} />
-            <span className="text-[12px] text-ash font-medium">
-              {acceptingPitches ? "Accepting pitches" : "Not accepting pitches"}
-            </span>
-          </div>
-          {responseTime && (
-            <span className="text-[11px] text-ash/60">{responseTime}</span>
-          )}
-        </div>
-      </PreviewSection>
-    </div>
-  );
-}
-
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function ProducerProfilePage() {
@@ -385,8 +115,6 @@ export default function ProducerProfilePage() {
   const [linkedin, setLinkedin]     = useState("");
   const [country, setCountry]       = useState("");
   const [yearsExp, setYearsExp]     = useState("");
-  const [supabaseUrl, setSupabaseUrl] = useState("");
-  const [isVerified, setIsVerified] = useState(false);
 
   // Preferences
   const [genres, setGenres]               = useState<string[]>([]);
@@ -410,9 +138,6 @@ export default function ProducerProfilePage() {
   const [editSection, setEditSection] = useState<string>("identity");
 
   useEffect(() => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-    setSupabaseUrl(url);
-
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
@@ -449,7 +174,6 @@ export default function ProducerProfilePage() {
           setResponseTime((pp as any).response_time ?? "");
           setYearsExp(String((pp as any).years_experience ?? ""));
         }
-        setIsVerified(!!(vf as any)?.is_producer_verified);
         setLoading(false);
       });
     });
@@ -521,25 +245,23 @@ export default function ProducerProfilePage() {
       {/* ── Two-column body ── */}
       <div className="flex-1 grid grid-cols-1 xl:grid-cols-[1fr_400px] overflow-hidden">
 
-        {/* ══ LEFT: Preview ══ */}
-        <div className="overflow-y-auto bg-parchment/50" style={{ padding: "40px 48px" }}>
-          <p className="text-[10px] tracking-[0.24em] uppercase font-semibold text-ash/50 mb-4">
-            Public profile preview
-          </p>
-          <ProfilePreview
-            name={name} company={company} avatarUrl={avatarUrl} country={country}
-            bio={bio} imdb={imdb} website={website} linkedin={linkedin}
-            genres={genres} formats={formats} festivals={festivals}
-            territories={territories} languages={languages}
-            fundingRoles={fundingRoles} capacity={capacity} budget={budget}
-            stages={stages} lookingFor={lookingFor}
-            acceptingPitches={acceptingPitches} responseTime={responseTime}
-            yearsExp={yearsExp} isPublic={isPublic} username={username}
-            supabaseUrl={supabaseUrl} isVerified={isVerified}
-          />
-          <p className="text-[10px] text-ash/40 mt-4 text-center">
-            {isPublic ? "Listed in the PITCH.FYLYM producer network" : "Not listed — enable visibility in settings"}
-          </p>
+        {/* ══ LEFT: Public profile (live iframe) ══ */}
+        <div className="relative overflow-hidden bg-parchment/20" style={{ minHeight: 0 }}>
+          {username ? (
+            <iframe
+              src={`/u/${username}`}
+              title="Public profile"
+              className="w-full border-0 block"
+              style={{ height: "calc(100vh - 85px)" }}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full gap-4 p-10 text-center" style={{ minHeight: 400 }}>
+              <p className="font-display text-[20px] text-ink">Set a username to preview</p>
+              <p className="text-[13px] text-ash max-w-[260px] leading-relaxed">
+                Save a username in the Identity tab — your public profile will appear here.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* ══ RIGHT: Edit panel ══ */}

@@ -87,7 +87,7 @@ export default async function PublicProfilePage({
   // Profile
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, username, company, country, bio, website, imdb_url, avatar_url, role, career_stage, filmmaker_formats")
+    .select("id, full_name, username, company, country, bio, website, imdb_url, linkedin_url, avatar_url, role, career_stage, filmmaker_formats")
     .eq("username", username)
     .single();
 
@@ -155,6 +155,260 @@ export default async function PublicProfilePage({
 
   const viewerRole   = (me as any)?.role ?? null;
   const dashboardHref = viewerRole === "producer" ? "/producer" : "/dashboard";
+
+
+  // ── Producer profile branch ───────────────────────────────────────────────
+  if (profile.role === "producer") {
+    const { data: pp } = await supabase
+      .from("producer_profiles")
+      .select("*")
+      .eq("user_id", profile.id)
+      .maybeSingle();
+
+    const { data: vf } = await supabase
+      .from("profiles")
+      .select("is_producer_verified")
+      .eq("id", profile.id)
+      .single();
+
+    const isVerified    = !!(vf as any)?.is_producer_verified;
+    const genres: string[]       = pp?.genres ?? [];
+    const formats: string[]      = pp?.formats ?? [];
+    const festivals: string[]    = pp?.festivals ?? [];
+    const territories: string[]  = pp?.territories ?? [];
+    const languages: string[]    = pp?.language_preferences ?? [];
+    const fundingRoles: string[] = pp?.funding_roles ?? [];
+    const stages: string[]       = pp?.stage_preferences ?? [];
+    const capacity: string       = pp?.contribution_capacity ?? "";
+    const budget: string         = pp?.budget_range ?? "";
+    const lookingFor: string[]   = (pp as any)?.looking_for ?? [];
+    const acceptingPitches       = (pp as any)?.accepting_pitches !== false;
+    const responseTime: string   = (pp as any)?.response_time ?? "";
+    const yearsExp               = (pp as any)?.years_experience ?? null;
+    const linkedin: string       = (profile as any).linkedin_url ?? "";
+
+    const FUNDING_ROLES_MAP: Record<string,string> = {
+      full_financing:"Full Financing", co_producer:"Co-Producer",
+      equity_investor:"Equity Investor", territory_presales:"Territory Pre-Sales",
+      gap_financing:"Gap Financing", grant_access:"Grant Access",
+    };
+    const STAGES_MAP: Record<string,string> = {
+      development:"Development", pre_production:"Pre-Production",
+      production:"Production", post_production:"Post-Production", completed:"Acquisition",
+    };
+    const CAPACITY_MAP: Record<string,string> = {
+      under_50k:"Under $50K", "50k_250k":"$50K\u2013$250K", "250k_1m":"$250K\u2013$1M", "1m_plus":"$1M+",
+    };
+    const BUDGET_MAP: Record<string,string> = {
+      micro:"< $100K", low:"$100K\u2013$500K", mid:"$500K\u2013$2M", high:"$2M+",
+    };
+    const TG: [string, string[]][] = [
+      ["North America",["United States","Canada"]],
+      ["UK & Ireland",["United Kingdom","Republic of Ireland"]],
+      ["Western Europe",["Germany","France","Austria","Switzerland","Benelux"]],
+      ["Nordic",["Sweden","Norway","Denmark","Finland","Iceland"]],
+      ["Central & Eastern Europe",["Poland","Czech Republic","Hungary","Romania","Bulgaria","Slovakia","The Baltics","The Balkans","CIS / Russia","Ukraine"]],
+      ["Southern Europe",["Italy","Spain","Portugal","Greece","Cyprus"]],
+      ["Latin America",["Mexico","Brazil","Argentina","Colombia","Chile","Peru","Venezuela","Ecuador","Central America & Caribbean"]],
+      ["Middle East",["Saudi Arabia","UAE","Kuwait","Qatar","Oman","Bahrain","Egypt","Jordan","Lebanon","Iraq","Israel"]],
+      ["Africa",["South Africa","Nigeria","Kenya","Ghana","Pan-African French-Speaking","North Africa / Maghreb"]],
+      ["South Asia",["India","Pakistan","Bangladesh","Sri Lanka","Nepal"]],
+      ["East & SE Asia",["Japan","South Korea","China","Hong Kong","Taiwan","Southeast Asia (SEAS)"]],
+      ["Oceania",["Australia","New Zealand","Pacific Islands"]],
+    ];
+    const tgMap: Record<string,string> = {};
+    TG.forEach(([r, ts]) => ts.forEach(t => { tgMap[t] = r; }));
+    const uniqueMarkets = [...new Set(territories.map(t => tgMap[t]).filter(Boolean))];
+
+    const avatarSrc = profile.avatar_url
+      ? `${supabaseUrl}/storage/v1/object/public/avatars/${profile.avatar_url}`
+      : null;
+    const initials = profile.full_name.split(" ").map((w: string) => w[0]).join("").slice(0,2).toUpperCase();
+
+    return (
+      <>
+        <style>{`
+          @keyframes pFade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+          .pf{animation:pFade 0.6s ease-out forwards}
+          .pf2{animation:pFade 0.6s 0.1s ease-out both}
+          .pf3{animation:pFade 0.6s 0.2s ease-out both}
+          .chip-lt{display:inline-flex;align-items:center;padding:3px 10px;border-radius:100px;font-size:11px;letter-spacing:.05em;font-weight:500;border:1px solid rgba(26,24,21,.1);color:#8A857C;background:rgba(255,255,255,.7)}
+          .chip-gd{display:inline-flex;align-items:center;padding:4px 12px;border-radius:100px;font-size:11px;letter-spacing:.06em;font-weight:600;border:1px solid rgba(191,153,83,.28);color:#8A6F3E;background:rgba(191,153,83,.08)}
+          .sl{font-size:9px;letter-spacing:.28em;text-transform:uppercase;font-weight:600;color:rgba(26,24,21,.32);margin-bottom:12px;display:block}
+          .pcard{background:#fff;border-radius:14px;border:1px solid rgba(26,24,21,.08);padding:28px 32px;margin-bottom:12px}
+          .pf-nav{transition:opacity 150ms}.pf-nav:hover{opacity:1!important}
+          @media(max-width:768px){.pf-hero-inner{flex-direction:column!important;align-items:flex-start!important}.pf-two-col{grid-template-columns:1fr!important}}
+        `}</style>
+        <div style={{background:"#F5F5F0",minHeight:"100vh",fontFamily:"'Montserrat',sans-serif"}}>
+
+          {/* Nav */}
+          <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:50,height:52,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 40px",background:"rgba(26,24,21,.6)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)"}}>
+            <Wordmark href="/" size="sm" />
+            <div style={{display:"flex",alignItems:"center",gap:24}}>
+              {user
+                ? <Link href={dashboardHref} className="pf-nav" style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(245,245,240,.55)"}}>Studio</Link>
+                : <Link href="/login" style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:700,color:"#1A1815",background:"rgba(245,245,240,.9)",padding:"6px 16px",borderRadius:100}}>Sign in</Link>
+              }
+            </div>
+          </nav>
+
+          {/* Hero */}
+          <div style={{background:"#1A1815",paddingTop:52}}>
+            <div style={{maxWidth:960,margin:"0 auto",padding:"64px 40px 56px"}}>
+              <div className="pf-hero-inner" style={{display:"flex",alignItems:"flex-end",gap:32}}>
+                <div className="pf" style={{flexShrink:0}}>
+                  <div style={{width:88,height:88,borderRadius:"50%",overflow:"hidden",border:"2px solid rgba(255,255,255,.1)",background:"rgba(255,255,255,.06)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    {avatarSrc
+                      ? <img src={avatarSrc} alt={profile.full_name} style={{width:"100%",height:"100%",objectFit:"cover"}} />
+                      : <span style={{fontFamily:"'Playfair Display',serif",fontSize:28,color:"rgba(245,245,240,.4)"}}>{initials}</span>}
+                  </div>
+                </div>
+                <div className="pf2" style={{flex:1,minWidth:0}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",marginBottom:6}}>
+                    <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(26px,4vw,40px)",color:"#F5F5F0",fontWeight:700,lineHeight:1.1,margin:0}}>
+                      {profile.full_name}
+                    </h1>
+                    {isVerified && (
+                      <span style={{fontSize:9,letterSpacing:".2em",textTransform:"uppercase",fontWeight:700,background:"rgba(191,153,83,.15)",color:"#BF9953",border:"1px solid rgba(191,153,83,.3)",padding:"3px 8px",borderRadius:100}}>✦ Verified</span>
+                    )}
+                  </div>
+                  {profile.company && <p style={{fontSize:14,fontWeight:600,color:"#BF9953",margin:"0 0 4px"}}>{profile.company}</p>}
+                  <p style={{fontSize:12,color:"rgba(245,245,240,.4)",margin:0}}>
+                    {[profile.country, yearsExp ? `${yearsExp} years` : null].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+                <div className="pf3" style={{display:"flex",gap:20,alignItems:"center",flexShrink:0}}>
+                  {profile.imdb_url && <a href={profile.imdb_url} target="_blank" rel="noopener noreferrer" style={{fontSize:10,letterSpacing:".16em",textTransform:"uppercase",fontWeight:700,color:"#BF9953",textDecoration:"none"}}>IMDb ↗</a>}
+                  {profile.website  && <a href={profile.website}  target="_blank" rel="noopener noreferrer" style={{fontSize:10,letterSpacing:".16em",textTransform:"uppercase",fontWeight:700,color:"rgba(245,245,240,.45)",textDecoration:"none"}}>Web ↗</a>}
+                  {linkedin         && <a href={linkedin}          target="_blank" rel="noopener noreferrer" style={{fontSize:10,letterSpacing:".16em",textTransform:"uppercase",fontWeight:700,color:"rgba(245,245,240,.45)",textDecoration:"none"}}>LinkedIn ↗</a>}
+                  <ProfileShareButton username={profile.username} name={profile.full_name} />
+                </div>
+              </div>
+              {profile.bio && (
+                <p className="pf2" style={{fontSize:14,lineHeight:1.75,color:"rgba(245,245,240,.6)",marginTop:28,maxWidth:680}}>{profile.bio}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Snapshot strip */}
+          <div style={{background:"#fff",borderBottom:"1px solid rgba(26,24,21,.07)"}}>
+            <div style={{maxWidth:960,margin:"0 auto",padding:"0 40px"}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",borderLeft:"1px solid rgba(26,24,21,.07)"}}>
+                {[
+                  {val:uniqueMarkets.length > 0 ? String(uniqueMarkets.length) : "\u2014", label:"Markets"},
+                  {val:yearsExp ? `${yearsExp}y` : "\u2014", label:"Experience"},
+                  {val:festivals.length > 0 ? String(festivals.length) : "\u2014", label:"Festivals"},
+                ].map(stat => (
+                  <div key={stat.label} style={{padding:"28px 0",textAlign:"center",borderRight:"1px solid rgba(26,24,21,.07)"}}>
+                    <p style={{fontFamily:"'Playfair Display',serif",fontSize:32,color:"#1A1815",lineHeight:1,margin:"0 0 6px",fontWeight:700}}>{stat.val}</p>
+                    <p style={{fontSize:9,letterSpacing:".22em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,.32)",margin:0}}>{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Main */}
+          <div style={{maxWidth:960,margin:"0 auto",padding:"48px 40px 80px"}}>
+            <div className="pf-two-col" style={{display:"grid",gridTemplateColumns:"1fr 300px",gap:40,alignItems:"start"}}>
+
+              {/* Left */}
+              <div>
+                {(genres.length > 0 || formats.length > 0) && (
+                  <div className="pcard">
+                    <span className="sl">Genres</span>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {genres.map(g => <span key={g} className="chip-lt">{g}</span>)}
+                      {formats.map(f => <span key={f} style={{display:"inline-flex",padding:"2px 8px",borderRadius:100,fontSize:10,fontWeight:600,background:"rgba(26,24,21,.05)",color:"rgba(26,24,21,.4)",border:"1px solid rgba(26,24,21,.08)"}}>{f}</span>)}
+                    </div>
+                  </div>
+                )}
+                {lookingFor.length > 0 && (
+                  <div className="pcard">
+                    <span className="sl">Currently Looking For</span>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {lookingFor.map(l => <span key={l} className="chip-gd">{l}</span>)}
+                    </div>
+                  </div>
+                )}
+                {(CAPACITY_MAP[capacity] || fundingRoles.length > 0 || stages.length > 0) && (
+                  <div className="pcard">
+                    <span className="sl">Investment Profile</span>
+                    {CAPACITY_MAP[capacity] && (
+                      <p style={{fontSize:18,fontWeight:700,color:"#1A1815",margin:"0 0 4px",fontFamily:"'Playfair Display',serif"}}>
+                        {CAPACITY_MAP[capacity]}
+                        {BUDGET_MAP[budget] && <span style={{fontSize:13,fontWeight:400,color:"#8A857C",fontFamily:"Montserrat,sans-serif"}}> · {BUDGET_MAP[budget]}</span>}
+                      </p>
+                    )}
+                    {(fundingRoles.length > 0 || stages.length > 0) && (
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:12}}>
+                        {fundingRoles.map(r => <span key={r} className="chip-lt">{FUNDING_ROLES_MAP[r] ?? r}</span>)}
+                        {stages.map(s => <span key={s} className="chip-lt">{STAGES_MAP[s] ?? s}</span>)}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {uniqueMarkets.length > 0 && (
+                  <div className="pcard">
+                    <span className="sl">Market Experience</span>
+                    <p style={{fontSize:13,color:"#8A857C",lineHeight:1.8,margin:0}}>{uniqueMarkets.join(" · ")}</p>
+                  </div>
+                )}
+                {festivals.length > 0 && (
+                  <div className="pcard">
+                    <span className="sl">Festival Pedigree</span>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                      {festivals.map(f => <span key={f} className="chip-lt">{f}</span>)}
+                    </div>
+                  </div>
+                )}
+                {languages.length > 0 && (
+                  <div className="pcard">
+                    <span className="sl">Languages</span>
+                    <p style={{fontSize:13,color:"#8A857C",lineHeight:1.8,margin:0}}>{languages.join(" · ")}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Right sidebar */}
+              <div style={{position:"sticky",top:72}}>
+                <div style={{background:"#1A1815",borderRadius:14,padding:"24px",marginBottom:12}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+                    <span style={{fontSize:9,letterSpacing:".28em",textTransform:"uppercase",fontWeight:600,color:"rgba(245,245,240,.3)"}}>Submissions</span>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{width:6,height:6,borderRadius:"50%",background:acceptingPitches?"#4ade80":"#f87171"}} />
+                      <span style={{fontSize:11,color:acceptingPitches?"rgba(74,222,128,.9)":"rgba(248,113,113,.9)",fontWeight:600}}>
+                        {acceptingPitches ? "Open" : "Closed"}
+                      </span>
+                    </div>
+                  </div>
+                  <p style={{fontSize:13,color:"rgba(245,245,240,.6)",margin:"0 0 16px",lineHeight:1.6}}>
+                    {acceptingPitches ? "Reviewing new project submissions." : "Not accepting pitches at this time."}
+                  </p>
+                  {responseTime && <p style={{fontSize:11,color:"rgba(245,245,240,.35)",margin:"0 0 20px"}}>Response: {responseTime}</p>}
+                  {user && user.id !== profile.id && (
+                    <Link href="/producer/messages" style={{display:"block",textAlign:"center",padding:"10px",borderRadius:8,background:"rgba(191,153,83,.15)",border:"1px solid rgba(191,153,83,.3)",color:"#BF9953",fontSize:11,letterSpacing:".14em",textTransform:"uppercase",fontWeight:700,textDecoration:"none"}}>
+                      Send message
+                    </Link>
+                  )}
+                </div>
+                {(profile.imdb_url || profile.website || linkedin) && (
+                  <div style={{background:"#fff",borderRadius:14,border:"1px solid rgba(26,24,21,.08)",padding:"20px 24px"}}>
+                    <span className="sl">Links</span>
+                    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                      {profile.imdb_url && <a href={profile.imdb_url} target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:"#8A857C",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:9,letterSpacing:".12em",textTransform:"uppercase",fontWeight:700,color:"rgba(26,24,21,.35)"}}>IMDb</span><span style={{flex:1,height:1,background:"rgba(26,24,21,.07)"}} /><span style={{fontSize:10,color:"#BF9953"}}>↗</span></a>}
+                      {profile.website  && <a href={profile.website}  target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:"#8A857C",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:9,letterSpacing:".12em",textTransform:"uppercase",fontWeight:700,color:"rgba(26,24,21,.35)"}}>Website</span><span style={{flex:1,height:1,background:"rgba(26,24,21,.07)"}} /><span style={{fontSize:10,color:"#8A857C"}}>↗</span></a>}
+                      {linkedin         && <a href={linkedin}          target="_blank" rel="noopener noreferrer" style={{fontSize:12,color:"#8A857C",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:9,letterSpacing:".12em",textTransform:"uppercase",fontWeight:700,color:"rgba(26,24,21,.35)"}}>LinkedIn</span><span style={{flex:1,height:1,background:"rgba(26,24,21,.07)"}} /><span style={{fontSize:10,color:"#8A857C"}}>↗</span></a>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
