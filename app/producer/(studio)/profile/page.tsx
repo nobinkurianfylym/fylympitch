@@ -4,6 +4,7 @@ import { useEffect, useState, useActionState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { saveProducerProfile, updateUsername } from "@/lib/actions";
 import AvatarUpload from "@/components/AvatarUpload";
+import DeleteAccountModal from "@/components/DeleteAccountModal";
 import Link from "next/link";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -548,6 +549,17 @@ export default function ProducerProfilePage() {
                 </div>
 
               </div>
+
+              {/* ── Danger zone — only shown in Settings tab ── */}
+              {editSection === "visibility" && (
+                <div className="px-6 pt-4 pb-6 border-t border-line mt-2">
+                  <p className="text-[9px] tracking-[0.26em] uppercase font-semibold text-ash/40 mb-3">Danger zone</p>
+                  <p className="text-[12px] text-ash mb-3 leading-relaxed">
+                    Permanently delete your account and all associated data.
+                  </p>
+                  <DeleteAccountModal />
+                </div>
+              )}
             )}
 
             {/* Save footer */}

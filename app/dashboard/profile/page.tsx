@@ -302,6 +302,15 @@ export default async function ProfilePage() {
 
             <AddCreditForm />
           </div>
+
+          {/* ── Danger zone ── */}
+          <div className="pt-8 border-t border-line">
+            <h2 className="font-display text-[20px] font-[400] mb-1">Danger zone</h2>
+            <p className="text-[12px] text-ash mb-4">
+              Permanently delete your account and all associated data.
+            </p>
+            <DeleteAccountModal />
+          </div>
         </div>
       </div>
     </div>

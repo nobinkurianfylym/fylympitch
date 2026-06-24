@@ -39,8 +39,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
       const data = await res.json();
       if (data.role && data.role !== role) {
         const existing = data.role === "producer" ? "Producer" : "Filmmaker";
-        const current  = role  === "producer"     ? "Producer" : "Filmmaker";
-        setRoleWarning(`This email is already registered as a ${existing}. Switch to ${existing} or use a different email.`);
+        setRoleWarning(`This email is already registered as a ${existing}. You'll be signed in to your ${existing} account.`);
       }
     } catch { /* silent */ }
   }
