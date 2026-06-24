@@ -213,7 +213,8 @@ export function Footer() {
                 <li><a href="/terms"   className={LI}>Terms</a></li>
                 <li><a href="/cookies" className={LI}>Cookies</a></li>
                 <li><a href="mailto:hello@fylym.com" className={LI}>Contact</a></li>
-                <li><a href="mailto:hello@fylym.com?subject=Report Issue" className={LI}>Report Issue</a></li>
+                <li><a href="mailto:hello@fylym.com?subject=Bug Report" className={LI}>Bug Report</a></li>
+                <li><a href="mailto:hello@fylym.com?subject=Broken Link Report" className={LI}>Broken Link Report</a></li>
               </ul>
             </div>
           </div>
