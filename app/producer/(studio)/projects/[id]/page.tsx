@@ -307,6 +307,7 @@ export default async function ProducerProjectDetailPage({
                 color:         S.ink,
                 lineHeight:    1.06,
                 letterSpacing: "-0.02em",
+                textTransform: "uppercase",
                 margin:        0,
                 marginBottom:  14,
               }}>
