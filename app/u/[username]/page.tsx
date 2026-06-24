@@ -159,7 +159,7 @@ export default async function PublicProfilePage({
 
 
   // ── Producer profile branch ───────────────────────────────────────────────
-  if (profile.role === "producer") {
+  if (profile.role === "producer" || profile.role === "admin") {
     const { data: pp } = await supabase
       .from("producer_profiles")
       .select("*")
