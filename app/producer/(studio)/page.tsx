@@ -274,8 +274,7 @@ export default async function ProducerDiscoverPage() {
             );
           })}
         </div>
-      )}
-
+      ) : null}
       {/* Footer links */}
       <div className="mt-10 flex items-center justify-between">
         <Link href="/producer/projects"
