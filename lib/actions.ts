@@ -390,6 +390,31 @@ export async function createProducerOpportunity(formData: FormData) {
     return { error: error.message };
   }
 
+  // ── Broadcast to all approved filmmakers ─────────────────────────────────
+  const producerLabel = (profile as any).company || (profile as any).full_name || "A producer";
+  const bodySnippet   = description
+    ? description.slice(0, 120) + (description.length > 120 ? "…" : "")
+    : "Submit your project as an exclusive pitch directly to this producer.";
+
+  const { data: filmmakers } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("role", "filmmaker")
+    .eq("approval_status", "approved")
+    .limit(2000);
+
+  if (filmmakers && filmmakers.length > 0) {
+    await supabase.from("notifications").insert(
+      (filmmakers as { id: string }[]).map((f) => ({
+        user_id: f.id,
+        kind:    "new_opportunity",
+        title:   `${producerLabel} is looking for projects — "${title}"`,
+        body:    bodySnippet,
+        link:    `/opportunities/${opp!.slug}`,
+      }))
+    );
+  }
+
   revalidatePath("/opportunities");
   revalidatePath("/producerstudio");
   redirect(`/producerstudio/my-opportunities`);

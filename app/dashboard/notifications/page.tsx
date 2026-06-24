@@ -10,6 +10,8 @@ const KIND_META: Record<string, { label: string; dot: string }> = {
   offer_received:     { label: "Offer",             dot: "bg-emerald-500" },
   match_found:        { label: "New Match",         dot: "bg-blue-500" },
   application_update: { label: "Application",       dot: "bg-violet-500" },
+  new_opportunity:    { label: "Producer Brief",    dot: "bg-gold" },
+  new_fund:           { label: "New Fund",          dot: "bg-blue-500" },
   system:             { label: "System",            dot: "bg-ash" },
 };
 
