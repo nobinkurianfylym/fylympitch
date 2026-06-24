@@ -53,14 +53,16 @@ export default async function ProfilePage({
           <p className="eyebrow">Filmmaker Profile</p>
           <h1 className="font-display text-[22px] mt-0.5">{profile.full_name || "Your Profile"}</h1>
         </div>
-        {/* Avatar — links to public profile */}
-        <Link
-          href={profile.username ? `/u/${profile.username}` : "#"}
-          target={profile.username ? "_blank" : undefined}
-          rel="noopener noreferrer"
-          title="View public profile"
-          className="shrink-0 hover:opacity-80 transition-opacity"
-        >
+        {/* Avatar + public profile link */}
+        <div className="flex items-center gap-3 shrink-0">
+          {profile.username && (
+            <Link
+              href={`/u/${profile.username}`}
+              className="text-[11px] tracking-[0.14em] uppercase text-ash hover:text-gold transition-colors whitespace-nowrap"
+            >
+              View public profile ↗
+            </Link>
+          )}
           <div className="w-10 h-10 rounded-full overflow-hidden border border-line bg-parchment flex items-center justify-center">
             {profile.avatar_url
               ? <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
@@ -71,7 +73,7 @@ export default async function ProfilePage({
                 </span>
             }
           </div>
-        </Link>
+        </div>
       </div>
 
       {/* ── Tabs + content ── */}

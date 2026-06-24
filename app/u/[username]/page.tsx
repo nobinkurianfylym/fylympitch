@@ -156,6 +156,7 @@ export default async function PublicProfilePage({
 
   const viewerRole   = (me as any)?.role ?? null;
   const dashboardHref = viewerRole === "producer" ? "/producerstudio" : "/dashboard";
+  const isOwner      = !!user && user.id === profile.id;
 
 
   // ── Producer profile branch ───────────────────────────────────────────────
@@ -244,7 +245,12 @@ export default async function PublicProfilePage({
           {/* Nav */}
           <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:50,height:48,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 40px",background:"rgba(245,245,240,0.95)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderBottom:"1px solid rgba(26,24,21,0.05)"}}>
             <Wordmark href="/" size="sm" />
-            {user && (
+            {isOwner ? (
+              <Link href="/producerstudio/profile" className="lnk"
+                style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.5)",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
+                ← Edit Profile
+              </Link>
+            ) : user && (
               <Link href={dashboardHref} className="lnk"
                 style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.35)",textDecoration:"none"}}>
                 Producer Studio
@@ -470,7 +476,12 @@ export default async function PublicProfilePage({
         {/* Nav */}
         <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:50,height:48,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 40px",background:"rgba(245,245,240,0.95)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderBottom:"1px solid rgba(26,24,21,0.05)"}}>
           <Wordmark href="/" size="sm" />
-          {user && (
+          {isOwner ? (
+            <Link href="/dashboard/profile" className="fklnk"
+              style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.5)",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
+              ← Edit Profile
+            </Link>
+          ) : user && (
             <Link href={dashboardHref} className="fklnk"
               style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.35)",textDecoration:"none"}}>
               {viewerRole === "producer" ? "Producer Studio" : "Dashboard"}
