@@ -239,7 +239,7 @@ export default async function PublicProfilePage({
 
         <div style={{ background:"#F5F5F0", minHeight:"100vh", fontFamily:"'Montserrat',sans-serif" }}>
 
-          {/* Nav — minimal, almost invisible */}
+          {/* Nav */}
           <nav style={{
             position:"fixed", top:0, left:0, right:0, zIndex:50, height:48,
             display:"flex", alignItems:"center", justifyContent:"space-between",
@@ -257,148 +257,115 @@ export default async function PublicProfilePage({
             )}
           </nav>
 
-          {/* Editorial column */}
-          <div style={{ maxWidth:680, margin:"0 auto", padding:"108px 40px 120px" }}>
+          {/* Identity zone — warm parchment separation */}
+          <div style={{ background:"#EDE8DF", paddingTop:48 }}>
+            <div style={{ maxWidth:680, margin:"0 auto", padding:"60px 40px 56px" }}>
+              <div className="arrive">
 
-            {/* ── Identity block ── */}
-            <div className="arrive">
-
-              {/* Role eyebrow */}
-              <p style={{ fontSize:9, letterSpacing:".32em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.28)", margin:"0 0 22px" }}>
-                {isVerified ? "✦ Verified Producer" : "Producer"}
-              </p>
-
-              {/* Avatar + Name */}
-              <div className="p-hero" style={{ display:"flex", alignItems:"flex-start", gap:20, marginBottom:18 }}>
-                {avatarSrc && (
-                  <div style={{ flexShrink:0, width:54, height:54, borderRadius:"50%", overflow:"hidden", border:"1px solid rgba(26,24,21,0.08)", marginTop:6 }}>
-                    <img src={avatarSrc} alt={profile.full_name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                  </div>
-                )}
-                <div>
-                  <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:"clamp(30px,5vw,50px)", fontWeight:700, lineHeight:1.06, color:"#1A1815", margin:0, letterSpacing:"-0.015em" }}>
-                    {profile.full_name}
-                  </h1>
-                  {profile.company && (
-                    <p style={{ fontSize:13, fontWeight:600, color:"#BF9953", margin:"7px 0 0", letterSpacing:".03em" }}>
-                      {profile.company}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Meta — country · years · links */}
-              <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", columnGap:18, rowGap:6, marginBottom:36 }}>
-                {profile.country && <span style={{ fontSize:12, color:"#8A857C" }}>{profile.country}</span>}
-                {yearsExp && <span style={{ fontSize:12, color:"#8A857C" }}>{yearsExp} years</span>}
-                {profile.imdb_url && (
-                  <a href={profile.imdb_url} target="_blank" rel="noopener noreferrer" className="lnk-gd"
-                    style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:700, color:"#BF9953", textDecoration:"none" }}>IMDb ↗</a>
-                )}
-                {profile.website && (
-                  <a href={profile.website} target="_blank" rel="noopener noreferrer" className="lnk-gd"
-                    style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.38)", textDecoration:"none" }}>Website ↗</a>
-                )}
-                {linkedin && (
-                  <a href={linkedin} target="_blank" rel="noopener noreferrer" className="lnk-gd"
-                    style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.38)", textDecoration:"none" }}>LinkedIn ↗</a>
-                )}
-                <span style={{ marginLeft:"auto" }}>
-                  <ProfileShareButton username={profile.username} name={profile.full_name} />
-                </span>
-              </div>
-
-              {/* Bio — the centrepiece */}
-              {profile.bio && (
-                <p style={{ fontSize:15, lineHeight:1.88, color:"rgba(26,24,21,0.58)", margin:0, fontWeight:400 }}>
-                  {profile.bio}
+                <p style={{ fontSize:9, letterSpacing:".32em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.35)", margin:"0 0 24px" }}>
+                  {isVerified ? "✦\u2002Verified Producer" : "Producer"}
                 </p>
-              )}
+
+                <div className="p-hero" style={{ display:"flex", alignItems:"flex-start", gap:20, marginBottom:20 }}>
+                  {/* Always show avatar — photo or initials */}
+                  <div style={{ flexShrink:0, width:56, height:56, borderRadius:"50%", overflow:"hidden", border:"1px solid rgba(26,24,21,0.1)", background:"rgba(26,24,21,0.06)", display:"flex", alignItems:"center", justifyContent:"center", marginTop:5 }}>
+                    {avatarSrc
+                      ? <img src={avatarSrc} alt={profile.full_name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                      : <span style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:700, color:"rgba(26,24,21,0.35)" }}>{initials}</span>
+                    }
+                  </div>
+                  <div>
+                    <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:"clamp(30px,5vw,50px)", fontWeight:700, lineHeight:1.06, color:"#1A1815", margin:0, letterSpacing:"-0.015em" }}>
+                      {profile.full_name}
+                    </h1>
+                    {profile.company && (
+                      <p style={{ fontSize:13, fontWeight:600, color:"#BF9953", margin:"7px 0 0", letterSpacing:".03em" }}>
+                        {profile.company}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", columnGap:18, rowGap:6, marginBottom:32 }}>
+                  {profile.country && <span style={{ fontSize:12, color:"rgba(26,24,21,0.5)" }}>{profile.country}</span>}
+                  {yearsExp && <span style={{ fontSize:12, color:"rgba(26,24,21,0.5)" }}>{yearsExp} years</span>}
+                  {profile.imdb_url && <a href={profile.imdb_url} target="_blank" rel="noopener noreferrer" className="lnk-gd" style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:700, color:"#BF9953", textDecoration:"none" }}>IMDb ↗</a>}
+                  {profile.website  && <a href={profile.website}  target="_blank" rel="noopener noreferrer" className="lnk-gd" style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.4)", textDecoration:"none" }}>Website ↗</a>}
+                  {linkedin         && <a href={linkedin}          target="_blank" rel="noopener noreferrer" className="lnk-gd" style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.4)", textDecoration:"none" }}>LinkedIn ↗</a>}
+                  <span style={{ marginLeft:"auto" }}>
+                    <ProfileShareButton username={profile.username} name={profile.full_name} />
+                  </span>
+                </div>
+
+                {profile.bio && (
+                  <p style={{ fontSize:15, lineHeight:1.88, color:"rgba(26,24,21,0.6)", margin:0 }}>
+                    {profile.bio}
+                  </p>
+                )}
+              </div>
             </div>
+          </div>
 
-            {/* ── Rule ── */}
-            <div style={{ height:1, background:"rgba(26,24,21,0.07)", margin:"52px 0" }} />
+          {/* Body — ivory */}
+          <div style={{ maxWidth:680, margin:"0 auto", padding:"48px 40px 100px" }}>
 
-            {/* ── Pitch status ── */}
-            <div className="arrive-2" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12, marginBottom:52 }}>
+            {/* Pitch status */}
+            <div className="arrive-2" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12, marginBottom:40 }}>
               <div style={{ display:"flex", alignItems:"center", gap:9 }}>
-                <span style={{ width:5, height:5, borderRadius:"50%", background:acceptingPitches ? "#5aab7a" : "rgba(26,24,21,0.18)", flexShrink:0 }} />
-                <span style={{ fontSize:12, fontWeight:600, color:acceptingPitches ? "rgba(26,24,21,0.6)" : "rgba(26,24,21,0.28)", letterSpacing:".02em" }}>
+                <span style={{ width:5, height:5, borderRadius:"50%", background:acceptingPitches?"#5aab7a":"rgba(26,24,21,0.18)", flexShrink:0 }} />
+                <span style={{ fontSize:12, fontWeight:600, color:acceptingPitches?"rgba(26,24,21,0.6)":"rgba(26,24,21,0.28)", letterSpacing:".02em" }}>
                   {acceptingPitches ? "Accepting pitches" : "Not accepting pitches"}
                 </span>
-                {responseTime && (
-                  <span style={{ fontSize:11, color:"rgba(26,24,21,0.28)", marginLeft:2 }}>— {responseTime}</span>
-                )}
+                {responseTime && <span style={{ fontSize:11, color:"rgba(26,24,21,0.28)", marginLeft:2 }}>— {responseTime}</span>}
               </div>
               {user && user.id !== profile.id && acceptingPitches && (
-                <Link href="/producer/messages" className="lnk-gd" style={{
-                  fontSize:10, letterSpacing:".16em", textTransform:"uppercase", fontWeight:700,
-                  color:"#8A6F3E", textDecoration:"none",
-                  border:"1px solid rgba(191,153,83,0.35)",
-                  padding:"8px 18px", borderRadius:100,
-                }}>
+                <Link href="/producer/messages" className="lnk-gd" style={{ fontSize:10, letterSpacing:".16em", textTransform:"uppercase", fontWeight:700, color:"#8A6F3E", textDecoration:"none", border:"1px solid rgba(191,153,83,0.35)", padding:"8px 18px", borderRadius:100 }}>
                   Send message
                 </Link>
               )}
             </div>
 
-            {/* ── Data sections ── */}
-            <div className="arrive-2">
+            {/* Data sections — white curved cards */}
+            <div className="arrive-2" style={{ display:"flex", flexDirection:"column", gap:10 }}>
               {([
-                (genres.length > 0 || formats.length > 0) && {
-                  label:"Genres",
-                  node:<p style={{ fontSize:14, color:"rgba(26,24,21,0.6)", lineHeight:1.7, margin:0 }}>
-                    {[...genres, ...formats].join(", ")}
-                  </p>
+                (genres.length > 0 || formats.length > 0) && { label:"Genres", node:
+                  <p style={{ fontSize:14, color:"rgba(26,24,21,0.6)", lineHeight:1.7, margin:0 }}>{[...genres, ...formats].join(", ")}</p>
                 },
-                lookingFor.length > 0 && {
-                  label:"Currently Looking For",
-                  node:<div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
+                lookingFor.length > 0 && { label:"Currently Looking For", node:
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
                     {lookingFor.map((l: string) => (
                       <span key={l} style={{ fontSize:11, letterSpacing:".02em", fontWeight:500, color:"#8A6F3E", border:"1px solid rgba(191,153,83,0.28)", padding:"4px 13px", borderRadius:100 }}>{l}</span>
                     ))}
                   </div>
                 },
-                (CAPACITY_MAP[capacity] || fundingRoles.length > 0) && {
-                  label:"Investment",
-                  node:<div style={{ display:"flex", flexDirection:"column" as const, gap:6 }}>
+                (CAPACITY_MAP[capacity] || fundingRoles.length > 0) && { label:"Investment", node:
+                  <div style={{ display:"flex", flexDirection:"column" as const, gap:6 }}>
                     {CAPACITY_MAP[capacity] && (
                       <p style={{ margin:0 }}>
                         <span style={{ fontFamily:"'Playfair Display',serif", fontSize:17, fontWeight:700, color:"#1A1815" }}>{CAPACITY_MAP[capacity]}</span>
                         {BUDGET_MAP[budget] && <span style={{ fontSize:13, color:"rgba(26,24,21,0.35)", marginLeft:8 }}>{BUDGET_MAP[budget]}</span>}
                       </p>
                     )}
-                    {fundingRoles.length > 0 && (
-                      <p style={{ fontSize:13, color:"rgba(26,24,21,0.45)", margin:0 }}>
-                        {fundingRoles.map((r: string) => FUNDING_ROLES_MAP[r] ?? r).join(", ")}
-                      </p>
-                    )}
-                    {stages.length > 0 && (
-                      <p style={{ fontSize:12, color:"rgba(26,24,21,0.35)", margin:0 }}>
-                        {stages.map((s: string) => STAGES_MAP[s] ?? s).join(", ")}
-                      </p>
-                    )}
+                    {fundingRoles.length > 0 && <p style={{ fontSize:13, color:"rgba(26,24,21,0.45)", margin:0 }}>{fundingRoles.map((r: string) => FUNDING_ROLES_MAP[r] ?? r).join(", ")}</p>}
+                    {stages.length > 0 && <p style={{ fontSize:12, color:"rgba(26,24,21,0.35)", margin:0 }}>{stages.map((s: string) => STAGES_MAP[s] ?? s).join(", ")}</p>}
                   </div>
                 },
-                uniqueMarkets.length > 0 && {
-                  label:"Markets",
-                  node:<p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{uniqueMarkets.join(" · ")}</p>
+                uniqueMarkets.length > 0 && { label:"Markets", node:
+                  <p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{uniqueMarkets.join(" · ")}</p>
                 },
-                festivals.length > 0 && {
-                  label:"Festival Pedigree",
-                  node:<p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{festivals.join(", ")}</p>
+                festivals.length > 0 && { label:"Festival Pedigree", node:
+                  <p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{festivals.join(", ")}</p>
                 },
-                languages.length > 0 && {
-                  label:"Languages",
-                  node:<p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{languages.join(", ")}</p>
+                languages.length > 0 && { label:"Languages", node:
+                  <p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{languages.join(", ")}</p>
                 },
               ] as ({ label: string; node: React.ReactNode } | false)[])
                 .filter(Boolean)
-                .map((sec, i, arr) => {
+                .map((sec) => {
                   const s = sec as { label: string; node: React.ReactNode };
                   return (
-                    <div key={s.label} style={{ paddingBottom:36, borderBottom: i < arr.length - 1 ? "1px solid rgba(26,24,21,0.06)" : "none", marginBottom: i < arr.length - 1 ? 36 : 0 }}>
-                      <p style={{ fontSize:9, letterSpacing:".28em", textTransform:"uppercase" as const, fontWeight:600, color:"rgba(26,24,21,0.26)", margin:"0 0 14px" }}>
+                    <div key={s.label} style={{ background:"#fff", borderRadius:14, border:"1px solid rgba(26,24,21,0.07)", padding:"24px 28px" }}>
+                      <p style={{ fontSize:9, letterSpacing:".28em", textTransform:"uppercase" as const, fontWeight:600, color:"rgba(26,24,21,0.26)", margin:"0 0 12px" }}>
                         {s.label}
                       </p>
                       {s.node}
@@ -408,9 +375,7 @@ export default async function PublicProfilePage({
               }
             </div>
 
-            {/* ── Footer ── */}
-            <div style={{ height:1, background:"rgba(26,24,21,0.06)", margin:"64px 0 40px" }} />
-            <p style={{ fontSize:9, letterSpacing:".28em", textTransform:"uppercase", color:"rgba(26,24,21,0.18)", fontWeight:600, margin:0 }}>
+            <p style={{ fontSize:9, letterSpacing:".28em", textTransform:"uppercase", color:"rgba(26,24,21,0.18)", fontWeight:600, margin:"56px 0 0" }}>
               Pitch.Fylym
             </p>
           </div>
