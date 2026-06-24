@@ -33,7 +33,7 @@ export default function SaveToPipelineButton({ projectId }: { projectId: string 
   if (stage === "done") {
     return (
       <Link
-        href="/producer/pipeline"
+        href="/producerstudio/pipeline"
         className="block text-center text-[12px] text-gold hover:underline py-1.5"
       >
         Open in Pipeline →

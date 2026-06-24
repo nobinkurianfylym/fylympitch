@@ -90,7 +90,7 @@ export default function ProducerOnboardingPage() {
 
   // Navigate on success
   useEffect(() => {
-    if (state?.ok) router.push("/producer");
+    if (state?.ok) router.push("/producerstudio");
   }, [state, router]);
 
   function toggle<T>(arr: T[], val: T): T[] {

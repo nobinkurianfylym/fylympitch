@@ -24,7 +24,7 @@ export async function markAllRead() {
     .eq("user_id", user.id)
     .eq("read", false);
   revalidatePath("/dashboard/notifications");
-  revalidatePath("/producer/notifications");
+  revalidatePath("/producerstudio/notifications");
 }
 
 export async function deleteNotification(formData: FormData) {
@@ -39,7 +39,7 @@ export async function deleteNotification(formData: FormData) {
     .eq("id", id)
     .eq("user_id", user.id);
   revalidatePath("/dashboard/notifications");
-  revalidatePath("/producer/notifications");
+  revalidatePath("/producerstudio/notifications");
 }
 
 export async function deleteAllNotifications() {
@@ -51,5 +51,5 @@ export async function deleteAllNotifications() {
     .delete()
     .eq("user_id", user.id);
   revalidatePath("/dashboard/notifications");
-  revalidatePath("/producer/notifications");
+  revalidatePath("/producerstudio/notifications");
 }

@@ -41,7 +41,7 @@ const ACCOUNTS = [
     role:        "Producer",
     email:       "producer@gmail.com",
     password:    "Fylympitch@dev1",
-    redirect:    "/producer",
+    redirect:    "/producerstudio",
     description: "Discover projects, manage pipeline, message filmmakers.",
     capabilities: ["Discover projects", "Pipeline management", "Message filmmakers", "Producer Studio"],
     accent:      "#3B6CB7",      // blue

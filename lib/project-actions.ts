@@ -44,7 +44,7 @@ export async function respondToOffer(formData: FormData) {
     kind: "offer_update",
     title: `Your offer was ${decision}`,
     body: null,
-    link: "/producer/projects",
+    link: "/producerstudio/projects",
   });
   revalidatePath("/dashboard");
 }

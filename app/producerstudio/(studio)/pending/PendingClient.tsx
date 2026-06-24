@@ -38,7 +38,7 @@ export default function PendingClient({
           if (payload.new?.approval_status === "approved") {
             setJustApproved(true);
             // Small delay so the producer sees the success state before redirect
-            setTimeout(() => router.push("/producer"), 1500);
+            setTimeout(() => router.push("/producerstudio"), 1500);
           }
         }
       )
@@ -56,7 +56,7 @@ export default function PendingClient({
       .eq("id", userId)
       .single();
     if (data?.approval_status === "approved") {
-      router.push("/producer");
+      router.push("/producerstudio");
     } else {
       setChecking(false);
     }

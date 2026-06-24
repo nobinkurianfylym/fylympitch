@@ -28,17 +28,17 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
   const role = (profile as any).role ?? "filmmaker";
   if (role !== "producer" && role !== "admin") redirect("/dashboard");
 
-  if (!producerProfile) redirect("/producer/onboarding");
+  if (!producerProfile) redirect("/producerstudio/onboarding");
 
   const nav = [
     { href: "https://pitch.fylym.com/", label: "Home" },
-    { href: "/producer",               label: "Discover" },
-    { href: "/producer/pipeline",      label: "Pipeline" },
-    { href: "/producer/projects",      label: "All Projects" },
-    { href: "/producer/meetings",      label: "Meetings & Notes" },
-    { href: "/producer/messages",      label: totalMsgUnread > 0 ? `Messages (${totalMsgUnread})` : "Messages" },
-    { href: "/producer/notifications", label: (unreadNotif ?? 0) > 0 ? `Notifications (${unreadNotif})` : "Notifications" },
-    { href: "/producer/profile",       label: "My Profile" },
+    { href: "/producerstudio",               label: "Discover" },
+    { href: "/producerstudio/pipeline",      label: "Pipeline" },
+    { href: "/producerstudio/projects",      label: "All Projects" },
+    { href: "/producerstudio/meetings",      label: "Meetings & Notes" },
+    { href: "/producerstudio/messages",      label: totalMsgUnread > 0 ? `Messages (${totalMsgUnread})` : "Messages" },
+    { href: "/producerstudio/notifications", label: (unreadNotif ?? 0) > 0 ? `Notifications (${unreadNotif})` : "Notifications" },
+    { href: "/producerstudio/profile",       label: "My Profile" },
   ];
 
   return (
@@ -53,9 +53,9 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
           {nav.map((n) => (
             <Link key={n.href} href={n.href}
               className={`hover:text-ink transition-colors ${
-                n.href === "/producer/notifications" && (unreadNotif ?? 0) > 0
+                n.href === "/producerstudio/notifications" && (unreadNotif ?? 0) > 0
                   ? "text-gold hover:text-gold/80"
-                  : n.href === "/producer/messages" && totalMsgUnread > 0
+                  : n.href === "/producerstudio/messages" && totalMsgUnread > 0
                   ? "text-gold hover:text-gold/80"
                   : "text-ash"
               }`}>
@@ -66,7 +66,7 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
 
         <div className="md:mt-auto md:pt-12 ml-auto md:ml-0 flex items-center gap-3">
           {/* Avatar circle */}
-          <Link href="/producer/profile" className="shrink-0">
+          <Link href="/producerstudio/profile" className="shrink-0">
             <div className="w-8 h-8 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center hover:border-gold transition-colors">
               {(profile as any)?.avatar_url ? (
                 <img src={(profile as any).avatar_url} alt={(profile as any).full_name ?? ""} className="w-full h-full object-cover" />

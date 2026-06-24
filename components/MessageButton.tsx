@@ -13,7 +13,7 @@ interface Props {
   filmakerId: string;
   label?:     string;
   className?: string;
-  /** Override redirect target (defaults to /producer/messages for producers) */
+  /** Override redirect target (defaults to /producerstudio/messages for producers) */
   inboxPath?: string;
 }
 
@@ -23,7 +23,7 @@ export default function MessageButton({
   filmakerId,
   label     = "Message filmmaker regarding this project",
   className,
-  inboxPath = "/producer/messages",
+  inboxPath = "/producerstudio/messages",
 }: Props) {
   const router  = useRouter();
   const [loading, setLoading] = useState(false);

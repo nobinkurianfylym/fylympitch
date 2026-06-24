@@ -65,8 +65,8 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   const producerProfile = producerResult.data;
   const isProducer      = !!producerProfile;
   const isOwnProject    = !!user && user.id === p.owner_id;
-  const dashboardHref   = (meResult.data as any)?.role === "producer" ? "/producer" : "/dashboard";
-  const dashboardLabel  = dashboardHref === "/producer" ? "Producer Studio" : "Dashboard";
+  const dashboardHref   = (meResult.data as any)?.role === "producer" ? "/producerstudio" : "/dashboard";
+  const dashboardLabel  = dashboardHref === "/producerstudio" ? "Producer Studio" : "Dashboard";
 
   const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -257,7 +257,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
                   <p className="mt-1 text-[13px] text-ash">Message the filmmaker or add it to your pipeline.</p>
                 </div>
                 <div className="flex gap-3 flex-wrap shrink-0">
-                  <Link href="/producer/messages" className="btn-ghost whitespace-nowrap">
+                  <Link href="/producerstudio/messages" className="btn-ghost whitespace-nowrap">
                     Message filmmaker
                   </Link>
                   <form action={async (fd: FormData) => {

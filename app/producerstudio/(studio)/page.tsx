@@ -62,7 +62,7 @@ export default async function ProducerDiscoverPage() {
     .eq("user_id", user.id)
     .single();
 
-  if (!producerProfile) redirect("/producer/onboarding");
+  if (!producerProfile) redirect("/producerstudio/onboarding");
 
   const [{ data: projects }, { data: pipelineRows }, { data: passedRows }, { data: loves }] = await Promise.all([
     supabase
@@ -144,7 +144,7 @@ export default async function ProducerDiscoverPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Link href="/producer/pipeline" className="btn-ghost relative">
+          <Link href="/producerstudio/pipeline" className="btn-ghost relative">
             Pipeline
             {pipelineCount > 0 && (
               <span className="ml-2 bg-gold text-white text-[10px] px-2 py-0.5 rounded-full">
@@ -152,7 +152,7 @@ export default async function ProducerDiscoverPage() {
               </span>
             )}
           </Link>
-          <Link href="/producer/projects" className="btn-gold">Browse all</Link>
+          <Link href="/producerstudio/projects" className="btn-gold">Browse all</Link>
         </div>
       </div>
 
@@ -190,7 +190,7 @@ export default async function ProducerDiscoverPage() {
                   actions={
                     <div className="flex flex-col gap-1.5 w-full">
                       {pillCls && pillLbl ? (
-                        <Link href="/producer/pipeline" className={`block text-center text-[12px] ${pillCls} rounded-full px-3 py-1.5`}>{pillLbl}</Link>
+                        <Link href="/producerstudio/pipeline" className={`block text-center text-[12px] ${pillCls} rounded-full px-3 py-1.5`}>{pillLbl}</Link>
                       ) : (
                         <SaveToPipelineButton projectId={p.id} />
                       )}
@@ -214,15 +214,15 @@ export default async function ProducerDiscoverPage() {
                 No new projects right now. Check back as filmmakers submit new work — or revisit your passed projects.
               </p>
               <div className="flex items-center justify-center gap-3">
-                <Link href="/producer/projects?filter=passed" className="btn-ghost">View passed projects</Link>
-                <Link href="/producer/projects" className="btn-gold">Browse all</Link>
+                <Link href="/producerstudio/projects?filter=passed" className="btn-ghost">View passed projects</Link>
+                <Link href="/producerstudio/projects" className="btn-gold">Browse all</Link>
               </div>
             </>
           ) : (
             <>
               <p className="font-display text-[22px] mb-3">No public projects yet</p>
               <p className="text-ash text-[15px] mb-6">Check back soon as filmmakers submit their work.</p>
-              <Link href="/producer/profile" className="btn-ghost">Update taste profile</Link>
+              <Link href="/producerstudio/profile" className="btn-ghost">Update taste profile</Link>
             </>
           )}
         </div>
@@ -241,7 +241,7 @@ export default async function ProducerDiscoverPage() {
                 variant="compact-card"
                 project={{ ...p, filmmaker }}
                 supabaseUrl={supabaseUrl}
-                href={`/producer/projects/${p.id}`}
+                href={`/producerstudio/projects/${p.id}`}
                 actions={
                   <div className="space-y-2.5">
 
@@ -286,7 +286,7 @@ export default async function ProducerDiscoverPage() {
                     {/* Pipeline action */}
                     {crm ? (
                       <Link
-                        href="/producer/pipeline"
+                        href="/producerstudio/pipeline"
                         className="block text-center text-[12px] text-gold hover:underline py-1.5"
                       >
                         Open in Pipeline →
@@ -303,11 +303,11 @@ export default async function ProducerDiscoverPage() {
       ) : null}
       {/* Footer links */}
       <div className="mt-10 flex items-center justify-between">
-        <Link href="/producer/projects"
+        <Link href="/producerstudio/projects"
           className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors">
           Browse all projects →
         </Link>
-        <Link href="/producer/profile"
+        <Link href="/producerstudio/profile"
           className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors">
           Update taste profile
         </Link>

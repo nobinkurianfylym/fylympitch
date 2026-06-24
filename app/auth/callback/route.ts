@@ -50,7 +50,7 @@ export async function GET(request: Request) {
   const isNewUser = (Date.now() - new Date(data.user.created_at).getTime()) < 120_000;
 
   // ── If caller specified a deep link and it's a returning user, honour it
-  const defaultDests = ["/dashboard", "/producer", "/admin", "/"];
+  const defaultDests = ["/dashboard", "/producerstudio", "/admin", "/"];
   const hasDeepLink  = next && !defaultDests.includes(next) && !isNewUser;
   if (hasDeepLink) return NextResponse.redirect(`${origin}${next}`);
 
@@ -58,9 +58,9 @@ export async function GET(request: Request) {
   if (role === "admin")    return NextResponse.redirect(`${origin}/admin`);
 
   if (role === "producer") {
-    if (isNewUser)                    return NextResponse.redirect(`${origin}/producer/pending`);
-    if (approval === "approved")      return NextResponse.redirect(`${origin}/producer`);
-    return NextResponse.redirect(`${origin}/producer/pending`);
+    if (isNewUser)                    return NextResponse.redirect(`${origin}/producerstudio/pending`);
+    if (approval === "approved")      return NextResponse.redirect(`${origin}/producerstudio`);
+    return NextResponse.redirect(`${origin}/producerstudio/pending`);
   }
 
   // filmmaker (default)

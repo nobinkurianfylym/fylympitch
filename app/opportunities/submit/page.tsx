@@ -16,7 +16,7 @@ export default async function SubmitOpportunityPage() {
   let dashboardHref = "/dashboard";
   if (user) {
     const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-    if ((me as any)?.role === "producer") dashboardHref = "/producer";
+    if ((me as any)?.role === "producer") dashboardHref = "/producerstudio";
   }
 
   return (

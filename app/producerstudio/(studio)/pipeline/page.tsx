@@ -62,7 +62,7 @@ export default async function ProducerPipelinePage() {
           <p className="eyebrow mb-2">PITCH.FYLYM Engine · Producer CRM</p>
           <h1 className="font-display text-[32px]">Pipeline</h1>
         </div>
-        <Link href="/producer/projects" className="btn-gold">
+        <Link href="/producerstudio/projects" className="btn-gold">
           Browse all projects
         </Link>
       </div>
@@ -71,7 +71,7 @@ export default async function ProducerPipelinePage() {
         <div className="card py-16 text-center">
           <p className="font-display text-[22px] mb-3">Your pipeline is empty</p>
           <p className="text-ash text-[15px] mb-6">Browse projects and save the ones you're interested in.</p>
-          <Link href="/producer/projects" className="btn-gold">Browse all projects</Link>
+          <Link href="/producerstudio/projects" className="btn-gold">Browse all projects</Link>
         </div>
       ) : (
         /* Kanban board */
@@ -106,7 +106,7 @@ export default async function ProducerPipelinePage() {
                         ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${p.poster_path}`
                         : null;
                       return (
-                        <Link key={row.id} href={`/producer/projects/${p.id}`}
+                        <Link key={row.id} href={`/producerstudio/projects/${p.id}`}
                           className="card p-4 hover:border-gold transition-colors block">
                           {thumb && (
                             <img src={thumb} alt={p.title} className="w-full rounded-card mb-3 object-cover" style={{ aspectRatio: "16/9" }} />
@@ -178,7 +178,7 @@ export default async function ProducerPipelinePage() {
 
       {/* Passed projects link */}
       <div className="mt-8 text-center">
-        <Link href="/producer/projects?filter=passed" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink">
+        <Link href="/producerstudio/projects?filter=passed" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink">
           View passed projects
         </Link>
       </div>

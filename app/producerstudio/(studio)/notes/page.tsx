@@ -1,3 +1,3 @@
 import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
-export default function NotesPage() { redirect("/producer/meetings"); }
+export default function NotesPage() { redirect("/producerstudio/meetings"); }

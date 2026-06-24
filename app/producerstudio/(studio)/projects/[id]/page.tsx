@@ -55,7 +55,7 @@ export default async function ProducerProjectDetailPage({
 
   const { data: profile } = await supabase
     .from("profiles").select("approval_status").eq("id", user.id).single();
-  if (profile?.approval_status !== "approved") redirect("/producer/pending");
+  if (profile?.approval_status !== "approved") redirect("/producerstudio/pending");
 
   const { data: project } = await supabase
     .from("projects")
@@ -184,7 +184,7 @@ export default async function ProducerProjectDetailPage({
           minWidth:   0,
           overflow:   "hidden",
         }}>
-          <Link href="/producer/projects" style={{
+          <Link href="/producerstudio/projects" style={{
             fontSize:      11,
             letterSpacing: "0.14em",
             textTransform: "uppercase",
@@ -635,7 +635,7 @@ export default async function ProducerProjectDetailPage({
                   return (
                     <Link
                       key={rel.id}
-                      href={`/producer/projects/${rel.id}`}
+                      href={`/producerstudio/projects/${rel.id}`}
                       className="group block rounded-[10px] overflow-hidden border border-line bg-white/80 hover:border-gold/40 hover:shadow-sm transition-all no-underline"
                     >
                       {/* Poster */}

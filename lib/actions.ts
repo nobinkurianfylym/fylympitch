@@ -355,7 +355,7 @@ export async function respondToOffer(formData: FormData) {
     kind: "offer_update",
     title: `Your offer was ${decision}`,
     body: null,
-    link: "/producer/projects",
+    link: "/producerstudio/projects",
   });
   revalidatePath("/dashboard");
 }
@@ -436,11 +436,11 @@ export async function adminSetApproval(formData: FormData) {
     body: status === "approved"
       ? "You can now access the Producer Studio, browse all projects and send offers."
       : "Contact support if you believe this was a mistake.",
-    link: status === "approved" ? "/producer" : "/",
+    link: status === "approved" ? "/producerstudio" : "/",
   });
   revalidatePath("/admin/users");
   revalidatePath("/admin/producers");
-  revalidatePath("/producer/pending");  // bust pending page cache
+  revalidatePath("/producerstudio/pending");  // bust pending page cache
 }
 
 export async function adminToggleOpportunity(formData: FormData) {
@@ -546,7 +546,7 @@ export async function adminVerifyProducer(formData: FormData) {
     body: verify
       ? "You now have verified producer access, including visibility of private projects."
       : "Your verified producer status has been removed by an administrator.",
-    link: "/producer",
+    link: "/producerstudio",
   });
 
   revalidatePath("/admin/producers");
@@ -764,11 +764,11 @@ export async function completeOnboarding(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
-  revalidatePath("/producer");
+  revalidatePath("/producerstudio");
 
   // Route to the correct workspace
   if (role === "producer") {
-    redirect("/producer/pending");
+    redirect("/producerstudio/pending");
   }
   redirect("/dashboard");
 }
@@ -791,7 +791,7 @@ export async function saveProducerNotes(projectId: string, notes: string): Promi
       { onConflict: "producer_id,project_id", ignoreDuplicates: false }
     );
 
-    revalidatePath(`/producer/projects/${projectId}`);
+    revalidatePath(`/producerstudio/projects/${projectId}`);
     return {};
   } catch (e) {
     return { error: String(e) };
@@ -831,8 +831,8 @@ export async function upsertProducerProject(formData: FormData) {
   );
   // Notify filmmaker that a producer is interested
   await supabase.rpc("notify_producer_interest", { p_project_id: project_id });
-  revalidatePath("/producer");
-  revalidatePath(`/producer/projects/${project_id}`);
+  revalidatePath("/producerstudio");
+  revalidatePath(`/producerstudio/projects/${project_id}`);
 }
 
 export async function requestMeeting(formData: FormData) {
@@ -851,8 +851,8 @@ export async function requestMeeting(formData: FormData) {
       { onConflict: "producer_id,project_id" }
     );
   }
-  revalidatePath("/producer/meetings");
-  revalidatePath(`/producer/projects/${project_id}`);
+  revalidatePath("/producerstudio/meetings");
+  revalidatePath(`/producerstudio/projects/${project_id}`);
 }
 
 export async function updateMeetingStatus(formData: FormData) {
@@ -867,7 +867,7 @@ export async function updateMeetingStatus(formData: FormData) {
     .update({ status, meeting_notes, updated_at: new Date().toISOString() })
     .eq("id", meeting_id)
     .or(`producer_id.eq.${user.id},filmmaker_id.eq.${user.id}`);
-  revalidatePath("/producer/meetings");
+  revalidatePath("/producerstudio/meetings");
 }
 
 export async function signOut() {

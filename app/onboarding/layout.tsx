@@ -17,8 +17,8 @@ export default async function OnboardingLayout({ children }: { children: React.R
   // Already completed onboarding
   if (profile?.profile_completed) {
     if (profile.role === "producer") {
-      if (profile.approval_status === "approved") redirect("/producer");
-      redirect("/producer/pending");
+      if (profile.approval_status === "approved") redirect("/producerstudio");
+      redirect("/producerstudio/pending");
     }
     redirect("/dashboard");
   }

@@ -193,7 +193,7 @@ export async function sendProducerApprovedEmail(
       `).join("")}
     </table>
 
-    ${goldButton("Enter Producer Studio", `${SITE_URL}/producer`)}
+    ${goldButton("Enter Producer Studio", `${SITE_URL}/producerstudio`)}
 
     ${divider()}
 
@@ -306,7 +306,7 @@ export async function sendIntroductionRequest({
       Log in to PITCH.FYLYM to view the full project, review the filmmaker's pitch, and respond.
     </p>
 
-    <a href="${siteUrl}/producer/projects"
+    <a href="${siteUrl}/producerstudio/projects"
       style="display:inline-block;background:#BF9953;color:#ffffff;font-size:13px;
              letter-spacing:0.16em;text-transform:uppercase;text-decoration:none;
              padding:14px 28px;border-radius:8px;">

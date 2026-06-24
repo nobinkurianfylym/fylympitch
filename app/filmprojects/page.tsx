@@ -23,9 +23,9 @@ export default async function ProjectsPage({
   let dashboardHref = "/dashboard";
   if (user) {
     const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-    if ((me as any)?.role === "producer") dashboardHref = "/producer";
+    if ((me as any)?.role === "producer") dashboardHref = "/producerstudio";
   }
-  const dashboardLabel = dashboardHref === "/producer" ? "Producer Studio" : "Dashboard";
+  const dashboardLabel = dashboardHref === "/producerstudio" ? "Producer Studio" : "Dashboard";
 
   let query = supabase
     .from("projects")

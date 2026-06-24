@@ -31,7 +31,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const role = profile?.role ?? "filmmaker";
 
   // Producers have their own studio — redirect them away from filmmaker dashboard
-  if (role === "producer") redirect("/producer");
+  if (role === "producer") redirect("/producerstudio");
 
   const isIndustry = role === "investor" || role === "organization";
 
@@ -44,7 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     { href: "/dashboard/projects",      label: "My Projects" },
     { href: "/dashboard/opportunities",label: "Opportunities" },
     { href: "/dashboard/applications", label: "Applications" },
-    ...(isIndustry ? [{ href: "/producer", label: "Producer Studio" }] : []),
+    ...(isIndustry ? [{ href: "/producerstudio", label: "Producer Studio" }] : []),
     { href: "/dashboard/messages",       label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}` },
     { href: "/dashboard/notifications",  label: `Notifications${(unread ?? 0) > 0 ? ` (${unread})` : ""}` },
     { href: "/dashboard/profile",      label: "Profile & Credits" },
@@ -71,7 +71,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           { href: "/dashboard/opportunities", label: "Opportunities" },
           { href: "/dashboard/applications",  label: "Applications" },
           { href: "/dashboard/saved",         label: "Saved" },
-          ...(isIndustry ? [{ href: "/producer", label: "Producer Studio", gold: true }] : []),
+          ...(isIndustry ? [{ href: "/producerstudio", label: "Producer Studio", gold: true }] : []),
           { href: "/dashboard/messages",      label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}`, gold: totalMsgUnread > 0 },
           { href: "/dashboard/notifications", label: `Notifications${(unread ?? 0) > 0 ? ` (${unread})` : ""}`, gold: (unread ?? 0) > 0 },
           { href: "/dashboard/profile",       label: "Profile & Credits" },

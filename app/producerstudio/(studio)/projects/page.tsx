@@ -77,7 +77,7 @@ export default async function ProducerProjectsPage({
     : (projects ?? []).filter((p) => crmByProject.get(p.id)?.status !== "passed");
 
   const hasFilters = !!(genre || format || q || country || language);
-  const clearHref  = `/producer/projects${filter ? `?filter=${filter}` : ""}`;
+  const clearHref  = `/producerstudio/projects${filter ? `?filter=${filter}` : ""}`;
 
   return (
     <div className="p-6 md:p-10">
@@ -93,7 +93,7 @@ export default async function ProducerProjectsPage({
               : `${display.length} project${display.length !== 1 ? "s" : ""} — including private submissions not visible to the public.`}
           </p>
         </div>
-        <Link href="/producer" className="btn-ghost">← Discover</Link>
+        <Link href="/producerstudio" className="btn-ghost">← Discover</Link>
       </div>
 
       {/* Filters */}
@@ -138,7 +138,7 @@ export default async function ProducerProjectsPage({
                 financing_secured_usd: (p as any).finance_secured_usd ?? null,
               }}
               supabaseUrl={supabaseUrl}
-              href={`/producer/projects/${p.id}`}
+              href={`/producerstudio/projects/${p.id}`}
               actions={
                 <div className="space-y-2.5">
 
@@ -183,7 +183,7 @@ export default async function ProducerProjectsPage({
                   {/* Pipeline action */}
                   {crm && crm.status !== "passed" ? (
                     <Link
-                      href="/producer/pipeline"
+                      href="/producerstudio/pipeline"
                       className="block text-center text-[12px] text-gold hover:underline py-1.5"
                     >
                       Open in Pipeline →

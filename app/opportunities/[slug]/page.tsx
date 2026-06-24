@@ -73,7 +73,7 @@ export default async function FundDetailPage({ params }: Props) {
   let dashboardHref = "/dashboard";
   if (user) {
     const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-    if ((me as any)?.role === "producer") dashboardHref = "/producer";
+    if ((me as any)?.role === "producer") dashboardHref = "/producerstudio";
   }
 
   const typeLabel  = TYPE_LABEL[opp.opp_type] ?? opp.opp_type;
@@ -197,7 +197,7 @@ export default async function FundDetailPage({ params }: Props) {
           <div className="flex items-center gap-3">
             {user ? (
               <Link href={dashboardHref} className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
-                {dashboardHref === "/producer" ? "Producer Studio" : "Dashboard"}
+                {dashboardHref === "/producerstudio" ? "Producer Studio" : "Dashboard"}
               </Link>
             ) : (
               <Link href="/login" className="btn-outline !px-5 !py-2.5 !text-[11px]">Get started</Link>

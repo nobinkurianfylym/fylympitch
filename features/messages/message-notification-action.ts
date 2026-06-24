@@ -82,7 +82,7 @@ export async function notifyNewMessage({
     const siteUrl        = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pitch.fylym.com";
 
     const conversationUrl = recipientRole === "producer"
-      ? `${siteUrl}/producer/messages?conv=${conversationId}`
+      ? `${siteUrl}/producerstudio/messages?conv=${conversationId}`
       : `${siteUrl}/dashboard/messages?conv=${conversationId}`;
 
     // ── Send ──────────────────────────────────────────────────

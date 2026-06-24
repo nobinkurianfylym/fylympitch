@@ -155,7 +155,7 @@ export default async function PublicProfilePage({
   if (profile.company)   highlights.push({ icon: "◈",  text: profile.company });
 
   const viewerRole   = (me as any)?.role ?? null;
-  const dashboardHref = viewerRole === "producer" ? "/producer" : "/dashboard";
+  const dashboardHref = viewerRole === "producer" ? "/producerstudio" : "/dashboard";
 
 
   // ── Producer profile branch ───────────────────────────────────────────────

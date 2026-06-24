@@ -26,7 +26,7 @@ export async function middleware(request: NextRequest) {
   const isProtected =
     path.startsWith("/dashboard") ||
     path.startsWith("/admin") ||
-    path.startsWith("/producer") ||
+    path.startsWith("/producerstudio") ||
     path.startsWith("/apply-packet");
 
   const isAuthPage = path === "/login" || path === "/signup";
@@ -39,10 +39,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // Logged in but profile not completed → role-aware onboarding
-  // Producers go to /producer/onboarding, filmmakers to /onboarding
+  // Producers go to /producerstudio/onboarding, filmmakers to /onboarding
   if (user && !error && isProtected &&
       !path.startsWith("/onboarding") &&
-      !path.startsWith("/producer/onboarding")) {
+      !path.startsWith("/producerstudio/onboarding")) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("profile_completed, role")
@@ -50,13 +50,13 @@ export async function middleware(request: NextRequest) {
       .single();
     if (profile && profile.profile_completed === false) {
       const url = request.nextUrl.clone();
-      url.pathname = profile.role === "producer" ? "/producer/onboarding" : "/onboarding";
+      url.pathname = profile.role === "producer" ? "/producerstudio/onboarding" : "/onboarding";
       return NextResponse.redirect(url);
     }
   }
 
   // Logged-in user on auth page → send them to their intended destination.
-  // This handles the homepage toggle: /login?next=/producer goes to /producer,
+  // This handles the homepage toggle: /login?next=/producerstudio goes to /producerstudio,
   // plain /login goes to /dashboard.
   if (isAuthPage && user && !error) {
     const rawNext = request.nextUrl.searchParams.get("next") ?? "";
@@ -84,8 +84,8 @@ export const config = {
     "/",
     "/dashboard/:path*",
     "/admin/:path*",
-    "/producer/:path*",
-    "/producer",
+    "/producerstudio/:path*",
+    "/producerstudio",
     "/apply-packet/:path*",
     "/onboarding",
     "/login",

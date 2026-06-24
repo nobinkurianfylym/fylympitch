@@ -17,7 +17,7 @@ export default async function ProducerMessagesPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login?next=/producer/messages");
+  if (!user) redirect("/login?next=/producerstudio/messages");
 
   const { data: rows } = await supabase
     .from("conversations")
@@ -50,7 +50,7 @@ export default async function ProducerMessagesPage({
       currentUserId={user.id}
       initialConversations={conversations}
       initialConversationId={initialConvId ?? null}
-      inboxPath="/producer/messages"
+      inboxPath="/producerstudio/messages"
     />
   );
 }

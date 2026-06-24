@@ -3,9 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-// Minimal layout for /producer/* — just enforces auth.
+// Minimal layout for /producerstudio/* — just enforces auth.
 // The sidebar + producer_profiles gate live in (studio)/layout.tsx.
-// /producer/onboarding is NOT in (studio) so it renders without the gate.
+// /producerstudio/onboarding is NOT in (studio) so it renders without the gate.
 export default async function ProducerRootLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

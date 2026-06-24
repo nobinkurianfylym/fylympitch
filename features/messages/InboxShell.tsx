@@ -18,7 +18,7 @@ interface Props {
   initialConversations: ConversationListItem[];
   /** Conversation ID from URL query param — pre-selects on load. */
   initialConversationId: string | null;
-  /** Path prefix for inbox URL: "/dashboard/messages" or "/producer/messages" */
+  /** Path prefix for inbox URL: "/dashboard/messages" or "/producerstudio/messages" */
   inboxPath: string;
 }
 

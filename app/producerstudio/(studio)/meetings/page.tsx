@@ -56,7 +56,7 @@ export default async function MeetingsNotesPage() {
             <div className="card py-10 text-center">
               <p className="font-display text-[17px] mb-2">No meeting requests yet</p>
               <p className="text-ash text-[13px] mb-5">Find a project and send the filmmaker a meeting request.</p>
-              <Link href="/producer/projects" className="btn-ghost !py-2 text-[12px]">Browse projects</Link>
+              <Link href="/producerstudio/projects" className="btn-ghost !py-2 text-[12px]">Browse projects</Link>
             </div>
           ) : (
             <div className="space-y-4">
@@ -67,7 +67,7 @@ export default async function MeetingsNotesPage() {
                   <div key={m.id} className="card p-5">
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div>
-                        <Link href={`/producer/projects/${project?.id}`} className="font-display text-[16px] hover:text-gold transition-colors">
+                        <Link href={`/producerstudio/projects/${project?.id}`} className="font-display text-[16px] hover:text-gold transition-colors">
                           {project?.title ?? "Unknown project"}
                         </Link>
                         <p className="text-[12px] text-ash mt-0.5">
@@ -132,7 +132,7 @@ export default async function MeetingsNotesPage() {
             <div className="card py-10 text-center">
               <p className="font-display text-[17px] mb-2">No notes yet</p>
               <p className="text-ash text-[13px] mb-5">Open a project and add private notes and ratings.</p>
-              <Link href="/producer/projects" className="btn-ghost !py-2 text-[12px]">Browse projects</Link>
+              <Link href="/producerstudio/projects" className="btn-ghost !py-2 text-[12px]">Browse projects</Link>
             </div>
           ) : (
             <div className="space-y-4">
@@ -142,7 +142,7 @@ export default async function MeetingsNotesPage() {
                   <div key={project?.id} className="card p-5">
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <div>
-                        <Link href={`/producer/projects/${project?.id}`} className="font-display text-[15px] hover:text-gold transition-colors">
+                        <Link href={`/producerstudio/projects/${project?.id}`} className="font-display text-[15px] hover:text-gold transition-colors">
                           {project?.title}
                         </Link>
                         <p className="text-[11px] text-ash mt-0.5">

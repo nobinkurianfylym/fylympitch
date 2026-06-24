@@ -47,9 +47,9 @@ export default function PassAndAdvanceButton({
       // Navigate to next project after brief moment, or back to all projects
       setTimeout(() => {
         if (nextProjectId) {
-          router.push(`/producer/projects/${nextProjectId}`);
+          router.push(`/producerstudio/projects/${nextProjectId}`);
         } else {
-          router.push("/producer/projects");
+          router.push("/producerstudio/projects");
         }
       }, 600);
     });

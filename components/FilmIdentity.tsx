@@ -61,7 +61,7 @@ export interface FilmIdentityProps {
   matchScore?: number;
   /** Slot for action buttons — caller provides the right buttons for context */
   actions?: ReactNode;
-  /** href override — defaults to /producer/projects/[id] */
+  /** href override — defaults to /producerstudio/projects/[id] */
   href?: string;
   className?: string;
 }
@@ -359,7 +359,7 @@ function CompactCardVariant({
   actions?: ReactNode;
   href?: string;
 }) {
-  const cardHref = href ?? `/producer/projects/${project.id}`;
+  const cardHref = href ?? `/producerstudio/projects/${project.id}`;
 
   const secured = project.finance_secured_usd;
   const securedPct =
@@ -471,7 +471,7 @@ function TableRowVariant({
   actions?: ReactNode;
   href?: string;
 }) {
-  const rowHref = href ?? `/producer/projects/${project.id}`;
+  const rowHref = href ?? `/producerstudio/projects/${project.id}`;
   const titleDisplay =
     project.title.length > 28
       ? project.title.slice(0, 27) + "…"
@@ -538,7 +538,7 @@ function SearchResultVariant({
   supabaseUrl: string;
   href?: string;
 }) {
-  const resultHref = href ?? `/producer/projects/${project.id}`;
+  const resultHref = href ?? `/producerstudio/projects/${project.id}`;
   const items = buildMetadataItems(project, "short");
   const metaParts = items.map((item) =>
     item.type === "country" ? `${item.flag} ${item.name}` : item.value
@@ -600,7 +600,7 @@ function MessagingPreviewVariant({
   supabaseUrl: string;
   href?: string;
 }) {
-  const previewHref = href ?? `/producer/projects/${project.id}`;
+  const previewHref = href ?? `/producerstudio/projects/${project.id}`;
   const items = buildMetadataItems(project, "mini");
   const meta = items
     .map((item) => (item.type === "country" ? item.name : item.value))
@@ -654,7 +654,7 @@ function NotificationVariant({
   body?: string;
   href?: string;
 }) {
-  const notifHref = href ?? `/producer/projects/${project.id}`;
+  const notifHref = href ?? `/producerstudio/projects/${project.id}`;
 
   return (
     <div className="text-[13px] text-ink leading-snug">

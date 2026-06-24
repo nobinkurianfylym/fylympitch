@@ -54,7 +54,7 @@ export default function HeroToggle({
   // Logged-in CTAs
   const loggedInPrimary =
     accountRole === "PRODUCER" || (accountRole === "ADMIN" && role === "producer")
-      ? { label: "Go to Producer Studio", href: "/producer" }
+      ? { label: "Go to Producer Studio", href: "/producerstudio" }
       : { label: "Go to Dashboard",       href: "/dashboard" };
 
   const primary   = isLoggedIn ? loggedInPrimary : c.primary;

@@ -115,7 +115,7 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
 
           {(accountRole === "PRODUCER" || accountRole === "ADMIN") && (
             <Link
-              href="/producer"
+              href="/producerstudio"
               onClick={() => setOpen(false)}
               className="w-full flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.1em] uppercase text-ash hover:text-ink transition-colors border-b border-line"
             >
@@ -124,7 +124,7 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
           )}
 
           <Link
-            href={accountRole === "PRODUCER" ? "/producer/profile" : "/dashboard/profile"}
+            href={accountRole === "PRODUCER" ? "/producerstudio/profile" : "/dashboard/profile"}
             onClick={() => setOpen(false)}
             className="w-full flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.1em] uppercase text-ash hover:text-ink transition-colors border-b border-line"
           >
