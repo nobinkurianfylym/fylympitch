@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import ProfileForm from "@/components/ProfileForm";
-import UsernameForm from "@/components/UsernameForm";
 import ExpandableCredit from "@/components/ExpandableCredit";
 import AddCreditForm from "@/components/AddCreditForm";
 import DeleteAccountModal from "@/components/DeleteAccountModal";
@@ -102,13 +101,6 @@ export default async function ProfilePage({
           {activeTab === "identity" && (
             <div className="p-6 space-y-5">
               <ProfileForm profile={profile} />
-              <div>
-                <p className="field-label mb-1">Profile URL</p>
-                <p className="text-[12px] text-ash mb-2.5">
-                  pitch.fylym.com/u/<span className="text-ink font-medium">{profile.username || "yourhandle"}</span>
-                </p>
-                <UsernameForm profile={profile} />
-              </div>
             </div>
           )}
 

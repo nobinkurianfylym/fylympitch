@@ -4,6 +4,7 @@ import { useState } from "react";
 import { updateProfile } from "@/lib/actions";
 import type { Profile } from "@/types";
 import AvatarUpload from "@/components/AvatarUpload";
+import UsernameForm from "@/components/UsernameForm";
 
 export default function ProfileForm({ profile }: { profile: Profile }) {
   const [saved, setSaved]         = useState(false);
@@ -34,6 +35,8 @@ export default function ProfileForm({ profile }: { profile: Profile }) {
         <label className="field-label" htmlFor="full_name">Full name</label>
         <input id="full_name" name="full_name" className="field" defaultValue={profile.full_name} required />
       </div>
+
+      <UsernameForm profile={profile} />
 
       <div className="grid sm:grid-cols-2 gap-5">
         <div>
