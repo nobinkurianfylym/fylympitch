@@ -291,9 +291,6 @@ export default async function PublicProfilePage({
                   {profile.imdb_url && <a href={profile.imdb_url} target="_blank" rel="noopener noreferrer" className="lnk-gd" style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:700, color:"#BF9953", textDecoration:"none" }}>IMDb ↗</a>}
                   {profile.website  && <a href={profile.website}  target="_blank" rel="noopener noreferrer" className="lnk-gd" style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.4)", textDecoration:"none" }}>Website ↗</a>}
                   {linkedin         && <a href={linkedin}          target="_blank" rel="noopener noreferrer" className="lnk-gd" style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.4)", textDecoration:"none" }}>LinkedIn ↗</a>}
-                  <span style={{ marginLeft:"auto" }}>
-                    <ProfileShareButton username={profile.username} name={profile.full_name} />
-                  </span>
                 </div>
 
                 {profile.bio && (
@@ -374,9 +371,12 @@ export default async function PublicProfilePage({
               }
             </div>
 
-            <p style={{ fontSize:9, letterSpacing:".28em", textTransform:"uppercase", color:"rgba(26,24,21,0.18)", fontWeight:600, margin:"56px 0 0" }}>
-              Pitch.Fylym
-            </p>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", margin:"56px 0 0" }}>
+              <p style={{ fontSize:9, letterSpacing:".28em", textTransform:"uppercase", color:"rgba(26,24,21,0.18)", fontWeight:600, margin:0 }}>
+                Pitch.Fylym
+              </p>
+              <ProfileShareButton username={profile.username} name={profile.full_name} />
+            </div>
           </div>
         </div>
       </>
