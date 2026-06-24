@@ -72,7 +72,7 @@ export default function ProducerProjectTicker({
           </span>
         </div>
         <Link
-          href="/projects"
+          href="/filmprojects"
           className="text-[11px] tracking-[0.14em] uppercase text-gold hover:text-ink transition-colors"
         >
           Browse all →

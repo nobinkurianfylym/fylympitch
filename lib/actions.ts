@@ -235,7 +235,7 @@ export async function createProject(formData: FormData) {
   // live "Analysing…" state. This keeps form submit instant (<1s).
 
   revalidatePath("/dashboard");
-  revalidatePath("/projects");
+  revalidatePath("/filmprojects");
   revalidatePath("/dashboard/projects");
   if (formData.get("is_public") !== "false") {
     revalidatePath(`/projects/${slug}`);
@@ -456,7 +456,7 @@ export async function adminToggleOpportunity(formData: FormData) {
     .from("opportunities").select("slug").eq("id", id).single();
   if ((toggled as any)?.slug) revalidatePath(`/funds/${(toggled as any).slug}`);
   revalidatePath("/admin/opportunities");
-  revalidatePath("/funds");
+  revalidatePath("/opportunities");
   revalidatePath("/sitemap.xml");
 }
 
@@ -550,7 +550,7 @@ export async function adminVerifyProducer(formData: FormData) {
   });
 
   revalidatePath("/admin/producers");
-  revalidatePath("/funds");
+  revalidatePath("/opportunities");
   revalidatePath("/sitemap.xml");
 }
 
@@ -633,7 +633,7 @@ export async function adminCreateOpportunity(formData: FormData) {
   // Notify all filmmakers about the new fund
   await supabase.rpc("broadcast_new_fund", { p_opp_id: data.id, p_title: title });
   revalidatePath("/admin/opportunities");
-  revalidatePath("/funds");
+  revalidatePath("/opportunities");
   revalidatePath("/sitemap.xml");
   redirect("/admin/opportunities");
 }
@@ -681,7 +681,7 @@ export async function adminUpdateOpportunity(formData: FormData) {
     .from("opportunities").select("slug").eq("id", id).single();
   if ((updatedOpp as any)?.slug) revalidatePath(`/funds/${(updatedOpp as any).slug}`);
   revalidatePath("/admin/opportunities");
-  revalidatePath("/funds");
+  revalidatePath("/opportunities");
   revalidatePath("/sitemap.xml");
 }
 
@@ -1009,7 +1009,7 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
         .update({ is_active: false })
         .eq("producer_user_id", user.id);
     }
-    revalidatePath("/funds");
+    revalidatePath("/opportunities");
     revalidatePath("/sitemap.xml");
   }
 
@@ -1108,7 +1108,7 @@ export async function toggleProjectLove(projectId: string) {
   }
 
   revalidatePath(`/projects/${projectId}`);
-  revalidatePath("/projects");
+  revalidatePath("/filmprojects");
 }
 
 // ---------- FILMMAKER CREDITS ----------
@@ -1242,7 +1242,7 @@ export async function adminApproveOpportunity(formData: FormData) {
     actor_id: user.id, action: "opportunity_approved", target: "opportunity", target_id: id,
   });
   revalidatePath("/admin/opportunities");
-  revalidatePath("/funds");
+  revalidatePath("/opportunities");
 }
 
 export async function adminRejectOpportunity(formData: FormData) {

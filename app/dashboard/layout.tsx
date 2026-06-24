@@ -54,7 +54,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Secondary links — available to all users
   const secondaryNav = [
     { href: "/dashboard/saved", label: "Saved" },
-    { href: "/projects", label: "Film showcase" },
+    { href: "/filmprojects", label: "Film showcase" },
   ];
 
   return (
@@ -79,7 +79,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         ]} />
         <nav className="hidden md:flex md:flex-col md:mt-6 md:space-y-1 text-[11px] tracking-[0.16em] uppercase whitespace-nowrap">
           {[
-            { href: "/projects", label: "Film showcase" },
+            { href: "/filmprojects", label: "Film showcase" },
           ].map((n) => (
             <Link key={n.href} href={n.href} className="text-ash/60 hover:text-ash transition-colors" style={{ padding: "5px 0 5px 14px" }}>
               {n.label}

@@ -97,7 +97,7 @@ export default function PendingClient({
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
-          <Link href="/projects" className="btn-ghost">Browse public projects</Link>
+          <Link href="/filmprojects" className="btn-ghost">Browse public projects</Link>
           <button
             onClick={handleCheck}
             disabled={checking}

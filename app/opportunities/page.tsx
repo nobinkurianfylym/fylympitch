@@ -157,8 +157,8 @@ export default async function FundsPage({
           <Wordmark />
           <nav className="hidden md:flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase font-[400] text-ash">
             <Link href="/#features" className="hover:text-ink transition-colors">Platform</Link>
-            <Link href="/projects"  className="hover:text-ink transition-colors">Film Projects</Link>
-            <Link href="/funds"     className="text-ink">Opportunities</Link>
+            <Link href="/filmprojects"  className="hover:text-ink transition-colors">Film Projects</Link>
+            <Link href="/opportunities"     className="text-ink">Opportunities</Link>
           </nav>
           <div className="flex items-center gap-3">
             {user ? (
@@ -198,7 +198,7 @@ export default async function FundsPage({
             })}
             {/* Search bar — right side */}
             <div className="ml-auto">
-              <SearchInput placeholder="Search funds…" basePath="/funds" />
+              <SearchInput placeholder="Search funds…" basePath="/opportunities" />
             </div>
           </div>
           {q && (
@@ -276,7 +276,7 @@ export default async function FundsPage({
         {/* Submit opportunity — always visible */}
         <div className="mt-12 text-center">
           <Link
-            href="/funds/submit"
+            href="/opportunities/submit"
             className="text-[12px] tracking-[0.16em] uppercase text-ash hover:text-ink transition-colors border-b border-ash/30 hover:border-ink pb-0.5"
           >
             + Submit an opportunity

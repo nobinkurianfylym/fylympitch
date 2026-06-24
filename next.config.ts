@@ -54,7 +54,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/projects/:path*",
+        source: "/filmprojects/:path*",
         headers: [
           {
             key: "Cache-Control",
@@ -63,7 +63,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/projects",
+        source: "/filmprojects",
         headers: [
           {
             key: "Cache-Control",

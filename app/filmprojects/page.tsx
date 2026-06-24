@@ -60,8 +60,8 @@ export default async function ProjectsPage({
           <Wordmark />
           <nav className="hidden md:flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase font-[400] text-ash">
             <Link href="/#features" className="hover:text-ink transition-colors">Platform</Link>
-            <Link href="/projects"  className="text-ink">Film Projects</Link>
-            <Link href="/funds"     className="hover:text-ink transition-colors">Opportunities</Link>
+            <Link href="/filmprojects"  className="text-ink">Film Projects</Link>
+            <Link href="/opportunities"     className="hover:text-ink transition-colors">Opportunities</Link>
           </nav>
           <div className="flex items-center gap-3">
             {user ? (
@@ -103,7 +103,7 @@ export default async function ProjectsPage({
               </Link>
             ))}
             <div className="ml-auto">
-              <SearchInput placeholder="Search projects…" basePath="/projects" />
+              <SearchInput placeholder="Search projects…" basePath="/filmprojects" />
             </div>
           </div>
 

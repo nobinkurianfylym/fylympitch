@@ -78,8 +78,8 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           <Wordmark />
           <nav className="hidden md:flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase font-[400] text-ash">
             <Link href="/#features" className="hover:text-ink transition-colors">Platform</Link>
-            <Link href="/projects" className="text-ink">Film Projects</Link>
-            <Link href="/funds" className="hover:text-ink transition-colors">Opportunities</Link>
+            <Link href="/filmprojects" className="text-ink">Film Projects</Link>
+            <Link href="/opportunities" className="hover:text-ink transition-colors">Opportunities</Link>
           </nav>
           <Link href={dashboardHref} className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">{dashboardLabel}</Link>
         </div>
@@ -87,7 +87,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
 
       <main className="max-w-3xl mx-auto px-6 py-12 pb-24">
         <p className="text-[11px] tracking-[0.16em] uppercase text-ash mb-8">
-          <Link href="/projects" className="hover:text-ink transition-colors">Film Projects</Link>
+          <Link href="/filmprojects" className="hover:text-ink transition-colors">Film Projects</Link>
           <span className="mx-2">›</span>
           <span className="text-ink uppercase" style={{ letterSpacing: "-0.01em" }}>{p.title}</span>
         </p>
@@ -275,7 +275,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           </div>
         )}
 
-        <Link href="/projects" className="mt-10 inline-block text-[12px] tracking-[0.16em] uppercase text-ash hover:text-ink transition-colors">
+        <Link href="/filmprojects" className="mt-10 inline-block text-[12px] tracking-[0.16em] uppercase text-ash hover:text-ink transition-colors">
           ← Back to Projects
         </Link>
       </main>

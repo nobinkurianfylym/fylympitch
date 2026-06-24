@@ -191,8 +191,8 @@ export default async function FundDetailPage({ params }: Props) {
           <Wordmark />
           <nav className="hidden md:flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase font-[400] text-ash">
             <Link href="/#features"  className="hover:text-ink transition-colors">Platform</Link>
-            <Link href="/projects"   className="hover:text-ink transition-colors">Film Projects</Link>
-            <Link href="/funds"      className="text-ink">Opportunities</Link>
+            <Link href="/filmprojects"   className="hover:text-ink transition-colors">Film Projects</Link>
+            <Link href="/opportunities"      className="text-ink">Opportunities</Link>
           </nav>
           <div className="flex items-center gap-3">
             {user ? (
@@ -210,7 +210,7 @@ export default async function FundDetailPage({ params }: Props) {
 
         {/* Breadcrumb */}
         <Link
-          href="/funds"
+          href="/opportunities"
           className="text-[11px] tracking-[0.18em] uppercase text-ash hover:text-ink transition-colors"
         >
           ← All funds
@@ -345,7 +345,7 @@ export default async function FundDetailPage({ params }: Props) {
           <p className="text-[12px] text-ash">
             The intelligence layer for cinema.
           </p>
-          <Link href="/funds" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors">
+          <Link href="/opportunities" className="text-[12px] tracking-[0.14em] uppercase text-ash hover:text-ink transition-colors">
             Browse all funds →
           </Link>
         </div>

@@ -87,7 +87,7 @@ export function SubmitOpportunityForm() {
         <p className="text-[14px] text-ash max-w-sm mx-auto leading-relaxed">
           Your submission is under review. Our team will add it to the database once verified.
         </p>
-        <Link href="/funds" className="mt-8 inline-block text-[12px] tracking-[0.16em] uppercase text-ash hover:text-ink transition-colors">
+        <Link href="/opportunities" className="mt-8 inline-block text-[12px] tracking-[0.16em] uppercase text-ash hover:text-ink transition-colors">
           ← Back to Opportunities
         </Link>
       </div>

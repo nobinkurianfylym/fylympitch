@@ -26,8 +26,8 @@ export default async function SubmitOpportunityPage() {
           <Wordmark />
           <nav className="hidden md:flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase font-[400] text-ash">
             <Link href="/#features"  className="hover:text-ink transition-colors">Platform</Link>
-            <Link href="/projects"   className="hover:text-ink transition-colors">Film Projects</Link>
-            <Link href="/funds"      className="hover:text-ink transition-colors">Opportunities</Link>
+            <Link href="/filmprojects"   className="hover:text-ink transition-colors">Film Projects</Link>
+            <Link href="/opportunities"      className="hover:text-ink transition-colors">Opportunities</Link>
           </nav>
           {user
             ? <Link href={dashboardHref} className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Dashboard</Link>
@@ -37,7 +37,7 @@ export default async function SubmitOpportunityPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-6 py-12 pb-24">
-        <Link href="/funds" className="text-[11px] tracking-[0.16em] uppercase text-ash hover:text-ink transition-colors">
+        <Link href="/opportunities" className="text-[11px] tracking-[0.16em] uppercase text-ash hover:text-ink transition-colors">
           ← Opportunities
         </Link>
 

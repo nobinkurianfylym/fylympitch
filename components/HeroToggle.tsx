@@ -26,7 +26,7 @@ const CONTENT = {
     ),
     body: "One account, two roles. Browse filmmaker projects by genre, stage and territory. Read scripts, send offers, co-produce — no approval needed.",
     primary: { label: "Get started", href: "/signup?role=producer" },
-    secondary: { label: "Browse projects", href: "/projects" },
+    secondary: { label: "Browse projects", href: "/filmprojects" },
   },
 };
 

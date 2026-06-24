@@ -110,7 +110,7 @@ export async function updateProject(formData: FormData) {
   if ((updated as any)?.slug) {
     if ((updated as any)?.is_public) {
       revalidatePath(`/projects/${(updated as any).slug}`);
-      revalidatePath("/projects");
+      revalidatePath("/filmprojects");
       revalidatePath("/sitemap.xml");
     }
   }

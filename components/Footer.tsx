@@ -175,14 +175,14 @@ export function Footer() {
             <div>
               <span className={HD}>Opportunities<span className={LN} style={{background:"linear-gradient(90deg,#FF3B30,#FF9500)"}}/></span>
               <ul className="space-y-3.5">
-                <li><Link href="/projects"                     className={LI}>Film Projects</Link></li>
-                <li><Link href="/funds?type=development"       className={LI}>Grants</Link></li>
-                <li><Link href="/funds?type=development"       className={LI}>Funds</Link></li>
-                <li><Link href="/funds?type=development"       className={LI}>Labs</Link></li>
-                <li><Link href="/funds?type=packaging_markets" className={LI}>Markets</Link></li>
-                <li><Link href="/funds?type=packaging_markets" className={LI}>Co-Productions</Link></li>
-                <li><Link href="/funds?type=tax_incentives"    className={LI}>Tax Incentives</Link></li>
-                <li><Link href="/funds/submit"                 className={LI}>Submit an Opportunity</Link></li>
+                <li><Link href="/filmprojects"                     className={LI}>Film Projects</Link></li>
+                <li><Link href="/opportunities?type=development"       className={LI}>Grants</Link></li>
+                <li><Link href="/opportunities?type=development"       className={LI}>Funds</Link></li>
+                <li><Link href="/opportunities?type=development"       className={LI}>Labs</Link></li>
+                <li><Link href="/opportunities?type=packaging_markets" className={LI}>Markets</Link></li>
+                <li><Link href="/opportunities?type=packaging_markets" className={LI}>Co-Productions</Link></li>
+                <li><Link href="/opportunities?type=tax_incentives"    className={LI}>Tax Incentives</Link></li>
+                <li><Link href="/opportunities/submit"                 className={LI}>Submit an Opportunity</Link></li>
               </ul>
             </div>
             <div>
