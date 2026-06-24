@@ -25,10 +25,25 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
     const r = params.get("role");
     return r === "producer" ? "producer" : "filmmaker";
   });
-  const [email, setEmail] = useState("");
-  const [busy,  setBusy]  = useState(false);
-  const [sent,  setSent]  = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [email, setEmail]             = useState("");
+  const [busy,  setBusy]              = useState(false);
+  const [sent,  setSent]              = useState(false);
+  const [error, setError]             = useState<string | null>(null);
+  const [roleWarning, setRoleWarning] = useState<string | null>(null);
+
+  async function checkEmailRole(val: string) {
+    setRoleWarning(null);
+    if (!val.trim() || !val.includes("@")) return;
+    try {
+      const res  = await fetch(`/api/check-email?email=${encodeURIComponent(val.trim())}`);
+      const data = await res.json();
+      if (data.role && data.role !== role) {
+        const existing = data.role === "producer" ? "Producer" : "Filmmaker";
+        const current  = role  === "producer"     ? "Producer" : "Filmmaker";
+        setRoleWarning(`This email is already registered as a ${existing}. Switch to ${existing} or use a different email.`);
+      }
+    } catch { /* silent */ }
+  }
 
   const rawNext = params.get("next") ?? "/dashboard";
   const next =
@@ -121,7 +136,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
             />
             <button
               type="button"
-              onClick={() => setRole("filmmaker")}
+              onClick={() => { setRole("filmmaker"); setRoleWarning(null); }}
               className={`relative z-10 flex-1 py-3 text-[10px] font-semibold tracking-[0.18em] transition-colors duration-[220ms] ${
                 role === "filmmaker" ? "text-ivory" : "text-ash"
               }`}
@@ -130,7 +145,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
             </button>
             <button
               type="button"
-              onClick={() => setRole("producer")}
+              onClick={() => { setRole("producer"); setRoleWarning(null); }}
               className={`relative z-10 flex-1 py-3 text-[10px] font-semibold tracking-[0.18em] transition-colors duration-[220ms] ${
                 role === "producer" ? "text-ivory" : "text-ash"
               }`}
@@ -138,6 +153,14 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
               PRODUCER
             </button>
           </div>
+
+          {/* Role warning */}
+          {roleWarning && (
+            <div className="mb-4 flex items-start gap-2.5 px-4 py-3 rounded-card border border-amber-200 bg-amber-50">
+              <span className="text-amber-500 text-[14px] shrink-0 mt-px">⚠</span>
+              <p className="text-[12px] text-amber-800 leading-relaxed">{roleWarning}</p>
+            </div>
+          )}
 
           {/* Error */}
           {(authError || error) && (
@@ -171,7 +194,8 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
             <input
               type="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={e => { setEmail(e.target.value); setRoleWarning(null); }}
+              onBlur={e => checkEmailRole(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleMagicLink()}
               placeholder="your@email.com"
               className="flex-1 min-w-0 bg-transparent text-[13px] font-medium text-ink placeholder:text-ash/50 outline-none"
