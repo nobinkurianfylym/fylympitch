@@ -599,91 +599,43 @@ export default async function ProducerProjectDetailPage({
           {relatedProjects.length > 0 && (
             <div style={{ paddingTop: 56, paddingBottom: 48 }}>
               <p style={{
-                fontSize:      9,
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
-                color:         S.ash,
-                fontWeight:    600,
-                marginBottom:  6,
+                fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase",
+                color: S.ash, fontWeight: 600, marginBottom: 20,
               }}>
                 Similar Projects
               </p>
-              <p style={{
-                fontSize:      11,
-                color:         S.ash,
-                opacity:       0.6,
-                marginBottom:  24,
-                letterSpacing: "0.04em",
-              }}>
-                {project.genre}
-              </p>
-              <div>
-                {relatedProjects.map((rel: any, i: number) => {
+              <div className="grid grid-cols-3 gap-3">
+                {relatedProjects.map((rel: any) => {
                   const relFilmmaker = Array.isArray(rel.profiles) ? rel.profiles[0] : rel.profiles;
                   const relDir = rel.director_name ?? relFilmmaker?.full_name ?? null;
-                  const relBudget = formatBudgetDisplay(rel.budget_usd);
                   return (
                     <Link
                       key={rel.id}
                       href={`/producer/projects/${rel.id}`}
-                      style={{
-                        display:       "flex",
-                        alignItems:    "center",
-                        gap:           16,
-                        padding:       "16px 0",
-                        borderBottom:  `1px solid ${S.line}`,
-                        textDecoration:"none",
-                      }}
-                      className="fyp-related-row"
+                      className="group block rounded-[10px] overflow-hidden border border-line bg-white/80 hover:border-gold/40 hover:shadow-sm transition-all no-underline"
                     >
-                      {/* Mini poster */}
-                      <div style={{
-                        width:        44,
-                        height:       66,
-                        flexShrink:   0,
-                        borderRadius: 4,
-                        overflow:     "hidden",
-                        background:   S.mist,
-                      }}>
+                      {/* Poster */}
+                      <div className="aspect-[3/2] overflow-hidden bg-parchment">
                         <ProjectThumbnail
                           posterPath={rel.poster_path}
                           title={rel.title}
                           genre={rel.genre}
                           supabaseUrl={supabaseUrl}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-200"
                         />
                       </div>
                       {/* Info */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{
-                          fontFamily:    "'Playfair Display', Georgia, serif",
-                          fontSize:      15,
-                          fontWeight:    700,
-                          color:         S.ink,
-                          letterSpacing: "-0.01em",
-                          marginBottom:  4,
-                          overflow:      "hidden",
-                          textOverflow:  "ellipsis",
-                          whiteSpace:    "nowrap",
-                        }}>
+                      <div className="p-3">
+                        <p className="font-display text-[13px] font-bold text-ink leading-tight line-clamp-1 mb-1 group-hover:text-gold transition-colors">
                           {rel.title}
                         </p>
                         {relDir && (
-                          <p style={{ fontSize: 11, color: S.ash, marginBottom: 3 }}>
-                            <span style={{ fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase", marginRight: 4 }}>Dir.</span>
-                            {relDir}
-                          </p>
+                          <p className="text-[10px] text-ash line-clamp-1 mb-0.5">{relDir}</p>
                         )}
-                        <p style={{ fontSize: 11, color: S.ash, opacity: 0.75, letterSpacing: "0.03em" }}>
-                          {[rel.genre, relBudget !== "—" ? relBudget : null].filter(Boolean).join("  ·  ")}
-                        </p>
+                        {rel.genre && (
+                          <p className="text-[10px] text-ash/60">{rel.genre}</p>
+                        )}
                       </div>
-                      {/* Chevron */}
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-                        style={{ flexShrink: 0, opacity: 0.22 }}>
-                        <path d="M5 3l4 4-4 4" stroke={S.ink}
-                          strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
                     </Link>
                   );
                 })}
@@ -979,8 +931,6 @@ export default async function ProducerProjectDetailPage({
           border-color: rgba(220,38,38,0.20) !important;
         }
 
-        /* Related row — subtle hover lift */
-        .fyp-related-row:hover { opacity: 0.72; }
 
         /* Sidebar minimal scrollbar */
         .producer-sidebar::-webkit-scrollbar       { width: 3px; }
