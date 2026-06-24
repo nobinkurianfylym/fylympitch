@@ -100,9 +100,9 @@ export default async function ProfilePage({
 
           {/* ── IDENTITY ── */}
           {activeTab === "identity" && (
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-5">
               <ProfileForm profile={profile} />
-              <div className="pt-4 border-t border-line">
+              <div>
                 <p className="field-label mb-1">Profile URL</p>
                 <p className="text-[12px] text-ash mb-2.5">
                   pitch.fylym.com/u/<span className="text-ink font-medium">{profile.username || "yourhandle"}</span>
