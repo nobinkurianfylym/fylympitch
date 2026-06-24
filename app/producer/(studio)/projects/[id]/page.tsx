@@ -234,16 +234,16 @@ export default async function ProducerProjectDetailPage({
       {/* ══ 2. MAIN LAYOUT ══════════════════════════════════════ */}
       <div style={{
         display:             "grid",
-        gridTemplateColumns: "1fr 288px",
+        gridTemplateColumns: "1fr 320px",
         maxWidth:            1240,
         margin:              "0 auto",
         padding:             "0 32px 80px",
-        gap:                 0,
+        gap:                 32,
         alignItems:          "start",
       }} className="producer-detail-grid">
 
         {/* ── LEFT: Main content ─────────────────────────────── */}
-        <div style={{ paddingRight: 48, paddingTop: 40 }}>
+        <div style={{ paddingTop: 40, paddingRight: 0 }}>
 
           {/* ── HERO — poster + title block ──────────────────── */}
           <div style={{
@@ -307,7 +307,6 @@ export default async function ProducerProjectDetailPage({
                 color:         S.ink,
                 lineHeight:    1.06,
                 letterSpacing: "-0.02em",
-                textTransform: "uppercase",
                 margin:        0,
                 marginBottom:  14,
               }}>
@@ -442,7 +441,7 @@ export default async function ProducerProjectDetailPage({
             display:             "grid",
             gridTemplateColumns: `repeat(${metricCols}, 1fr)`,
             borderBottom:        `1px solid ${S.line}`,
-            margin:              "0 -4px",
+            margin:              "0",
           }}>
                 {budget !== "—" && (
                   <div style={{ padding: "22px 16px 20px", borderRight: `1px solid ${S.line}` }}>
@@ -657,7 +656,7 @@ export default async function ProducerProjectDetailPage({
             paddingLeft:   28,
             paddingRight:  6,
             paddingBottom: 32,
-            borderLeft:    `1px solid ${S.line}`,
+            borderLeft:    "none",
           }}
         >
           {/* Section header */}
@@ -767,38 +766,12 @@ export default async function ProducerProjectDetailPage({
           )}
 
           {/* ── 1. SAVED STATUS ─────────────────────────────── */}
-          <div style={{
-            marginBottom: 24,
-            padding:      "12px 14px",
-            background:   pipelineStyle ? pipelineStyle.bg : "rgba(138,133,124,0.06)",
-            borderRadius: 6,
-            border:       `1px solid ${pipelineStyle ? pipelineStyle.bg : "rgba(138,133,124,0.12)"}`,
-          }}>
-            <p style={{
-              fontSize:      9,
-              letterSpacing: "0.16em",
-              textTransform: "uppercase",
-              color:         S.ash,
-              fontWeight:    600,
-              marginBottom:  7,
-            }}>
-              Status
-            </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <span style={{
-                width:      6,
-                height:     6,
-                borderRadius:"50%",
-                background: pipelineStyle ? pipelineStyle.dot : S.ash,
-                display:    "inline-block",
-                flexShrink: 0,
-              }} />
-              <span style={{
-                fontSize:      13,
-                fontWeight:    600,
-                color:         pipelineStyle ? pipelineStyle.color : S.ash,
-                letterSpacing: "0.01em",
-              }}>
+          <div style={{ marginBottom:24, display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ fontSize:9, letterSpacing:"0.18em", textTransform:"uppercase", color:S.ash, fontWeight:600 }}>Status</span>
+            <span style={{ flex:1, height:1, background:S.line }} />
+            <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+              <span style={{ width:6, height:6, borderRadius:"50%", background:pipelineStyle ? pipelineStyle.dot : S.ash, display:"inline-block" }} />
+              <span style={{ fontSize:12, fontWeight:600, color:pipelineStyle ? pipelineStyle.color : S.ash, letterSpacing:"0.01em" }}>
                 {pipelineLabel ?? "Not Saved"}
               </span>
             </div>
@@ -812,9 +785,8 @@ export default async function ProducerProjectDetailPage({
               fontSize:      9,
               letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color:         S.ink,
-              fontWeight:    700,
-              opacity:       0.6,
+              color:         S.ash,
+              fontWeight:    600,
               marginBottom:  14,
             }}>
               Pipeline Stage
@@ -835,9 +807,8 @@ export default async function ProducerProjectDetailPage({
               fontSize:      9,
               letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color:         S.ink,
-              fontWeight:    700,
-              opacity:       0.6,
+              color:         S.ash,
+              fontWeight:    600,
               marginBottom:  14,
             }}>
               Your Rating
@@ -858,9 +829,8 @@ export default async function ProducerProjectDetailPage({
               fontSize:      9,
               letterSpacing: "0.18em",
               textTransform: "uppercase",
-              color:         S.ink,
-              fontWeight:    700,
-              opacity:       0.6,
+              color:         S.ash,
+              fontWeight:    600,
               marginBottom:  14,
             }}>
               Private Notes
@@ -943,7 +913,7 @@ export default async function ProducerProjectDetailPage({
         /* Tablet: tighten sidebar */
         @media (max-width: 1100px) {
           .producer-detail-grid {
-            grid-template-columns: 1fr 256px !important;
+            grid-template-columns: 1fr 280px !important;
           }
         }
 
