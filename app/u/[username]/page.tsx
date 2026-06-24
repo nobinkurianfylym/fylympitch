@@ -260,10 +260,13 @@ export default async function PublicProfilePage({
               <div className="id-card arr" style={{position:"sticky",top:64}}>
                 <div style={{background:"#EDE8DF",borderRadius:20,padding:"36px 32px 32px",overflow:"hidden",position:"relative"}}>
 
-                  {/* Eyebrow */}
-                  <p style={{fontSize:9,letterSpacing:".3em",textTransform:"uppercase",fontWeight:700,color:"#BF9953",margin:"0 0 20px"}}>
-                    {isVerified ? "✦  Verified Producer" : "Producer"}
-                  </p>
+                  {/* Eyebrow + Share */}
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+                    <p style={{fontSize:9,letterSpacing:".3em",textTransform:"uppercase",fontWeight:700,color:"#BF9953",margin:0}}>
+                      {isVerified ? "✦  Verified Producer" : "Producer"}
+                    </p>
+                    <ProfileShareButton username={profile.username} name={profile.full_name} />
+                  </div>
 
                   {/* Avatar + Name */}
                   <div style={{display:"flex",alignItems:"flex-start",gap:18,marginBottom:20}}>
@@ -425,9 +428,8 @@ export default async function PublicProfilePage({
                 )}
 
                 {/* Footer */}
-                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:8}}>
+                <div style={{paddingTop:8}}>
                   <p style={{fontSize:9,letterSpacing:".26em",textTransform:"uppercase",color:"rgba(26,24,21,0.18)",fontWeight:600,margin:0}}>Pitch.Fylym</p>
-                  <ProfileShareButton username={profile.username} name={profile.full_name} />
                 </div>
               </div>
             </div>
