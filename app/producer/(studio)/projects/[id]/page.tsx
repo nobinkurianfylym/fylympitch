@@ -824,27 +824,9 @@ export default async function ProducerProjectDetailPage({
 
           <div style={{ height: 1, background: S.line, margin: "0 0 24px" }} />
 
-          {/* ── 4. PRIVATE NOTES ────────────────────────────── */}
-          <div style={{ marginBottom: 28 }}>
-            <p style={{
-              fontSize:      9,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color:         S.ash,
-              fontWeight:    600,
-              marginBottom:  14,
-            }}>
-              Private Notes
-            </p>
-            <PrivateNotesForm
-              projectId={project.id}
-              initialNotes={crm?.notes}
-            />
-          </div>
-
-          {/* ── 6. PASS ON PROJECT ──────────────────────────── */}
+          {/* ── 5. PASS ON PROJECT ──────────────────────────── */}
           {crm?.status !== "passed" ? (
-            <form action={upsertProducerProject}>
+            <form action={upsertProducerProject} style={{ marginBottom: 24 }}>
               <input type="hidden" name="project_id" value={project.id} />
               <input type="hidden" name="status"     value="passed" />
               <input type="hidden" name="rating"     value={crm?.rating ?? ""} />
@@ -871,6 +853,7 @@ export default async function ProducerProjectDetailPage({
             <div style={{
               textAlign:     "center",
               padding:       "9px 0",
+              marginBottom:  24,
               fontSize:      10,
               letterSpacing: "0.14em",
               textTransform: "uppercase",
@@ -879,6 +862,26 @@ export default async function ProducerProjectDetailPage({
               Passed
             </div>
           )}
+
+          <div style={{ height: 1, background: S.line, margin: "0 0 24px" }} />
+
+          {/* ── 6. PRIVATE NOTES ────────────────────────────── */}
+          <div style={{ marginBottom: 28 }}>
+            <p style={{
+              fontSize:      9,
+              letterSpacing: "0.18em",
+              textTransform: "uppercase",
+              color:         S.ash,
+              fontWeight:    600,
+              marginBottom:  14,
+            }}>
+              Private Notes
+            </p>
+            <PrivateNotesForm
+              projectId={project.id}
+              initialNotes={crm?.notes}
+            />
+          </div>
         </div>
       </div>
 
