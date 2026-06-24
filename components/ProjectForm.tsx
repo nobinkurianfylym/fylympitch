@@ -11,19 +11,6 @@ const GENRES = ["Drama","Comedy","Thriller","Horror","Romance","Action","Documen
 
 // ── Engine loader ──────────────────────────────────────────────────────────────
 
-const ENGINE_STEPS: { label: string; duration: number }[] = [
-  { label: "Saving your project",                              duration: 400   },
-  { label: "Loading active opportunities",                     duration: 700   },
-  { label: "Scoring matches across funds, grants and labs",    duration: 1200  },
-  { label: "Calculating your funding readiness score",         duration: 900   },
-  { label: "Mapping funding sources for your budget",          duration: 900   },
-  { label: "Identifying financing obstacles",                  duration: 800   },
-  { label: "Building your roadmap to production",              duration: 800   },
-  { label: "Matching producers and investors",                 duration: 700   },
-  { label: "Generating your Executive Producer brief",         duration: 5000  },
-  { label: "Finalising your intelligence report",              duration: 99999 },
-];
-
 function BlinkingDots() {
   const [dots, setDots] = useState(1);
   useEffect(() => {
@@ -31,28 +18,6 @@ function BlinkingDots() {
     return () => clearInterval(id);
   }, []);
   return <span className="text-ash" style={{ fontWeight: 400 }}>{"•".repeat(dots)}</span>;
-}
-
-function EngineLoader({ step }: { step: number }) {
-  const progress = Math.min(96, Math.round((step / (ENGINE_STEPS.length - 1)) * 100));
-  const activeLabel = ENGINE_STEPS[Math.min(step, ENGINE_STEPS.length - 1)]?.label ?? "Processing…";
-  return (
-    <div className="py-10 max-w-2xl">
-      <div className="flex items-center gap-4 mb-4">
-        <div className="h-[2px] flex-1 bg-line rounded-full overflow-hidden">
-          <div className="h-full bg-gold rounded-full transition-all duration-700"
-            style={{ width: `${progress}%` }} />
-        </div>
-        <span className="text-[11px] tracking-[0.15em] uppercase text-gold shrink-0 font-medium">
-          {progress}%
-        </span>
-      </div>
-      <p className="text-[13px] text-ash">
-        <span className="text-gold font-medium">PITCH.FYLYM ENGINE</span>
-        {" · "}{activeLabel}<BlinkingDots />
-      </p>
-    </div>
-  );
 }
 
 // ── AI analysing state ─────────────────────────────────────────────────────────
@@ -162,7 +127,6 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
   const [aiError, setAiError]       = useState<string | null>(null);
   const [error, setError]           = useState<string | null>(null);
   const [busy, setBusy]             = useState(false);
-  const [engineStep, setEngineStep] = useState(0);
   const [uploading, setUploading]   = useState<string | null>(null);
   const [deckPath, setDeckPath]         = useState("");
   const [deckHash, setDeckHash]         = useState("");
@@ -213,22 +177,6 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
     setFields((f) => ({ ...f, [k]: e.target.value }));
     setAiFilled((a) => ({ ...a, [k]: false }));
   };
-
-  useEffect(() => {
-    if (!busy) return;
-    setEngineStep(0);
-    let i = 0;
-    let timer: ReturnType<typeof setTimeout>;
-    const advance = () => {
-      i++;
-      if (i < ENGINE_STEPS.length) {
-        setEngineStep(i);
-        timer = setTimeout(advance, ENGINE_STEPS[i].duration);
-      }
-    };
-    timer = setTimeout(advance, ENGINE_STEPS[0].duration);
-    return () => clearTimeout(timer);
-  }, [busy]);
 
   // ── PDF extraction ─────────────────────────────────────────────────────────
   async function extractPDFText(file: File): Promise<string> {
@@ -389,11 +337,9 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
     flushSync(() => { setError(null); setBusy(true); });
     startTransition(async () => {
       const result = await createProject(formData);
-      if (result?.error) { setError(result.error); setBusy(false); setEngineStep(0); }
+      if (result?.error) { setError(result.error); setBusy(false); }
     });
   }
-
-  if (busy) return <EngineLoader step={engineStep} />;
 
   // ── AI highlight helper ────────────────────────────────────────────────────
   const ai = (k: keyof Fields) => aiFilled[k] ? "border-gold/60 bg-gold/4" : "";
@@ -775,9 +721,9 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
         </p>
       )}
 
-      <button type="submit" disabled={aiLoading || uploading !== null}
+      <button type="submit" disabled={busy || aiLoading || uploading !== null}
         className="btn-gold disabled:opacity-50">
-        {aiLoading ? "AI is reading your deck…" : uploading ? "Uploading…" : "Create project & compute matches"}
+        {busy ? "Submitting…" : aiLoading ? "AI is reading your deck…" : uploading ? "Uploading…" : "Create project & compute matches"}
       </button>
     </form>
   );
