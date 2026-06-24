@@ -13,6 +13,7 @@ const CONTENT = {
       </>
     ),
     body: "Every pitch is analyzed against 500+ verified grants, labs, markets, and tax incentives — matched, ranked, and ready to apply. At the same time, verified producers actively searching for projects to finance, co-produce, or acquire see your pitch directly.",
+    proof: "From the moment you submit, your work is cryptographically timestamped on the Bitcoin blockchain — permanent proof, your ideas yours forever.",
     primary: { label: "Get started", href: "/signup" },
     secondary: { label: "See how it works", href: "#how" },
   },
@@ -25,6 +26,7 @@ const CONTENT = {
       </>
     ),
     body: "One account, two roles. Browse filmmaker projects by genre, stage and territory. Read scripts, send offers, co-produce — no approval needed.",
+    proof: "",
     primary: { label: "Get started", href: "/signup?role=producer" },
     secondary: { label: "Browse projects", href: "/filmprojects" },
   },
@@ -72,6 +74,12 @@ export default function HeroToggle({
         <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-ash">
           {c.body}
         </p>
+        {c.proof && (
+          <p className="mt-4 max-w-xl text-[13px] leading-relaxed text-ash/50 flex items-start gap-2">
+            <span className="mt-px shrink-0 text-gold/60">⬡</span>
+            {c.proof}
+          </p>
+        )}
         <div className="mt-7 flex flex-wrap gap-4">
           <Link href={primary.href} className="btn-gold">
             {primary.label}
