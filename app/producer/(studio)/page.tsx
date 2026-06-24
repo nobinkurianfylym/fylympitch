@@ -64,7 +64,7 @@ export default async function ProducerDiscoverPage() {
 
   if (!producerProfile) redirect("/producer/onboarding");
 
-  const [{ data: projects }, { data: pipelineRows }, { data: loves }] = await Promise.all([
+  const [{ data: projects }, { data: pipelineRows }, { data: passedRows }, { data: loves }] = await Promise.all([
     supabase
       .from("projects")
       .select("id, title, genre, format, stage, country, language, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, logline, poster_path, love_count, is_public, director_name, owner_id, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
@@ -77,6 +77,11 @@ export default async function ProducerDiscoverPage() {
       .select("project_id, status")
       .eq("producer_id", user.id)
       .neq("status", "passed"),
+    supabase
+      .from("producer_projects")
+      .select("project_id")
+      .eq("producer_id", user.id)
+      .eq("status", "passed"),
     supabase
       .from("project_loves")
       .select("project_id")
@@ -91,16 +96,21 @@ export default async function ProducerDiscoverPage() {
     .order("created_at", { ascending: false });
 
   const exclusiveSet = new Set((exclusivePitches ?? []).map((p: any) => p.id));
+  const passedSet    = new Set((passedRows ?? []).map((r: any) => r.project_id));
 
   const pipelineCount   = pipelineRows?.length ?? 0;
   const crmByProject    = new Map((pipelineRows ?? []).map((r: any) => [r.project_id, r]));
   const lovedSet        = new Set((loves ?? []).map((r: any) => r.project_id));
 
-  // Score all 50, take top 9 (exclude already-shown exclusive pitches)
-  const top9 = (projects ?? []).filter((p: any) => !exclusiveSet.has(p.id))
+  // Score all 50, exclude passed + exclusive pitches already shown above
+  const top9 = (projects ?? [])
+    .filter((p: any) => !exclusiveSet.has(p.id) && !passedSet.has(p.id))
     .map((p) => ({ ...p, _score: scoreProject(p, producerProfile) }))
     .sort((a, b) => b._score - a._score)
     .slice(0, 9);
+
+  const allPassed = (projects ?? []).length > 0 &&
+    (projects ?? []).every((p: any) => passedSet.has(p.id) || exclusiveSet.has(p.id));
 
   // Fetch funding readiness scores for top 9
   const top9Ids = top9.map((p) => p.id);
@@ -197,9 +207,24 @@ export default async function ProducerDiscoverPage() {
 
       {top9.length === 0 && (exclusivePitches ?? []).length === 0 ? (
         <div className="card py-16 text-center">
-          <p className="font-display text-[22px] mb-3">No public projects yet</p>
-          <p className="text-ash text-[15px] mb-6">Check back soon as filmmakers submit their work.</p>
-          <Link href="/producer/profile" className="btn-ghost">Update taste profile</Link>
+          {allPassed ? (
+            <>
+              <p className="font-display text-[22px] mb-3">You've reviewed everything</p>
+              <p className="text-ash text-[15px] mb-6 max-w-sm mx-auto">
+                No new projects right now. Check back as filmmakers submit new work — or revisit your passed projects.
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <Link href="/producer/projects?filter=passed" className="btn-ghost">View passed projects</Link>
+                <Link href="/producer/projects" className="btn-gold">Browse all</Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="font-display text-[22px] mb-3">No public projects yet</p>
+              <p className="text-ash text-[15px] mb-6">Check back soon as filmmakers submit their work.</p>
+              <Link href="/producer/profile" className="btn-ghost">Update taste profile</Link>
+            </>
+          )}
         </div>
       ) : top9.length > 0 ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
