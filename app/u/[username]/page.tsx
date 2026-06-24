@@ -221,9 +221,8 @@ export default async function PublicProfilePage({
     TG.forEach(([r, ts]) => ts.forEach(t => { tgMap[t] = r; }));
     const uniqueMarkets = [...new Set(territories.map(t => tgMap[t]).filter(Boolean))];
 
-    const avatarSrc = profile.avatar_url
-      ? `${supabaseUrl}/storage/v1/object/public/avatars/${profile.avatar_url}`
-      : null;
+    // avatar_url is stored as a full public URL by AvatarUpload
+    const avatarSrc = profile.avatar_url || null;
     const initials = profile.full_name.split(" ").map((w: string) => w[0]).join("").slice(0,2).toUpperCase();
 
     return (
