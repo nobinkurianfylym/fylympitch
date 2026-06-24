@@ -228,169 +228,208 @@ export default async function PublicProfilePage({
     return (
       <>
         <style>{`
-          @keyframes arrive { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-          .arrive   { animation: arrive 0.65s cubic-bezier(0.16,1,0.3,1) forwards; }
-          .arrive-2 { animation: arrive 0.65s 0.1s cubic-bezier(0.16,1,0.3,1) both; }
-          .pnav-lnk { transition: opacity 120ms; } .pnav-lnk:hover { opacity:1 !important; }
-          .lnk-gd   { transition: opacity 150ms; } .lnk-gd:hover { opacity:0.7; }
-          @media (max-width:640px) { .p-hero { flex-direction:column !important; gap:16px !important; } }
+          @keyframes arrive{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+          .arr{animation:arrive 0.55s cubic-bezier(0.16,1,0.3,1) forwards}
+          .arr2{animation:arrive 0.55s 0.08s cubic-bezier(0.16,1,0.3,1) both}
+          .arr3{animation:arrive 0.55s 0.16s cubic-bezier(0.16,1,0.3,1) both}
+          .lnk{transition:opacity 140ms}.lnk:hover{opacity:0.65}
+          .pcard{background:#fff;border-radius:14px;border:1px solid rgba(26,24,21,0.08);padding:24px 28px}
+          .sl{font-size:9px;letter-spacing:.26em;text-transform:uppercase;font-weight:600;color:#BF9953;margin:0 0 12px;display:block}
+          .chip-gd{display:inline-flex;align-items:center;padding:4px 13px;border-radius:100px;font-size:11px;font-weight:500;border:1px solid rgba(191,153,83,0.28);color:#8A6F3E}
+          @media(max-width:768px){.two-col{grid-template-columns:1fr!important}.id-card{position:static!important}}
         `}</style>
 
-        <div style={{ background:"#F5F5F0", minHeight:"100vh", fontFamily:"'Montserrat',sans-serif" }}>
+        <div style={{background:"#F5F5F0",minHeight:"100vh",fontFamily:"'Montserrat',sans-serif"}}>
 
           {/* Nav */}
-          <nav style={{
-            position:"fixed", top:0, left:0, right:0, zIndex:50, height:48,
-            display:"flex", alignItems:"center", justifyContent:"space-between",
-            padding:"0 48px",
-            background:"rgba(245,245,240,0.95)",
-            backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)",
-            borderBottom:"1px solid rgba(26,24,21,0.05)",
-          }}>
+          <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:50,height:48,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 40px",background:"rgba(245,245,240,0.95)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderBottom:"1px solid rgba(26,24,21,0.05)"}}>
             <Wordmark href="/" size="sm" />
             {user && (
-              <Link href={dashboardHref} className="pnav-lnk"
-                style={{ fontSize:10, letterSpacing:".18em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.32)", textDecoration:"none" }}>
+              <Link href={dashboardHref} className="lnk"
+                style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.35)",textDecoration:"none"}}>
                 Producer Studio
               </Link>
             )}
           </nav>
 
-          {/* Identity zone — warm parchment card */}
-          <div style={{ maxWidth:680, margin:"0 auto", padding:"0 16px" }}>
-            <div style={{ background:"#EDE8DF", borderRadius:24, padding:"48px 44px 44px", marginTop:28 }}>
-              <div className="arrive">
+          {/* Two-column layout */}
+          <div style={{maxWidth:1100,margin:"0 auto",padding:"72px 32px 80px"}}>
+            <div className="two-col" style={{display:"grid",gridTemplateColumns:"360px 1fr",gap:24,alignItems:"start"}}>
 
-                <p style={{ fontSize:9, letterSpacing:".32em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.35)", margin:"0 0 24px" }}>
-                  {isVerified ? "✦\u2002Verified Producer" : "Producer"}
-                </p>
+              {/* ═══ LEFT — Identity card (sticky) ═══ */}
+              <div className="id-card arr" style={{position:"sticky",top:64}}>
+                <div style={{background:"#EDE8DF",borderRadius:20,padding:"36px 32px 32px",overflow:"hidden",position:"relative"}}>
 
-                <div className="p-hero" style={{ display:"flex", alignItems:"flex-start", gap:20, marginBottom:20 }}>
-                  {/* Always show avatar — photo or initials */}
-                  <div style={{ flexShrink:0, width:56, height:56, borderRadius:"50%", overflow:"hidden", border:"1px solid rgba(26,24,21,0.1)", background:"rgba(26,24,21,0.06)", display:"flex", alignItems:"center", justifyContent:"center", marginTop:5 }}>
-                    {avatarSrc
-                      ? <img src={avatarSrc} alt={profile.full_name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                      : <span style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:700, color:"rgba(26,24,21,0.35)" }}>{initials}</span>
-                    }
-                  </div>
-                  <div>
-                    <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:"clamp(30px,5vw,50px)", fontWeight:700, lineHeight:1.06, color:"#1A1815", margin:0, letterSpacing:"-0.015em" }}>
-                      {profile.full_name}
-                    </h1>
-                    {profile.company && (
-                      <p style={{ fontSize:13, fontWeight:600, color:"#BF9953", margin:"7px 0 0", letterSpacing:".03em" }}>
-                        {profile.company}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ display:"flex", flexWrap:"wrap", alignItems:"center", columnGap:18, rowGap:6, marginBottom:32 }}>
-                  {profile.country && <span style={{ fontSize:12, color:"rgba(26,24,21,0.5)" }}>{profile.country}</span>}
-                  {yearsExp && <span style={{ fontSize:12, color:"rgba(26,24,21,0.5)" }}>{yearsExp} years</span>}
-                  {profile.imdb_url && <a href={profile.imdb_url} target="_blank" rel="noopener noreferrer" className="lnk-gd" style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:700, color:"#BF9953", textDecoration:"none" }}>IMDb ↗</a>}
-                  {profile.website  && <a href={profile.website}  target="_blank" rel="noopener noreferrer" className="lnk-gd" style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.4)", textDecoration:"none" }}>Website ↗</a>}
-                  {linkedin         && <a href={linkedin}          target="_blank" rel="noopener noreferrer" className="lnk-gd" style={{ fontSize:10, letterSpacing:".12em", textTransform:"uppercase", fontWeight:600, color:"rgba(26,24,21,0.4)", textDecoration:"none" }}>LinkedIn ↗</a>}
-                </div>
-
-                {profile.bio && (
-                  <p style={{ fontSize:15, lineHeight:1.88, color:"rgba(26,24,21,0.6)", margin:0 }}>
-                    {profile.bio}
+                  {/* Eyebrow */}
+                  <p style={{fontSize:9,letterSpacing:".3em",textTransform:"uppercase",fontWeight:700,color:"#BF9953",margin:"0 0 20px"}}>
+                    {isVerified ? "✦  Verified Producer" : "Producer"}
                   </p>
-                )}
-              </div>
-            </div>
-          </div>
 
-          {/* Body — ivory */}
-          <div style={{ maxWidth:680, margin:"0 auto", padding:"48px 40px 100px" }}>
-
-            {/* Pitch status */}
-            <div className="arrive-2" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:12, marginBottom:40 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:9 }}>
-                <span style={{ width:5, height:5, borderRadius:"50%", background:acceptingPitches?"#5aab7a":"rgba(26,24,21,0.18)", flexShrink:0 }} />
-                <span style={{ fontSize:12, fontWeight:600, color:acceptingPitches?"rgba(26,24,21,0.6)":"rgba(26,24,21,0.28)", letterSpacing:".02em" }}>
-                  {acceptingPitches ? "Accepting pitches" : "Not accepting pitches"}
-                </span>
-                {responseTime && <span style={{ fontSize:11, color:"rgba(26,24,21,0.28)", marginLeft:2 }}>— {responseTime}</span>}
-              </div>
-              <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                {/* Send Pitch — visible to everyone when accepting pitches */}
-                {acceptingPitches && (
-                  <Link
-                    href={user ? `/dashboard/projects/new?producer=${profile.username}` : `/login?next=/dashboard/projects/new?producer=${profile.username}`}
-                    style={{
-                      fontSize:10, letterSpacing:".16em", textTransform:"uppercase", fontWeight:700,
-                      color:"#F5F5F0", textDecoration:"none", background:"#1A1815",
-                      padding:"8px 18px", borderRadius:100,
-                    }}>
-                    Send Pitch
-                  </Link>
-                )}
-                {/* Message — only for logged-in non-owners */}
-                {user && user.id !== profile.id && acceptingPitches && (
-                  <Link href="/producer/messages" className="lnk-gd" style={{ fontSize:10, letterSpacing:".16em", textTransform:"uppercase", fontWeight:700, color:"#8A6F3E", textDecoration:"none", border:"1px solid rgba(191,153,83,0.35)", padding:"8px 18px", borderRadius:100 }}>
-                    Message
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            {/* Data sections — white curved cards */}
-            <div className="arrive-2" style={{ display:"flex", flexDirection:"column", gap:10 }}>
-              {([
-                (genres.length > 0 || formats.length > 0) && { label:"Genres", node:
-                  <p style={{ fontSize:14, color:"rgba(26,24,21,0.6)", lineHeight:1.7, margin:0 }}>{[...genres, ...formats].join(", ")}</p>
-                },
-                lookingFor.length > 0 && { label:"Currently Looking For", node:
-                  <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
-                    {lookingFor.map((l: string) => (
-                      <span key={l} style={{ fontSize:11, letterSpacing:".02em", fontWeight:500, color:"#8A6F3E", border:"1px solid rgba(191,153,83,0.28)", padding:"4px 13px", borderRadius:100 }}>{l}</span>
-                    ))}
+                  {/* Avatar + Name */}
+                  <div style={{display:"flex",alignItems:"flex-start",gap:18,marginBottom:20}}>
+                    <div style={{flexShrink:0,width:80,height:80,borderRadius:"50%",overflow:"hidden",border:"2px solid rgba(26,24,21,0.1)",background:"rgba(26,24,21,0.06)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      {avatarSrc
+                        ? <img src={avatarSrc} alt={profile.full_name} style={{width:"100%",height:"100%",objectFit:"cover"}} />
+                        : <span style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:700,color:"rgba(26,24,21,0.3)"}}>{initials}</span>
+                      }
+                    </div>
+                    <div style={{paddingTop:4}}>
+                      <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:"clamp(24px,3vw,34px)",fontWeight:700,lineHeight:1.08,color:"#1A1815",margin:0,letterSpacing:"-0.01em"}}>
+                        {profile.full_name}
+                      </h1>
+                      {profile.company && (
+                        <p style={{fontSize:13,fontWeight:600,color:"#BF9953",margin:"5px 0 0",letterSpacing:".02em"}}>{profile.company}</p>
+                      )}
+                    </div>
                   </div>
-                },
-                (CAPACITY_MAP[capacity] || fundingRoles.length > 0) && { label:"Investment", node:
-                  <div style={{ display:"flex", flexDirection:"column" as const, gap:6 }}>
+
+                  {/* Meta row */}
+                  <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:"6px 16px",marginBottom:24}}>
+                    {profile.country && (
+                      <span style={{display:"flex",alignItems:"center",gap:5,fontSize:12,color:"rgba(26,24,21,0.5)"}}>
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1a4 4 0 100 8A4 4 0 006 1zM1 6a5 5 0 1110 0A5 5 0 011 6z" stroke="currentColor" strokeWidth="1"/><path d="M6 1c-1 1.5-1.5 3-1.5 5s.5 3.5 1.5 5M6 1c1 1.5 1.5 3 1.5 5S7 9.5 6 11M1.5 4h9M1.5 8h9" stroke="currentColor" strokeWidth=".9"/></svg>
+                        {profile.country}
+                      </span>
+                    )}
+                    {yearsExp && (
+                      <span style={{fontSize:12,color:"rgba(26,24,21,0.5)"}}>
+                        {yearsExp} years
+                      </span>
+                    )}
+                    {profile.imdb_url && (
+                      <a href={profile.imdb_url} target="_blank" rel="noopener noreferrer" className="lnk"
+                        style={{display:"flex",alignItems:"center",gap:4,fontSize:10,letterSpacing:".1em",textTransform:"uppercase",fontWeight:700,color:"#BF9953",textDecoration:"none"}}>
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M0 1.5A1.5 1.5 0 011.5 0h7A1.5 1.5 0 0110 1.5v7A1.5 1.5 0 018.5 10h-7A1.5 1.5 0 010 8.5v-7zM2 2v6h1.25V2H2zm2 0v6h1V5.5L6.25 8h1V2H6v2.5L4.75 2H4zm3.5 0v6H9V2H7.5z"/></svg>
+                        IMDb
+                      </a>
+                    )}
+                    {profile.website && (
+                      <a href={profile.website} target="_blank" rel="noopener noreferrer" className="lnk"
+                        style={{fontSize:10,letterSpacing:".1em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.4)",textDecoration:"none"}}>
+                        Website ↗
+                      </a>
+                    )}
+                    {linkedin && (
+                      <a href={linkedin} target="_blank" rel="noopener noreferrer" className="lnk"
+                        style={{fontSize:10,letterSpacing:".1em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.4)",textDecoration:"none"}}>
+                        LinkedIn ↗
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Bio */}
+                  {profile.bio && (
+                    <p style={{fontSize:13,lineHeight:1.85,color:"rgba(26,24,21,0.6)",margin:0}}>
+                      {profile.bio}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* ═══ RIGHT — Detail cards ═══ */}
+              <div className="arr2" style={{display:"flex",flexDirection:"column",gap:12}}>
+
+                {/* Accepting pitches + Send Pitch */}
+                <div className="pcard" style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}>
+                    <div style={{width:36,height:36,borderRadius:"50%",background:acceptingPitches?"rgba(90,171,122,0.12)":"rgba(26,24,21,0.06)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                      {acceptingPitches
+                        ? <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 4.5" stroke="#5aab7a" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        : <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3l-8 8" stroke="rgba(26,24,21,0.3)" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      }
+                    </div>
+                    <div>
+                      <p style={{fontSize:14,fontWeight:600,color:acceptingPitches?"#1A1815":"rgba(26,24,21,0.35)",margin:0,letterSpacing:".01em"}}>
+                        {acceptingPitches ? "Accepting pitches" : "Not accepting pitches"}
+                      </p>
+                      {responseTime && acceptingPitches && (
+                        <p style={{fontSize:11,color:"rgba(26,24,21,0.35)",margin:"2px 0 0"}}>{responseTime}</p>
+                      )}
+                    </div>
+                  </div>
+                  {acceptingPitches && (
+                    <Link
+                      href={user ? `/dashboard/projects/new?producer=${profile.username}` : `/login?next=/dashboard/projects/new?producer=${profile.username}`}
+                      style={{display:"inline-flex",alignItems:"center",gap:8,fontSize:10,letterSpacing:".16em",textTransform:"uppercase",fontWeight:700,color:"#F5F5F0",textDecoration:"none",background:"#1A1815",padding:"10px 20px",borderRadius:100}}>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 5-10 5V7l7-1-7-1V1z" fill="currentColor"/></svg>
+                      Send Pitch
+                    </Link>
+                  )}
+                </div>
+
+                {/* Genres */}
+                {(genres.length > 0 || formats.length > 0) && (
+                  <div className="pcard">
+                    <span className="sl">Genres</span>
+                    <p style={{fontSize:14,color:"rgba(26,24,21,0.65)",lineHeight:1.7,margin:0}}>
+                      {[...genres,...formats].join(", ")}
+                    </p>
+                  </div>
+                )}
+
+                {/* Looking For */}
+                {lookingFor.length > 0 && (
+                  <div className="pcard">
+                    <span className="sl">Currently Looking For</span>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:7}}>
+                      {lookingFor.map((l:string) => <span key={l} className="chip-gd">{l}</span>)}
+                    </div>
+                  </div>
+                )}
+
+                {/* Investment */}
+                {(CAPACITY_MAP[capacity] || fundingRoles.length > 0) && (
+                  <div className="pcard">
+                    <span className="sl">Investment</span>
                     {CAPACITY_MAP[capacity] && (
-                      <p style={{ margin:0 }}>
-                        <span style={{ fontFamily:"'Playfair Display',serif", fontSize:17, fontWeight:700, color:"#1A1815" }}>{CAPACITY_MAP[capacity]}</span>
-                        {BUDGET_MAP[budget] && <span style={{ fontSize:13, color:"rgba(26,24,21,0.35)", marginLeft:8 }}>{BUDGET_MAP[budget]}</span>}
+                      <p style={{margin:"0 0 6px"}}>
+                        <span style={{fontFamily:"'Playfair Display',serif",fontSize:20,fontWeight:700,color:"#1A1815"}}>{CAPACITY_MAP[capacity]}</span>
+                        {BUDGET_MAP[budget] && <span style={{fontSize:13,color:"rgba(26,24,21,0.35)",marginLeft:8}}>{BUDGET_MAP[budget]}</span>}
                       </p>
                     )}
-                    {fundingRoles.length > 0 && <p style={{ fontSize:13, color:"rgba(26,24,21,0.45)", margin:0 }}>{fundingRoles.map((r: string) => FUNDING_ROLES_MAP[r] ?? r).join(", ")}</p>}
-                    {stages.length > 0 && <p style={{ fontSize:12, color:"rgba(26,24,21,0.35)", margin:0 }}>{stages.map((s: string) => STAGES_MAP[s] ?? s).join(", ")}</p>}
-                  </div>
-                },
-                uniqueMarkets.length > 0 && { label:"Markets", node:
-                  <p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{uniqueMarkets.join(" · ")}</p>
-                },
-                festivals.length > 0 && { label:"Festival Pedigree", node:
-                  <p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{festivals.join(", ")}</p>
-                },
-                languages.length > 0 && { label:"Languages", node:
-                  <p style={{ fontSize:14, color:"rgba(26,24,21,0.55)", lineHeight:1.8, margin:0 }}>{languages.join(", ")}</p>
-                },
-              ] as ({ label: string; node: React.ReactNode } | false)[])
-                .filter(Boolean)
-                .map((sec) => {
-                  const s = sec as { label: string; node: React.ReactNode };
-                  return (
-                    <div key={s.label} style={{ background:"#fff", borderRadius:14, border:"1px solid rgba(26,24,21,0.07)", padding:"24px 28px" }}>
-                      <p style={{ fontSize:9, letterSpacing:".28em", textTransform:"uppercase" as const, fontWeight:600, color:"rgba(26,24,21,0.26)", margin:"0 0 12px" }}>
-                        {s.label}
+                    {fundingRoles.length > 0 && (
+                      <p style={{fontSize:13,color:"rgba(26,24,21,0.45)",margin:0}}>
+                        {fundingRoles.map((r:string) => FUNDING_ROLES_MAP[r] ?? r).join(", ")}
                       </p>
-                      {s.node}
-                    </div>
-                  );
-                })
-              }
-            </div>
+                    )}
+                    {stages.length > 0 && (
+                      <p style={{fontSize:12,color:"rgba(26,24,21,0.35)",margin:"4px 0 0"}}>
+                        {stages.map((s:string) => STAGES_MAP[s] ?? s).join(", ")}
+                      </p>
+                    )}
+                  </div>
+                )}
 
-            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", margin:"56px 0 0" }}>
-              <p style={{ fontSize:9, letterSpacing:".28em", textTransform:"uppercase", color:"rgba(26,24,21,0.18)", fontWeight:600, margin:0 }}>
-                Pitch.Fylym
-              </p>
-              <ProfileShareButton username={profile.username} name={profile.full_name} />
+                {/* Markets */}
+                {uniqueMarkets.length > 0 && (
+                  <div className="pcard">
+                    <span className="sl">Market Experience</span>
+                    <p style={{fontSize:13,color:"rgba(26,24,21,0.55)",lineHeight:1.9,margin:0}}>{uniqueMarkets.join(" · ")}</p>
+                  </div>
+                )}
+
+                {/* Festivals */}
+                {festivals.length > 0 && (
+                  <div className="pcard">
+                    <span className="sl">Festival Pedigree</span>
+                    <p style={{fontSize:13,color:"rgba(26,24,21,0.55)",lineHeight:1.9,margin:0}}>{festivals.join(", ")}</p>
+                  </div>
+                )}
+
+                {/* Languages */}
+                {languages.length > 0 && (
+                  <div className="pcard">
+                    <span className="sl">Languages</span>
+                    <p style={{fontSize:13,color:"rgba(26,24,21,0.55)",lineHeight:1.9,margin:0}}>{languages.join(", ")}</p>
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:8}}>
+                  <p style={{fontSize:9,letterSpacing:".26em",textTransform:"uppercase",color:"rgba(26,24,21,0.18)",fontWeight:600,margin:0}}>Pitch.Fylym</p>
+                  <ProfileShareButton username={profile.username} name={profile.full_name} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
