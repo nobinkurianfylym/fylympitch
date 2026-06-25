@@ -199,6 +199,11 @@ Deno.serve(async (req) => {
 
   for (const proof of pendingProofs) {
     const project = Array.isArray(proof.projects) ? proof.projects[0] : proof.projects;
+    if (!project?.owner_id) {
+      console.warn(`[proof ${proof.id}] project missing or no owner_id, skipping`);
+      results.failed++;
+      continue;
+    }
 
     // ── Step 1: download pending OTS and extract commitment ──
     let commitmentHex: string | null = null;
@@ -246,7 +251,6 @@ Deno.serve(async (req) => {
     console.log(`[proof ${proof.id}] checking with hash: ${hashToCheck}`);
 
     let anchoredBytes: Uint8Array | null = null;
-    let successCalendar = "";
 
     for (const calUrl of toTry) {
       try {
@@ -267,7 +271,6 @@ Deno.serve(async (req) => {
         if (att) {
           console.log(`[upgrade] ${calUrl} -> ANCHORED at block ${att.blockHeight} ✓`);
           anchoredBytes = bytes;
-          successCalendar = calUrl;
           break;
         } else {
           console.log(`[upgrade] ${calUrl} -> no Bitcoin attestation yet`);
