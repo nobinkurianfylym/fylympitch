@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
       ots_pending_path,
       projects!inner (
         title,
-        filmmaker_id
+        owner_id
       )
     `)
     .eq("ots_status", "pending")
@@ -263,7 +263,7 @@ Deno.serve(async (req) => {
     ].join("\n");
 
     await supabase.from("proof_notifications").insert({
-      filmmaker_id: project.filmmaker_id,
+      filmmaker_id: project.owner_id,
       project_id: proof.project_id,
       proof_id: proof.id,
       title: notificationTitle,
