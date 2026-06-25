@@ -309,7 +309,7 @@ export function ProofVerificationPanel({
                     background: isAnchored ? "rgba(191,153,83,0.15)" : "rgba(255,255,255,0.06)",
                     color: isAnchored ? "#BF9953" : "rgba(255,255,255,0.35)",
                   }}>
-                    {isAnchored ? "₿ Anchored" : "Pending"}
+                    {isAnchored ? <><span style={{ fontFamily: "Arial, sans-serif" }}>₿</span> Anchored</> : "Pending"}
                   </span>
                   <span style={{ fontSize: 11, color: "rgba(255,255,255,0.6)" }}>{typeLabel} · v{proof.version}</span>
                 </div>
