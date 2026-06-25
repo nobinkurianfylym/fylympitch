@@ -271,7 +271,7 @@ export default async function ProjectDetailPage({
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 32px", height: 52, gap: 12,
       }}>
-        <Link href="/dashboard" style={{
+        <Link href="/dashboard/projects" style={{
           display: "flex", alignItems: "center", gap: 6, flexShrink: 0,
           fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase",
           color: S.ash, textDecoration: "none",
@@ -431,7 +431,7 @@ export default async function ProjectDetailPage({
           })()}
 
           {/* INVESTMENT STRIP */}
-          {(budget !== "—" || secured || seeking) && (
+          {(budget !== "—" || !!secured || seeking) && (
             <div style={{
               display: "grid",
               gridTemplateColumns: `repeat(${[budget !== "—", !!secured, !!seeking].filter(Boolean).length}, 1fr)`,
@@ -443,7 +443,7 @@ export default async function ProjectDetailPage({
                   <p style={{ fontSize: 19, fontWeight: 700, color: S.ink, fontFamily: "'Playfair Display', serif" }}>{budget}</p>
                 </div>
               )}
-              {secured && (
+              {!!secured && (
                 <div style={{ padding: "18px 14px 16px", borderRight: `1px solid ${S.line}` }}>
                   <p style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: S.ash, fontWeight: 600, marginBottom: 5 }}>Secured</p>
                   <p style={{ fontSize: 19, fontWeight: 700, color: "#2E6B4E", fontFamily: "'Playfair Display', serif", marginBottom: 6 }}>
