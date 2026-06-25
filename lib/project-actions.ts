@@ -3,6 +3,7 @@ import { toLiveUSD, validateBudgetSplit } from "@/lib/currency";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 function str(fd: FormData, key: string): string {
@@ -104,10 +105,10 @@ export async function updateProject(formData: FormData) {
 
   await supabase.from("projects").update(patch).eq("id", id).eq("owner_id", user.id);
 
-  // ── OTS Proof of Existence — fire and forget, never blocks update ──────────
-  {
+  // ── OTS Proof of Existence — runs after response via waitUntil ──────────────
+  after(async () => {
     const { triggerProjectProof } = await import("@/lib/proof-actions");
-    triggerProjectProof({
+    await triggerProjectProof({
       projectId: id,
       projectData: {
         title:            patch.title as string,
@@ -126,7 +127,7 @@ export async function updateProject(formData: FormData) {
       pitchDeckHash:     (formData.get("pitch_deck_hash") as string) || null,
       pitchDeckFileName: (formData.get("pitch_deck_filename") as string) || null,
     }).catch((e) => console.error("[Proof] updateProject trigger failed:", e));
-  }
+  });
 
   // Revalidate public-facing pages if project is public
   const { data: updated } = await supabase

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { toUSD } from "@/lib/format";
 import { toLiveUSD, validateBudgetSplit } from "@/lib/currency";
 import { redirect } from "next/navigation";
@@ -252,10 +253,10 @@ export async function createProject(formData: FormData) {
   // ProjectAnalysisLoader auto-triggers rerunEngine() on mount, showing a
   // live "Analysing…" state. This keeps form submit instant (<1s).
 
-  // ── OTS Proof of Existence — fire and forget, never blocks submit ──────────
-  {
+  // ── OTS Proof of Existence — runs after response via waitUntil ──────────────
+  after(async () => {
     const { triggerProjectProof } = await import("@/lib/proof-actions");
-    triggerProjectProof({
+    await triggerProjectProof({
       projectId: data.id,
       projectData: {
         title,
@@ -274,7 +275,7 @@ export async function createProject(formData: FormData) {
       pitchDeckHash:     str(formData, "pitch_deck_hash") || null,
       pitchDeckFileName: str(formData, "pitch_deck_filename") || null,
     }).catch((e) => console.error("[Proof] createProject trigger failed:", e));
-  }
+  });
 
   revalidatePath("/dashboard");
   revalidatePath("/filmprojects");
