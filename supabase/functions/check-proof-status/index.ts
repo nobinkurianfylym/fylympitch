@@ -142,24 +142,17 @@ async function extractCommitment(
 
 // ── Parse response bytes for Bitcoin attestation ─────────────────────────────
 function parseBitcoinAttestation(bytes: Uint8Array): { blockHeight: number } | null {
-  outer: for (let i = 0; i <= bytes.length - BITCOIN_ATTESTATION_TAG.length - 2; i++) {
+  // OTS format after Bitcoin TAG: varint(height) directly — no outer_length to skip
+  // TAG is: 05 88 96 0d 73 d7 19 01
+  // After TAG: varint-encoded block height
+  outer: for (let i = 0; i <= bytes.length - BITCOIN_ATTESTATION_TAG.length - 1; i++) {
     for (let j = 0; j < BITCOIN_ATTESTATION_TAG.length; j++) {
       if (bytes[i + j] !== BITCOIN_ATTESTATION_TAG[j]) continue outer;
     }
+    // Found TAG — read varint(height) immediately after
     const pos = i + BITCOIN_ATTESTATION_TAG.length;
-    let varintPos = pos;
-    // skip outer_length varint (length of Bitcoin attestation payload = 8)
-    while (varintPos < bytes.length && (bytes[varintPos] & 0x80)) varintPos++;
-    varintPos++; // move past the last varint byte
-    if (varintPos >= bytes.length) continue outer; // guard against overrun
-    if (varintPos + 4 <= bytes.length) {
-      const height =
-        bytes[varintPos] |
-        (bytes[varintPos + 1] << 8) |
-        (bytes[varintPos + 2] << 16) |
-        (bytes[varintPos + 3] << 24);
-      if (height > 100000 && height < 10000000) return { blockHeight: height };
-    }
+    const { value: height } = readVarint(bytes, pos);
+    if (height > 100000 && height < 10000000) return { blockHeight: height };
   }
   return null;
 }
