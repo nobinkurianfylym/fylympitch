@@ -23,6 +23,18 @@ export default async function MyProjectsPage() {
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
+  // Bulk fetch anchored proofs for all user projects
+  const projectIds = (projects ?? []).map((p: any) => p.id);
+  const anchoredSet = new Set<string>();
+  if (projectIds.length > 0) {
+    const { data: anchoredProofs } = await supabase
+      .from("project_proofs")
+      .select("project_id")
+      .in("project_id", projectIds)
+      .eq("ots_status", "anchored");
+    (anchoredProofs ?? []).forEach((r: any) => anchoredSet.add(r.project_id));
+  }
+
   const hasProjects = (projects ?? []).length > 0;
 
   return (
@@ -178,6 +190,19 @@ export default async function MyProjectsPage() {
                     {p.budget_usd && (
                       <span className="text-ash">
                         {formatBudget(p.budget_usd, p.budget_currency)}
+                      </span>
+                    )}
+                    {anchoredSet.has(p.id) && (
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: 4,
+                        fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase",
+                        padding: "3px 8px", borderRadius: 20,
+                        border: "1px solid rgba(191,153,83,0.35)",
+                        background: "rgba(191,153,83,0.07)",
+                        color: "#BF9953",
+                        fontFamily: "Montserrat, sans-serif",
+                      }}>
+                        ₿ Anchored
                       </span>
                     )}
                   </div>

@@ -22,6 +22,7 @@ import ProjectIntelligenceSidebar from "@/components/ProjectIntelligenceSidebar"
 import FilmmakerWorkspace, { type WorkspaceDeadline } from "@/components/FilmmakerWorkspace";
 import FilmmakerMotivation from "@/components/FilmmakerMotivation";
 import { ProofVerificationPanel } from "@/components/ProofVerificationPanel";
+import { ProofAnchoredBanner } from "@/components/ProofAnchoredBanner";
 import {
   formatBudgetDisplay, formatShortId, formatCountry, STAGE_BADGE,
 } from "@/lib/film-identity";
@@ -67,6 +68,25 @@ export default async function ProjectDetailPage({
     .select("id, version, file_name, proof_type, sha256_hash, ots_status, bitcoin_block_height, bitcoin_block_hash, anchored_at, created_at")
     .eq("project_id", id)
     .order("created_at", { ascending: false });
+
+  // ── Unread Bitcoin anchoring notification ────────────────────────────────
+  const { data: unreadProofNotif } = await supabase
+    .from("proof_notifications")
+    .select("id, body, project_proofs!proof_notifications_proof_id_fkey(bitcoin_block_height)")
+    .eq("project_id", id)
+    .eq("filmmaker_id", user!.id)
+    .eq("is_read", false)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const anchorNotif = unreadProofNotif
+    ? {
+        id: unreadProofNotif.id as string,
+        body: unreadProofNotif.body as string,
+        bitcoinBlock: (unreadProofNotif as any).project_proofs?.bitcoin_block_height ?? null,
+      }
+    : null;
 
   const { data: intel } = await supabase
     .from("project_intelligence").select("*").eq("project_id", id).single();
@@ -233,6 +253,16 @@ export default async function ProjectDetailPage({
   return (
     <div style={{ background: S.canvas, minHeight: "100vh", overflowX: "hidden" }}>
       {isOwner && !discovery && !simpleView && <ProjectAnalysisLoader projectId={project.id} />}
+
+      {/* ── BITCOIN ANCHORED BANNER ─────────────────────────────── */}
+      {isOwner && anchorNotif && (
+        <ProofAnchoredBanner
+          notificationId={anchorNotif.id}
+          projectTitle={project.title}
+          bitcoinBlock={anchorNotif.bitcoinBlock}
+          body={anchorNotif.body}
+        />
+      )}
 
       {/* ── ACTION BAR ─────────────────────────────────────────── */}
       <div style={{
