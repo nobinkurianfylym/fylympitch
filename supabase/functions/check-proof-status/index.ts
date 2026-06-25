@@ -80,17 +80,17 @@ async function extractCommitment(
 
     if (tag === 0x00) {
       // Attestation marker
-      // OTS format: 0x00 + varint(payload_len) + TAG(8 bytes) + varint(url_len) + url
-      // Must read and skip varint(payload_len) before reading the TAG
-      const { bytesRead: payloadLenSize } = readVarint(otsBytes, pos);
-      pos += payloadLenSize;
-
+      // OTS format: 0x00 + TAG(8 bytes) + varint(payload_len) + payload
+      // TAG comes DIRECTLY after 0x00 — no varint before it
       if (pos + 8 > otsBytes.length) break;
       const attType = otsBytes.slice(pos, pos + 8);
       pos += 8;
 
       const isPending = attType.every((b, i) => b === PENDING_ATTESTATION_TAG[i]);
       if (isPending) {
+        // Skip past payload_len varint, then read url_len varint + url
+        const { bytesRead: payloadLenBytes } = readVarint(otsBytes, pos);
+        pos += payloadLenBytes;
         const { value: urlLen, bytesRead } = readVarint(otsBytes, pos);
         pos += bytesRead;
         if (urlLen > 0 && pos + urlLen <= otsBytes.length) {
@@ -105,18 +105,7 @@ async function extractCommitment(
       }
       break;
     } else if (tag === 0xf0) {
-      // Prepend data before current hash
-      const { value: len, bytesRead } = readVarint(otsBytes, pos);
-      pos += bytesRead;
-      if (pos + len > otsBytes.length) break;
-      const data = otsBytes.slice(pos, pos + len);
-      pos += len;
-      const combined = new Uint8Array(data.length + current.length);
-      combined.set(data, 0);
-      combined.set(current, data.length);
-      current = combined;
-    } else if (tag === 0xf1) {
-      // Append data after current hash
+      // OpAppend (0xf0): result = current + data
       const { value: len, bytesRead } = readVarint(otsBytes, pos);
       pos += bytesRead;
       if (pos + len > otsBytes.length) break;
@@ -125,6 +114,17 @@ async function extractCommitment(
       const combined = new Uint8Array(current.length + data.length);
       combined.set(current, 0);
       combined.set(data, current.length);
+      current = combined;
+    } else if (tag === 0xf1) {
+      // OpPrepend (0xf1): result = data + current
+      const { value: len, bytesRead } = readVarint(otsBytes, pos);
+      pos += bytesRead;
+      if (pos + len > otsBytes.length) break;
+      const data = otsBytes.slice(pos, pos + len);
+      pos += len;
+      const combined = new Uint8Array(data.length + current.length);
+      combined.set(data, 0);
+      combined.set(current, data.length);
       current = combined;
     } else if (tag === 0x08) {
       // SHA256
@@ -142,16 +142,17 @@ async function extractCommitment(
 
 // ── Parse response bytes for Bitcoin attestation ─────────────────────────────
 function parseBitcoinAttestation(bytes: Uint8Array): { blockHeight: number } | null {
-  // OTS format after Bitcoin TAG: varint(height) directly — no outer_length to skip
+  // OTS format after Bitcoin TAG: varint(payload_len) + varuint(height)
   // TAG is: 05 88 96 0d 73 d7 19 01
-  // After TAG: varint-encoded block height
-  outer: for (let i = 0; i <= bytes.length - BITCOIN_ATTESTATION_TAG.length - 1; i++) {
+  outer: for (let i = 0; i <= bytes.length - BITCOIN_ATTESTATION_TAG.length - 2; i++) {
     for (let j = 0; j < BITCOIN_ATTESTATION_TAG.length; j++) {
       if (bytes[i + j] !== BITCOIN_ATTESTATION_TAG[j]) continue outer;
     }
-    // Found TAG — read varint(height) immediately after
+    // After TAG: varint(payload_len) then varuint(height)
     const pos = i + BITCOIN_ATTESTATION_TAG.length;
-    const { value: height } = readVarint(bytes, pos);
+    const { bytesRead: payloadLenBytes } = readVarint(bytes, pos);
+    const heightPos = pos + payloadLenBytes;
+    const { value: height } = readVarint(bytes, heightPos);
     if (height > 100000 && height < 10000000) return { blockHeight: height };
   }
   return null;
