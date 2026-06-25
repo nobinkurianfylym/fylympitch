@@ -15,8 +15,6 @@ const PENDING_ATTESTATION_TAG = new Uint8Array([
 const BITCOIN_ATTESTATION_TAG = new Uint8Array([
   0x05, 0x88, 0x96, 0x0d, 0x73, 0xd7, 0x19, 0x01,
 ]);
-const OTS_HEADER_LEN = 31;
-
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function hexToBytes(hex: string): Uint8Array {
   const bytes = new Uint8Array(hex.length / 2);
@@ -50,13 +48,31 @@ function readVarint(bytes: Uint8Array, pos: number): { value: number; bytesRead:
 // ── Parse pending OTS: apply ops to original hash → commitment ───────────────
 // The calendar stores the commitment (hash after Merkle ops), NOT the original hash.
 // /timestamp/{commitment} is the correct upgrade URL.
+//
+// Format detection:
+//   Full .ots file: starts with magic header (31 bytes) + version (1) + file_hash_op (1) = skip 33
+//   Raw calendar /digest response: no header, start at pos 0
+const OTS_FILE_MAGIC = new Uint8Array([0x00, 0x4f, 0x70, 0x65]); // "\x00Ope"
+
+function detectStartPos(otsBytes: Uint8Array): number {
+  if (otsBytes.length >= 4 && OTS_FILE_MAGIC.every((b, i) => otsBytes[i] === b)) {
+    // Full .ots file: skip header(31) + version(1) + file_hash_op(1)
+    return 33;
+  }
+  // Raw calendar timestamp bytes — start from 0
+  return 0;
+}
+
 async function extractCommitment(
   otsBytes: Uint8Array,
   originalHashHex: string
 ): Promise<{ commitmentHex: string; calendarUrl: string } | null> {
-  if (otsBytes.length <= OTS_HEADER_LEN) return null;
+  if (otsBytes.length < 8) return null;
 
-  let pos = OTS_HEADER_LEN;
+  const startPos = detectStartPos(otsBytes);
+  console.log(`[ots] format: ${startPos === 0 ? "raw calendar" : "full .ots file"}, starting at pos ${startPos}`);
+
+  let pos = startPos;
   let current = hexToBytes(originalHashHex);
 
   while (pos < otsBytes.length) {
