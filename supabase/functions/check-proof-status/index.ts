@@ -79,23 +79,22 @@ async function extractCommitment(
     const tag = otsBytes[pos++];
 
     if (tag === 0x00) {
-      // Attestation marker — read 8-byte type
+      // Attestation marker
+      // OTS format: 0x00 + varint(payload_len) + TAG(8 bytes) + varint(url_len) + url
+      // Must read and skip varint(payload_len) before reading the TAG
+      const { bytesRead: payloadLenSize } = readVarint(otsBytes, pos);
+      pos += payloadLenSize;
+
       if (pos + 8 > otsBytes.length) break;
       const attType = otsBytes.slice(pos, pos + 8);
       pos += 8;
 
       const isPending = attType.every((b, i) => b === PENDING_ATTESTATION_TAG[i]);
       if (isPending) {
-        // OTS TimeAttestation.serialize writes: TAG + varint(outer_len) + payload
-        // payload = varint(url_len) + url_bytes
-        // Must skip outer_len before reading url_len
-        const { bytesRead: outerSkip } = readVarint(otsBytes, pos);
-        pos += outerSkip;
         const { value: urlLen, bytesRead } = readVarint(otsBytes, pos);
         pos += bytesRead;
         if (urlLen > 0 && pos + urlLen <= otsBytes.length) {
           const url = new TextDecoder().decode(otsBytes.slice(pos, pos + urlLen));
-          // Validate URL looks right
           if (url.startsWith("http")) {
             console.log(`[ots] extracted URL: ${url}`);
             return { commitmentHex: bytesToHex(current), calendarUrl: url };
