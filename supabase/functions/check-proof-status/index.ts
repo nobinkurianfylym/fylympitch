@@ -357,6 +357,168 @@ Deno.serve(async (req) => {
       ].join("\n"),
     });
 
+    // ── Send anchor confirmation email via Resend ─────────────────────────────
+    try {
+      const { data: authUser } = await supabase.auth.admin.getUserById(project.owner_id);
+      const filmmakerEmail = authUser?.user?.email;
+      const filmmakerName  = authUser?.user?.user_metadata?.full_name
+        ?? authUser?.user?.user_metadata?.name
+        ?? "Filmmaker";
+      const firstName = (filmmakerName as string).split(" ")[0];
+
+      if (filmmakerEmail) {
+        const RESEND_KEY = Deno.env.get("RESEND_API_KEY");
+        if (RESEND_KEY) {
+          const verifyUrl  = `https://pitch.fylym.com/verify/${proof.sha256_hash}`;
+          const dashUrl    = `https://pitch.fylym.com/dashboard/projects/${proof.project_id}`;
+          const blockStr   = attestation.blockHeight.toLocaleString();
+          const dateStr    = formatDate(anchoredAt);
+
+          const emailHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bitcoin Proof Anchored — PITCH.FYLYM</title>
+</head>
+<body style="margin:0;padding:0;background:#F5F5F0;font-family:'Helvetica Neue',Arial,sans-serif;color:#1A1815;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F5F0;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+        <!-- Wordmark -->
+        <tr><td style="padding-bottom:40px;">
+          <p style="margin:0;font-size:14px;letter-spacing:0.32em;color:#1A1815;text-transform:uppercase;">
+            <span style="color:#BF9953;">P</span>ITCH.<span style="color:#BF9953;">F</span>YLYM
+          </p>
+        </td></tr>
+
+        <!-- Card -->
+        <tr><td style="background:#FFFFFF;border:1px solid #E5E0D5;border-radius:14px;overflow:hidden;">
+
+          <!-- Gold top stripe -->
+          <div style="background:#BF9953;height:4px;"></div>
+
+          <div style="padding:48px 40px;">
+
+            <h1 style="margin:0 0 6px;font-size:28px;font-weight:400;font-family:Georgia,serif;color:#1A1815;">
+              Anchored to Bitcoin
+            </h1>
+            <p style="margin:0 0 32px;font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#BF9953;">
+              Proof of Existence · Confirmed
+            </p>
+
+            <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#1A1815;">
+              Hi ${firstName},
+            </p>
+            <p style="margin:0 0 24px;font-size:16px;line-height:1.65;color:#1A1815;">
+              Your ${versionLabel} for <strong style="font-weight:600;">${project.title}</strong> is now
+              permanently recorded on the Bitcoin blockchain. This proof is immutable —
+              it cannot be altered, deleted, or disputed.
+            </p>
+
+            <!-- Data block -->
+            <table width="100%" cellpadding="0" cellspacing="0"
+              style="background:#F8F5F0;border:1px solid #E5E0D5;border-radius:10px;margin-bottom:32px;">
+              <tr><td style="padding:24px;">
+
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding-bottom:16px;">
+                      <p style="margin:0 0 4px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#8A857C;">Bitcoin Block</p>
+                      <p style="margin:0;font-size:22px;font-family:Georgia,serif;color:#BF9953;">#${blockStr}</p>
+                    </td>
+                    <td style="padding-bottom:16px;text-align:right;">
+                      <p style="margin:0 0 4px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#8A857C;">Anchored</p>
+                      <p style="margin:0;font-size:14px;color:#1A1815;">${dateStr} UTC</p>
+                    </td>
+                  </tr>
+                </table>
+
+                <div style="border-top:1px solid #E5E0D5;margin-bottom:16px;"></div>
+
+                <p style="margin:0 0 4px;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:#8A857C;">SHA-256 Fingerprint</p>
+                <p style="margin:0;font-size:10px;font-family:monospace;color:#1A1815;word-break:break-all;line-height:1.7;">${proof.sha256_hash}</p>
+
+              </td></tr>
+            </table>
+
+            <p style="margin:0 0 28px;font-size:15px;line-height:1.65;color:#8A857C;">
+              Download your PDF certificate and the raw .ots file from your project dashboard.
+              The public verify page is available to share with collaborators, distributors, or financiers.
+            </p>
+
+            <table cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding-right:12px;">
+                  <a href="${dashUrl}"
+                    style="display:inline-block;background:#1A1815;color:#F5F5F0;font-size:12px;
+                           letter-spacing:0.12em;text-transform:uppercase;font-weight:500;
+                           text-decoration:none;padding:14px 24px;border-radius:10px;">
+                    Download Certificate
+                  </a>
+                </td>
+                <td>
+                  <a href="${verifyUrl}"
+                    style="display:inline-block;background:transparent;color:#BF9953;font-size:12px;
+                           letter-spacing:0.12em;text-transform:uppercase;font-weight:500;
+                           text-decoration:none;padding:14px 24px;border-radius:10px;
+                           border:1px solid #BF9953;">
+                    View Public Proof
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+          </div>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding-top:32px;padding-bottom:8px;">
+          <p style="margin:0;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#8A857C;text-align:center;">
+            © PITCH.FYLYM · Intelligent film financing
+          </p>
+          <p style="margin:8px 0 0;font-size:11px;color:#8A857C;text-align:center;">
+            <a href="https://pitch.fylym.com" style="color:#8A857C;text-decoration:underline;">pitch.fylym.com</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+          const resendRes = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${RESEND_KEY}`,
+            },
+            body: JSON.stringify({
+              from: "PITCH.FYLYM <hello@fylym.com>",
+              to: filmmakerEmail,
+              subject: `₿ Bitcoin proof anchored — ${project.title}`,
+              html: emailHtml,
+            }),
+          });
+
+          if (!resendRes.ok) {
+            const errText = await resendRes.text();
+            console.warn(`[email] Resend failed for proof ${proof.id}: ${errText}`);
+          } else {
+            console.log(`[email] Anchor confirmation sent to ${filmmakerEmail}`);
+          }
+        } else {
+          console.warn("[email] RESEND_API_KEY not set — skipping anchor email");
+        }
+      } else {
+        console.warn(`[email] No email found for user ${project.owner_id}`);
+      }
+    } catch (emailErr) {
+      console.error(`[email] Exception sending anchor email for ${proof.id}:`, emailErr);
+    }
+
     results.anchored++;
     console.log(`✓ Anchored proof ${proof.id} at block ${attestation.blockHeight}`);
   }
