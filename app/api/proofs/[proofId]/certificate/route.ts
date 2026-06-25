@@ -43,7 +43,7 @@ export async function GET(
         ots_anchored_path,
         ots_pending_path,
         ots_status,
-        projects!inner (filmmaker_id)
+        projects!inner (owner_id)
       `)
       .eq("id", params.proofId)
       .single();
@@ -57,7 +57,7 @@ export async function GET(
       : proof.projects;
 
     // Only the filmmaker who owns the project can download
-    if (project.filmmaker_id !== user.id) {
+    if (project.owner_id !== user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -66,10 +66,10 @@ export async function GET(
       return NextResponse.json({ error: "Certificate not yet available" }, { status: 404 });
     }
 
-    // Generate signed URL valid for 60 seconds
+    // Generate signed URL valid for 1 hour
     const { data: signedUrl, error } = await serviceSupabase.storage
       .from("proofs")
-      .createSignedUrl(path, 60);
+      .createSignedUrl(path, 3600);
 
     if (error || !signedUrl) {
       return NextResponse.json({ error: "Could not generate download URL" }, { status: 500 });
