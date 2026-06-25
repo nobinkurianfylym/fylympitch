@@ -86,11 +86,22 @@ async function extractCommitment(
 
       const isPending = attType.every((b, i) => b === PENDING_ATTESTATION_TAG[i]);
       if (isPending) {
+        // OTS TimeAttestation.serialize writes: TAG + varint(outer_len) + payload
+        // payload = varint(url_len) + url_bytes
+        // Must skip outer_len before reading url_len
+        const { bytesRead: outerSkip } = readVarint(otsBytes, pos);
+        pos += outerSkip;
         const { value: urlLen, bytesRead } = readVarint(otsBytes, pos);
         pos += bytesRead;
-        if (pos + urlLen <= otsBytes.length) {
+        if (urlLen > 0 && pos + urlLen <= otsBytes.length) {
           const url = new TextDecoder().decode(otsBytes.slice(pos, pos + urlLen));
-          return { commitmentHex: bytesToHex(current), calendarUrl: url };
+          // Validate URL looks right
+          if (url.startsWith("http")) {
+            console.log(`[ots] extracted URL: ${url}`);
+            return { commitmentHex: bytesToHex(current), calendarUrl: url };
+          } else {
+            console.warn(`[ots] URL parse produced invalid string: ${url.slice(0,30)}`);
+          }
         }
       }
       break;
@@ -138,9 +149,10 @@ function parseBitcoinAttestation(bytes: Uint8Array): { blockHeight: number } | n
     }
     const pos = i + BITCOIN_ATTESTATION_TAG.length;
     let varintPos = pos;
-    // skip varint
+    // skip outer_length varint (length of Bitcoin attestation payload = 8)
     while (varintPos < bytes.length && (bytes[varintPos] & 0x80)) varintPos++;
-    varintPos++;
+    varintPos++; // move past the last varint byte
+    if (varintPos >= bytes.length) continue outer; // guard against overrun
     if (varintPos + 4 <= bytes.length) {
       const height =
         bytes[varintPos] |
