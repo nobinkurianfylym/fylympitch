@@ -68,32 +68,47 @@ async function upgradeFromCalendar(
   hashHex: string
 ): Promise<Uint8Array | null> {
   try {
-    const response = await fetch(
-      `${calendarUrl}/timestamp/${hashHex.toLowerCase()}`,
-      {
-        method: "GET",
-        headers: { "Accept": "application/octet-stream" },
-      }
-    );
+    const url = `${calendarUrl}/timestamp/${hashHex.toLowerCase()}`;
+    console.log(`[upgrade] GET ${url}`);
 
-    if (response.status === 404) return null; // Not yet anchored
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { "Accept": "application/octet-stream" },
+    });
+
+    console.log(`[upgrade] ${calendarUrl} -> HTTP ${response.status}`);
+
+    if (response.status === 404) {
+      console.log(`[upgrade] ${calendarUrl} -> 404 not anchored yet`);
+      return null;
+    }
     if (!response.ok) {
-      console.warn(`Calendar ${calendarUrl} upgrade returned ${response.status}`);
+      const text = await response.text().catch(() => "");
+      console.warn(`[upgrade] ${calendarUrl} -> ${response.status}: ${text.slice(0, 200)}`);
       return null;
     }
 
     const bytes = new Uint8Array(await response.arrayBuffer());
+    console.log(`[upgrade] ${calendarUrl} -> ${bytes.length} bytes`);
 
-    // Must be a valid OTS file (check header) and larger than pending
-    if (bytes.length < OTS_HEADER.length) return null;
+    if (bytes.length < 8) {
+      console.warn(`[upgrade] ${calendarUrl} -> too short`);
+      return null;
+    }
 
-    // Check for Bitcoin attestation
+    const preview = Array.from(bytes.slice(0, 16)).map(b => b.toString(16).padStart(2, "0")).join(" ");
+    console.log(`[upgrade] first bytes: ${preview}`);
+
     const attestation = parseBitcoinAttestation(bytes);
-    if (!attestation) return null; // No Bitcoin proof yet
+    if (!attestation) {
+      console.log(`[upgrade] ${calendarUrl} -> no Bitcoin attestation yet`);
+      return null;
+    }
 
+    console.log(`[upgrade] ${calendarUrl} -> Bitcoin block ${attestation.blockHeight}`);
     return bytes;
   } catch (err) {
-    console.warn(`Upgrade attempt failed for ${calendarUrl}:`, err);
+    console.warn(`[upgrade] ${calendarUrl} -> exception:`, err);
     return null;
   }
 }
