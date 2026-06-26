@@ -37,6 +37,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${montserrat.variable} ${playfair.variable}`}>
       <head>
+        {/* Tabler Icons webfont */}
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css"
+        />
         {/* Preconnect to Supabase — saves ~150ms on first auth/data call */}
         <link rel="preconnect" href={`https://${SUPABASE_HOST}`} />
         <link rel="dns-prefetch" href={`https://${SUPABASE_HOST}`} />
