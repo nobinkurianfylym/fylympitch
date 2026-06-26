@@ -204,74 +204,152 @@ export default async function Home() {
       </section>
 
       {/* PROOF OF EXISTENCE */}
+
+      {/* — Hero: dark — */}
       <section className="bg-deep text-ivory">
         <div className="max-w-3xl mx-auto px-6 py-24 md:py-32 text-center">
 
-          {/* Trust label */}
           <p className="text-[10px] tracking-[0.28em] uppercase text-ivory/30 mb-5">
             The most trusted place to submit your film project
           </p>
-
-          {/* Eyebrow */}
           <p className="eyebrow text-gold mb-8">Proof of Existence</p>
 
-          {/* Main headline */}
-          <h2 className="font-display text-[30px] md:text-[46px] leading-[1.12] font-normal mb-12">
+          <h2 className="font-display text-[30px] md:text-[46px] leading-[1.12] font-normal mb-8">
             Before your project reaches a producer, it receives a permanent,{" "}
             <span className="italic text-gold">Bitcoin-verified proof of its existence.</span>
           </h2>
 
-          {/* Hash specimen */}
+          <p className="text-[16px] leading-[1.8] text-ivory/50 mb-10 max-w-xl mx-auto">
+            Your project is never exposed. Only its unique digital fingerprint is
+            recorded — permanent, independent, and verifiable by anyone on earth.
+          </p>
+
           <div
-            className="inline-flex flex-wrap justify-center items-center gap-x-5 gap-y-2 mb-14 px-6 py-4"
+            className="inline-flex flex-wrap justify-center items-center gap-x-5 gap-y-2 mb-10 px-6 py-4"
             style={{ border: "1px solid rgba(255,255,255,0.08)" }}
           >
-            <span className="text-[10px] tracking-[0.22em] uppercase text-ivory/30">SHA-256</span>
-            <span className="font-mono text-[12px] text-gold/50 tracking-wider">3a7f2c9b·1e48d6f2·a09c3b7e···</span>
+            <span className="text-[10px] tracking-[0.22em] uppercase text-gold/60">SHA-256</span>
+            <span className="font-mono text-[12px] text-ivory/40 tracking-wider">3a7f2c9b·1e48d6f2·a09c3b7e···</span>
             <span className="text-[10px] tracking-[0.15em] uppercase text-ivory/30">Block #893,441</span>
             <span className="text-[10px] tracking-[0.15em] uppercase text-ivory/30">14 Jun 2025 · 09:41 UTC</span>
           </div>
 
-          {/* Body copy */}
-          <div className="text-left space-y-6 mb-16">
-            <p className="text-[16px] md:text-[17px] leading-[1.85] text-ivory/60">
-              Every project uploaded to Pitch.Fylym is cryptographically hashed and anchored to the Bitcoin
-              blockchain — the world&apos;s most secure and enduring public ledger. Your project itself is never
-              published or exposed. Only its unique digital fingerprint is recorded, creating independent proof
-              that your work existed in that exact form at that exact moment in time.
-            </p>
-            <p className="text-[16px] md:text-[17px] leading-[1.85] text-ivory/60">
-              No central authority. No intermediary. No expiry date. Just a permanent, independently verifiable
-              record that anyone can verify, anywhere in the world.
-            </p>
-          </div>
+          <Link href="/signup" className="btn-gold">
+            Timestamp Your Pitch Deck →
+          </Link>
 
-          {/* Three pillars */}
-          <div
-            className="grid grid-cols-3 max-w-xl mx-auto mb-16"
-            style={{ border: "1px solid rgba(255,255,255,0.08)" }}
-          >
+        </div>
+      </section>
+
+      {/* — How it works + Certificate + Trust signals: light — */}
+      <section className="bg-ivory">
+        <div className="max-w-5xl mx-auto px-6 py-20 md:py-28">
+
+          {/* Steps */}
+          <p className="eyebrow text-center mb-14">How it works</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
             {[
-              { label: "No central authority", sub: "Bitcoin-anchored" },
-              { label: "No intermediary",      sub: "Direct chain record" },
-              { label: "No expiry date",       sub: "Permanent & verifiable" },
-            ].map((item, i) => (
-              <div
-                key={item.label}
-                className="py-6 px-4"
-                style={{ borderLeft: i > 0 ? "1px solid rgba(255,255,255,0.08)" : undefined }}
-              >
-                <p className="text-[13px] text-ivory/70 mb-1.5">{item.label}</p>
-                <p className="text-[10px] tracking-[0.18em] uppercase text-gold/50">{item.sub}</p>
+              { icon: "ti-file-text",       label: "Upload your pitch deck", sub: "PDF only. Your file never leaves our servers.", gold: false },
+              { icon: "ti-fingerprint",     label: "Fingerprint created",    sub: "A unique SHA-256 hash of your document.",        gold: false },
+              { icon: "ti-currency-bitcoin",label: "Anchored to Bitcoin",    sub: "Via OpenTimestamps. Permanent, immutable.",        gold: true  },
+              { icon: "ti-certificate",     label: "Certificate issued",     sub: "Instant. Includes a public verification link.",  gold: false },
+            ].map((step) => (
+              <div key={step.label} className="flex flex-col items-center text-center">
+                <div
+                  className="w-11 h-11 rounded-full flex items-center justify-center mb-4 shrink-0"
+                  style={{ background: step.gold ? "#BF9953" : "#1A1815" }}
+                >
+                  <i className={`ti ${step.icon} text-ivory`} style={{ fontSize: 18 }} aria-hidden="true" />
+                </div>
+                <p className="text-[12px] font-semibold text-ink leading-snug mb-2">{step.label}</p>
+                <p className="text-[11px] text-ash leading-relaxed">{step.sub}</p>
               </div>
             ))}
           </div>
 
-          {/* Closing line */}
-          <p className="font-display text-[26px] md:text-[34px] italic text-gold">
-            Pitch with confidence.
-          </p>
+          {/* Proof certificate card */}
+          <div
+            className="bg-white rounded-card mx-auto mb-14 max-w-md"
+            style={{ border: "1px solid rgba(26,24,21,0.1)", padding: "24px 28px" }}
+          >
+            <div className="flex justify-between items-start mb-5">
+              <div>
+                <p className="text-[9px] tracking-[0.2em] uppercase text-ash mb-2">Proof of Existence</p>
+                <p className="text-[12px] text-ash leading-snug">
+                  Your pitch deck fingerprint has been<br />anchored to the Bitcoin blockchain.
+                </p>
+              </div>
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 ml-4"
+                style={{ background: "#22c55e" }}
+              >
+                <i className="ti ti-check text-white" style={{ fontSize: 13 }} aria-hidden="true" />
+              </div>
+            </div>
 
+            <div className="space-y-3" style={{ borderTop: "1px solid rgba(26,24,21,0.08)", paddingTop: 16 }}>
+              {[
+                { icon: "ti-clock",            iconCls: "text-ash",  label: "Timestamp",      value: "May 25, 2025 · 10:48 AM IST",  mono: false, green: false },
+                { icon: "ti-currency-bitcoin", iconCls: "text-gold", label: "Blockchain",     value: "Bitcoin (via OpenTimestamps)", mono: false, green: false },
+                { icon: "ti-hash",             iconCls: "text-ash",  label: "Transaction ID", value: "b4f7c2...8e9a1d7",             mono: true,  green: false },
+                { icon: "ti-shield-check",     iconCls: "text-ash",  label: "Status",         value: "Confirmed",                   mono: false, green: true  },
+              ].map((row) => (
+                <div key={row.label} className="flex items-center gap-3">
+                  <i className={`ti ${row.icon} ${row.iconCls} shrink-0`} style={{ fontSize: 14 }} aria-hidden="true" />
+                  <div>
+                    <p className="text-[9px] tracking-[0.12em] uppercase text-ash mb-0.5">{row.label}</p>
+                    <p className={`text-[12px] font-medium ${row.green ? "text-green-600" : "text-ink"} ${row.mono ? "font-mono" : ""}`}>
+                      {row.value}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div
+              className="flex justify-between items-center mt-4 pt-3"
+              style={{ borderTop: "1px solid rgba(26,24,21,0.08)" }}
+            >
+              <p className="font-display italic text-[11px] text-ash">Signed</p>
+              <div className="flex items-center gap-1.5">
+                <i className="ti ti-shield text-gold" style={{ fontSize: 12 }} aria-hidden="true" />
+                <span className="text-[9px] tracking-[0.14em] uppercase font-semibold text-ink">PITCH.FYLYM</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust signals */}
+          <div
+            className="grid grid-cols-3"
+            style={{ border: "1px solid rgba(26,24,21,0.1)", borderRadius: 8, overflow: "hidden" }}
+          >
+            {[
+              { icon: "ti-lock",         label: "Private",      sub: "Your content stays secure. Only the fingerprint is stored." },
+              { icon: "ti-shield-check", label: "Tamper-proof", sub: "No one can alter the record. Not even us."                   },
+              { icon: "ti-world",        label: "Verifiable",   sub: "Anyone can verify independently, anytime, anywhere."         },
+            ].map((item, i) => (
+              <div
+                key={item.label}
+                className="p-5"
+                style={{ borderLeft: i > 0 ? "1px solid rgba(26,24,21,0.1)" : undefined }}
+              >
+                <i className={`ti ${item.icon} text-ink`} style={{ fontSize: 20, display: "block", marginBottom: 10 }} aria-hidden="true" />
+                <p className="text-[12px] font-semibold text-ink mb-1.5">{item.label}</p>
+                <p className="text-[11px] text-ash leading-relaxed">{item.sub}</p>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </section>
+
+      {/* — Tagline: dark — */}
+      <section className="bg-ink">
+        <div className="max-w-3xl mx-auto px-6 py-10 text-center">
+          <p className="font-display text-[18px] md:text-[22px] text-ivory/90">
+            Your idea. Your creation. Your proof.{" "}
+            <span className="italic text-gold">Forever.</span>
+          </p>
         </div>
       </section>
 
