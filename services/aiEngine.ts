@@ -41,7 +41,6 @@ import {
   runFylympitchEngine,
   type FylympitchEngineInput,
   type FylympitchEngineResult,
-  type FundingObstacle,
 } from "./fylympitchEngine.ts";
 
 // ── Types ────────────────────────────────────────────────────

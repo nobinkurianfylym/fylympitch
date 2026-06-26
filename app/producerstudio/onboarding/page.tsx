@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useActionState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { saveProducerProfile } from "@/lib/actions";
 import AvatarUpload from "@/components/AvatarUpload";

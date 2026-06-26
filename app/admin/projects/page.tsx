@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { adminToggleProjectVisibility, adminDeleteProject } from "@/lib/actions";
-import { usd, STAGE_LABEL } from "@/lib/format";
+import { usd } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 
 export const dynamic = "force-dynamic";

@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
-import { TYPE_LABEL } from "@/lib/format";
 import SearchInput from "@/components/SearchInput";
 import type { Metadata } from "next";
 

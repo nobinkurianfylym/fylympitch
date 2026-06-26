@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { usd, STAGE_LABEL, formatBudget } from "@/lib/format";
+import { usd, formatBudget } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 import { respondToOffer } from "@/lib/project-actions";
 import ProjectThumbnail from "@/components/ProjectThumbnail";

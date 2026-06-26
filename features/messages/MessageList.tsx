@@ -14,7 +14,7 @@ import React, {
   useMemo,
 } from "react";
 import type { MessageOrOptimistic } from "./message.types";
-import { shouldShowDateDivider, isOptimistic } from "./message.utils";
+import { shouldShowDateDivider } from "./message.utils";
 import { DateDivider } from "./DateDivider";
 import { MessageItem } from "./MessageItem";
 import { EmptyState } from "./EmptyState";

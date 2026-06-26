@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { usd, STAGE_LABEL, formatBudget } from "@/lib/format";
-import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
+import { formatBudget } from "@/lib/format";
+import { formatFormat, formatCountry } from "@/lib/film-identity";
 
 export const dynamic = "force-dynamic";
 

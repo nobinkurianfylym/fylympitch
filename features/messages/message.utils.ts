@@ -246,7 +246,6 @@ export function createOptimisticMessage(
 // ── Message normalisation from DB row ─────────────────────────
 
 export function normalizeMessage(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   row: Record<string, any>
 ): Message {
   return {

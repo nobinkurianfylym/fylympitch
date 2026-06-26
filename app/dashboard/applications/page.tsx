@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { usd, timeAgo } from "@/lib/format";
 import { updateFilmmakerStage } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";

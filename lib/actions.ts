@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { toUSD } from "@/lib/format";
 import { toLiveUSD, validateBudgetSplit } from "@/lib/currency";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { usd, TYPE_LABEL, CATEGORY_CONFIG, OPP_CATEGORY_MAP } from "@/lib/format";
 import { toggleSaved } from "@/lib/actions";
-import { OpportunityCategoryBlock, type MatchedProducer } from "./OpportunityCategoryBlock";
+import { OpportunityCategoryBlock } from "./OpportunityCategoryBlock";
 
 export const dynamic = "force-dynamic";
 

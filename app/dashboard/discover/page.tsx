@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { usd, STAGE_LABEL } from "@/lib/format";
+import { usd } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 import OfferForm from "@/components/OfferForm";
 import PitchDeckTile from "@/components/PitchDeckTile";

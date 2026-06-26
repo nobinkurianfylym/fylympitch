@@ -5,7 +5,7 @@ import Wordmark from "@/components/Wordmark";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import LoveButton from "@/components/LoveButton";
 import ShareButton from "@/components/ShareButton";
-import { usd, STAGE_LABEL, formatBudget } from "@/lib/format";
+import { formatBudget } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 import type { Metadata } from "next";
 

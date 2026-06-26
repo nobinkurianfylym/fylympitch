@@ -2,7 +2,7 @@
 // app/admin/intelligence/TriggerCrawlButton.tsx
 // Fires crawl and polls via page refresh every 15s until run completes.
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { triggerCrawlRun } from "./actions-trigger";
 

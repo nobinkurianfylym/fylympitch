@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { JourneyOpp } from '@/components/FundingJourney';
 
 // Mirrors 9 master categories from FundingJourney
 const CATEGORY_DEFS = [

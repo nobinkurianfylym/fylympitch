@@ -12,7 +12,6 @@ import {
   buildMetadataItems,
   formatBudgetDisplay,
   formatFilmDate,
-  formatFormat,
   formatShortId,
   formatStage,
   STAGE_BADGE,

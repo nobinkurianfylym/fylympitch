@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { usd, timeAgo } from "@/lib/format";
+import { usd } from "@/lib/format";
 import { deleteProject, respondToOffer } from "@/lib/project-actions";
 import { requestProducerIntroduction } from "@/lib/actions";
 import type { Opportunity, Project } from "@/types";
