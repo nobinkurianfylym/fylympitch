@@ -166,6 +166,25 @@ function formatDate(iso: string): string {
   });
 }
 
+// ── Error logger ──────────────────────────────────────────────────────────────
+async function logError(
+  supabase: ReturnType<typeof createClient>,
+  message: string,
+  context?: Record<string, unknown>,
+  severity: "warn" | "error" | "critical" = "error"
+) {
+  try {
+    await supabase.from("platform_errors").insert({
+      source: "check-proof-status",
+      severity,
+      message,
+      context: context ?? null,
+    });
+  } catch (_) {
+    // never let logging break the main flow
+  }
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -193,6 +212,7 @@ Deno.serve(async (req) => {
 
   if (fetchError) {
     console.error("DB fetch error:", fetchError);
+    await logError(supabase, "DB fetch failed for pending proofs", { error: fetchError.message }, "critical");
     return Response.json({ error: "DB fetch failed" }, { status: 500 });
   }
 
@@ -307,6 +327,7 @@ Deno.serve(async (req) => {
 
     if (uploadError) {
       console.error(`Storage upload failed for ${proof.id}:`, uploadError);
+      await logError(supabase, `Storage upload failed for anchored OTS`, { proof_id: proof.id, error: uploadError.message });
       results.failed++;
       continue;
     }
@@ -326,6 +347,7 @@ Deno.serve(async (req) => {
 
     if (updateError) {
       console.error(`DB update failed for ${proof.id}:`, updateError);
+      await logError(supabase, `DB update failed after anchoring proof`, { proof_id: proof.id, error: updateError.message });
       results.failed++;
       continue;
     }

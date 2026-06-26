@@ -39,6 +39,11 @@ export async function respondToOffer(formData: FormData) {
     .eq("id", offer_id)
     .single();
   if (!offer) return;
+
+  // Ownership check — only the filmmaker who owns the project can respond to offers on it
+  const project = Array.isArray(offer.projects) ? offer.projects[0] : offer.projects;
+  if (!project || project.owner_id !== user.id) return;
+
   await supabase.from("offers").update({ status: decision }).eq("id", offer_id);
   await supabase.from("notifications").insert({
     user_id: offer.from_user_id,

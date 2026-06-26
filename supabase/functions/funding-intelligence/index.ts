@@ -151,6 +151,25 @@ function getSupabase() {
   });
 }
 
+// ─── Error logger ─────────────────────────────────────────────
+async function logError(
+  supabase: ReturnType<typeof createClient>,
+  message: string,
+  context?: Record<string, unknown>,
+  severity: "warn" | "error" | "critical" = "error"
+) {
+  try {
+    await supabase.from("platform_errors").insert({
+      source: "funding-intelligence",
+      severity,
+      message,
+      context: context ?? null,
+    });
+  } catch (_) {
+    // never let logging break the main flow
+  }
+}
+
 // ─── AI Waterfall: Cerebras → Groq → OpenAI ───────────────────
 // Mirrors the callLLM() function in services/aiEngine.ts
 async function callLLM(
@@ -725,6 +744,14 @@ Deno.serve(async (req: Request) => {
 
     console.log("FUNDING INTELLIGENCE COMPLETE:", JSON.stringify(summary));
 
+    // ── Log high failure rate ───────────────────────────────────
+    if (stats.failed_crawls > 0 && stats.sources_crawled > 0) {
+      const failRate = stats.failed_crawls / stats.sources_crawled;
+      if (failRate >= 0.5) {
+        await logError(supabase, `High crawl failure rate: ${stats.failed_crawls}/${stats.sources_crawled} sources failed`, { run_id: runId, ...summary }, "warn");
+      }
+    }
+
     // ── Refresh platform metrics snapshot ──────────────────────
     try {
       await supabase.rpc("refresh_platform_metrics");
@@ -740,6 +767,7 @@ Deno.serve(async (req: Request) => {
 
   } catch (err) {
     console.error("[intelligence] Fatal:", err);
+    await logError(supabase, `Fatal crawl error: ${String(err)}`, { run_id: runId }, "critical");
     await supabase.from("funding_crawl_runs").update({
       status: "failed", finished_at: new Date().toISOString(),
       error_summary: String(err),

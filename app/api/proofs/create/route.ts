@@ -1,10 +1,11 @@
 // app/api/proofs/create/route.ts
 // Server-side proxy: receives proof creation request from client,
-// forwards to Supabase Edge Function with service role key
-// Keeps Supabase URLs and keys off the client
+// forwards to Supabase Edge Function with service role key.
+// Keeps Supabase service key off the client.
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
 
 export const runtime = "edge";
 
@@ -20,13 +21,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate the filmmaker owns this project via user session
-    const supabase = createClient(
+    // ── Auth: verify session cookie ───────────────────────────────────────────
+    const supabaseAnon = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name) {
+            return req.cookies.get(name)?.value;
+          },
+        },
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabaseAnon.auth.getUser();
+    if (!user || authError) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // ── Ownership: verify this user owns the project ──────────────────────────
+    const serviceSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Call the Edge Function with service role key
+    const { data: project } = await serviceSupabase
+      .from("projects")
+      .select("id, owner_id")
+      .eq("id", project_id)
+      .single();
+
+    if (!project || project.owner_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // ── Forward to Edge Function ──────────────────────────────────────────────
     const edgeUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-proof`;
 
     const edgeRes = await fetch(edgeUrl, {
