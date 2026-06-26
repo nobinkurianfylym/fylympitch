@@ -1,6 +1,7 @@
 // app/api/proofs/[proofId]/snapshot/route.ts
-// Serves the stored project snapshot JSON for independent verification
-// Auth required — filmmaker only
+// Serves the stored project snapshot JSON for independent verification.
+// Auth required — filmmaker only.
+// Reads snapshot_json column first (new rows), falls back to Storage (old rows).
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -29,10 +30,10 @@ export async function GET(
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Verify ownership
+    // Verify ownership + fetch snapshot_json in one query
     const { data: proof } = await serviceSupabase
       .from("project_proofs")
-      .select("id, proof_type, sha256_hash, projects!inner(owner_id, title)")
+      .select("id, project_id, proof_type, sha256_hash, snapshot_json, projects!inner(owner_id, title)")
       .eq("id", params.proofId)
       .single();
 
@@ -47,8 +48,18 @@ export async function GET(
       return NextResponse.json({ error: "Not a snapshot proof" }, { status: 400 });
     }
 
-    // Fetch snapshot JSON from storage
-    const snapshotPath = `${(proof as any).project_id}/${proof.id}/snapshot.json`;
+    // ── 1. DB column (new rows) ───────────────────────────────────────────────
+    if (proof.snapshot_json) {
+      return new NextResponse(proof.snapshot_json, {
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Disposition": `attachment; filename="fylym-snapshot-${proof.id.slice(0, 8)}.json"`,
+        },
+      });
+    }
+
+    // ── 2. Storage fallback (rows created before migration 058) ──────────────
+    const snapshotPath = `${proof.project_id}/${proof.id}/snapshot.json`;
     const { data, error } = await serviceSupabase.storage
       .from("proofs")
       .download(snapshotPath);
@@ -57,9 +68,7 @@ export async function GET(
       return NextResponse.json({ error: "Snapshot not available" }, { status: 404 });
     }
 
-    const text = await data.text();
-
-    return new NextResponse(text, {
+    return new NextResponse(await data.text(), {
       headers: {
         "Content-Type": "application/json",
         "Content-Disposition": `attachment; filename="fylym-snapshot-${proof.id.slice(0, 8)}.json"`,

@@ -1,7 +1,5 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-
 interface TriggerProjectProofArgs {
   projectId: string;
   projectData: {
@@ -23,8 +21,17 @@ interface TriggerProjectProofArgs {
   pitchDeckFileName?: string | null;
 }
 
+async function getServiceClient() {
+  const { createClient } = await import("@supabase/supabase-js");
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  );
+}
+
 async function getNextVersion(projectId: string): Promise<number> {
-  const supabase = await createClient();
+  const supabase = await getServiceClient();
   const { count } = await supabase
     .from("project_proofs")
     .select("*", { count: "exact", head: true })
@@ -60,76 +67,41 @@ function buildProjectSnapshot(data: TriggerProjectProofArgs["projectData"]): str
   return JSON.stringify(fields, Object.keys(fields).sort());
 }
 
-// Submit hash to Edge Function — returns proof_id on success
-async function submitProof({
-  projectId, sha256Hash, fileName, proofType, version,
-}: {
-  projectId: string; sha256Hash: string; fileName: string;
-  proofType: "file" | "snapshot"; version: number;
-}): Promise<string | null> {
-  try {
-    const edgeUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-proof`;
-    const res = await fetch(edgeUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-      },
-      body: JSON.stringify({ project_id: projectId, sha256_hash: sha256Hash, file_name: fileName, proof_type: proofType, version }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.proof_id ?? null;
-  } catch {
-    return null;
-  }
-}
-
-// Store snapshot JSON in Storage so filmmaker can download for independent verification
-async function storeSnapshotJson(projectId: string, proofId: string, json: string): Promise<void> {
-  try {
-    const { createClient: createServiceClient } = await import("@supabase/supabase-js");
-    const supabase = createServiceClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-    const path = `${projectId}/${proofId}/snapshot.json`;
-    await supabase.storage.from("proofs").upload(path, json, {
-      contentType: "application/json",
-      upsert: false,
-    });
-  } catch (err) {
-    console.error("[Proof] storeSnapshotJson failed:", err);
-  }
-}
-
+// ── triggerProjectProof ────────────────────────────────────────────────────────
+// Called from after() — must complete fast (no external network calls).
+// Inserts project_proofs rows with ots_status = 'queued'.
+// The process-queued-proofs Edge Function (pg_cron, every 5 min) picks
+// them up and submits to OTS calendars outside the Worker lifecycle.
 export async function triggerProjectProof({
   projectId, projectData, pitchDeckHash, pitchDeckFileName,
 }: TriggerProjectProofArgs): Promise<void> {
   try {
-    const version = await getNextVersion(projectId);
+    const supabase = await getServiceClient();
+    const version  = await getNextVersion(projectId);
 
-    // ── 1. Project data snapshot ──
+    // ── 1. Snapshot proof — hash of project metadata ──
     const snapshotJson = buildProjectSnapshot(projectData);
     const snapshotHash = await hashString(snapshotJson);
 
-    const snapshotProofId = await submitProof({
-      projectId, sha256Hash: snapshotHash,
-      fileName: `project_snapshot_v${version}.json`,
-      proofType: "snapshot", version,
+    await supabase.from("project_proofs").insert({
+      project_id:   projectId,
+      version,
+      file_name:    `project_snapshot_v${version}.json`,
+      proof_type:   "snapshot",
+      sha256_hash:  snapshotHash,
+      ots_status:   "queued",
+      snapshot_json: snapshotJson,
     });
 
-    // Store the JSON so filmmaker can download for independent verification
-    if (snapshotProofId) {
-      await storeSnapshotJson(projectId, snapshotProofId, snapshotJson);
-    }
-
-    // ── 2. Pitch deck file (if uploaded) ──
+    // ── 2. Pitch deck file proof (if uploaded) ──
     if (pitchDeckHash && pitchDeckFileName) {
-      await submitProof({
-        projectId, sha256Hash: pitchDeckHash,
-        fileName: pitchDeckFileName,
-        proofType: "file", version,
+      await supabase.from("project_proofs").insert({
+        project_id:  projectId,
+        version,
+        file_name:   pitchDeckFileName,
+        proof_type:  "file",
+        sha256_hash: pitchDeckHash,
+        ots_status:  "queued",
       });
     }
   } catch (err) {
