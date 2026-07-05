@@ -20,7 +20,7 @@ export default function OnboardingPage() {
     fd.set("full_name",    name.trim());
     fd.set("country",      country.trim());
     fd.set("imdb_url",     imdb.trim());
-    fd.set("career_stage", isDebut ? "debut" : "filmmaker");
+    if (isDebut) fd.set("career_stage", "debut");
 
     startTransition(async () => {
       const result = await completeFilmmakerOnboarding(fd);
@@ -98,7 +98,9 @@ export default function OnboardingPage() {
               )}
             </div>
             <div>
-              <div className="text-[14px] font-medium text-ink">Debut filmmaker</div>
+              <div className="text-[14px] font-medium text-ink">
+                Debut filmmaker <span className="font-normal text-ash">— optional</span>
+              </div>
               <div className="text-[12px] text-ash mt-0.5">First or second feature / documentary</div>
             </div>
           </label>

@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
       .select("profile_completed, role")
       .eq("id", user.id)
       .single();
-    if (profile && profile.profile_completed === false) {
+    if (profile && profile.role !== "admin" && profile.profile_completed === false) {
       const url = request.nextUrl.clone();
       url.pathname = profile.role === "producer" ? "/producerstudio/onboarding" : "/onboarding";
       return NextResponse.redirect(url);

@@ -39,7 +39,7 @@ export async function completeFilmmakerOnboarding(formData: FormData) {
   const full_name    = str(formData, "full_name")?.trim();
   const country      = str(formData, "country")?.trim();
   const imdb_url     = str(formData, "imdb_url")?.trim() || null;
-  const career_stage = str(formData, "career_stage") || "filmmaker";
+  const career_stage = str(formData, "career_stage") || null;
 
   if (!full_name) return { error: "Please enter your name." };
   if (!country)   return { error: "Please enter your country." };
@@ -471,6 +471,8 @@ export async function deleteProducerOpportunity(formData: FormData) {
   revalidatePath("/producerstudio/my-opportunities");
   revalidatePath("/opportunities");
 }
+
+export async function updateFilmmakerStage(formData: FormData) {
   const { supabase, user } = await requireUser();
   const id    = str(formData, "application_id");
   const stage = str(formData, "stage");
@@ -1332,7 +1334,7 @@ export async function deleteFilmmakerCredit(formData: FormData) {
 
 export async function updateCareerStage(formData: FormData) {
   const { supabase, user } = await requireUser();
-  const career_stage = str(formData, "career_stage");
+  const career_stage = str(formData, "career_stage") || null;
   await supabase.from("profiles").update({ career_stage }).eq("id", user.id);
   revalidatePath("/dashboard/credits");
 }
