@@ -4,48 +4,48 @@ import { useState } from "react";
 
 const PROJECTS = [
   {
-    title: "Sigma Events",
-    genre: "Comedy", format: "Feature", country: "India", budget: "$280K", seeking: "$175K",
-    fundable: "$1.2M", sources: 30, readiness: 45,
-    breakdown: [{ l: "Grants", a: "$320K" }, { l: "Labs", a: "$180K" }, { l: "Co-Pro", a: "$510K" }, { l: "Funds", a: "$190K" }],
+    title: "SAMPLE FEATURE — COMEDY",
+    genre: "Comedy", format: "Feature", country: "—", budget: "—", seeking: "—",
+    fundable: "—", sources: 0, readiness: 0,
+    breakdown: [{ l: "Grants", a: "—" }, { l: "Labs", a: "—" }, { l: "Co-Pro", a: "—" }, { l: "Funds", a: "—" }],
     matches: [
-      { name: "TorinoFilmLab", country: "Italy", type: "Development Lab", award: "€40,000", deadline: "Open", score: 95 },
-      { name: "Sundance Screenwriters Lab", country: "USA", type: "Script Lab", award: "$25,000", deadline: "Sep 15", score: 88 },
-      { name: "BFI Development Fund", country: "UK", type: "Grant", award: "£35,000", deadline: "Rolling", score: 82 },
+      { name: "Illustrative lab", country: "—", type: "Development Lab", award: "—", deadline: "—", score: 0 },
+      { name: "Illustrative lab", country: "—", type: "Script Lab", award: "—", deadline: "—", score: 0 },
+      { name: "Illustrative fund", country: "—", type: "Grant", award: "—", deadline: "—", score: 0 },
     ],
-    ep: "Your ensemble comedy with Kerala setting is rare in the international lab circuit. Apply to TorinoFilmLab before the September window — 67% estimated success.",
+    ep: "Example only — submit your project to see your own funding readiness score and matched opportunities.",
+    stages: [
+      { l: "Script", s: "completed" }, { l: "Script Labs", s: "current" }, { l: "Dev Labs", s: "ready" },
+      { l: "Dev Grants", s: "upcoming" }, { l: "Co-Pro", s: "locked" }, { l: "Production", s: "locked" },
+    ],
+  },
+  {
+    title: "SAMPLE FEATURE — DRAMA",
+    genre: "Drama", format: "Feature", country: "—", budget: "—", seeking: "—",
+    fundable: "—", sources: 0, readiness: 0,
+    breakdown: [{ l: "Grants", a: "—" }, { l: "Labs", a: "—" }, { l: "Co-Pro", a: "—" }, { l: "Funds", a: "—" }],
+    matches: [
+      { name: "Illustrative fund", country: "—", type: "Development Grant", award: "—", deadline: "—", score: 0 },
+      { name: "Illustrative fund", country: "—", type: "Co-Development", award: "—", deadline: "—", score: 0 },
+      { name: "Illustrative fund", country: "—", type: "Grant", award: "—", deadline: "—", score: 0 },
+    ],
+    ep: "Example only — submit your project to see your own funding readiness score and matched opportunities.",
     stages: [
       { l: "Script", s: "completed" }, { l: "Script Labs", s: "completed" }, { l: "Dev Labs", s: "current" },
       { l: "Dev Grants", s: "ready" }, { l: "Co-Pro", s: "upcoming" }, { l: "Production", s: "locked" },
     ],
   },
   {
-    title: "The Waiting Shore",
-    genre: "Drama", format: "Feature", country: "Kerala", budget: "$180K", seeking: "$120K",
-    fundable: "$847K", sources: 24, readiness: 72,
-    breakdown: [{ l: "Grants", a: "$350K" }, { l: "Labs", a: "$160K" }, { l: "Co-Pro", a: "$240K" }, { l: "Funds", a: "$97K" }],
+    title: "SAMPLE FEATURE — DOCUMENTARY",
+    genre: "Documentary", format: "Documentary", country: "—", budget: "—", seeking: "—",
+    fundable: "—", sources: 0, readiness: 0,
+    breakdown: [{ l: "Grants", a: "—" }, { l: "Labs", a: "—" }, { l: "Streamers", a: "—" }, { l: "Funds", a: "—" }],
     matches: [
-      { name: "Hubert Bals Fund", country: "Netherlands", type: "Development Grant", award: "$50,000", deadline: "23 days", score: 94 },
-      { name: "Creative Europe – MEDIA", country: "EU", type: "Co-Development", award: "$200,000", deadline: "61 days", score: 87 },
-      { name: "BFI Development Fund", country: "UK", type: "Grant", award: "£35,000", deadline: "Rolling", score: 82 },
+      { name: "Illustrative fund", country: "—", type: "Documentary Grant", award: "—", deadline: "—", score: 0 },
+      { name: "Illustrative fund", country: "—", type: "Development Fund", award: "—", deadline: "—", score: 0 },
+      { name: "Illustrative fund", country: "—", type: "Development Grant", award: "—", deadline: "—", score: 0 },
     ],
-    ep: "Malayalam-language debut with strong festival DNA. Hubert Bals Fund is your highest-ROI action this month — 73% success probability with your current profile.",
-    stages: [
-      { l: "Script", s: "completed" }, { l: "Script Labs", s: "completed" }, { l: "Dev Labs", s: "completed" },
-      { l: "Dev Grants", s: "current" }, { l: "Co-Pro", s: "ready" }, { l: "Production", s: "upcoming" },
-    ],
-  },
-  {
-    title: "Midnight Circuit",
-    genre: "Documentary", format: "Documentary", country: "India", budget: "$45K", seeking: "$35K",
-    fundable: "$380K", sources: 18, readiness: 58,
-    breakdown: [{ l: "Grants", a: "$160K" }, { l: "Labs", a: "$80K" }, { l: "Streamers", a: "$80K" }, { l: "Funds", a: "$60K" }],
-    matches: [
-      { name: "BFI Doc Society Fund", country: "UK", type: "Documentary Grant", award: "£30,000", deadline: "Rolling", score: 92 },
-      { name: "IDFA Bertha Fund", country: "Netherlands", type: "Development Fund", award: "$25,000", deadline: "Oct 1", score: 88 },
-      { name: "Sundance Documentary Fund", country: "USA", type: "Development Grant", award: "$20,000", deadline: "Nov 15", score: 79 },
-    ],
-    ep: "Strong subject, weak documentation. Add a production budget breakdown and one letter of support to push eligibility from 58% to 80%+ at IDFA and Sundance.",
+    ep: "Example only — submit your project to see your own funding readiness score and matched opportunities.",
     stages: [
       { l: "Script", s: "completed" }, { l: "Script Labs", s: "current" }, { l: "Dev Labs", s: "ready" },
       { l: "Dev Grants", s: "upcoming" }, { l: "Co-Pro", s: "locked" }, { l: "Production", s: "locked" },
@@ -77,7 +77,7 @@ export default function HomepageDemo() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "20px", marginBottom: "32px" }}>
         <div>
-          <p style={{ fontSize: "10px", letterSpacing: "0.26em", textTransform: "uppercase", color: "#8A857C", marginBottom: "10px" }}>Live demo</p>
+          <p style={{ fontSize: "10px", letterSpacing: "0.26em", textTransform: "uppercase", color: "#8A857C", marginBottom: "10px" }}>Illustrative example</p>
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "30px", fontWeight: 400, color: "#1A1815", marginBottom: "8px", lineHeight: 1.2 }}>
             See the engine in action
           </h2>
