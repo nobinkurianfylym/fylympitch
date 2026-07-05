@@ -29,7 +29,7 @@ export default async function ProjectsPage({
 
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+    .select("id, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
     .eq("is_public", true)
     .is("target_producer_id", null)
     .order("created_at", { ascending: false })
@@ -50,6 +50,17 @@ export default async function ProjectsPage({
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+
+  // Bulk signed URLs for pitch deck cover tiles (poster takes priority when present)
+  const deckUrlMap = new Map<string, string>();
+  await Promise.all(
+    (projects ?? [])
+      .filter((p: any) => !p.poster_path && p.pitch_deck_path)
+      .map(async (p: any) => {
+        const { data } = await supabase.storage.from("pitch-decks").createSignedUrl(p.pitch_deck_path, 3600);
+        if (data?.signedUrl) deckUrlMap.set(p.id, data.signedUrl);
+      })
+  );
 
   return (
     <div className="min-h-screen bg-ivory">
@@ -130,6 +141,7 @@ export default async function ProjectsPage({
                     ...p,
                     filmmaker,
                     financing_secured_usd: p.finance_secured_usd ?? null,
+                    deckUrl: deckUrlMap.get(p.id) ?? null,
                   }}
                   supabaseUrl={supabaseUrl}
                   href={`/filmprojects/${p.id}`}

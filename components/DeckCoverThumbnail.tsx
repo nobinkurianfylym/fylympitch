@@ -91,7 +91,7 @@ export default function DeckCoverThumbnail({ deckUrl, title, genre, className = 
         draggable={false}
         onContextMenu={e => e.preventDefault()}
         className={[
-          'w-full h-full object-cover block transition-opacity duration-300',
+          'w-full h-full object-contain block transition-opacity duration-300',
           status === 'ready' ? 'opacity-100' : 'opacity-0',
         ].join(' ')}
       />

@@ -40,8 +40,8 @@ export interface FilmIdentityProject {
   funding_needed_usd?: number | null;
   finance_secured_usd?: number | null;
   poster_path?: string | null;
-  // Signed URL for the pitch deck PDF — only populate on authenticated surfaces.
-  // When set and poster_path is absent, the tile renders the deck's page 1.
+  // Signed URL for the pitch deck PDF (page 1 is rendered as the tile when set).
+  // Caller generates this — omit when the surface shouldn't expose deck content.
   deckUrl?: string | null;
   director_name?: string | null;
   producer_info?: string | null;

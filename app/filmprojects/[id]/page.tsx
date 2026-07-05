@@ -71,6 +71,10 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
+  const deckUrl = (!p.poster_path && p.pitch_deck_path)
+    ? (await supabase.storage.from("pitch-decks").createSignedUrl(p.pitch_deck_path, 3600)).data?.signedUrl
+    : null;
+
   return (
     <div className="min-h-screen bg-ivory">
       <header className="border-b border-line">
@@ -92,7 +96,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           <span className="text-ink uppercase" style={{ letterSpacing: "-0.01em" }}>{p.title}</span>
         </p>
 
-        <ProjectThumbnail posterPath={p.poster_path} title={p.title} genre={p.genre}
+        <ProjectThumbnail posterPath={p.poster_path} deckUrl={deckUrl} title={p.title} genre={p.genre}
           supabaseUrl={supabaseUrl} className="rounded-card mb-8 w-full max-h-[420px]" />
 
         <div className="flex items-start justify-between gap-4 mb-4">

@@ -94,9 +94,8 @@ function PastelCard({ title, genre, className }: { title: string; genre: string 
 
 interface Props {
   posterPath?: string | null;
-  // Signed URL for the project's pitch deck PDF. Only pass this on authenticated
-  // surfaces (dashboard, producer studio, Discover) — decks live in a private
-  // bucket, so public pages should omit it and fall through to the pastel card.
+  // Signed URL for the project's pitch deck PDF (page 1 is rendered as the tile).
+  // Caller is responsible for generating this only when appropriate for the surface.
   deckUrl?: string | null;
   title: string;
   genre?: string | null;
