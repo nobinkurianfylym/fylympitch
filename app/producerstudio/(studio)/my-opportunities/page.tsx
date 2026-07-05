@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TYPE_LABEL } from "@/lib/format";
+import DeleteOpportunityButton from "@/components/DeleteOpportunityButton";
 
 export const dynamic = "force-dynamic";
 
@@ -123,7 +124,7 @@ export default async function MyOpportunitiesPage() {
                     </span>
                   </div>
 
-                  <div className="mt-4 flex gap-3">
+                  <div className="mt-4 flex items-center gap-3">
                     <Link
                       href={`/opportunities/${opp.slug}`}
                       target="_blank"
@@ -139,6 +140,8 @@ export default async function MyOpportunitiesPage() {
                         See submissions →
                       </Link>
                     )}
+                    <span className="text-ash/30">·</span>
+                    <DeleteOpportunityButton opportunityId={opp.id} title={opp.title} />
                   </div>
                 </div>
               </div>

@@ -438,7 +438,39 @@ export async function createProducerOpportunity(formData: FormData) {
   redirect(`/producerstudio/my-opportunities`);
 }
 
-export async function updateFilmmakerStage(formData: FormData) {
+export async function deleteProducerOpportunity(formData: FormData) {
+  const { supabase, user } = await requireUser();
+  const id = str(formData, "opportunity_id");
+  if (!id) return { error: "Missing opportunity ID." };
+
+  const { data: opp } = await supabase
+    .from("opportunities")
+    .select("id, posted_by_producer_id, is_producer_post")
+    .eq("id", id)
+    .single();
+
+  if (!opp || !(opp as any).is_producer_post) return { error: "Opportunity not found." };
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+  const isAdmin = (profile as any)?.role === "admin";
+
+  if ((opp as any).posted_by_producer_id !== user.id && !isAdmin) {
+    return { error: "You can only delete your own opportunities." };
+  }
+
+  // Submissions table naming has varied historically — clear both defensively.
+  // allSettled so a missing/renamed table on one side doesn't block the other.
+  await Promise.allSettled([
+    supabase.from("applications").delete().eq("opportunity_id", id),
+    supabase.from("opportunity_applications").delete().eq("opportunity_id", id),
+  ]);
+
+  const { error } = await supabase.from("opportunities").delete().eq("id", id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/producerstudio/my-opportunities");
+  revalidatePath("/opportunities");
+}
   const { supabase, user } = await requireUser();
   const id    = str(formData, "application_id");
   const stage = str(formData, "stage");
