@@ -42,10 +42,10 @@ const STEPS = [
 ];
 
 const FAQS = [
-  ["Who can see my script and pitch deck?", "Only you, PITCH.FYLYM administrators, and industry accounts that have been individually verified and approved. Files live in private storage with row-level access control — there are no public links."],
+  ["Who can see my script and pitch deck?", "It depends how you submit your project. Public projects are visible to everyone browsing PITCH.FYLYM. Private projects are visible only to you, PITCH.FYLYM administrators, and industry accounts that have been individually verified and approved. Files live in private storage with row-level access control — there are no public links to private materials."],
   ["How is the match score calculated?", "Eight weighted criteria totalling 100 points: genre (20), stage (20), territory (15), budget (15), format (10), funding gap (10), language (5) and historical success (5). Anything under 60 is hidden so you only see real prospects."],
   ["Is PITCH.FYLYM free for filmmakers?", "Yes. The platform is in public beta and every feature is free for filmmakers and producers during this period."],
-  ["How do producers and investors join?", "Sign up with a single Google account — you automatically get access to both the filmmaker dashboard and the producer studio. One login, both sides of the table."],
+  ["How do producers and investors join?", "Sign up with a single Google account or email — you automatically get access to the Producer Studio. Once an admin verifies your account, you'll also see private projects submitted by filmmakers."],
 ];
 
 export default async function Home() {
