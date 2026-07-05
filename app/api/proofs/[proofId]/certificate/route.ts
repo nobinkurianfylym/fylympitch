@@ -4,23 +4,22 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
 export const runtime = "edge";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { proofId: string } }
+  { params }: { params: Promise<{ proofId: string }> }
 ) {
   try {
-    const cookieStore = cookies();
+    const { proofId } = await params;
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get(name) { return cookieStore.get(name)?.value; },
+          get(name) { return req.cookies.get(name)?.value; },
         },
       }
     );
@@ -45,7 +44,7 @@ export async function GET(
         ots_status,
         projects!inner (owner_id)
       `)
-      .eq("id", params.proofId)
+      .eq("id", proofId)
       .single();
 
     if (!proof) {
@@ -78,7 +77,7 @@ export async function GET(
     return NextResponse.json({
       url: signedUrl.signedUrl,
       status: proof.ots_status,
-      filename: `fylym-proof-${params.proofId.slice(0, 8)}.ots`,
+      filename: `fylym-proof-${proofId.slice(0, 8)}.ots`,
     });
   } catch (err) {
     console.error("[/api/proofs/certificate]", err);

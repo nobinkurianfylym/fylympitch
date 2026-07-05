@@ -217,7 +217,10 @@ export function ProofVerificationPanel({
     setSnapshotDlId(proofId);
     try {
       const res = await fetch(`/api/proofs/${proofId}/snapshot`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error("[ProofPanel] Snapshot download failed:", res.status, await res.text().catch(() => ""));
+        return;
+      }
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");

@@ -6,20 +6,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 
 export const runtime = "edge";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { proofId: string } }
+  { params }: { params: Promise<{ proofId: string }> }
 ) {
   try {
-    const cookieStore = cookies();
+    const { proofId } = await params;
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: { get(name) { return cookieStore.get(name)?.value; } } }
+      { cookies: { get(name) { return req.cookies.get(name)?.value; } } }
     );
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -34,7 +33,7 @@ export async function GET(
     const { data: proof } = await serviceSupabase
       .from("project_proofs")
       .select("id, project_id, proof_type, sha256_hash, snapshot_json, projects!inner(owner_id, title)")
-      .eq("id", params.proofId)
+      .eq("id", proofId)
       .single();
 
     if (!proof) return NextResponse.json({ error: "Not found" }, { status: 404 });
