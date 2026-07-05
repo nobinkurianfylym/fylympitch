@@ -108,11 +108,18 @@ export default async function ProducerProjectDetailPage({
   if (project.genre) {
     const { data: relData } = await supabase
       .from("projects")
-      .select("id, title, genre, budget_usd, director_name, poster_path, profiles!projects_owner_id_fkey(id, full_name)")
+      .select("id, title, genre, budget_usd, director_name, poster_path, pitch_deck_path, profiles!projects_owner_id_fkey(id, full_name)")
       .eq("genre", project.genre)
       .neq("id", project.id)
       .limit(3);
-    relatedProjects = relData ?? [];
+    relatedProjects = await Promise.all(
+      (relData ?? []).map(async (rel: any) => ({
+        ...rel,
+        deckUrl: rel.pitch_deck_path
+          ? (await supabase.storage.from("pitch-decks").createSignedUrl(rel.pitch_deck_path, 3600)).data?.signedUrl
+          : null,
+      }))
+    );
   }
 
   const deckUrl = project.pitch_deck_path
@@ -297,6 +304,7 @@ export default async function ProducerProjectDetailPage({
             }}>
               <ProjectThumbnail
                 posterPath={project.poster_path}
+                deckUrl={deckUrl}
                 title={project.title}
                 genre={project.genre}
                 supabaseUrl={supabaseUrl}
@@ -650,6 +658,7 @@ export default async function ProducerProjectDetailPage({
                       <div className="aspect-[3/2] overflow-hidden bg-parchment">
                         <ProjectThumbnail
                           posterPath={rel.poster_path}
+                          deckUrl={rel.deckUrl}
                           title={rel.title}
                           genre={rel.genre}
                           supabaseUrl={supabaseUrl}

@@ -41,7 +41,7 @@ export default async function ProducerProjectsPage({
 
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, country, language, director_name, logline, budget_usd, finance_secured_usd, funding_needed_usd, poster_path, is_public, created_at, owner_id, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, username, career_stage)")
+    .select("id, title, genre, format, stage, country, language, director_name, logline, budget_usd, finance_secured_usd, funding_needed_usd, poster_path, pitch_deck_path, is_public, created_at, owner_id, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, username, career_stage)")
     .eq("admin_hidden", false)
     .is("target_producer_id", null)
     .order("created_at", { ascending: false })
@@ -56,6 +56,18 @@ export default async function ProducerProjectsPage({
   const { data: projects } = await query;
 
   const projectIds = (projects ?? []).map((p) => p.id);
+
+  // Bulk signed URLs for pitch deck cover tiles (poster takes priority when present)
+  const deckUrlMap = new Map<string, string>();
+  await Promise.all(
+    (projects ?? [])
+      .filter((p: any) => !p.poster_path && p.pitch_deck_path)
+      .map(async (p: any) => {
+        const { data } = await supabase.storage.from("pitch-decks").createSignedUrl(p.pitch_deck_path, 3600);
+        if (data?.signedUrl) deckUrlMap.set(p.id, data.signedUrl);
+      })
+  );
+
   const [{ data: crmRows }, { data: intelligenceRows }] = await Promise.all([
     projectIds.length
       ? supabase.from("producer_projects").select("project_id, status, rating")
@@ -189,6 +201,7 @@ export default async function ProducerProjectsPage({
                   ...p,
                   filmmaker: fm,
                   financing_secured_usd: (p as any).finance_secured_usd ?? null,
+                  deckUrl: deckUrlMap.get(p.id) ?? null,
                 }}
                 supabaseUrl={supabaseUrl}
                 href={`/producerstudio/projects/${p.id}`}

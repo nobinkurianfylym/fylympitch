@@ -359,7 +359,7 @@ export default async function ProjectDetailPage({
               overflow: "hidden", boxShadow: "0 4px 24px rgba(26,24,21,0.12)",
               aspectRatio: "2/3", background: S.mist,
             }}>
-              <ProjectThumbnail posterPath={project.poster_path} title={project.title}
+              <ProjectThumbnail posterPath={project.poster_path} deckUrl={deckUrl} title={project.title}
                 genre={project.genre} supabaseUrl={supabaseUrl} className="w-full h-full object-cover" />
             </div>
             <div style={{ flex: 1, minWidth: 0, paddingTop: 4 }}>

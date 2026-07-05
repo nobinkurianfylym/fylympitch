@@ -29,11 +29,22 @@ export default async function DashboardPage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, title, stage, genre, format, country, language, logline, budget_currency, funding_needed_usd, finance_secured_usd, is_public, created_at, poster_path, love_count, director_name")
+    .select("id, title, stage, genre, format, country, language, logline, budget_currency, funding_needed_usd, finance_secured_usd, is_public, created_at, poster_path, pitch_deck_path, love_count, director_name")
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
   const projectIds = (projects ?? []).map((p) => p.id);
+
+  // Bulk signed URLs for pitch deck cover tiles (poster takes priority when present)
+  const deckUrlMap = new Map<string, string>();
+  await Promise.all(
+    (projects ?? [])
+      .filter((p: any) => !p.poster_path && p.pitch_deck_path)
+      .map(async (p: any) => {
+        const { data } = await supabase.storage.from("pitch-decks").createSignedUrl(p.pitch_deck_path, 3600);
+        if (data?.signedUrl) deckUrlMap.set(p.id, data.signedUrl);
+      })
+  );
 
   const [
     { data: allMatches },
@@ -213,6 +224,7 @@ export default async function DashboardPage() {
                       <div className="aspect-[3/2] overflow-hidden">
                         <ProjectThumbnail
                           posterPath={p.poster_path}
+                          deckUrl={deckUrlMap.get(p.id)}
                           title={p.title}
                           genre={p.genre}
                           supabaseUrl={supabaseUrl}

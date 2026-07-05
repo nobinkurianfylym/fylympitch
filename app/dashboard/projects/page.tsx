@@ -35,6 +35,17 @@ export default async function MyProjectsPage() {
     (anchoredProofs ?? []).forEach((r: any) => anchoredSet.add(r.project_id));
   }
 
+  // Bulk signed URLs for pitch deck cover tiles (poster takes priority when present)
+  const deckUrlMap = new Map<string, string>();
+  await Promise.all(
+    (projects ?? [])
+      .filter((p: any) => !p.poster_path && p.pitch_deck_path)
+      .map(async (p: any) => {
+        const { data } = await supabase.storage.from("pitch-decks").createSignedUrl(p.pitch_deck_path, 3600);
+        if (data?.signedUrl) deckUrlMap.set(p.id, data.signedUrl);
+      })
+  );
+
   const hasProjects = (projects ?? []).length > 0;
 
   return (
@@ -98,6 +109,7 @@ export default async function MyProjectsPage() {
                   <div className="aspect-[3/2] overflow-hidden">
                     <ProjectThumbnail
                       posterPath={p.poster_path}
+                      deckUrl={deckUrlMap.get(p.id)}
                       title={p.title}
                       genre={p.genre}
                       supabaseUrl={supabaseUrl}

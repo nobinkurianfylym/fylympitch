@@ -35,7 +35,7 @@ function scoreProject(
   return score;
 }
 
-const PROJECT_SELECT = "id, title, genre, format, stage, country, language, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, logline, poster_path, love_count, is_public, director_name, owner_id, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)";
+const PROJECT_SELECT = "id, title, genre, format, stage, country, language, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, logline, poster_path, pitch_deck_path, love_count, is_public, director_name, owner_id, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)";
 
 export default async function ProducerDiscoverPage({
   searchParams,
@@ -157,6 +157,22 @@ export default async function ProducerDiscoverPage({
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
+  // Bulk signed URLs for pitch deck cover tiles (poster takes priority when present)
+  // Dedup across the discover feed, exclusive pitches, and passed-projects lists.
+  const deckUrlMap = new Map<string, string>();
+  {
+    const allProjectsForDecks = [...(projects ?? []), ...(exclusivePitchesRaw ?? []), ...passedProjects];
+    const seen = new Set<string>();
+    await Promise.all(
+      allProjectsForDecks
+        .filter((p: any) => !seen.has(p.id) && seen.add(p.id) && !p.poster_path && p.pitch_deck_path)
+        .map(async (p: any) => {
+          const { data } = await supabase.storage.from("pitch-decks").createSignedUrl(p.pitch_deck_path, 3600);
+          if (data?.signedUrl) deckUrlMap.set(p.id, data.signedUrl);
+        })
+    );
+  }
+
   // Helper: render a project card
   function ProjectCard({ p, showPassedBadge = false }: { p: any; showPassedBadge?: boolean }) {
     const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
@@ -169,7 +185,7 @@ export default async function ProducerDiscoverPage({
       <FilmIdentity
         key={p.id}
         variant="compact-card"
-        project={{ ...p, filmmaker }}
+        project={{ ...p, filmmaker, deckUrl: deckUrlMap.get(p.id) ?? null }}
         supabaseUrl={supabaseUrl}
         href={`/producerstudio/projects/${p.id}`}
         actions={
@@ -334,6 +350,7 @@ export default async function ProducerDiscoverPage({
                         funding_needed_usd: p.funding_needed_usd ?? null,
                         is_public: p.is_public, director_name: p.director_name ?? null,
                         filmmaker: filmmaker ? { full_name: filmmaker.full_name, username: filmmaker.username ?? null, career_stage: filmmaker.career_stage ?? null } : null,
+                        deckUrl: deckUrlMap.get(p.id) ?? null,
                       }}
                       supabaseUrl={supabaseUrl}
                       actions={

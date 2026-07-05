@@ -1,8 +1,11 @@
-// ProjectThumbnail — poster image or pastel SVG title card fallback.
+// ProjectThumbnail — poster image, pitch deck cover, or pastel SVG title card fallback.
 //
 // Priority:
 //   1. poster_path → Supabase public storage URL
-//   2. No poster   → Generated pastel title card (inline, instant, no network)
+//   2. deckUrl     → Rendered page 1 of the pitch deck (authenticated surfaces only)
+//   3. Neither     → Generated pastel title card (inline, instant, no network)
+
+import DeckCoverThumbnail from "./DeckCoverThumbnail";
 
 const PALETTES = [
   { bg: "#F0E8FF", accent: "#C4A8E8", text: "#4A1D96" },  // lavender
@@ -91,23 +94,32 @@ function PastelCard({ title, genre, className }: { title: string; genre: string 
 
 interface Props {
   posterPath?: string | null;
+  // Signed URL for the project's pitch deck PDF. Only pass this on authenticated
+  // surfaces (dashboard, producer studio, Discover) — decks live in a private
+  // bucket, so public pages should omit it and fall through to the pastel card.
+  deckUrl?: string | null;
   title: string;
   genre?: string | null;
   supabaseUrl: string;
   className?: string;
 }
 
-export default function ProjectThumbnail({ posterPath, title, genre, supabaseUrl, className = "" }: Props) {
-  if (!posterPath) {
-    return <PastelCard title={title} genre={genre ?? ""} className={`${className} rounded-card`} />;
+export default function ProjectThumbnail({ posterPath, deckUrl, title, genre, supabaseUrl, className = "" }: Props) {
+  // Priority: poster > pitch deck page 1 > pastel title card
+  if (posterPath) {
+    return (
+      <img
+        src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`}
+        alt={`${title} poster`}
+        className={`${className} object-cover`}
+        loading="lazy"
+      />
+    );
   }
 
-  return (
-    <img
-      src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`}
-      alt={`${title} poster`}
-      className={`${className} object-cover`}
-      loading="lazy"
-    />
-  );
+  if (deckUrl) {
+    return <DeckCoverThumbnail deckUrl={deckUrl} title={title} genre={genre} className={className} />;
+  }
+
+  return <PastelCard title={title} genre={genre ?? ""} className={`${className} rounded-card`} />;
 }

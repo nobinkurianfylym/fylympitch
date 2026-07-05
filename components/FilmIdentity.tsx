@@ -40,6 +40,9 @@ export interface FilmIdentityProject {
   funding_needed_usd?: number | null;
   finance_secured_usd?: number | null;
   poster_path?: string | null;
+  // Signed URL for the pitch deck PDF — only populate on authenticated surfaces.
+  // When set and poster_path is absent, the tile renders the deck's page 1.
+  deckUrl?: string | null;
   director_name?: string | null;
   producer_info?: string | null;
   writer_name?: string | null;
@@ -254,6 +257,7 @@ function FullVariant({
           <div className="rounded-card overflow-hidden" style={{ width: 140, height: 210 }}>
             <ProjectThumbnail
               posterPath={project.poster_path}
+              deckUrl={project.deckUrl}
               title={project.title}
               genre={project.genre}
               supabaseUrl={supabaseUrl}
@@ -268,6 +272,7 @@ function FullVariant({
           <div className="block md:hidden mb-5 rounded-card overflow-hidden aspect-[3/4] max-w-[160px]">
             <ProjectThumbnail
               posterPath={project.poster_path}
+              deckUrl={project.deckUrl}
               title={project.title}
               genre={project.genre}
               supabaseUrl={supabaseUrl}
@@ -383,6 +388,7 @@ function CompactCardVariant({
           <div className="aspect-[3/2] overflow-hidden">
             <ProjectThumbnail
               posterPath={project.poster_path}
+              deckUrl={project.deckUrl}
               title={project.title}
               genre={project.genre}
               supabaseUrl={supabaseUrl}
@@ -555,6 +561,7 @@ function SearchResultVariant({
       >
         <ProjectThumbnail
           posterPath={project.poster_path}
+          deckUrl={project.deckUrl}
           title={project.title}
           genre={project.genre}
           supabaseUrl={supabaseUrl}
@@ -622,6 +629,7 @@ function MessagingPreviewVariant({
       >
         <ProjectThumbnail
           posterPath={project.poster_path}
+          deckUrl={project.deckUrl}
           title={project.title}
           genre={project.genre}
           supabaseUrl={supabaseUrl}
