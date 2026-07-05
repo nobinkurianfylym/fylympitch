@@ -51,17 +51,17 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
           <span className="text-[10px] tracking-[0.22em] uppercase text-ash mt-1">Producer Studio</span>
         </div>
 
-        <nav className="flex md:flex-col gap-5 md:gap-0 md:mt-12 md:space-y-5 text-[12px] tracking-[0.16em] uppercase whitespace-nowrap">
+        <nav className="flex md:flex-col gap-5 md:gap-0 md:mt-12 md:space-y-3 text-[12px] tracking-[0.16em] uppercase whitespace-nowrap">
           {nav.map((n) => (
             <Link key={n.href} href={n.href}
-              className={`transition-colors ${
+              className={`transition-colors border rounded-sm pl-2 pr-2 py-1 -ml-2 ${
                 n.href === "/producerstudio/create-opportunity"
-                  ? "text-gold hover:text-gold/80 border border-gold/40 px-2 py-1 rounded-sm -mx-2 -my-0.5"
+                  ? "text-gold hover:text-gold/80 border-gold/40"
                   : n.href === "/producerstudio/notifications" && (unreadNotif ?? 0) > 0
-                  ? "text-gold hover:text-gold/80 hover:text-ink"
+                  ? "text-gold hover:text-gold/80 hover:text-ink border-transparent"
                   : n.href === "/producerstudio/messages" && totalMsgUnread > 0
-                  ? "text-gold hover:text-gold/80 hover:text-ink"
-                  : "text-ash hover:text-ink"
+                  ? "text-gold hover:text-gold/80 hover:text-ink border-transparent"
+                  : "text-ash hover:text-ink border-transparent"
               }`}>
               {n.label}
             </Link>
