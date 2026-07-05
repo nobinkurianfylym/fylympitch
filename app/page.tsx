@@ -44,7 +44,7 @@ const STEPS = [
 const FAQS = [
   ["Who can see my script and pitch deck?", "Only you, PITCH.FYLYM administrators, and industry accounts that have been individually verified and approved. Files live in private storage with row-level access control — there are no public links."],
   ["How is the match score calculated?", "Eight weighted criteria totalling 100 points: genre (20), stage (20), territory (15), budget (15), format (10), funding gap (10), language (5) and historical success (5). Anything under 60 is hidden so you only see real prospects."],
-  ["Is PITCH.FYLYM free for filmmakers?", "Creating a profile, submitting one project and viewing your matches is free. Unlimited projects and priority matching are part of the Pro plan."],
+  ["Is PITCH.FYLYM free for filmmakers?", "Yes. The platform is in public beta and every feature is free for filmmakers and producers during this period."],
   ["How do producers and investors join?", "Sign up with a single Google account — you automatically get access to both the filmmaker dashboard and the producer studio. One login, both sides of the table."],
 ];
 
@@ -497,29 +497,22 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* PRICING */}
-      <section id="pricing" className="max-w-6xl mx-auto px-6 py-24 md:py-32">
-        <p className="eyebrow mb-4">Pricing</p>
-        <h2 className="font-display text-[32px] md:text-[44px] leading-tight">Start free. Upgrade when you're pitching.</h2>
-        <div className="mt-16 grid md:grid-cols-3 gap-8">
-          {[
-            ["Free", "$0", ["1 active project", "Match scores & reasons", "Save opportunities", "Apply to 3 opportunities / month"], "Start free", "/signup"],
-            ["Single Pitch", "$19", ["Everything in Free", "1 project, unlimited applications", "Priority in producer discovery", "Deadline alerts"], "Choose Single Pitch", "/signup"],
-            ["Pro", "$49", ["Unlimited projects", "Unlimited applications", "Early access to new funds", "Pitch materials review queue"], "Go Pro", "/signup"],
-          ].map(([name, price, items, cta, href], i) => (
-            <div key={name as string} className={`card p-8 ${i === 2 ? "border-gold" : ""}`}>
-              <h3 className="eyebrow">{name as string}</h3>
-              <div className="mt-4 font-display text-[40px]">{price as string}<span className="text-[14px] text-ash font-sans"> /month</span></div>
-              <ul className="mt-6 space-y-3 text-[14px] text-ash">
-                {(items as string[]).map((it) => (
-                  <li key={it} className="hairline pt-3">{it}</li>
-                ))}
-              </ul>
-              <Link href={href as string} className={`mt-8 w-full ${i === 2 ? "btn-gold" : "btn-ghost"}`}>{cta as string}</Link>
-            </div>
-          ))}
+      {/* BETA */}
+      <section id="beta" className="max-w-6xl mx-auto px-6 py-24 md:py-32">
+        <div className="hairline-gold pt-10 max-w-2xl">
+          <p className="eyebrow mb-4">Public beta</p>
+          <h2 className="font-display text-[32px] md:text-[44px] leading-tight">Free while we build in the open.</h2>
+          <p className="mt-6 text-[17px] leading-[1.7] text-ash">
+            PITCH.FYLYM is in public beta. Matching, applications, producer discovery and
+            proof of existence — every feature is free for filmmakers and producers during
+            this period. Your feedback shapes what comes next.
+          </p>
+          <div className="mt-10 flex items-center gap-6">
+            <Link href="/signup" className="btn-gold">Join the beta</Link>
+            <a href="mailto:hello@fylym.com" className="text-[14px] text-ash underline underline-offset-4 decoration-ash/40 hover:text-ink">Share feedback</a>
+          </div>
+          <p className="mt-8 text-[13px] text-ash">Producer and investor accounts require verification.</p>
         </div>
-        <p className="mt-8 text-[13px] text-ash">Producer and investor accounts are free — verification required.</p>
       </section>
 
       {/* FAQ */}

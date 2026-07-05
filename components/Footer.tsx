@@ -201,7 +201,7 @@ export function Footer() {
               <ul className="space-y-3.5">
                 <li><a href="#features" className={LI}>How it Works</a></li>
                 <li><a href="#features" className={LI}>FYLYMPITCH Engine™</a></li>
-                <li><a href="#pricing"  className={LI}>Pricing</a></li>
+                <li><a href="#beta"  className={LI}>Beta</a></li>
                 <li><Link href="/signup" className={LI}>Join Free</Link></li>
                 <li><Link href="/login"  className={LI}>Sign In</Link></li>
               </ul>
