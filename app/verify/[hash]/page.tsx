@@ -68,6 +68,7 @@ export default async function VerifyPage({
   const project = Array.isArray(proof.projects) ? proof.projects[0] : proof.projects;
   const isAnchored = proof.ots_status === "anchored";
   const isPending  = proof.ots_status === "pending";
+  const isFailed   = proof.ots_status === "failed";
 
   // Generate signed certificate URL (valid 5 minutes)
   let certUrl: string | null = null;
@@ -136,13 +137,13 @@ export default async function VerifyPage({
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
             <div style={{
               width: 10, height: 10, borderRadius: "50%",
-              background: isAnchored ? "#BF9953" : "rgba(255,255,255,0.3)",
+              background: isAnchored ? "#BF9953" : isFailed ? "#8A857C" : "rgba(255,255,255,0.3)",
             }} />
             <span style={{
               fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase",
               color: isAnchored ? "#BF9953" : "#8A857C",
             }}>
-              {isAnchored ? "Bitcoin Verified" : "Anchoring in Progress"}
+              {isAnchored ? "Bitcoin Verified" : isFailed ? "Anchoring Failed" : "Anchoring in Progress"}
             </span>
           </div>
 
@@ -151,7 +152,7 @@ export default async function VerifyPage({
             fontSize: 22, fontWeight: 400, marginBottom: 4,
             color: isAnchored ? "#F5F5F0" : "#1A1815",
           }}>
-            {isAnchored ? "Proof of Existence Verified" : "Cryptographic Record"}
+            {isAnchored ? "Proof of Existence Verified" : isFailed ? "Anchoring Failed" : "Cryptographic Record"}
           </h1>
 
           <p style={{
@@ -236,7 +237,7 @@ export default async function VerifyPage({
         </div>
 
         {/* Certificate download */}
-        {certUrl && (
+        {certUrl && !isFailed && (
           <a
             href={certUrl}
             download={`fylym-proof-${proof.id.slice(0, 8)}.ots`}
@@ -257,6 +258,7 @@ export default async function VerifyPage({
         )}
 
         {/* Independent verification steps */}
+        {!isFailed && (
         <div style={{
           background: "#fff",
           borderRadius: 14,
@@ -317,14 +319,33 @@ export default async function VerifyPage({
             </div>
           ))}
         </div>
+        )}
+
+        {isFailed && (
+          <div style={{
+            background: "#fff",
+            borderRadius: 14,
+            border: "1px solid rgba(26,24,21,0.08)",
+            padding: "20px",
+          }}>
+            <p style={{ fontSize: 12, color: "#1A1815", marginBottom: 6 }}>
+              This anchoring attempt did not complete
+            </p>
+            <p style={{ fontSize: 11, color: "#8A857C", lineHeight: 1.6 }}>
+              The submission could not be timestamped to the Bitcoin blockchain. No certificate
+              exists for this record. Contact hello@fylym.com if this project needs to be resubmitted.
+            </p>
+          </div>
+        )}
 
         {/* Footer note */}
         <p style={{
           fontSize: 10, color: "#8A857C", textAlign: "center",
           marginTop: 24, lineHeight: 1.7,
         }}>
-          Your submission date is now part of Bitcoin's permanent record —
-          independently verifiable by anyone, anywhere, forever.
+          {isFailed
+            ? "This record was not anchored to Bitcoin. No proof of existence has been established."
+            : "Your submission date is now part of Bitcoin's permanent record — independently verifiable by anyone, anywhere, forever."}
         </p>
       </div>
     </div>

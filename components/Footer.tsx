@@ -223,7 +223,7 @@ export function Footer() {
         {/* Copyright */}
         <div className="hairline-gold mt-14 pt-5 pb-6 flex items-center justify-between flex-wrap gap-3">
           <p className="text-[10px] tracking-[0.2em] uppercase text-ivory/30 font-normal">
-            © {new Date().getFullYear()} PITCH.FYLYM · A FYLYM Company · Ernakulam, Kerala
+            © {new Date().getFullYear()} PITCH.FYLYM · A FYLYM Company
           </p>
           <p className="text-[10px] tracking-[0.14em] uppercase text-ivory/20 font-normal">
             Intelligent matchmaking for independent film
