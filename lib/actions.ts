@@ -1418,47 +1418,51 @@ export async function deleteAccount() {
   "use server";
   const { supabase, user } = await requireUser();
 
-  // 1. Messages — delete threads where user is a participant
-  await supabase.from("messages").delete().eq("sender_id", user.id);
-  await supabase.from("message_threads").delete()
-    .or(`filmmaker_id.eq.${user.id},producer_id.eq.${user.id}`);
-
-  // 2. Applications / opportunities
-  await supabase.from("opportunity_applications").delete().eq("user_id", user.id);
-
-  // 3. Notifications
-  await supabase.from("notifications").delete().eq("user_id", user.id);
-
-  // 4. Loves
-  await supabase.from("project_loves").delete().eq("user_id", user.id);
-
-  // 5. Pipeline entries (as producer)
-  await supabase.from("producer_projects").delete().eq("producer_id", user.id);
-
-  // 6. Projects (as filmmaker) — cascade deletes project_intelligence etc. via FK
-  await supabase.from("projects").delete().eq("owner_id", user.id);
-
-  // 7. Producer profile
-  await supabase.from("producer_profiles").delete().eq("user_id", user.id);
-
-  // 8. Credits / filmmaker profile rows
-  await supabase.from("filmmaker_credits").delete().eq("user_id", user.id);
-
-  // 9. Profile row
-  await supabase.from("profiles").delete().eq("id", user.id);
-
-  // 10. Delete auth user via service-role client
+  // Service-role client — used both for the final auth deletion and, on
+  // failure, to log to platform_errors (RLS only allows service-role inserts).
   const { createClient: createAdmin } = await import("@supabase/supabase-js");
   const admin = createAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { persistSession: false } }
   );
-  const { error } = await admin.auth.admin.deleteUser(user.id);
-  if (error) return { error: "Failed to delete auth account. Please contact support." };
 
-  // 11. Sign out and redirect
-  await supabase.auth.signOut();
+  try {
+    // Independent tables — none depend on each other's deletion order, so run
+    // as one parallel batch instead of chaining sequential round trips.
+    await Promise.all([
+      supabase.from("messages").delete().eq("sender_id", user.id),
+      supabase.from("message_threads").delete()
+        .or(`filmmaker_id.eq.${user.id},producer_id.eq.${user.id}`),
+      supabase.from("opportunity_applications").delete().eq("user_id", user.id),
+      supabase.from("notifications").delete().eq("user_id", user.id),
+      supabase.from("project_loves").delete().eq("user_id", user.id),
+      supabase.from("producer_projects").delete().eq("producer_id", user.id),
+      supabase.from("projects").delete().eq("owner_id", user.id), // cascades project_intelligence etc. via FK
+      supabase.from("producer_profiles").delete().eq("user_id", user.id),
+      supabase.from("filmmaker_credits").delete().eq("user_id", user.id),
+    ]);
+
+    // Profile row goes last — kept sequential in case any RLS policy elsewhere
+    // in this request still expects it to exist mid-flight.
+    await supabase.from("profiles").delete().eq("id", user.id);
+
+    // Delete auth user via service-role client
+    const { error } = await admin.auth.admin.deleteUser(user.id);
+    if (error) throw new Error(`auth.admin.deleteUser failed: ${error.message}`);
+
+    // Sign out and redirect
+    await supabase.auth.signOut();
+  } catch (err: any) {
+    await admin.from("platform_errors").insert({
+      source: "delete-account",
+      severity: "critical",
+      message: err?.message ?? String(err),
+      context: { user_id: user.id },
+    });
+    return { error: "Something went wrong deleting your account. Our team has been notified — please contact support if this persists." };
+  }
+
   const { redirect } = await import("next/navigation");
   redirect("/");
 }
