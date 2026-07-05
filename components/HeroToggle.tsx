@@ -50,7 +50,7 @@ export default function HeroToggle({
   isLoggedIn?:  boolean
   accountRole?: string
 }) {
-  const { role } = useRole();
+  const { role, setRole } = useRole();
   const c = CONTENT[role];
 
   // Logged-in CTAs
@@ -67,6 +67,34 @@ export default function HeroToggle({
 
       {/* ── Content — fades on role change ── */}
       <div key={role} style={{ animation: "heroFadeIn 0.35s ease both" }}>
+        <div className="flex items-center gap-3 mb-6">
+          <span className="text-[12px] tracking-[0.08em] text-ash">I'm a</span>
+          <div
+            className="flex items-center p-[3px] rounded-full"
+            style={{ border: "1px solid rgba(26,24,21,0.18)" }}
+          >
+            <button
+              onClick={() => setRole("filmmaker")}
+              className="rounded-full text-[10px] tracking-[0.12em] uppercase font-medium px-3.5 py-[5px] transition-all duration-200"
+              style={{
+                background: role === "filmmaker" ? "var(--color-ink)" : "transparent",
+                color:      role === "filmmaker" ? "var(--color-ivory)" : "var(--color-ash)",
+              }}
+            >
+              Filmmaker
+            </button>
+            <button
+              onClick={() => setRole("producer")}
+              className="rounded-full text-[10px] tracking-[0.12em] uppercase font-medium px-3.5 py-[5px] transition-all duration-200"
+              style={{
+                background: role === "producer" ? "var(--color-ink)" : "transparent",
+                color:      role === "producer" ? "var(--color-ivory)" : "var(--color-ash)",
+              }}
+            >
+              Producer
+            </button>
+          </div>
+        </div>
         <p className="eyebrow mb-5">{c.eyebrow}</p>
         <h1 className="font-display font-normal text-[36px] leading-[1.08] md:text-[52px] max-w-4xl">
           {c.headline}

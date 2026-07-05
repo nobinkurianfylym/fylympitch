@@ -124,7 +124,7 @@ export default async function Home() {
             <Link href="/opportunities"    className="hover:text-ink transition-colors">Opportunities</Link>
           </nav>
           <div className="flex items-center gap-3">
-            <HeaderRoleToggle isLoggedIn={!!user} isAdmin={isAdmin} />
+            <HeaderRoleToggle isAdmin={isAdmin} />
             <HeaderCTA
               isLoggedIn={!!user}
               userName={user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? ""}
