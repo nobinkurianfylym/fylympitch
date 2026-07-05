@@ -21,11 +21,11 @@ const CONTENT = {
     eyebrow: "For producers & investors",
     headline: (
       <>
-        Where producers find{" "}
-        <span className="italic text-gold">their next project.</span>
+        The films worth producing{" "}
+        <span className="italic text-gold">find you here.</span>
       </>
     ),
-    body: "One account, two roles. Browse filmmaker projects by genre, stage and territory. Read scripts, send offers, co-produce — no approval needed.",
+    body: "A curated slate of investment-ready projects from filmmakers worldwide. Filter by genre, budget, and stage. Speak directly with the people who made them.",
     proof: "",
     primary: { label: "Get started", href: "/signup?role=producer" },
     secondary: { label: "Browse projects", href: "/filmprojects" },
