@@ -1108,7 +1108,7 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
     genres,
     formats,
     territories,
-    budget_range: str(formData, "budget_range") ?? null,
+    budget_range: str(formData, "budget_range") || null,
     festivals,
     stage_preferences,
     language_preferences,
@@ -1151,9 +1151,11 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
     .maybeSingle();
   const wasAlreadyPublic = prevPP?.is_public === true;
 
-  await supabase
+  const { error: upsertError } = await supabase
     .from("producer_profiles")
     .upsert(payload, { onConflict: "user_id" });
+
+  if (upsertError) return { error: upsertError.message };
 
   // When a producer goes public for the first time, log for retroactive
   // rematch. New project submissions after this point will pick up this

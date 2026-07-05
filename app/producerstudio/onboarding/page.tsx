@@ -269,6 +269,11 @@ export default function ProducerOnboardingPage() {
           </section>
 
           <div className="pt-2 pb-8">
+            {state?.error && (
+              <p className="mb-4 text-[13px] text-red-700 border border-red-200 bg-red-50 rounded-card px-4 py-3">
+                {state.error}
+              </p>
+            )}
             <button type="submit" disabled={pending}
               className="btn-gold w-full py-4 text-[14px] tracking-[0.16em] disabled:opacity-60">
               {pending ? "Saving…" : "Enter Producer Studio →"}
