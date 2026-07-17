@@ -6,13 +6,15 @@ import { useRouter } from "next/navigation";
 
 interface Props {
   projectId: string;
+  /** Canonical public slug — used for the post-login return path */
+  slug?: string | null;
   initialCount: number;
   initialLiked: boolean;
   isLoggedIn: boolean;
   size?: "sm" | "md";
 }
 
-export default function LoveButton({ projectId, initialCount, initialLiked, isLoggedIn, size = "md" }: Props) {
+export default function LoveButton({ projectId, slug, initialCount, initialLiked, isLoggedIn, size = "md" }: Props) {
   const [liked, setLiked]   = useState(initialLiked);
   const [count, setCount]   = useState(initialCount);
   const [pending, start]    = useTransition();
@@ -23,14 +25,27 @@ export default function LoveButton({ projectId, initialCount, initialLiked, isLo
     e.stopPropagation();
 
     if (!isLoggedIn) {
-      router.push(`/login?next=/projects/${projectId}`);
+      router.push(`/login?next=${encodeURIComponent(`/filmprojects/${slug || projectId}`)}`);
       return;
     }
 
-    const next = !liked;
+    const next  = !liked;
+    const prevC = count;
     setLiked(next);
     setCount(c => next ? c + 1 : Math.max(0, c - 1));
-    start(async () => { await toggleProjectLove(projectId); });
+
+    start(async () => {
+      const res = await toggleProjectLove(projectId);
+      if (!res?.ok) {
+        // Roll back — the write did not persist
+        setLiked(!next);
+        setCount(prevC);
+        return;
+      }
+      // Reconcile against the server's authoritative count
+      setLiked(res.loved);
+      setCount(res.count);
+    });
   }
 
   const isSmall = size === "sm";

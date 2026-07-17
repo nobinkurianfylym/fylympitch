@@ -49,7 +49,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   }
 
   const { data: p } = await supabase.from("projects")
-    .select("id, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, director_name, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, is_public, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username)")
+    .select("id, slug, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, director_name, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, is_public, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username)")
     .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
 
   if (!p) notFound();
@@ -133,8 +133,8 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0 mt-1">
-            <LoveButton projectId={p.id} initialCount={p.love_count ?? 0} initialLiked={!!loved} isLoggedIn={true} />
-            <ShareButton projectId={p.id} title={p.title} genre={p.genre} country={p.country} />
+            <LoveButton projectId={p.id} slug={p.slug} initialCount={p.love_count ?? 0} initialLiked={!!loved} isLoggedIn={!!user} />
+            <ShareButton projectId={p.id} slug={p.slug} title={p.title} genre={p.genre} country={p.country} />
           </div>
         </div>
 

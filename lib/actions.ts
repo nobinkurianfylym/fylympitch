@@ -1276,7 +1276,9 @@ export async function requestProducerIntroduction(formData: FormData) {
 
 // ---------- PROJECT LOVES ----------
 
-export async function toggleProjectLove(projectId: string) {
+export async function toggleProjectLove(
+  projectId: string
+): Promise<{ ok: boolean; loved: boolean; count: number; error?: string }> {
   const { supabase, user } = await requireUser();
 
   const { data: existing } = await supabase
@@ -1284,17 +1286,51 @@ export async function toggleProjectLove(projectId: string) {
     .select("user_id")
     .eq("user_id", user.id)
     .eq("project_id", projectId)
-    .single();
+    .maybeSingle();
 
-  if (existing) {
-    await supabase.from("project_loves").delete()
-      .eq("user_id", user.id).eq("project_id", projectId);
-  } else {
-    await supabase.from("project_loves").insert({ user_id: user.id, project_id: projectId });
+  const loved = !existing;
+
+  const { error } = existing
+    ? await supabase.from("project_loves").delete()
+        .eq("user_id", user.id).eq("project_id", projectId)
+    : await supabase.from("project_loves")
+        .insert({ user_id: user.id, project_id: projectId });
+
+  if (error) {
+    // platform_errors is RLS-scoped to admins — requires the service-role client
+    const { createClient: createAdmin } = await import("@supabase/supabase-js");
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
+    );
+    await admin.from("platform_errors").insert({
+      source: "toggle-project-love",
+      severity: "warning",
+      message: error.message,
+      context: { project_id: projectId, user_id: user.id, op: existing ? "unlove" : "love" },
+    });
+    // Report the persisted truth, not the optimistic guess
+    const { count: trueCount } = await supabase
+      .from("project_loves").select("user_id", { count: "exact", head: true })
+      .eq("project_id", projectId);
+    return { ok: false, loved: !loved, count: trueCount ?? 0, error: error.message };
   }
 
-  revalidatePath(`/filmprojects/${projectId}`);
+  // Authoritative count straight from the join table — never a cached guess
+  const { count } = await supabase
+    .from("project_loves").select("user_id", { count: "exact", head: true })
+    .eq("project_id", projectId);
+
+  const { data: slugRow } = await supabase
+    .from("projects").select("slug").eq("id", projectId).maybeSingle();
+
+  if (slugRow?.slug) revalidatePath(`/filmprojects/${slugRow.slug}`);
   revalidatePath("/filmprojects");
+  revalidatePath("/producerstudio");
+  revalidatePath("/producerstudio/projects");
+
+  return { ok: true, loved, count: count ?? 0 };
 }
 
 // ---------- FILMMAKER CREDITS ----------

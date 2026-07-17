@@ -5,13 +5,15 @@ import { createPortal } from "react-dom";
 
 interface Props {
   projectId: string;
+  /** Canonical public slug — falls back to id (page redirects uuid -> slug) */
+  slug?: string | null;
   title: string;
   genre?: string | null;
   country?: string | null;
   size?: "sm" | "md";
 }
 
-export default function ShareButton({ projectId, title, genre, country, size = "md" }: Props) {
+export default function ShareButton({ projectId, slug, title, genre, country, size = "md" }: Props) {
   const [open, setOpen]         = useState(false);
   const [copied, setCopied]     = useState(false);
   const [mounted, setMounted]   = useState(false);
@@ -22,7 +24,7 @@ export default function ShareButton({ projectId, title, genre, country, size = "
   useEffect(() => { setMounted(true); }, []);
 
   const siteUrl   = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pitch.fylym.com";
-  const url       = `${siteUrl}/projects/${projectId}`;
+  const url       = `${siteUrl}/filmprojects/${slug || projectId}`;
   const tagline   = [genre, country].filter(Boolean).join(" · ");
   const shareText = `${title}${tagline ? ` — ${tagline}` : ""} · Now pitching on PITCH.FYLYM`;
 

@@ -41,7 +41,7 @@ export default async function ProducerProjectsPage({
 
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, country, language, director_name, logline, budget_usd, finance_secured_usd, funding_needed_usd, poster_path, pitch_deck_path, is_public, created_at, owner_id, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, username, career_stage)")
+    .select("id, slug, title, genre, format, stage, country, language, director_name, logline, budget_usd, finance_secured_usd, funding_needed_usd, poster_path, pitch_deck_path, is_public, created_at, owner_id, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, username, career_stage)")
     .eq("admin_hidden", false)
     .is("target_producer_id", null)
     .order("created_at", { ascending: false })
@@ -68,7 +68,7 @@ export default async function ProducerProjectsPage({
       })
   );
 
-  const [{ data: crmRows }, { data: intelligenceRows }] = await Promise.all([
+  const [{ data: crmRows }, { data: intelligenceRows }, { data: loveRows }] = await Promise.all([
     projectIds.length
       ? supabase.from("producer_projects").select("project_id, status, rating")
           .eq("producer_id", user.id).in("project_id", projectIds)
@@ -77,7 +77,13 @@ export default async function ProducerProjectsPage({
       ? supabase.from("project_intelligence").select("project_id, funding_readiness")
           .in("project_id", projectIds)
       : { data: [] },
+    projectIds.length
+      ? supabase.from("project_loves").select("project_id")
+          .eq("user_id", user.id).in("project_id", projectIds)
+      : { data: [] },
   ]);
+
+  const lovedSet = new Set((loveRows ?? []).map((r: any) => r.project_id));
 
   const crmByProject = new Map((crmRows ?? []).map((r) => [r.project_id, r]));
   const frsMap = new Map<string, { score: number; missing: string[]; fund_requirements?: string[] }>(
@@ -240,13 +246,15 @@ export default async function ProducerProjectsPage({
                       />
                       <LoveButton
                         projectId={p.id}
+                        slug={(p as any).slug}
                         initialCount={(p as any).love_count ?? 0}
-                        initialLiked={false}
+                        initialLiked={lovedSet.has(p.id)}
                         isLoggedIn={true}
                         size="sm"
                       />
                       <ShareButton
                         projectId={p.id}
+                        slug={(p as any).slug}
                         title={p.title}
                         genre={p.genre}
                         country={p.country}

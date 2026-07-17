@@ -44,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .limit(500);
 
   const projectUrls: MetadataRoute.Sitemap = (projects ?? []).map((p: any) => ({
-    url: `${BASE}/projects/${p.slug}`,
+    url: `${BASE}/filmprojects/${p.slug}`,
     lastModified: p.updated_at ?? new Date().toISOString(),
     changeFrequency: "weekly" as const,
     priority: 0.6,

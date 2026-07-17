@@ -29,7 +29,7 @@ export default async function ProjectsPage({
 
   let query = supabase
     .from("projects")
-    .select("id, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+    .select("id, slug, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
     .eq("is_public", true)
     .is("target_producer_id", null)
     .order("created_at", { ascending: false })
@@ -150,6 +150,7 @@ export default async function ProjectsPage({
                       <div className="flex items-center gap-2">
                         <LoveButton
                           projectId={p.id}
+                          slug={(p as any).slug}
                           initialCount={p.love_count ?? 0}
                           initialLiked={lovedSet.has(p.id)}
                           isLoggedIn={!!user}
@@ -157,6 +158,7 @@ export default async function ProjectsPage({
                         />
                         <ShareButton
                           projectId={p.id}
+                          slug={(p as any).slug}
                           title={p.title}
                           genre={p.genre}
                           country={p.country}

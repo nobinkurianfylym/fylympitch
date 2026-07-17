@@ -35,7 +35,7 @@ function scoreProject(
   return score;
 }
 
-const PROJECT_SELECT = "id, title, genre, format, stage, country, language, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, logline, poster_path, pitch_deck_path, love_count, is_public, director_name, owner_id, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)";
+const PROJECT_SELECT = "id, slug, title, genre, format, stage, country, language, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, logline, poster_path, pitch_deck_path, love_count, is_public, director_name, owner_id, created_at, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)";
 
 export default async function ProducerDiscoverPage({
   searchParams,
@@ -217,6 +217,7 @@ export default async function ProducerDiscoverPage({
               />
               <LoveButton
                 projectId={p.id}
+                slug={(p as any).slug}
                 initialCount={p.love_count ?? 0}
                 initialLiked={lovedSet.has(p.id)}
                 isLoggedIn={true}
@@ -224,6 +225,7 @@ export default async function ProducerDiscoverPage({
               />
               <ShareButton
                 projectId={p.id}
+                slug={(p as any).slug}
                 title={p.title}
                 genre={p.genre}
                 country={p.country}
