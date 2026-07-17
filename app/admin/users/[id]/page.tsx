@@ -98,10 +98,20 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
   const { id } = await params;
   const supabase = await createClient();
 
-  // `email` is revoked from the authenticated role (migration 013) — `select("*")`
-  // silently omits it, so it is resolved separately from auth.users (the
-  // authoritative source) via lib/admin-email.
-  const { data: p } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
+  // `email` is resolved separately from auth.users via lib/admin-email, which is
+  // authoritative; the copy on profiles is a cache that drifts.
+  const { data: p, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  // A failed read is not a missing user. Swallowing the error here turned every
+  // PostgREST failure into a bare 404, which says "this person does not exist"
+  // when the truth is "the query broke".
+  if (profileError) {
+    throw new Error(`Could not load profile ${id}: ${profileError.message}`);
+  }
   if (!p) notFound();
 
   const isProducerish = p.role === "producer" || p.role === "investor" || p.role === "organization";
