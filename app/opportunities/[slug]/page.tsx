@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Wordmark from "@/components/Wordmark";
+import TrackOpportunityView from "@/components/TrackOpportunityView";
 import { usd, TYPE_LABEL, STAGE_LABEL } from "@/lib/format";
 import type { Opportunity } from "@/types";
 
@@ -191,6 +192,7 @@ export default async function FundDetailPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-ivory">
+      <TrackOpportunityView opportunityId={opp.id} />
 
       {/* JSON-LD */}
       <script

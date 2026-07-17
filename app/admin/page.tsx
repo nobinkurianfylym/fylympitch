@@ -3,12 +3,41 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-async function count(supabase: Awaited<ReturnType<typeof createClient>>, table: string, filter?: (q: any) => any) {
-  let q = supabase.from(table).select("*", { count: "exact", head: true });
+// Returns null when the query fails, so a broken read renders "—" rather than
+// masquerading as a real zero. Failures are recorded to platform_errors.
+async function count(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  table: string,
+  filter?: (q: any) => any,
+): Promise<number | null> {
+  let q = supabase.from(table).select("id", { count: "exact", head: true });
   if (filter) q = filter(q);
-  const { count: c } = await q;
+  const { count: c, error } = await q;
+  if (error) {
+    try {
+      const { createServiceClient } = await import("@/lib/supabase/service");
+      await createServiceClient().from("platform_errors").insert({
+        source: "admin/analytics",
+        severity: "warning",
+        message: `count("${table}") failed: ${error.message}`,
+        context: { table, code: error.code, details: error.details },
+      });
+    } catch {
+      // Never let error logging break the analytics page.
+    }
+    return null;
+  }
   return c ?? 0;
 }
+
+// A rate is only meaningful when both operands actually resolved.
+function rate(numerator: number | null, denominator: number | null) {
+  if (numerator === null || denominator === null) return "—";
+  if (denominator === 0) return "—";
+  return `${Math.round((numerator / denominator) * 100)}%`;
+}
+
+const show = (v: number | null) => (v === null ? "—" : v.toLocaleString());
 
 export default async function AdminHome() {
   const supabase = await createClient();
@@ -26,22 +55,21 @@ export default async function AdminHome() {
       count(supabase, "activity_logs", (q) => q.eq("action", "opportunity_viewed")),
     ]);
 
-  const matchSuccess =
-    applications > 0 ? Math.round((accepted / applications) * 100) : 0;
-  const offerSuccess = offers > 0 ? Math.round((offersAccepted / offers) * 100) : 0;
+  const matchSuccess = rate(accepted, applications);
+  const offerSuccess = rate(offersAccepted, offers);
 
   const stats = [
-    { label: "Registered users",      value: users,                   href: "/admin/users" },
-    { label: "Pending verifications", value: pending, accent: pending > 0, href: "/admin/producers" },
-    { label: "Projects submitted",    value: projects,                href: "/admin/projects" },
-    { label: "Active opportunities",  value: opps,                    href: "/admin/opportunities" },
-    { label: "Applications sent",     value: applications,            href: "/admin/audit" },
-    { label: "Opportunity views",     value: views,                   href: "/admin/audit" },
-    { label: "Match success rate",    value: `${matchSuccess}%` },
-    { label: "Offer acceptance rate", value: `${offerSuccess}%` },
+    { label: "Registered users",      value: show(users),        href: "/admin/users" },
+    { label: "Pending verifications", value: show(pending), accent: (pending ?? 0) > 0, href: "/admin/producers" },
+    { label: "Projects submitted",    value: show(projects),     href: "/admin/projects" },
+    { label: "Active opportunities",  value: show(opps),         href: "/admin/opportunities" },
+    { label: "Applications sent",     value: show(applications), href: "/admin/audit" },
+    { label: "Opportunity views",     value: show(views),        href: "/admin/audit" },
+    { label: "Match success rate",    value: matchSuccess },
+    { label: "Offer acceptance rate", value: offerSuccess },
   ];
 
-  const { data: recent } = await supabase
+  const { data: recent, error: recentError } = await supabase
     .from("activity_logs")
     .select("action, entity, created_at, user_id, profiles!activity_logs_user_id_fkey(full_name)")
     .order("created_at", { ascending: false })
@@ -89,7 +117,12 @@ export default async function AdminHome() {
               </Link>
             );
           })}
-          {(!recent || recent.length === 0) && (
+          {recentError && (
+            <p className="px-5 py-6 text-[14px] text-ash font-normal">
+              Activity could not be read — {recentError.message}
+            </p>
+          )}
+          {!recentError && (!recent || recent.length === 0) && (
             <p className="px-5 py-6 text-[14px] text-ash font-normal">No activity yet.</p>
           )}
         </div>

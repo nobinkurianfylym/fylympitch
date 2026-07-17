@@ -4,6 +4,7 @@ import MatchBadge from "@/components/MatchBadge";
 import { usd, TYPE_LABEL, STAGE_LABEL } from "@/lib/format";
 import { applyToOpportunity, toggleSaved } from "@/lib/actions";
 import { ExportPacketButton } from "@/components/ExportPacketButton";
+import TrackOpportunityView from "@/components/TrackOpportunityView";
 import type { Opportunity, Project } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,7 @@ export default async function OpportunityDetailPage({
 
   return (
     <div className="max-w-3xl">
+      <TrackOpportunityView opportunityId={opp.id} />
       <p className="eyebrow mb-3">{TYPE_LABEL[opp.opp_type]}{opp.region ? ` · ${opp.region}` : opp.country ? ` · ${opp.country}` : " · Worldwide"}</p>
       <h1 className="font-display text-[34px]">{opp.title}</h1>
 
