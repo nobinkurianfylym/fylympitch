@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { adminSetApproval, adminVerifyProducer } from "@/lib/actions";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +74,9 @@ export default async function AdminProducersPage({
           <div key={p.id} className="px-5 py-5 flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-normal text-ink">{p.full_name ?? "Unnamed"}</p>
+                <Link href={`/admin/users/${p.id}`} className="font-normal text-ink hover:text-gold transition-colors">
+                  {p.full_name ?? "Unnamed"}
+                </Link>
                 {p.is_producer_verified && (
                   <span
                     title="Verified producer"
@@ -92,11 +95,16 @@ export default async function AdminProducersPage({
               {p.bio && (
                 <p className="text-[13px] text-ash mt-1 line-clamp-2">{p.bio}</p>
               )}
-              {p.imdb_url && (
-                <a className="text-[12px] underline hover:text-gold mt-1 inline-block" href={p.imdb_url} target="_blank" rel="noreferrer">
-                  IMDb profile ↗
-                </a>
-              )}
+              <div className="flex items-center gap-3 mt-1">
+                <Link href={`/admin/users/${p.id}`} className="text-[11px] tracking-[0.14em] uppercase text-ash hover:text-gold">
+                  View full profile →
+                </Link>
+                {p.imdb_url && (
+                  <a className="text-[12px] underline hover:text-gold" href={p.imdb_url} target="_blank" rel="noreferrer">
+                    IMDb ↗
+                  </a>
+                )}
+              </div>
               <p className="text-[11px] text-ash mt-1">
                 Joined {new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
               </p>

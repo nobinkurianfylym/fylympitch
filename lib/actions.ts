@@ -623,6 +623,7 @@ export async function adminSetApproval(formData: FormData) {
     link: status === "approved" ? "/producerstudio" : "/",
   });
   revalidatePath("/admin/users");
+  revalidatePath("/admin/users/[id]", "page");
   revalidatePath("/admin/producers");
   revalidatePath("/producerstudio/pending");  // bust pending page cache
 }
@@ -734,6 +735,8 @@ export async function adminVerifyProducer(formData: FormData) {
   });
 
   revalidatePath("/admin/producers");
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/users/[id]", "page");
   revalidatePath("/opportunities");
   revalidatePath("/sitemap.xml");
 }

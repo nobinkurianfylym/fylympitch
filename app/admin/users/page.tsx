@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { adminSetApproval } from "@/lib/actions";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export default async function AdminUsers({
 
   let query = supabase
     .from("profiles")
-    .select("id, full_name, role, approval_status, company, country, imdb_url, created_at")
+    .select("id, full_name, username, role, approval_status, is_producer_verified, company, country, imdb_url, avatar_url, created_at")
     .order("created_at", { ascending: false })
     .limit(200);
 
@@ -49,19 +50,42 @@ export default async function AdminUsers({
       <div className="card mt-8 divide-y divide-line">
         {(users ?? []).map((u) => (
           <div key={u.id} className="px-5 py-4 flex flex-wrap items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="font-normal text-ink">
-                {u.full_name ?? "Unnamed"}{" "}
-                <span className="text-[12px] text-ash">· {ROLE_LABEL[u.role] ?? u.role}</span>
-              </p>
-              <p className="text-[12px] text-ash font-normal mt-0.5">
-                {[u.company, u.country].filter(Boolean).join(" · ") || "No company details"}
-                {u.imdb_url && (
-                  <> · <a className="underline hover:text-gold" href={u.imdb_url} target="_blank" rel="noreferrer">IMDb</a></>
-                )}
-              </p>
-            </div>
+            {/* Whole identity block opens the full profile for review */}
+            <Link href={`/admin/users/${u.id}`} className="min-w-0 flex items-center gap-3 group">
+              {u.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={u.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border border-line shrink-0" />
+              ) : (
+                <div className="w-9 h-9 rounded-full border border-line bg-parchment flex items-center justify-center text-[11px] text-ash shrink-0">
+                  {(u.full_name ?? "?").split(" ").map((w: string) => w[0]).filter(Boolean).join("").slice(0, 2).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="font-normal text-ink group-hover:text-gold transition-colors flex items-center gap-1.5">
+                  {u.full_name ?? "Unnamed"}
+                  {u.is_producer_verified && (
+                    <span
+                      title="Verified producer"
+                      className="inline-flex items-center justify-center w-[15px] h-[15px] rounded-full bg-blue-500 text-white text-[9px] font-bold leading-none"
+                    >
+                      ✓
+                    </span>
+                  )}
+                  <span className="text-[12px] text-ash">· {ROLE_LABEL[u.role] ?? u.role}</span>
+                </p>
+                <p className="text-[12px] text-ash font-normal mt-0.5">
+                  {[u.company, u.country].filter(Boolean).join(" · ") || "No company details"}
+                  {u.imdb_url && " · IMDb on file"}
+                </p>
+              </div>
+            </Link>
             <div className="flex items-center gap-3">
+              <Link
+                href={`/admin/users/${u.id}`}
+                className="text-[11px] tracking-[0.14em] uppercase text-ash hover:text-gold"
+              >
+                View profile →
+              </Link>
               <span
                 className={`text-[12px] uppercase tracking-[0.14em] font-normal ${
                   u.approval_status === "approved"
