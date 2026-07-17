@@ -24,8 +24,20 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles").select("*").eq("id", user.id).single<Profile>();
+  // Never select("*") from profiles as the authenticated role — the email column
+  // is REVOKEd (migration 013) and `*` references every column, so the whole
+  // query fails with "permission denied for table profiles". The error used to
+  // be swallowed here, leaving profile null: the greeting fell back to "there"
+  // and profile completion rendered a flat 0% for everyone.
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("full_name, country, bio, company, website, imdb_url")
+    .eq("id", user.id)
+    .single<Pick<Profile, "full_name" | "country" | "bio" | "company" | "website" | "imdb_url">>();
+
+  if (profileError) {
+    throw new Error(`Could not load your profile: ${profileError.message}`);
+  }
 
   const { data: projects } = await supabase
     .from("projects")

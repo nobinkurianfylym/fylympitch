@@ -34,7 +34,14 @@ export default async function ProfilePage({
   if (!user) redirect("/login");
 
   const [{ data: profile }, { data: credits }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", user.id).single<Profile>(),
+    // Explicit columns, not "*" — see app/dashboard/page.tsx. This list must
+    // cover every field ProfileForm reads, or the form renders blanks and a
+    // save can wipe them.
+    supabase
+      .from("profiles")
+      .select("id, full_name, username, avatar_url, bio, company, country, imdb_url, website")
+      .eq("id", user.id)
+      .single<Pick<Profile, "id" | "full_name" | "username" | "avatar_url" | "bio" | "company" | "country" | "imdb_url" | "website">>(),
     supabase.from("filmmaker_credits").select("*").eq("user_id", user.id)
       .order("is_featured", { ascending: false })
       .order("year",        { ascending: false }),

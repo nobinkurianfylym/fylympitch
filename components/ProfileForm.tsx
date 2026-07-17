@@ -6,7 +6,15 @@ import type { Profile } from "@/types";
 import AvatarUpload from "@/components/AvatarUpload";
 import UsernameForm from "@/components/UsernameForm";
 
-export default function ProfileForm({ profile }: { profile: Profile }) {
+// Only the fields this form actually reads. Demanding a full Profile forced the
+// caller to select("*"), which is not permitted on profiles for the
+// authenticated role (email is REVOKEd — see app/dashboard/page.tsx).
+export type ProfileFormFields = Pick<
+  Profile,
+  "id" | "full_name" | "username" | "avatar_url" | "bio" | "company" | "country" | "imdb_url" | "website"
+>;
+
+export default function ProfileForm({ profile }: { profile: ProfileFormFields }) {
   const [saved, setSaved]         = useState(false);
   const [error, setError]         = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url ?? "");

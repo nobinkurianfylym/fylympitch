@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { updateUsername } from "@/lib/actions";
 import type { Profile } from "@/types";
 
-export default function UsernameForm({ profile }: { profile: Profile }) {
+export default function UsernameForm({ profile }: { profile: Pick<Profile, "username"> }) {
   const [state, action, pending] = useActionState(updateUsername, null);
 
   return (

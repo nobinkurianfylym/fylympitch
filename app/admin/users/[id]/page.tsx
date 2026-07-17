@@ -98,9 +98,17 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
   const { id } = await params;
   const supabase = await createClient();
 
-  // `email` is resolved separately from auth.users via lib/admin-email, which is
-  // authoritative; the copy on profiles is a cache that drifts.
-  const { data: p, error: profileError } = await supabase
+  // Do NOT use select("*") on profiles as the `authenticated` role. Migration 013
+  // revoked SELECT on the email column, and Postgres requires SELECT on EVERY
+  // column referenced by `*` — so `*` fails with "permission denied for table
+  // profiles". (013's own comment claims the column is "silently omitted". It is
+  // not. That comment is wrong.)
+  //
+  // The service-role client is not the `authenticated` role, so the REVOKE does
+  // not apply to it — same reasoning as lib/admin-email. This page is already
+  // admin-gated server-side by app/admin/layout.tsx, and it needs the full row.
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { data: p, error: profileError } = await createAdminClient()
     .from("profiles")
     .select("*")
     .eq("id", id)
