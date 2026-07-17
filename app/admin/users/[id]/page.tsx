@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatBudget } from "@/lib/format";
 import { formatFormat, formatStage } from "@/lib/film-identity";
+import { lookupUserEmail } from "@/lib/admin-email";
 
 export const dynamic = "force-dynamic";
 
@@ -98,14 +99,15 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
   const supabase = await createClient();
 
   // `email` is revoked from the authenticated role (migration 013) — `select("*")`
-  // silently omits it, so it is read separately via the profile_email() accessor.
+  // silently omits it, so it is resolved separately from auth.users (the
+  // authoritative source) via lib/admin-email.
   const { data: p } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
   if (!p) notFound();
 
   const isProducerish = p.role === "producer" || p.role === "investor" || p.role === "organization";
 
   const [emailRes, producerRes, creditsRes, projectsRes] = await Promise.all([
-    supabase.rpc("profile_email", { target_id: id }),
+    lookupUserEmail(id),
     isProducerish
       ? supabase.from("producer_profiles").select("*").eq("user_id", id).maybeSingle()
       : Promise.resolve({ data: null }),
@@ -121,8 +123,8 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
       .order("created_at", { ascending: false }),
   ]);
 
-  const emailErr = emailRes.error?.message ?? null;
-  const email    = (emailRes.data as string | null) ?? null;
+  const email    = emailRes.email;
+  const emailErr = emailRes.error;
   const pp       = producerRes.data as any;
   const credits  = creditsRes.data ?? [];
   const projects = projectsRes.data ?? [];
@@ -137,7 +139,7 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
   // no weighting, no judgement. Just what the applicant did and did not give us.
   const evidence: { label: string; ok: boolean }[] = [
     { label: "Full name",     ok: !!p.full_name },
-    { label: "Email",         ok: !!email },  // via profile_email() — admin-only accessor
+    { label: "Email",         ok: !!email },
     { label: "Country",       ok: !!p.country },
     { label: "Bio",           ok: !!p.bio },
     { label: "Company",       ok: !!p.company },
@@ -248,7 +250,23 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
         {/* ── Contact & identity ────────────────────────────────── */}
         <Panel title="Identity">
           <Field label="Email">
-            {email ?? (emailErr ? <span className="text-red-700">Lookup failed — {emailErr}</span> : null)}
+            {emailErr ? (
+              <span className="text-red-700">Lookup failed — {emailErr}</span>
+            ) : email ? (
+              <>
+                <a href={`mailto:${email}`} className="underline decoration-line hover:text-gold">{email}</a>
+                {emailRes.source === "profiles" && (
+                  <span className="block text-[11px] text-amber-700 mt-1">
+                    From the profiles copy — auth.users has no address for this account.
+                  </span>
+                )}
+                {emailRes.staleProfileEmail && (
+                  <span className="block text-[11px] text-amber-700 mt-1">
+                    profiles.email is out of date ({emailRes.staleProfileEmail}). Shown value is from auth.users.
+                  </span>
+                )}
+              </>
+            ) : null}
           </Field>
           <Field label="Country">{p.country}</Field>
           <Field label="Company">{p.company}</Field>

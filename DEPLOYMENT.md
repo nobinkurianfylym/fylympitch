@@ -91,6 +91,7 @@ Set secrets via CLI:
 ```bash
 wrangler secret put NEXT_PUBLIC_SUPABASE_URL
 wrangler secret put NEXT_PUBLIC_SUPABASE_ANON_KEY
+wrangler secret put SUPABASE_SERVICE_ROLE_KEY   # required: proofs, admin email lookup, account deletion
 wrangler secret put NEXT_PUBLIC_SITE_URL
 wrangler secret put RESEND_API_KEY
 wrangler secret put CEREBERAS_API

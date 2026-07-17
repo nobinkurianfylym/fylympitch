@@ -587,28 +587,45 @@ export async function adminSetApproval(formData: FormData) {
     return;
   }
 
-  // Email column is revoked from `authenticated` role (migration 013).
-  // Use the profile_email() SECURITY DEFINER function to access it
-  // only when the caller is the profile owner or an admin.
-  const [{ data: producerProfile }, { data: producerEmail }] = await Promise.all([
+  // The email column is revoked from the `authenticated` role (migration 013),
+  // so it is resolved from auth.users via the service-role client. This used to
+  // go through the profile_email() RPC; when that function is missing or
+  // PostgREST's schema cache is stale the call returns null, and a null address
+  // here silently skipped the notification with no error anywhere.
+  const { lookupUserEmail } = await import("@/lib/admin-email");
+  const [{ data: producerProfile }, emailLookup] = await Promise.all([
     supabase.from("profiles").select("full_name, company").eq("id", target).single(),
-    supabase.rpc("profile_email", { target_id: target }),
+    lookupUserEmail(target),
   ]);
+
+  const producerEmail = emailLookup.email;
 
   if (producerEmail) {
     const { sendProducerApprovedEmail, sendProducerDeclinedEmail } = await import("@/lib/email");
     if (status === "approved") {
       await sendProducerApprovedEmail(
-        producerEmail as string,
+        producerEmail,
         producerProfile?.full_name ?? "there",
         producerProfile?.company ?? ""
       );
     } else {
       await sendProducerDeclinedEmail(
-        producerEmail as string,
+        producerEmail,
         producerProfile?.full_name ?? "there"
       );
     }
+  } else {
+    // No address means the decision email did not go out. Record it — a silent
+    // skip is how this went unnoticed in the first place.
+    const { createServiceClient } = await import("@/lib/supabase/service");
+    await createServiceClient().from("platform_errors").insert({
+      source: "admin-set-approval",
+      severity: "warning",
+      message: emailLookup.error
+        ? `Decision email skipped — email lookup failed: ${emailLookup.error}`
+        : "Decision email skipped — no address on auth.users or profiles for this account",
+      context: { user_id: target, decision: status },
+    });
   }
 
   await supabase.from("audit_logs").insert({
