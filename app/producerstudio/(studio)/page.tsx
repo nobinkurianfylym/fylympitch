@@ -362,7 +362,7 @@ export default async function ProducerDiscoverPage({
                           ) : (
                             <SaveToPipelineButton projectId={p.id} />
                           )}
-                          <MessageButton projectId={p.id} producerId={user.id} filmakerId={p.owner_id} filmmakerName={filmmaker?.full_name ?? ""} size="sm" />
+                          <MessageButton projectId={p.id} producerId={user.id} filmakerId={p.owner_id} size="sm" />
                         </div>
                       }
                     />

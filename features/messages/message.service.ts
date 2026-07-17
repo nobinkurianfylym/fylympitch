@@ -110,9 +110,12 @@ export async function loadMessages(
     .limit(MESSAGE_PAGE_SIZE + 1); // +1 to detect hasMore
 
   if (cursor) {
-    // Cursor: rows older than (sent_at, id)
+    // Cursor: rows older than (sent_at, id). The timestamp is double-quoted —
+    // PostgREST treats "." and ":" as reserved in filter values and a
+    // timestamptz such as 2026-07-17T10:20:30.123456+00:00 contains both.
+    const ts = `"${cursor.sent_at}"`;
     query = query.or(
-      `sent_at.lt.${cursor.sent_at},and(sent_at.eq.${cursor.sent_at},id.lt.${cursor.id})`
+      `sent_at.lt.${ts},and(sent_at.eq.${ts},id.lt.${cursor.id})`
     );
   }
 
@@ -120,7 +123,7 @@ export async function loadMessages(
 
   if (error) return { data: null, error: error.message };
 
-  const rows = data ?? [];
+  const rows    = (data ?? []) as unknown as Record<string, any>[];
   const hasMore = rows.length > MESSAGE_PAGE_SIZE;
   const page    = hasMore ? rows.slice(0, MESSAGE_PAGE_SIZE) : rows;
 
@@ -129,7 +132,7 @@ export async function loadMessages(
   const lastRow = page[page.length - 1];
   const nextCursor: MessageCursor | null =
     hasMore && lastRow
-      ? { sent_at: lastRow.sent_at, id: lastRow.id }
+      ? { sent_at: lastRow.sent_at as string, id: lastRow.id as string }
       : null;
 
   return {
@@ -148,15 +151,19 @@ export async function sendTextMessage(
   text: string
 ): Promise<ServiceResult<Message>> {
   const supabase = createClient();
-  const now = new Date().toISOString();
 
+  // sent_at is deliberately omitted so the column default (now()) applies.
+  // A client clock is not a source of truth: a device running fast stamps a
+  // future sent_at, which the handle_new_project_message trigger copies into
+  // conversations.last_message_at — leaving last_message_at permanently ahead
+  // of last_read_at, so the unread badge never clears. It also corrupts
+  // ordering and the keyset cursor, which both sort on sent_at.
   const { data, error } = await supabase
     .from("messages")
     .insert({
       conversation_id: conversationId,
       sender_id:       senderId,
       message:         text.trim(),
-      sent_at:         now,
       created_by:      senderId,
       updated_by:      senderId,
     })
@@ -197,6 +204,7 @@ export async function sendAttachmentMessage(
 
   const storagePath = buildAttachmentPath(conversationId, senderId, extension);
 
+
   const { error: uploadError } = await supabase.storage
     .from("message-attachments")
     .upload(storagePath, file, {
@@ -208,8 +216,8 @@ export async function sendAttachmentMessage(
     return { data: null, error: `Upload failed: ${uploadError.message}` };
   }
 
-  const now = new Date().toISOString();
-
+  // sent_at omitted — see sendTextMessage. The database clock is the only one
+  // every participant agrees on.
   const { data, error } = await supabase
     .from("messages")
     .insert({
@@ -221,7 +229,6 @@ export async function sendAttachmentMessage(
       attachment_mime:      file.type,
       storage_bucket:       "message-attachments",
       storage_path:         storagePath,
-      sent_at:              now,
       created_by:           senderId,
       updated_by:           senderId,
     })
@@ -250,11 +257,18 @@ export async function sendAttachmentMessage(
  */
 export async function markConversationRead(
   conversationId: string
-): Promise<void> {
+): Promise<ServiceResult<null>> {
   const supabase = createClient();
-  await supabase.rpc("mark_conversation_read", {
+  const { error } = await supabase.rpc("mark_conversation_read", {
     p_conversation_id: conversationId,
   });
+  if (error) {
+    // Not fatal — but a silent failure here means read receipts and the unread
+    // badge quietly stop working, which is exactly the kind of bug that hides.
+    console.error("[messages] mark_conversation_read failed:", error.message);
+    return { data: null, error: error.message };
+  }
+  return { data: null, error: null };
 }
 
 /**

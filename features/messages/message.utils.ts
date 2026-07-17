@@ -6,6 +6,7 @@ import type {
   MessageOrOptimistic,
   OptimisticMessage,
   ConversationRow,
+  ConversationParty,
   ConversationListItem,
   MessageDeliveryStatus,
   AllowedAttachmentExtension,
@@ -38,6 +39,13 @@ export function isOptimistic(
 
 // ── Conversation transformation ────────────────────────────────
 
+/** PostgREST returns a to-one embed as an object, but as a single-element
+ *  array when it resolves the relationship as to-many. Accept both. */
+function one<T>(v: T | T[] | null | undefined): T | null {
+  if (v == null) return null;
+  return Array.isArray(v) ? (v[0] ?? null) : v;
+}
+
 export function toConversationListItem(
   row: ConversationRow,
   currentUserId: string
@@ -45,10 +53,13 @@ export function toConversationListItem(
   const myRole: ConversationRole =
     row.producer_id === currentUserId ? "producer" : "filmmaker";
 
+  const producerParty  = one<ConversationParty>(row.producer  as any);
+  const filmmakerParty = one<ConversationParty>(row.filmmaker as any);
+
   const counterparty =
     myRole === "producer"
-      ? row.filmmaker ?? { id: row.filmmaker_id, full_name: null, company: null, avatar_url: null }
-      : row.producer  ?? { id: row.producer_id,  full_name: null, company: null, avatar_url: null };
+      ? filmmakerParty ?? { id: row.filmmaker_id, full_name: null, company: null, avatar_url: null }
+      : producerParty  ?? { id: row.producer_id,  full_name: null, company: null, avatar_url: null };
 
   const myLastReadAt =
     myRole === "producer"
@@ -63,7 +74,7 @@ export function toConversationListItem(
   return {
     id:              row.id,
     project_id:      row.project_id,
-    project_title:   row.project?.title ?? "Untitled Project",
+    project_title:   one<{ title: string }>(row.project as any)?.title ?? "Untitled Project",
     producer_id:     row.producer_id,
     filmmaker_id:    row.filmmaker_id,
     my_role:         myRole,

@@ -27,6 +27,22 @@ interface ProofNotification {
   } | null;
 }
 
+/** A to-one PostgREST embed arrives as an object, or as a single-element array
+ *  when the relationship resolves as to-many. Accept both. */
+function one<T>(v: T | T[] | null | undefined): T | null {
+  if (v == null) return null;
+  return Array.isArray(v) ? (v[0] ?? null) : v;
+}
+
+/** Shape as returned by PostgREST, before the embed is normalised. */
+type ProofNotificationRow = Omit<ProofNotification, "project_proofs"> & {
+  project_proofs: ProofNotification["project_proofs"] | ProofNotification["project_proofs"][];
+};
+
+function normalizeProofNotification(row: ProofNotificationRow): ProofNotification {
+  return { ...row, project_proofs: one(row.project_proofs) };
+}
+
 interface ProofNotificationThreadProps {
   filmakerId: string;
   onUnreadChange?: (count: number) => void;
@@ -76,7 +92,9 @@ export function ProofNotificationThread({
         .order("created_at", { ascending: false })
         .limit(30);
 
-      setNotifications((data as ProofNotification[]) ?? []);
+      setNotifications(
+        ((data ?? []) as unknown as ProofNotificationRow[]).map(normalizeProofNotification)
+      );
       setLoading(false);
 
       // Auto-select first

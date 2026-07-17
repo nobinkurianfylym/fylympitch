@@ -620,7 +620,7 @@ export async function adminSetApproval(formData: FormData) {
     const { createServiceClient } = await import("@/lib/supabase/service");
     await createServiceClient().from("platform_errors").insert({
       source: "admin-set-approval",
-      severity: "warning",
+      severity: "warn",
       message: emailLookup.error
         ? `Decision email skipped — email lookup failed: ${emailLookup.error}`
         : "Decision email skipped — no address on auth.users or profiles for this account",
@@ -1326,7 +1326,7 @@ export async function toggleProjectLove(
     );
     await admin.from("platform_errors").insert({
       source: "toggle-project-love",
-      severity: "warning",
+      severity: "warn",
       message: error.message,
       context: { project_id: projectId, user_id: user.id, op: existing ? "unlove" : "love" },
     });

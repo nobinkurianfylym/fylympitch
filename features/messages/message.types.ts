@@ -127,6 +127,11 @@ export const ALLOWED_MIME_TYPES = [
   "application/zip",
   "application/x-zip-compressed",
 ];
+/** Mirrors the chk_message_length CHECK constraint in migration 057.
+ *  Kept in sync so the user is stopped by the composer rather than by a raw
+ *  Postgres constraint violation. */
+export const MAX_MESSAGE_LENGTH = 10000;
+
 export const MAX_ATTACHMENT_BYTES = 52_428_800; // 50 MB
 
 export interface AttachmentMeta {

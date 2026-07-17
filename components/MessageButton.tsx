@@ -13,6 +13,8 @@ interface Props {
   filmakerId: string;
   label?:     string;
   className?: string;
+  /** Compact variant for card grids. Defaults to "md". */
+  size?:      "sm" | "md";
   /** Override redirect target (defaults to /producerstudio/messages for producers) */
   inboxPath?: string;
 }
@@ -21,10 +23,15 @@ export default function MessageButton({
   projectId,
   producerId,
   filmakerId,
-  label     = "Message filmmaker regarding this project",
+  label,
   className,
+  size      = "md",
   inboxPath = "/producerstudio/messages",
 }: Props) {
+  const isSmall = size === "sm";
+  // A card grid has no room for the full sentence; the surrounding project
+  // context already says who is being messaged.
+  const resolvedLabel = label ?? (isSmall ? "Message" : "Message filmmaker regarding this project");
   const router  = useRouter();
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
@@ -55,15 +62,17 @@ export default function MessageButton({
         disabled={loading}
         className={
           className ??
-          "btn-ghost gap-2 disabled:opacity-40 text-[12px] tracking-[0.1em] uppercase"
+          `btn-ghost gap-2 disabled:opacity-40 tracking-[0.1em] uppercase ${
+            isSmall ? "!py-1.5 !px-3 text-[11px] w-full justify-center" : "text-[12px]"
+          }`
         }
       >
         <i
           className="ti ti-message-circle"
-          style={{ fontSize: 14, verticalAlign: "-2px" }}
+          style={{ fontSize: isSmall ? 12 : 14, verticalAlign: "-2px" }}
           aria-hidden="true"
         />
-        {loading ? "Opening…" : label}
+        {loading ? "Opening…" : resolvedLabel}
       </button>
       {error && (
         <p className="text-[11px] text-red-600 mt-1 tracking-[0.04em]">{error}</p>

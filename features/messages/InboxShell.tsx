@@ -38,6 +38,10 @@ export default function InboxShell({
   const pathname = usePathname();
 
   const [selectedId,      setSelectedId]      = useState<string | null>(initialConversationId);
+  // The proof thread is a synthetic sentinel, not a row in `conversations`.
+  // Never let it reach the chat hook.
+  const isProofThread = selectedId === PROOF_THREAD_ID;
+  const chatConversationId = isProofThread ? null : selectedId;
   const [mobileShowPanel, setMobileShowPanel] = useState(!!initialConversationId);
   const [proofUnreadCount, setProofUnreadCount] = useState(initialProofUnreadCount);
 
@@ -54,7 +58,7 @@ export default function InboxShell({
     retry,
     clearSendError,
     getUrl,
-  } = useProjectChat(selectedId, currentUserId, initialConversations);
+  } = useProjectChat(chatConversationId, currentUserId, initialConversations);
 
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
 
@@ -131,9 +135,9 @@ export default function InboxShell({
         `}
         aria-label="Message panel"
       >
-        {!selected && selectedId !== PROOF_THREAD_ID ? (
+        {!selected && !isProofThread ? (
           <EmptyState variant="no-selection" />
-        ) : selectedId === PROOF_THREAD_ID ? (
+        ) : isProofThread ? (
           <ProofNotificationThread
             filmakerId={currentUserId}
             onUnreadChange={setProofUnreadCount}

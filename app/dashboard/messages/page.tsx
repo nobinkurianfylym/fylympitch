@@ -19,7 +19,7 @@ export default async function MessagesPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?next=/dashboard/messages");
 
-  const { data: rows } = await supabase
+  const { data: rows, error: convError } = await supabase
     .from("conversations")
     .select(`
       id,
@@ -39,6 +39,12 @@ export default async function MessagesPage({
     `)
     .or(`producer_id.eq.${user.id},filmmaker_id.eq.${user.id}`)
     .order("last_message_at", { ascending: false, nullsFirst: false });
+
+  // An empty inbox and a broken query look identical to the user unless we
+  // say so. Surface it rather than rendering a reassuring blank slate.
+  if (convError) {
+    console.error("[messages] inbox query failed:", convError.message);
+  }
 
   const conversations = ((rows ?? []) as unknown as ConversationRow[]).map((row) =>
     toConversationListItem(row, user.id)

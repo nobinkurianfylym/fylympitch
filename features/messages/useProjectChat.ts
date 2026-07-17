@@ -299,13 +299,10 @@ export function useProjectChat(
 
       retryQueueRef.current.delete(clientId);
 
-      // Fire-and-forget: notify the counterparty by email.
-      // Throttled server-side (skips if recipient was active recently).
-      void notifyNewMessage({
-        conversationId,
-        senderId: currentUserId,
-        messageText: confirmed.message ?? confirmed.attachment_name ?? null,
-      });
+      // Fire-and-forget: notify the counterparty by email. The action derives
+      // sender, recipient and preview text from auth.uid() and the DB — passing
+      // them from here would let any caller forge them.
+      void notifyNewMessage({ conversationId, messageId: confirmed.id });
 
       setConversations((prev: ConversationListItem[]) =>
         sortByLastMessage(prev.map((c: ConversationListItem) =>

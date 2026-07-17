@@ -21,6 +21,7 @@ import {
 import {
   ALLOWED_ATTACHMENT_EXTENSIONS,
   MAX_ATTACHMENT_BYTES,
+  MAX_MESSAGE_LENGTH,
 } from "./message.types";
 
 interface Props {
@@ -78,6 +79,7 @@ export function PremiumComposer({ onSend, sendError, onClearError, disabled }: P
   const handleSend = useCallback(async () => {
     if (sending || disabled) return;
     if (!text.trim() && !stagedFile) return;
+    if (text.length > MAX_MESSAGE_LENGTH) return;
 
     setSending(true);
     onClearError();
@@ -106,8 +108,15 @@ export function PremiumComposer({ onSend, sendError, onClearError, disabled }: P
     }
   }, [handleSend]);
 
-  const canSend = !sending && !disabled && (text.trim().length > 0 || stagedFile !== null);
-  const error   = fileError ?? sendError;
+  const tooLong = text.length > MAX_MESSAGE_LENGTH;
+  const canSend =
+    !sending && !disabled && !tooLong &&
+    (text.trim().length > 0 || stagedFile !== null);
+  const error   =
+    fileError ??
+    (tooLong
+      ? `Message is ${text.length.toLocaleString()} characters — the limit is ${MAX_MESSAGE_LENGTH.toLocaleString()}.`
+      : sendError);
 
   return (
     <div
