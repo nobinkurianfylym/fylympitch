@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { adminSetApproval, adminVerifyProducer } from "@/lib/actions";
+import MessageUserButton from "./MessageUserButton";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatBudget } from "@/lib/format";
@@ -226,6 +227,7 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
 
         {/* ── Decisions ───────────────────────────────────────────── */}
         <div className="flex items-center gap-2 flex-wrap shrink-0">
+          <MessageUserButton userId={p.id} />
           {canDecide && p.approval_status !== "approved" && (
             <form action={adminSetApproval}>
               <input type="hidden" name="user_id" value={p.id} />

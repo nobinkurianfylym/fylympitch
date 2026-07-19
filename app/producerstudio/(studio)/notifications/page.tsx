@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 const KIND_LABEL: Record<string, string> = {
   new_project:    "New project",
   producer_match: "New match",
+  admin_broadcast: "Announcement",
+  admin_message:  "PITCH.FYLYM",
   system:         "System",
   offer_update:   "Offer",
 };

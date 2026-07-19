@@ -13,6 +13,8 @@ const KIND_META: Record<string, { label: string; dot: string; icon: string; icon
   application_update: { label: "Application",       dot: "bg-violet-500",   icon: "●", iconBg: "bg-violet-50 text-violet-500" },
   new_opportunity:    { label: "Producer Brief",    dot: "bg-gold",         icon: "◉", iconBg: "bg-gold/10 text-gold" },
   new_fund:           { label: "New Fund",          dot: "bg-blue-500",     icon: "◈", iconBg: "bg-blue-50 text-blue-500" },
+  admin_broadcast:    { label: "Announcement",      dot: "bg-gold",         icon: "◆", iconBg: "bg-gold/10 text-gold" },
+  admin_message:      { label: "PITCH.FYLYM",       dot: "bg-gold",         icon: "✉", iconBg: "bg-gold/10 text-gold" },
   system:             { label: "System",            dot: "bg-ash",          icon: "◎", iconBg: "bg-parchment text-ash" },
 };
 
