@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { SITE, opportunityIndexability } from "@/lib/seo";
+import { OPPORTUNITY_FAMILIES, countrySlug } from "@/lib/opportunity-taxonomy";
+import { countriesWithCounts, HUB_MIN_RECORDS, type HubRow } from "@/lib/hubs";
 
 export const revalidate = 3600; // regenerate hourly
 
@@ -40,6 +42,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
+  // ── Hub pages (threshold-gated) ───────────────────────────────
+  const indexable = (opps ?? []).filter((o: any) => opportunityIndexability(o).index) as unknown as HubRow[];
+  const hubUrls: MetadataRoute.Sitemap = [
+    { url: `${BASE}/opportunities/type`, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${BASE}/opportunities/country`, changeFrequency: "weekly", priority: 0.7 },
+  ];
+
+  // Family hubs
+  for (const fam of OPPORTUNITY_FAMILIES) {
+    const rows = indexable.filter((r) => fam.types.includes(r.opp_type ?? ""));
+    if (rows.length >= HUB_MIN_RECORDS)
+      hubUrls.push({ url: `${BASE}/opportunities/type/${fam.slug}`, changeFrequency: "weekly", priority: 0.75 });
+  }
+
+  // Country hubs + country×family combos
+  const countries = countriesWithCounts(indexable);
+  for (const c of countries) {
+    hubUrls.push({ url: `${BASE}/opportunities/country/${c.slug}`, changeFrequency: "weekly", priority: 0.7 });
+    for (const fam of OPPORTUNITY_FAMILIES) {
+      const n = indexable.filter((r) => r.country && countrySlug(r.country) === c.slug && fam.types.includes(r.opp_type ?? "")).length;
+      if (n >= HUB_MIN_RECORDS)
+        hubUrls.push({ url: `${BASE}/opportunities/country/${c.slug}/${fam.slug}`, changeFrequency: "weekly", priority: 0.65 });
+    }
+  }
+
   // ── Public project pages ──────────────────────────────────────
   const { data: projects } = await supabase
     .from("projects")
@@ -74,5 +101,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     }));
 
-  return [...statics, ...oppUrls, ...projectUrls, ...profileUrls];
+  return [...statics, ...oppUrls, ...hubUrls, ...projectUrls, ...profileUrls];
 }
