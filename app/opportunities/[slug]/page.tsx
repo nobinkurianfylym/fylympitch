@@ -6,6 +6,10 @@ import Wordmark from "@/components/Wordmark";
 import TrackOpportunityView from "@/components/TrackOpportunityView";
 import { usd, TYPE_LABEL, STAGE_LABEL } from "@/lib/format";
 import type { Opportunity } from "@/types";
+import JsonLd from "@/components/JsonLd";
+import AuthAwareCta from "@/components/AuthAwareCta";
+import { opportunitySchema, breadcrumbSchema, faqPageSchema } from "@/lib/schema";
+import { opportunityRobots } from "@/lib/seo";
 
 export const revalidate = 3600; // ISR — re-generate at most once per hour
 
@@ -17,10 +21,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient();
   const { data: opp } = await supabase
     .from("opportunities")
-    .select("title, opp_type, description, country, region, deadline, max_award_usd")
+    .select("slug, title, opp_type, description, country, region, deadline, max_award_usd, min_award_usd, is_active, is_producer_post, posted_by_producer_id, eligible_countries, career_stages")
     .eq("slug", slug)
     .eq("is_active", true)
-    .single<Pick<Opportunity, "title" | "opp_type" | "description" | "country" | "region" | "deadline" | "max_award_usd">>();
+    .single<any>();
 
   if (!opp) return { title: "Fund Not Found — PITCH.FYLYM" };
 
@@ -51,6 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: {
       canonical: `https://pitch.fylym.com/opportunities/${slug}`,
     },
+    robots: opportunityRobots(opp),
   };
 }
 
@@ -58,8 +63,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function FundDetailPage({ params }: Props) {
   const { slug } = await params;
   const supabase  = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
 
   const { data: opp } = await supabase
     .from("opportunities")
@@ -70,12 +73,7 @@ export default async function FundDetailPage({ params }: Props) {
 
   if (!opp) notFound();
 
-  // Role-aware dashboard link
-  let dashboardHref = "/dashboard";
-  if (user) {
-    const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-    if ((me as any)?.role === "producer") dashboardHref = "/producerstudio";
-  }
+  const o = opp as any;
 
   // For producer-posted opportunities, fetch producer display info
   let producerInfo: { full_name: string | null; username: string | null; company: string | null } | null = null;
@@ -112,93 +110,60 @@ export default async function FundDetailPage({ params }: Props) {
     ...(opp.ott_affiliated       ? [{ label: "Platform",  value: "OTT / Streaming" }]                                   : []),
   ];
 
-  // ── JSON-LD structured data ───────────────────────────────────────────────
-  const BASE = "https://pitch.fylym.com";
-  const pageUrl = `${BASE}/opportunities/${(opp as any).slug}`;
+  // ── AEO: answer-first lede + data-derived FAQ (honest data only) ────────────
+  const awardText =
+    o.max_award_usd != null
+      ? `up to ${usd(o.max_award_usd)}`
+      : o.min_award_usd != null
+      ? `from ${usd(o.min_award_usd)}`
+      : null;
+  const deadlineText = formatDeadline(opp.deadline, opp.deadline_note ?? null);
+  const ledeText = `${opp.title} is a ${typeLabel.toLowerCase()} ${
+    location !== "Worldwide" ? `based in ${location}` : "open to filmmakers worldwide"
+  }${awardText ? `, awarding ${awardText}` : ""}${
+    opp.deadline || opp.deadline_note ? `, with applications due ${deadlineText}` : ""
+  }.`;
+  const faqs = (
+    [
+      awardText
+        ? { question: `How much does ${opp.title} award?`, answer: `${opp.title} awards ${awardText}.` }
+        : null,
+      opp.deadline || opp.deadline_note
+        ? { question: `What is the application deadline for ${opp.title}?`, answer: `The application deadline is ${deadlineText}.` }
+        : null,
+      location !== "Worldwide" || (o.career_stages?.length ?? 0) > 0 || (o.eligible_countries?.length ?? 0) > 0
+        ? {
+            question: `Who is eligible for ${opp.title}?`,
+            answer: `${opp.title} is ${location !== "Worldwide" ? `focused on ${location}` : "open internationally"}${
+              o.career_stages?.length ? `, aimed at ${o.career_stages.join(", ")} filmmakers` : ""
+            }.`,
+          }
+        : null,
+      officialLink
+        ? {
+            question: `How do I apply to ${opp.title}?`,
+            answer: `Apply via the official website${opp.deadline ? ` before ${deadlineText}` : ""}, or submit your project through PITCH.FYLYM to check your match first.`,
+          }
+        : null,
+    ].filter(Boolean) as { question: string; answer: string }[]
+  );
 
-  // BreadcrumbList — always present
-  const breadcrumb = {
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Funds", "item": `${BASE}/opportunities` },
-      { "@type": "ListItem", "position": 2, "name": opp.title, "item": pageUrl },
-    ],
-  };
-
-  // Main entity — type-aware
-  const GRANT_TYPES = new Set(["grant", "fund", "lab"]);
-  const TAX_TYPES   = new Set(["tax_incentive"]);
-
-  let mainEntity: Record<string, any>;
-
-  if (GRANT_TYPES.has(opp.opp_type)) {
-    mainEntity = {
-      "@type": "Grant",
-      "name": opp.title,
-      ...(opp.description && { "description": opp.description }),
-      "url": pageUrl,
-      ...(officialLink && { "sameAs": [officialLink] }),
-      "funder": { "@type": "Organization", "name": opp.title },
-      ...(opp.max_award_usd && {
-        "fundingAmount": {
-          "@type": "MonetaryAmount",
-          "currency": "USD",
-          "maxValue": opp.max_award_usd,
-        },
-      }),
-      ...(opp.deadline && { "endDate": opp.deadline }),
-      ...((opp.country || opp.region) && {
-        "areaServed": { "@type": "Place", "name": opp.country || opp.region },
-      }),
-    };
-  } else if (TAX_TYPES.has(opp.opp_type)) {
-    mainEntity = {
-      "@type": "GovernmentService",
-      "name": opp.title,
-      ...(opp.description && { "description": opp.description }),
-      "url": officialLink ?? pageUrl,
-      ...(opp.country && {
-        "areaServed": { "@type": "Country", "name": opp.country },
-        "provider": { "@type": "GovernmentOrganization", "addressCountry": opp.country },
-      }),
-      ...(opp.region && !opp.country && {
-        "areaServed": { "@type": "Place", "name": opp.region },
-      }),
-    };
-  } else {
-    // Organization — production companies, studios, distributors, sales agents,
-    // investors, broadcasters, streamers, crowdfunding platforms, etc.
-    mainEntity = {
-      "@type": "Organization",
-      "name": opp.title,
-      ...(opp.description && { "description": opp.description }),
-      "url": officialLink ?? pageUrl,
-      ...(officialLink && { "sameAs": [officialLink] }),
-      ...((opp as any).contact_email && { "email": (opp as any).contact_email }),
-      ...((opp as any).contact_phone && { "telephone": (opp as any).contact_phone }),
-      ...((opp as any).key_person && {
-        "employee": { "@type": "Person", "name": (opp as any).key_person },
-      }),
-      ...(opp.country && {
-        "address": { "@type": "PostalAddress", "addressCountry": opp.country },
-      }),
-    };
-  }
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [breadcrumb, mainEntity],
-  };
+  // ── JSON-LD structured data (centralized, honest-data builders) ─────────────
+  const jsonLd = [
+    breadcrumbSchema([
+      { name: "Opportunities", path: "/opportunities" },
+      { name: opp.title, path: `/opportunities/${o.slug}` },
+    ]),
+    opportunitySchema(o),
+    faqPageSchema(faqs),
+  ];
 
   return (
     <div className="min-h-screen bg-ivory">
       <TrackOpportunityView opportunityId={opp.id} />
 
       {/* JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
       <header className="border-b border-line">
         <div className="max-w-[1180px] mx-auto px-6 py-5 flex items-center justify-between">
           <Wordmark />
@@ -208,13 +173,9 @@ export default async function FundDetailPage({ params }: Props) {
             <Link href="/opportunities"      className="text-ink">Opportunities</Link>
           </nav>
           <div className="flex items-center gap-3">
-            {user ? (
-              <Link href={dashboardHref} className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
-                {dashboardHref === "/producerstudio" ? "Producer Studio" : "Dashboard"}
-              </Link>
-            ) : (
+            <AuthAwareCta authedHref="/dashboard" authedLabel="Dashboard" authedClassName="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
               <Link href="/login" className="btn-outline !px-5 !py-2.5 !text-[11px]">Get started</Link>
-            )}
+            </AuthAwareCta>
           </div>
         </div>
       </header>
@@ -293,6 +254,11 @@ export default async function FundDetailPage({ params }: Props) {
           </div>{/* flex-1 min-w-0 */}
         </div>
 
+        {/* Answer-first summary (AEO) */}
+        {ledeText && (
+          <p className="mt-8 text-[15px] leading-[1.7] text-ash max-w-[68ch]">{ledeText}</p>
+        )}
+
         {/* Description */}
         {opp.description && (
           <div className="mt-10 pb-10 border-b border-line">
@@ -311,6 +277,21 @@ export default async function FundDetailPage({ params }: Props) {
                 <div key={t.label}>
                   <p className="text-[10px] tracking-[0.18em] uppercase text-ash mb-1">{t.label}</p>
                   <p className="text-[15px] text-ink">{t.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* FAQ (AEO) */}
+        {faqs.length > 0 && (
+          <div className="mt-10 pb-10 border-b border-line">
+            <p className="eyebrow mb-6">Frequently asked</p>
+            <div className="space-y-6">
+              {faqs.map((f) => (
+                <div key={f.question}>
+                  <p className="font-display text-[18px] text-ink mb-1">{f.question}</p>
+                  <p className="text-[15px] text-ash leading-[1.6]">{f.answer}</p>
                 </div>
               ))}
             </div>
@@ -347,16 +328,12 @@ export default async function FundDetailPage({ params }: Props) {
               — identical to pitching via their producer profile. They will see your
               full project, FRS score, and match analysis.
             </p>
-            {user ? (
-              <Link href="/dashboard" className="btn-gold">
-                Submit your project →
-              </Link>
-            ) : (
+            <AuthAwareCta authedHref="/dashboard" authedLabel="Submit your project →">
               <div className="flex flex-wrap gap-3">
                 <Link href="/signup" className="btn-gold">Create account & submit</Link>
                 <Link href="/login" className="btn-ghost">Sign in</Link>
               </div>
-            )}
+            </AuthAwareCta>
           </div>
         ) : (
           <div className="mt-12 card p-8">
@@ -368,16 +345,12 @@ export default async function FundDetailPage({ params }: Props) {
               Submit your project and the PITCH.FYLYM engine scores your match against
               {` ${opp.title}`} and hundreds of other funds, labs and co-producers worldwide.
             </p>
-            {user ? (
-              <Link href="/dashboard" className="btn-gold">
-                Go to your dashboard →
-              </Link>
-            ) : (
+            <AuthAwareCta authedHref="/dashboard" authedLabel="Go to your dashboard →">
               <div className="flex flex-wrap gap-3">
                 <Link href="/signup" className="btn-gold">Submit your project</Link>
                 <Link href="/login" className="btn-ghost">Sign in</Link>
               </div>
-            )}
+            </AuthAwareCta>
           </div>
         )}
 
