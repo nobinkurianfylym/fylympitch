@@ -5,6 +5,9 @@ import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import ProfileShareButton from "@/components/ProfileShareButton";
 import type { Metadata } from "next";
+import JsonLd from "@/components/JsonLd";
+import { profileSchema, breadcrumbSchema } from "@/lib/schema";
+import { profileRobots, absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +22,7 @@ export async function generateMetadata({
   const supabase = await createClient();
   const { data: p } = await supabase
     .from("profiles")
-    .select("full_name, bio, country, avatar_url")
+    .select("full_name, bio, country, avatar_url, username, role, company")
     .eq("username", username)
     .single();
   if (!p) return { title: "Filmmaker — PITCH.FYLYM" };
@@ -34,6 +37,8 @@ export async function generateMetadata({
       images: p.avatar_url ? [p.avatar_url] : [],
       type: "profile",
     },
+    alternates: { canonical: absoluteUrl(`/u/${username}`) },
+    robots: profileRobots(p as any),
   };
 }
 
@@ -158,6 +163,14 @@ export default async function PublicProfilePage({
   const dashboardHref = viewerRole === "producer" ? "/producerstudio" : "/dashboard";
   const isOwner      = !!user && user.id === profile.id;
 
+  const profileLd = [
+    profileSchema(profile as any, { url: absoluteUrl(`/u/${profile.username}`), image: profile.avatar_url ?? null }),
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: profile.full_name ?? profile.username, path: `/u/${profile.username}` },
+    ]),
+  ];
+
 
   // ── Producer profile branch ───────────────────────────────────────────────
   if (profile.role === "producer" || profile.role === "admin") {
@@ -228,6 +241,7 @@ export default async function PublicProfilePage({
 
     return (
       <>
+        <JsonLd data={profileLd} />
         <style>{`
           @keyframes arrive{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
           .arr{animation:arrive 0.55s cubic-bezier(0.16,1,0.3,1) forwards}
@@ -461,6 +475,7 @@ export default async function PublicProfilePage({
 
   return (
     <>
+      <JsonLd data={profileLd} />
       <style>{`
         @keyframes fkarr{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
         .fka{animation:fkarr 0.55s cubic-bezier(0.16,1,0.3,1) forwards}

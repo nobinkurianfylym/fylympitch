@@ -101,3 +101,46 @@ export function opportunityIndexability(opp: OpportunityLike): {
 export function opportunityRobots(opp: OpportunityLike) {
   return opportunityIndexability(opp).index ? ROBOTS_INDEX : ROBOTS_NOINDEX;
 }
+
+// ── Profile indexation threshold ─────────────────────────────────────────────
+
+export type ProfileLike = {
+  username?: string | null;
+  full_name?: string | null;
+  bio?: string | null;
+  role?: string | null;
+  company?: string | null;
+};
+
+export function profileIndexability(p: ProfileLike): { index: boolean; reason: string } {
+  if (!p.username) return { index: false, reason: "no_username" };
+  if (!p.full_name && !p.company) return { index: false, reason: "no_name" };
+  if ((p.bio ?? "").trim().length < 60) return { index: false, reason: "thin_bio" };
+  return { index: true, reason: "ok" };
+}
+export function profileRobots(p: ProfileLike) {
+  return profileIndexability(p).index ? ROBOTS_INDEX : ROBOTS_NOINDEX;
+}
+
+// ── Project indexation threshold ─────────────────────────────────────────────
+
+export type ProjectLike = {
+  slug?: string | null;
+  title?: string | null;
+  logline?: string | null;
+  synopsis?: string | null;
+  is_public?: boolean | null;
+  admin_hidden?: boolean | null;
+};
+
+export function projectIndexability(p: ProjectLike): { index: boolean; reason: string } {
+  if (!p.is_public) return { index: false, reason: "not_public" };
+  if (p.admin_hidden) return { index: false, reason: "admin_hidden" };
+  if (!p.slug || !p.title) return { index: false, reason: "missing_slug_or_title" };
+  const body = `${p.logline ?? ""} ${p.synopsis ?? ""}`.trim();
+  if (body.length < 80) return { index: false, reason: "thin_content" };
+  return { index: true, reason: "ok" };
+}
+export function projectRobots(p: ProjectLike) {
+  return projectIndexability(p).index ? ROBOTS_INDEX : ROBOTS_NOINDEX;
+}

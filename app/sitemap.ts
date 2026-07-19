@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { SITE, opportunityIndexability } from "@/lib/seo";
+import { SITE, opportunityIndexability, projectIndexability, profileIndexability } from "@/lib/seo";
 import { OPPORTUNITY_FAMILIES, countrySlug } from "@/lib/opportunity-taxonomy";
 import { countriesWithCounts, HUB_MIN_RECORDS, type HubRow } from "@/lib/hubs";
 
@@ -70,14 +70,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Public project pages ──────────────────────────────────────
   const { data: projects } = await supabase
     .from("projects")
-    .select("slug, updated_at")
+    .select("slug, updated_at, title, logline, synopsis, is_public, admin_hidden")
     .eq("is_public", true)
     .eq("admin_hidden", false)
     .not("slug", "is", null)
     .order("created_at", { ascending: false })
     .limit(2000);
 
-  const projectUrls: MetadataRoute.Sitemap = (projects ?? []).map((p: any) => ({
+  const projectUrls: MetadataRoute.Sitemap = (projects ?? [])
+    .filter((p: any) => projectIndexability(p).index)
+    .map((p: any) => ({
     url: `${BASE}/filmprojects/${p.slug}`,
     lastModified: p.updated_at ?? new Date().toISOString(),
     changeFrequency: "weekly" as const,
@@ -87,13 +89,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Public user profiles ──────────────────────────────────────
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("username, updated_at")
+    .select("username, updated_at, full_name, bio, company, role")
     .not("username", "is", null)
     .order("created_at", { ascending: false })
     .limit(2000);
 
   const profileUrls: MetadataRoute.Sitemap = (profiles ?? [])
-    .filter((p: any) => p.username)
+    .filter((p: any) => profileIndexability(p).index)
     .map((p: any) => ({
       url: `${BASE}/u/${p.username}`,
       lastModified: p.updated_at ?? new Date().toISOString(),

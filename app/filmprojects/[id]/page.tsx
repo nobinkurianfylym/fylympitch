@@ -8,6 +8,9 @@ import ShareButton from "@/components/ShareButton";
 import { formatBudget } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
 import type { Metadata } from "next";
+import JsonLd from "@/components/JsonLd";
+import { projectSchema, breadcrumbSchema } from "@/lib/schema";
+import { projectRobots, absoluteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const supabase = await createClient();
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   const { data: p } = await supabase
-    .from("projects").select("title, genre, logline, poster_path, country")
+    .from("projects").select("title, genre, logline, synopsis, poster_path, country, slug, is_public, admin_hidden")
     .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
   if (!p) return { title: "Project — PITCH.FYLYM" };
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -31,6 +34,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     description: desc,
     openGraph: { title: p.title, description: desc, images: image ? [image] : [], type: "article" },
     twitter: { card: "summary_large_image", title: p.title, description: desc, images: image ? [image] : [] },
+    alternates: { canonical: absoluteUrl(`/filmprojects/${p.slug}`) },
+    robots: projectRobots(p as any),
   };
 }
 
@@ -75,8 +80,18 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
     ? (await supabase.storage.from("pitch-decks").createSignedUrl(p.pitch_deck_path, 3600)).data?.signedUrl
     : null;
 
+  const posterUrl = p.poster_path ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${p.poster_path}` : null;
+  const projectLd = [
+    projectSchema(p as any, { url: absoluteUrl(`/filmprojects/${p.slug}`), image: posterUrl, authorName: filmmaker?.full_name ?? null }),
+    breadcrumbSchema([
+      { name: "Film Projects", path: "/filmprojects" },
+      { name: p.title, path: `/filmprojects/${p.slug}` },
+    ]),
+  ];
+
   return (
     <div className="min-h-screen bg-ivory">
+      <JsonLd data={projectLd} />
       <header className="border-b border-line">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <Wordmark />

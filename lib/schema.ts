@@ -234,3 +234,79 @@ export function typeLabel(oppType?: string | null): string {
   if (!oppType) return "Opportunity";
   return TYPE_LABEL[oppType] ?? oppType;
 }
+
+// ── Profile → Person | Organization ──────────────────────────────────────────
+
+export function profileSchema(
+  p: {
+    username?: string | null;
+    full_name?: string | null;
+    company?: string | null;
+    bio?: string | null;
+    role?: string | null;
+    country?: string | null;
+    website?: string | null;
+    imdb_url?: string | null;
+    linkedin_url?: string | null;
+  },
+  opts: { url: string; image?: string | null },
+): Json | null {
+  if (!p.username) return null;
+  const sameAs = [p.website, p.imdb_url, p.linkedin_url].filter(Boolean) as string[];
+  const address = p.country ? { "@type": "PostalAddress", addressCountry: p.country } : undefined;
+
+  if (p.role === "organization" || p.role === "production_company") {
+    return clean({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: p.company || p.full_name,
+      description: p.bio ?? undefined,
+      url: opts.url,
+      logo: opts.image ?? undefined,
+      sameAs: sameAs.length ? sameAs : undefined,
+      address,
+    });
+  }
+
+  return clean({
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: p.full_name || p.company,
+    description: p.bio ?? undefined,
+    url: opts.url,
+    image: opts.image ?? undefined,
+    jobTitle: p.role ?? undefined,
+    worksFor: p.company ? { "@type": "Organization", name: p.company } : undefined,
+    sameAs: sameAs.length ? sameAs : undefined,
+    address,
+  });
+}
+
+// ── Project → CreativeWork ───────────────────────────────────────────────────
+// CreativeWork (not Movie) — these are projects in development, not released films.
+
+export function projectSchema(
+  pr: {
+    title?: string | null;
+    logline?: string | null;
+    synopsis?: string | null;
+    genre?: string | null;
+    language?: string | null;
+    country?: string | null;
+  },
+  opts: { url: string; image?: string | null; authorName?: string | null },
+): Json | null {
+  if (!pr.title) return null;
+  return clean({
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: pr.title,
+    description: pr.logline || pr.synopsis || undefined,
+    url: opts.url,
+    image: opts.image ?? undefined,
+    genre: pr.genre ?? undefined,
+    inLanguage: pr.language ?? undefined,
+    countryOfOrigin: pr.country ? { "@type": "Country", name: pr.country } : undefined,
+    creator: opts.authorName ? { "@type": "Person", name: opts.authorName } : undefined,
+  });
+}
