@@ -90,6 +90,18 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: "/guides/:path*",
+        headers: [{ key: "Cache-Control", value: "public, s-maxage=86400, stale-while-revalidate=604800" }],
+      },
+      {
+        source: "/glossary/:path*",
+        headers: [{ key: "Cache-Control", value: "public, s-maxage=86400, stale-while-revalidate=604800" }],
+      },
+      {
+        source: "/deadlines",
+        headers: [{ key: "Cache-Control", value: "public, s-maxage=3600, stale-while-revalidate=86400" }],
+      },
+      {
         source: "/logos/:path*",
         headers: [
           {

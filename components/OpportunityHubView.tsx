@@ -139,6 +139,15 @@ export default function OpportunityHubView({
             </div>
           </div>
         ))}
+        {/* Learn more — hub -> editorial internal links */}
+        <div className="mt-12 pt-8 border-t border-line">
+          <p className="eyebrow mb-4">Learn more</p>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/guides" className="btn-ghost !text-[12px]">Film financing guides</Link>
+            <Link href="/glossary" className="btn-ghost !text-[12px]">Glossary</Link>
+            <Link href="/deadlines" className="btn-ghost !text-[12px]">Upcoming deadlines</Link>
+          </div>
+        </div>
       </main>
 
       <div className="border-t border-line mt-16">

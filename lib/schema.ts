@@ -310,3 +310,27 @@ export function projectSchema(
     creator: opts.authorName ? { "@type": "Person", name: opts.authorName } : undefined,
   });
 }
+
+// ── Dataset (the whole verified directory) ───────────────────────────────────
+// Flags the aggregate as structured data to AI engines and Google Dataset Search.
+
+export function datasetSchema(): Json {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: "Film Funding Directory — PITCH.FYLYM",
+    description:
+      "A verified, continuously updated directory of film grants, funds, labs, markets, tax incentives, co-productions and investors worldwide, with eligibility, award amounts and deadlines.",
+    url: absoluteUrl("/opportunities"),
+    keywords: [
+      "film grants",
+      "film funding",
+      "film tax incentives",
+      "co-production",
+      "development labs",
+      "film markets",
+    ],
+    creator: { "@type": "Organization", name: SITE.name, url: SITE.host },
+    isAccessibleForFree: true,
+  };
+}

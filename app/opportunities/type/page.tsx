@@ -6,7 +6,7 @@ import AuthAwareCta from "@/components/AuthAwareCta";
 import { loadIndexableOpportunities } from "@/lib/hubs";
 import { OPPORTUNITY_FAMILIES } from "@/lib/opportunity-taxonomy";
 import { absoluteUrl, ROBOTS_INDEX } from "@/lib/seo";
-import { breadcrumbSchema, itemListSchema } from "@/lib/schema";
+import { breadcrumbSchema, itemListSchema, datasetSchema } from "@/lib/schema";
 
 export const revalidate = 3600;
 
@@ -39,6 +39,7 @@ export default async function TypeDirectory() {
             families.filter((f) => f.count > 0).map((f) => ({ name: f.label, path: `/opportunities/type/${f.slug}` })),
             "Film funding categories",
           ),
+          datasetSchema(),
         ]}
       />
       <header className="border-b border-line">

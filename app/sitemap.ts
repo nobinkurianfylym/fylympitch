@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { SITE, opportunityIndexability, projectIndexability, profileIndexability } from "@/lib/seo";
 import { OPPORTUNITY_FAMILIES, countrySlug } from "@/lib/opportunity-taxonomy";
 import { countriesWithCounts, HUB_MIN_RECORDS, type HubRow } from "@/lib/hubs";
+import { GLOSSARY } from "@/lib/glossary";
+import { GUIDES } from "@/lib/guides";
 
 export const revalidate = 3600; // regenerate hourly
 
@@ -103,5 +105,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     }));
 
-  return [...statics, ...oppUrls, ...hubUrls, ...projectUrls, ...profileUrls];
+  // ── Editorial (guides, glossary, deadlines) ───────────────────
+  const editorialUrls: MetadataRoute.Sitemap = [
+    { url: `${BASE}/guides`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/glossary`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/deadlines`, changeFrequency: "daily", priority: 0.8 },
+    ...GUIDES.map((g) => ({ url: `${BASE}/guides/${g.slug}`, changeFrequency: "monthly" as const, priority: 0.65 })),
+    ...GLOSSARY.map((t) => ({ url: `${BASE}/glossary/${t.slug}`, changeFrequency: "monthly" as const, priority: 0.5 })),
+  ];
+
+  return [...statics, ...oppUrls, ...hubUrls, ...editorialUrls, ...projectUrls, ...profileUrls];
 }
