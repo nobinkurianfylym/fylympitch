@@ -1,4 +1,6 @@
 "use client";
+
+import { Icon } from "@/components/Icon";
 // features/messages/AttachmentCard.tsx
 
 import React, { useState, useEffect } from "react";
@@ -56,10 +58,10 @@ export const AttachmentCard = React.memo(function AttachmentCard({
         group
       "
     >
-      <i
-        className={`ti ${icon} text-ash group-hover:text-ink`}
+      <Icon
+        name={icon}
+        className="text-ash group-hover:text-ink"
         style={{ fontSize: 22, flexShrink: 0 }}
-        aria-hidden="true"
       />
 
       <div className="flex-1 min-w-0">
@@ -73,18 +75,20 @@ export const AttachmentCard = React.memo(function AttachmentCard({
       </div>
 
       {loading && (
-        <i
-          className="ti ti-loader animate-spin text-ash shrink-0"
+        <Icon
+          name="loader"
+          className="animate-spin text-ash shrink-0"
           style={{ fontSize: 16 }}
-          aria-label="Loading download link"
+          ariaLabel="Loading download link"
         />
       )}
 
       {!loading && error && (
-        <i
-          className="ti ti-alert-triangle text-ash shrink-0"
+        <Icon
+          name="alert-triangle"
+          className="text-ash shrink-0"
           style={{ fontSize: 16 }}
-          aria-label="Could not load file"
+          ariaLabel="Could not load file"
           title="Could not generate download link."
         />
       )}
@@ -99,7 +103,7 @@ export const AttachmentCard = React.memo(function AttachmentCard({
           className="shrink-0 text-ash hover:text-ink transition-colors"
           onClick={(e: React.MouseEvent) => e.stopPropagation()}
         >
-          <i className="ti ti-download" style={{ fontSize: 16 }} aria-hidden="true" />
+          <Icon name="download" style={{ fontSize: 16 }} />
         </a>
       )}
     </div>

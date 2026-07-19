@@ -1,4 +1,6 @@
 "use client";
+
+import { Icon } from "@/components/Icon";
 // features/messages/ConversationList.tsx
 
 import React, { useState, useMemo } from "react";
@@ -57,10 +59,10 @@ export function ConversationList({
 
         {/* Search */}
         <div className="relative">
-          <i
-            className="ti ti-search absolute left-3 top-1/2 -translate-y-1/2 text-ash"
+          <Icon
+            name="search"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-ash"
             style={{ fontSize: 14 }}
-            aria-hidden="true"
           />
           <input
             type="search"

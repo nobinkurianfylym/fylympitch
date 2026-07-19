@@ -303,10 +303,10 @@ export function filterConversations(
 
 export function getFileIcon(extension: string | null): string {
   switch (extension?.toLowerCase()) {
-    case "pdf":  return "ti-file-type-pdf";
-    case "docx": return "ti-file-type-doc";
-    case "xlsx": return "ti-file-type-xls";
-    case "zip":  return "ti-file-zip";
-    default:     return "ti-file";
+    case "pdf":  return "file-type-pdf";
+    case "docx": return "file-type-doc";
+    case "xlsx": return "file-type-xls";
+    case "zip":  return "file-zip";
+    default:     return "file";
   }
 }

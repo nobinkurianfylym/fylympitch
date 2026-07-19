@@ -1,5 +1,7 @@
 "use client";
 
+import { Icon } from "@/components/Icon";
+
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -39,7 +41,7 @@ export default function SearchInput({
   return (
     <form onSubmit={submit} className="relative flex items-center gap-0">
       <span className="absolute left-3 text-ash pointer-events-none" style={{ fontSize: 13 }}>
-        <i className="ti ti-search" aria-hidden="true" />
+        <Icon name="search" />
       </span>
       <input
         type="text"

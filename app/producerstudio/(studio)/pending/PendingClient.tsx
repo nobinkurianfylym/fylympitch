@@ -1,5 +1,7 @@
 "use client";
 
+import { Icon } from "@/components/Icon";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -67,7 +69,7 @@ export default function PendingClient({
       <div className="flex-1 flex items-center justify-center min-h-[80vh] px-6">
         <div className="max-w-lg text-center">
           <div className="w-16 h-16 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center mx-auto mb-8">
-            <i className="ti ti-check" style={{ fontSize: 28, color: "#BF9953" }} aria-hidden="true" />
+            <Icon name="check" style={{ fontSize: 28, color: "#BF9953" }} />
           </div>
           <h1 className="font-display text-[32px] mb-4">You're approved</h1>
           <p className="text-[17px] text-ash leading-[1.7]">
@@ -82,7 +84,7 @@ export default function PendingClient({
     <div className="flex-1 flex items-center justify-center min-h-[80vh] px-6">
       <div className="max-w-lg text-center">
         <div className="w-16 h-16 rounded-full bg-gold/10 border border-gold/30 flex items-center justify-center mx-auto mb-8">
-          <i className="ti ti-clock" style={{ fontSize: 28, color: "#BF9953" }} aria-hidden="true" />
+          <Icon name="clock" style={{ fontSize: 28, color: "#BF9953" }} />
         </div>
 
         <h1 className="font-display text-[32px] mb-4">Application received</h1>

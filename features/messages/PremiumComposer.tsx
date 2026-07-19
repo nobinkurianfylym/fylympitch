@@ -1,4 +1,6 @@
 "use client";
+
+import { Icon } from "@/components/Icon";
 // features/messages/PremiumComposer.tsx
 // Fixed-bottom composer:
 //  - Auto-expanding textarea (Enter = send, Shift+Enter = newline)
@@ -131,10 +133,10 @@ export function PremiumComposer({ onSend, sendError, onClearError, disabled }: P
             className="flex items-center gap-3 px-3 py-2 border border-line bg-ivory rounded-lg"
             style={{ maxWidth: 300 }}
           >
-            <i
-              className={`ti ${getFileIcon(stagedExtension)} text-ash`}
+            <Icon
+              name={getFileIcon(stagedExtension)}
+              className="text-ash"
               style={{ fontSize: 18, flexShrink: 0 }}
-              aria-hidden="true"
             />
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-medium truncate">{stagedFile.name}</p>
@@ -147,7 +149,7 @@ export function PremiumComposer({ onSend, sendError, onClearError, disabled }: P
               aria-label={`Remove ${stagedFile.name}`}
               className="text-ash hover:text-ink transition-colors shrink-0"
             >
-              <i className="ti ti-x" style={{ fontSize: 14 }} aria-hidden="true" />
+              <Icon name="x" style={{ fontSize: 14 }} />
             </button>
           </div>
         </div>
@@ -181,7 +183,7 @@ export function PremiumComposer({ onSend, sendError, onClearError, disabled }: P
             rounded-lg
           "
         >
-          <i className="ti ti-paperclip" style={{ fontSize: 18 }} aria-hidden="true" />
+          <Icon name="paperclip" style={{ fontSize: 18 }} />
         </button>
 
         <input
@@ -236,7 +238,7 @@ export function PremiumComposer({ onSend, sendError, onClearError, disabled }: P
           "
         >
           {sending ? (
-            <i className="ti ti-loader animate-spin" style={{ fontSize: 14 }} aria-hidden="true" />
+            <Icon name="loader" className="animate-spin" style={{ fontSize: 14 }} />
           ) : (
             "Send"
           )}

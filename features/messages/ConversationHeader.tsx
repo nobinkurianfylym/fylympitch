@@ -1,4 +1,6 @@
 "use client";
+
+import { Icon } from "@/components/Icon";
 // features/messages/ConversationHeader.tsx
 
 import React from "react";
@@ -36,7 +38,7 @@ export const ConversationHeader = React.memo(function ConversationHeader({
           aria-label="Back to inbox"
           className="md:hidden text-ash hover:text-ink transition-colors mr-1 shrink-0"
         >
-          <i className="ti ti-arrow-left" style={{ fontSize: 20 }} aria-hidden="true" />
+          <Icon name="arrow-left" style={{ fontSize: 20 }} />
         </button>
       )}
 
@@ -98,7 +100,7 @@ export const ConversationHeader = React.memo(function ConversationHeader({
         "
         aria-label={`View project: ${project_title}`}
       >
-        <i className="ti ti-external-link" style={{ fontSize: 12 }} aria-hidden="true" />
+        <Icon name="external-link" style={{ fontSize: 12 }} />
         View project
       </Link>
     </header>

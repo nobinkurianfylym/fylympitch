@@ -1,4 +1,6 @@
 "use client";
+
+import { Icon } from "@/components/Icon";
 // components/MessageButton.tsx
 // Entry point for initiating a project conversation.
 // Requires projectId + producerId + filmakerId — no free-form DMs.
@@ -67,10 +69,9 @@ export default function MessageButton({
           }`
         }
       >
-        <i
-          className="ti ti-message-circle"
+        <Icon
+          name="message-circle"
           style={{ fontSize: isSmall ? 12 : 14, verticalAlign: "-2px" }}
-          aria-hidden="true"
         />
         {loading ? "Opening…" : resolvedLabel}
       </button>

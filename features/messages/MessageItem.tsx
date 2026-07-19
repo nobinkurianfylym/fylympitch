@@ -1,4 +1,6 @@
 "use client";
+
+import { Icon } from "@/components/Icon";
 // features/messages/MessageItem.tsx
 
 import React, { forwardRef } from "react";
@@ -20,20 +22,22 @@ const DeliveryMark = React.memo(function DeliveryMark({
 }) {
   if (status === "sending") {
     return (
-      <i
-        className="ti ti-clock text-ash/60"
+      <Icon
+        name="clock"
+        className="text-ash/60"
         style={{ fontSize: 11 }}
-        aria-label="Sending"
+        ariaLabel="Sending"
         title="Sending…"
       />
     );
   }
   if (status === "failed") {
     return (
-      <i
-        className="ti ti-alert-circle text-red-500"
+      <Icon
+        name="alert-circle"
+        className="text-red-500"
         style={{ fontSize: 11 }}
-        aria-label="Failed to send"
+        ariaLabel="Failed to send"
         title="Failed to send"
       />
     );
@@ -117,10 +121,10 @@ export const MessageItem = React.memo(
                     className="flex items-center gap-3 px-4 py-3 mt-2 border border-white/20 bg-white/10 rounded-lg"
                     style={{ maxWidth: 300 }}
                   >
-                    <i
-                      className="ti ti-loader animate-spin"
+                    <Icon
+                      name="loader"
+                      className="animate-spin"
                       style={{ fontSize: 18, flexShrink: 0 }}
-                      aria-hidden="true"
                     />
                     <p className="text-[13px] truncate">{msg.attachment_name}</p>
                   </div>

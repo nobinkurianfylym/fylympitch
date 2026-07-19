@@ -13,29 +13,30 @@ import HeaderRoleToggle from "@/components/HeaderRoleToggle";
 import HeaderCTA from "@/components/HeaderCTA";
 import { createClient } from "@/lib/supabase/server";
 import ProducerProjectTicker from "@/components/ProducerProjectTicker";
+import { Icon } from "@/components/Icon";
 
 const STEPS = [
   {
     num: "01",
-    icon: "ti-file-pencil",
+    icon: "file-pencil",
     title: "Create Your Project",
     body: "Build a professional project profile — logline, synopsis, budget, pitch deck, cast and crew. Your film, presented at its best.",
   },
   {
     num: "02",
-    icon: "ti-target",
+    icon: "target",
     title: "Match With Global Opportunities",
     body: "The PITCH.FYLYM ENGINE™ scores your project against 1,000+ grants, funds, labs, investors, studios and co-productions worldwide — and tells you exactly why each one fits.",
   },
   {
     num: "03",
-    icon: "ti-eye",
+    icon: "eye",
     title: "Get Discovered by Producers",
     body: "Make your project visible to producers actively searching for their next film — whether they're seeking financing, co-production partners, or creative attachment.",
   },
   {
     num: "04",
-    icon: "ti-movie",
+    icon: "movie",
     title: "Turn Projects Into Productions",
     body: "Connect with the right people, unlock funding, build lasting partnerships. Move your film from development to the screen.",
   },
@@ -171,7 +172,7 @@ export default async function Home() {
                     className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center mt-0.5"
                     style={{ border: "1px solid rgba(191,153,83,0.35)", background: "rgba(191,153,83,0.06)" }}
                   >
-                    <i className={`ti ${s.icon} text-gold`} style={{ fontSize: 16 }} aria-hidden="true" />
+                    <Icon name={s.icon} className="text-gold" style={{ fontSize: 16 }} />
                   </div>
                   <div>
                     <p className="text-[10px] tracking-[0.2em] uppercase text-ash/50 mb-2">{s.num}</p>
@@ -249,17 +250,17 @@ export default async function Home() {
           <p className="eyebrow text-center mb-14">How it works</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
             {[
-              { icon: "ti-file-text",       label: "Upload your pitch deck", sub: "PDF only. Your file never leaves our servers.", gold: false },
-              { icon: "ti-fingerprint",     label: "Fingerprint created",    sub: "A unique SHA-256 hash of your document.",        gold: false },
-              { icon: "ti-currency-bitcoin",label: "Anchored to Bitcoin",    sub: "Via OpenTimestamps. Permanent, immutable.",        gold: true  },
-              { icon: "ti-certificate",     label: "Certificate issued",     sub: "Instant. Includes a public verification link.",  gold: false },
+              { icon: "file-text",       label: "Upload your pitch deck", sub: "PDF only. Your file never leaves our servers.", gold: false },
+              { icon: "fingerprint",     label: "Fingerprint created",    sub: "A unique SHA-256 hash of your document.",        gold: false },
+              { icon: "currency-bitcoin",label: "Anchored to Bitcoin",    sub: "Via OpenTimestamps. Permanent, immutable.",        gold: true  },
+              { icon: "certificate",     label: "Certificate issued",     sub: "Instant. Includes a public verification link.",  gold: false },
             ].map((step) => (
               <div key={step.label} className="flex flex-col items-center text-center">
                 <div
                   className="w-11 h-11 rounded-full flex items-center justify-center mb-4 shrink-0"
                   style={{ background: step.gold ? "#BF9953" : "#1A1815" }}
                 >
-                  <i className={`ti ${step.icon} text-ivory`} style={{ fontSize: 18 }} aria-hidden="true" />
+                  <Icon name={step.icon} className="text-ivory" style={{ fontSize: 18 }} />
                 </div>
                 <p className="text-[12px] font-semibold text-ink leading-snug mb-2">{step.label}</p>
                 <p className="text-[11px] text-ash leading-relaxed">{step.sub}</p>
@@ -283,19 +284,19 @@ export default async function Home() {
                 className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 ml-4"
                 style={{ background: "#22c55e" }}
               >
-                <i className="ti ti-check text-white" style={{ fontSize: 13 }} aria-hidden="true" />
+                <Icon name="check" className="text-white" style={{ fontSize: 13 }} />
               </div>
             </div>
 
             <div className="space-y-3" style={{ borderTop: "1px solid rgba(26,24,21,0.08)", paddingTop: 16 }}>
               {[
-                { icon: "ti-clock",            iconCls: "text-ash",  label: "Timestamp",      value: "May 25, 2025 · 10:48 AM IST",  mono: false, green: false },
-                { icon: "ti-currency-bitcoin", iconCls: "text-gold", label: "Blockchain",     value: "Bitcoin (via OpenTimestamps)", mono: false, green: false },
-                { icon: "ti-hash",             iconCls: "text-ash",  label: "Transaction ID", value: "b4f7c2...8e9a1d7",             mono: true,  green: false },
-                { icon: "ti-shield-check",     iconCls: "text-ash",  label: "Status",         value: "Confirmed",                   mono: false, green: true  },
+                { icon: "clock",            iconCls: "text-ash",  label: "Timestamp",      value: "May 25, 2025 · 10:48 AM IST",  mono: false, green: false },
+                { icon: "currency-bitcoin", iconCls: "text-gold", label: "Blockchain",     value: "Bitcoin (via OpenTimestamps)", mono: false, green: false },
+                { icon: "hash",             iconCls: "text-ash",  label: "Transaction ID", value: "b4f7c2...8e9a1d7",             mono: true,  green: false },
+                { icon: "shield-check",     iconCls: "text-ash",  label: "Status",         value: "Confirmed",                   mono: false, green: true  },
               ].map((row) => (
                 <div key={row.label} className="flex items-center gap-3">
-                  <i className={`ti ${row.icon} ${row.iconCls} shrink-0`} style={{ fontSize: 14 }} aria-hidden="true" />
+                  <Icon name={row.icon} className={`${row.iconCls} shrink-0`} style={{ fontSize: 14 }} />
                   <div>
                     <p className="text-[9px] tracking-[0.12em] uppercase text-ash mb-0.5">{row.label}</p>
                     <p className={`text-[12px] font-medium ${row.green ? "text-green-600" : "text-ink"} ${row.mono ? "font-mono" : ""}`}>
@@ -312,7 +313,7 @@ export default async function Home() {
             >
               <p className="font-display italic text-[11px] text-ash">Signed</p>
               <div className="flex items-center gap-1.5">
-                <i className="ti ti-shield text-gold" style={{ fontSize: 12 }} aria-hidden="true" />
+                <Icon name="shield" className="text-gold" style={{ fontSize: 12 }} />
                 <span className="text-[9px] tracking-[0.14em] uppercase font-semibold text-ink">PITCH.FYLYM</span>
               </div>
             </div>
@@ -324,16 +325,16 @@ export default async function Home() {
             style={{ border: "1px solid rgba(26,24,21,0.1)", borderRadius: 8, overflow: "hidden" }}
           >
             {[
-              { icon: "ti-lock",         label: "Private",      sub: "Your content stays secure. Only the fingerprint is stored." },
-              { icon: "ti-shield-check", label: "Tamper-proof", sub: "No one can alter the record. Not even us."                   },
-              { icon: "ti-world",        label: "Verifiable",   sub: "Anyone can verify independently, anytime, anywhere."         },
+              { icon: "lock",         label: "Private",      sub: "Your content stays secure. Only the fingerprint is stored." },
+              { icon: "shield-check", label: "Tamper-proof", sub: "No one can alter the record. Not even us."                   },
+              { icon: "world",        label: "Verifiable",   sub: "Anyone can verify independently, anytime, anywhere."         },
             ].map((item, i) => (
               <div
                 key={item.label}
                 className="p-5"
                 style={{ borderLeft: i > 0 ? "1px solid rgba(26,24,21,0.1)" : undefined }}
               >
-                <i className={`ti ${item.icon} text-ink`} style={{ fontSize: 20, display: "block", marginBottom: 10 }} aria-hidden="true" />
+                <Icon name={item.icon} className="text-ink" style={{ fontSize: 20, display: "block", marginBottom: 10 }} />
                 <p className="text-[12px] font-semibold text-ink mb-1.5">{item.label}</p>
                 <p className="text-[11px] text-ash leading-relaxed">{item.sub}</p>
               </div>

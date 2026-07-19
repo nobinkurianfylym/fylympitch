@@ -44,15 +44,15 @@ const nextConfig: NextConfig = {
   // ── Response headers ──────────────────────────────────────────
   async headers() {
     return [
-      {
-        source: "/:path*",
+      // Eager Supabase TLS preconnect ONLY on authenticated data routes that hit
+      // Supabase immediately on load. Kept off public pages (/, /filmprojects) where
+      // it is unused — PageSpeed flagged it there. dns-prefetch (layout) still covers all routes.
+      ...["/dashboard/:path*", "/producerstudio/:path*", "/admin/:path*"].map((source) => ({
+        source,
         headers: [
-          {
-            key: "Link",
-            value: `<https://${SUPABASE_HOSTNAME}>; rel=preconnect`,
-          },
+          { key: "Link", value: `<https://${SUPABASE_HOSTNAME}>; rel=preconnect` },
         ],
-      },
+      })),
       {
         source: "/filmprojects/:path*",
         headers: [
