@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SITE } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -10,8 +11,14 @@ export default function robots(): MetadataRoute.Robots {
         "/producerstudio/",
         "/admin/",
         "/api/",
+        "/support",
+        "/apply-packet/",
+        "/opportunities/submit",
+        "/*?*sort=",
+        "/*?*q=",
       ],
     },
-    sitemap: "https://pitch.fylym.com/sitemap.xml",
+    sitemap: `${SITE.host}/sitemap.xml`,
+    host: SITE.host,
   };
 }

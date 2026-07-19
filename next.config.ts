@@ -72,6 +72,24 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: "/opportunities/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=300, stale-while-revalidate=3600",
+          },
+        ],
+      },
+      {
+        source: "/opportunities",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, s-maxage=300, stale-while-revalidate=3600",
+          },
+        ],
+      },
+      {
         source: "/logos/:path*",
         headers: [
           {
