@@ -8,8 +8,9 @@ import type { Metadata } from "next";
 import JsonLd from "@/components/JsonLd";
 import { profileSchema, breadcrumbSchema } from "@/lib/schema";
 import { profileRobots, absoluteUrl } from "@/lib/seo";
+import ProfileNavAuth from "@/components/ProfileNavAuth";
+import AuthLink from "@/components/AuthLink";
 
-export const dynamic = "force-dynamic";
 
 // ── SEO ──────────────────────────────────────────────────────────────────────
 
@@ -88,8 +89,6 @@ export default async function PublicProfilePage({
   const supabase = await createClient();
 
   // Auth optional — just for personalising the CTA
-  const { data: { user } } = await supabase.auth.getUser();
-
   // Profile
   const { data: profile } = await supabase
     .from("profiles")
@@ -105,7 +104,6 @@ export default async function PublicProfilePage({
   const [
     { data: projects },
     { data: credits },
-    { data: me },
   ] = await Promise.all([
     supabase
       .from("projects")
@@ -120,9 +118,6 @@ export default async function PublicProfilePage({
       .eq("user_id", profile.id)
       .order("is_featured", { ascending: false })
       .order("year",        { ascending: false }),
-    user
-      ? supabase.from("profiles").select("role").eq("id", user.id).single()
-      : Promise.resolve({ data: null }),
   ]);
 
   // ── Computed stats ───────────────────────────────────────────────────────
@@ -158,10 +153,6 @@ export default async function PublicProfilePage({
   if (projectList.length > 0) highlights.push({ icon: "📽", text: `${projectList.length} Film${projectList.length !== 1 ? "s" : ""}` });
   if (profile.country)   highlights.push({ icon: "📍", text: profile.country });
   if (profile.company)   highlights.push({ icon: "◈",  text: profile.company });
-
-  const viewerRole   = (me as any)?.role ?? null;
-  const dashboardHref = viewerRole === "producer" ? "/producerstudio" : "/dashboard";
-  const isOwner      = !!user && user.id === profile.id;
 
   const profileLd = [
     profileSchema(profile as any, { url: absoluteUrl(`/u/${profile.username}`), image: profile.avatar_url ?? null }),
@@ -259,17 +250,20 @@ export default async function PublicProfilePage({
           {/* Nav */}
           <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:50,height:48,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 40px",background:"rgba(245,245,240,0.95)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderBottom:"1px solid rgba(26,24,21,0.05)"}}>
             <Wordmark href="/" size="sm" />
-            {isOwner ? (
-              <Link href="/producerstudio/profile" className="lnk"
-                style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.5)",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
-                ← Edit Profile
-              </Link>
-            ) : user && (
-              <Link href={dashboardHref} className="lnk"
-                style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.35)",textDecoration:"none"}}>
-                Producer Studio
-              </Link>
-            )}
+            <ProfileNavAuth ownerId={profile.id}
+              ownerNode={
+                <Link href="/producerstudio/profile" className="lnk"
+                  style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.5)",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
+                  ← Edit Profile
+                </Link>
+              }
+              authedNode={
+                <Link href="/dashboard" className="lnk"
+                  style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.35)",textDecoration:"none"}}>
+                  Dashboard
+                </Link>
+              }
+            />
           </nav>
 
           {/* Two-column layout */}
@@ -371,12 +365,13 @@ export default async function PublicProfilePage({
                     </div>
                   </div>
                   {acceptingPitches && (
-                    <Link
-                      href={user ? `/dashboard/projects/new?producer=${profile.username}` : `/login?next=/dashboard/projects/new?producer=${profile.username}`}
+                    <AuthLink
+                      authedHref={`/dashboard/projects/new?producer=${profile.username}`}
+                      anonHref={`/login?next=/dashboard/projects/new?producer=${profile.username}`}
                       style={{display:"inline-flex",alignItems:"center",gap:8,fontSize:10,letterSpacing:".16em",textTransform:"uppercase",fontWeight:700,color:"#F5F5F0",textDecoration:"none",background:"#1A1815",padding:"10px 20px",borderRadius:100}}>
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 5-10 5V7l7-1-7-1V1z" fill="currentColor"/></svg>
                       Send Pitch
-                    </Link>
+                    </AuthLink>
                   )}
                 </div>
 
@@ -491,17 +486,20 @@ export default async function PublicProfilePage({
         {/* Nav */}
         <nav style={{position:"fixed",top:0,left:0,right:0,zIndex:50,height:48,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 40px",background:"rgba(245,245,240,0.95)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)",borderBottom:"1px solid rgba(26,24,21,0.05)"}}>
           <Wordmark href="/" size="sm" />
-          {isOwner ? (
-            <Link href="/dashboard/profile" className="fklnk"
-              style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.5)",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
-              ← Edit Profile
-            </Link>
-          ) : user && (
-            <Link href={dashboardHref} className="fklnk"
-              style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.35)",textDecoration:"none"}}>
-              {viewerRole === "producer" ? "Producer Studio" : "Dashboard"}
-            </Link>
-          )}
+          <ProfileNavAuth ownerId={profile.id}
+            ownerNode={
+              <Link href="/dashboard/profile" className="fklnk"
+                style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.5)",textDecoration:"none",display:"flex",alignItems:"center",gap:6}}>
+                ← Edit Profile
+              </Link>
+            }
+            authedNode={
+              <Link href="/dashboard" className="fklnk"
+                style={{fontSize:10,letterSpacing:".18em",textTransform:"uppercase",fontWeight:600,color:"rgba(26,24,21,0.35)",textDecoration:"none"}}>
+                Dashboard
+              </Link>
+            }
+          />
         </nav>
 
         {/* Two-column layout */}
@@ -643,7 +641,7 @@ export default async function PublicProfilePage({
               )}
 
               {/* Message / connect CTA — only for logged-in non-owners */}
-              {user && user.id !== profile.id && (
+              <ProfileNavAuth ownerId={profile.id} authedNode={
                 <div className="fkcard" style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
                   <div>
                     <p style={{fontSize:13,fontWeight:600,color:"#1A1815",margin:"0 0 2px"}}>Connect with {profile.full_name.split(" ")[0]}</p>
@@ -654,7 +652,7 @@ export default async function PublicProfilePage({
                     Message
                   </Link>
                 </div>
-              )}
+              } />
 
               {/* Footer */}
               <div style={{paddingTop:4}}>
