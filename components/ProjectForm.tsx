@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { createProject } from "@/lib/actions";
 import { CURRENCIES } from "@/lib/format";
 import { hashFile } from "@/lib/proofUtils";
+import { generateAndUploadDeckCover } from "@/lib/deck-cover";
 
 const GENRES = ["Drama","Comedy","Thriller","Horror","Romance","Action","Documentary","Family","Crime","Sci-Fi","Fantasy","Musical"];
 
@@ -130,6 +131,7 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
   const [uploading, setUploading]   = useState<string | null>(null);
   const [deckPath, setDeckPath]         = useState("");
   const [deckHash, setDeckHash]         = useState("");
+  const [deckCoverPath, setDeckCoverPath] = useState("");
   const [deckFileName, setDeckFileName] = useState("");
   const [scriptPath, setScriptPath] = useState("");
   const [posterPath, setPosterPath] = useState("");
@@ -263,6 +265,13 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
     const [path, text] = await Promise.all([uploadFile(file, "pitch-decks"), extractPDFText(file).catch(() => "")]);
     if (path) setDeckPath(path);
     setUploading(null);
+    // Pre-render a static cover so public pages don't run pdf.js on every view.
+    // Non-blocking: if it fails or the user submits first, rendering falls back
+    // to the client-side deck thumbnail and the owner backfills on next visit.
+    setDeckCoverPath("");
+    generateAndUploadDeckCover(file)
+      .then((cover) => { if (cover) setDeckCoverPath(cover); })
+      .catch(() => {});
     try {
       let body: Record<string, unknown>;
       if (text.trim()) {
@@ -347,6 +356,7 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
       <input type="hidden" name="pitch_deck_path"     value={deckPath} />
+      <input type="hidden" name="deck_cover_path"     value={deckCoverPath} />
       <input type="hidden" name="pitch_deck_hash"     value={deckHash} />
       <input type="hidden" name="pitch_deck_filename" value={deckFileName} />
       <input type="hidden" name="script_path"       value={scriptPath} />
