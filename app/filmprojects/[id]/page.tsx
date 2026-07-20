@@ -3,7 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
-import LoveButton from "@/components/LoveButton";
+import LoveButtonAuto from "@/components/LoveButtonAuto";
+import ProjectViewerCta from "@/components/ProjectViewerCta";
+import AuthAwareCta from "@/components/AuthAwareCta";
 import ShareButton from "@/components/ShareButton";
 import { formatBudget } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
@@ -12,7 +14,6 @@ import JsonLd from "@/components/JsonLd";
 import { projectSchema, breadcrumbSchema } from "@/lib/schema";
 import { projectRobots, absoluteUrl } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
 
 const CAREER_LABEL: Record<string, string> = {
   debut: "Debut film", second_film: "2nd film", established: "Established filmmaker", veteran: "Veteran filmmaker",
@@ -42,8 +43,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function PublicProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
   // UUID → redirect to slug-based URL (preserve old shared links)
@@ -59,19 +58,8 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
 
   if (!p) notFound();
 
-  const [{ data: filmmakerCredits }, lovedResult, producerResult, meResult] = await Promise.all([
-    supabase.from("filmmaker_credits").select("*").eq("user_id", p.owner_id).order("year", { ascending: false }),
-    user ? supabase.from("project_loves").select("user_id").eq("user_id", user.id).eq("project_id", p.id).single() : Promise.resolve({ data: null }),
-    user ? supabase.from("producer_profiles").select("user_id").eq("user_id", user.id).single() : Promise.resolve({ data: null }),
-    user ? supabase.from("profiles").select("role").eq("id", user.id).single() : Promise.resolve({ data: null }),
-  ]);
-
-  const loved           = lovedResult.data;
-  const producerProfile = producerResult.data;
-  const isProducer      = !!producerProfile;
-  const isOwnProject    = !!user && user.id === p.owner_id;
-  const dashboardHref   = (meResult.data as any)?.role === "producer" ? "/producerstudio" : "/dashboard";
-  const dashboardLabel  = dashboardHref === "/producerstudio" ? "Producer Studio" : "Dashboard";
+  const { data: filmmakerCredits } = await supabase
+    .from("filmmaker_credits").select("*").eq("user_id", p.owner_id).order("year", { ascending: false });
 
   const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -100,7 +88,9 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
             <Link href="/filmprojects" className="text-ink">Film Projects</Link>
             <Link href="/opportunities" className="hover:text-ink transition-colors">Opportunities</Link>
           </nav>
-          <Link href={dashboardHref} className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">{dashboardLabel}</Link>
+          <AuthAwareCta authedHref="/dashboard" authedLabel="Dashboard" authedClassName="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">
+            <Link href="/login" className="text-[12px] tracking-[0.18em] uppercase hover:text-gold transition-colors">Sign in</Link>
+          </AuthAwareCta>
         </div>
       </header>
 
@@ -148,7 +138,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0 mt-1">
-            <LoveButton projectId={p.id} slug={p.slug} initialCount={p.love_count ?? 0} initialLiked={!!loved} isLoggedIn={!!user} />
+            <LoveButtonAuto projectId={p.id} slug={p.slug} initialCount={p.love_count ?? 0} />
             <ShareButton projectId={p.id} slug={p.slug} title={p.title} genre={p.genre} country={p.country} />
           </div>
         </div>
@@ -261,38 +251,8 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           </section>
         )}
 
-        {/* CTA block */}
-        {!isOwnProject && (
-          <div className="mt-14 border border-line rounded-card bg-white/70 p-7 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-            {!user ? (
-              <>
-                <p className="font-display text-[18px] font-normal italic">Every great film starts with the right discovery.</p>
-                <Link href="/signup" className="btn-gold shrink-0 whitespace-nowrap">Get started</Link>
-              </>
-            ) : isProducer ? (
-              <>
-                <div>
-                  <p className="text-[16px]">Interested in this project?</p>
-                  <p className="mt-1 text-[13px] text-ash">Message the filmmaker or add it to your pipeline.</p>
-                </div>
-                <div className="flex gap-3 flex-wrap shrink-0">
-                  <Link href="/producerstudio/messages" className="btn-ghost whitespace-nowrap">
-                    Message filmmaker
-                  </Link>
-                  <form action={async (fd: FormData) => {
-                    "use server";
-                    const { upsertProducerProject } = await import("@/lib/actions");
-                    await upsertProducerProject(fd);
-                  }}>
-                    <input type="hidden" name="project_id" value={p.id} />
-                    <input type="hidden" name="status" value="saved" />
-                    <button className="btn-gold whitespace-nowrap">Add to pipeline</button>
-                  </form>
-                </div>
-              </>
-            ) : null}
-          </div>
-        )}
+        {/* CTA block — client component keeps this page edge-cacheable */}
+        <ProjectViewerCta projectId={p.id} ownerId={p.owner_id} />
 
         <Link href="/filmprojects" className="mt-10 inline-block text-[12px] tracking-[0.16em] uppercase text-ash hover:text-ink transition-colors">
           ← Back to Projects

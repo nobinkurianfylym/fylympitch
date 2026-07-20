@@ -102,6 +102,10 @@ const nextConfig: NextConfig = {
         headers: [{ key: "Cache-Control", value: "public, s-maxage=3600, stale-while-revalidate=86400" }],
       },
       {
+        source: "/u/:path*",
+        headers: [{ key: "Cache-Control", value: "public, s-maxage=300, stale-while-revalidate=3600" }],
+      },
+      {
         source: "/logos/:path*",
         headers: [
           {
