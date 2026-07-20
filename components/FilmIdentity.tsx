@@ -40,6 +40,7 @@ export interface FilmIdentityProject {
   funding_needed_usd?: number | null;
   finance_secured_usd?: number | null;
   poster_path?: string | null;
+  deck_cover_path?: string | null;
   // Signed URL for the pitch deck PDF (page 1 is rendered as the tile when set).
   // Caller generates this — omit when the surface shouldn't expose deck content.
   deckUrl?: string | null;
@@ -257,6 +258,7 @@ function FullVariant({
           <div className="rounded-card overflow-hidden" style={{ width: 140, height: 210 }}>
             <ProjectThumbnail
               posterPath={project.poster_path}
+              deckCoverPath={project.deck_cover_path}
               deckUrl={project.deckUrl}
               title={project.title}
               genre={project.genre}
@@ -272,6 +274,7 @@ function FullVariant({
           <div className="block md:hidden mb-5 rounded-card overflow-hidden aspect-[3/4] max-w-[160px]">
             <ProjectThumbnail
               posterPath={project.poster_path}
+              deckCoverPath={project.deck_cover_path}
               deckUrl={project.deckUrl}
               title={project.title}
               genre={project.genre}
@@ -388,6 +391,7 @@ function CompactCardVariant({
           <div className="aspect-[3/2] overflow-hidden">
             <ProjectThumbnail
               posterPath={project.poster_path}
+              deckCoverPath={project.deck_cover_path}
               deckUrl={project.deckUrl}
               title={project.title}
               genre={project.genre}
@@ -561,7 +565,8 @@ function SearchResultVariant({
       >
         <ProjectThumbnail
           posterPath={project.poster_path}
-          deckUrl={project.deckUrl}
+          deckCoverPath={project.deck_cover_path}
+              deckUrl={project.deckUrl}
           title={project.title}
           genre={project.genre}
           supabaseUrl={supabaseUrl}
@@ -629,7 +634,8 @@ function MessagingPreviewVariant({
       >
         <ProjectThumbnail
           posterPath={project.poster_path}
-          deckUrl={project.deckUrl}
+          deckCoverPath={project.deck_cover_path}
+              deckUrl={project.deckUrl}
           title={project.title}
           genre={project.genre}
           supabaseUrl={supabaseUrl}

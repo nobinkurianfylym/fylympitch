@@ -94,6 +94,9 @@ function PastelCard({ title, genre, className }: { title: string; genre: string 
 
 interface Props {
   posterPath?: string | null;
+  // Pre-rendered page-1 cover image path (in the public thumbnails bucket).
+  // Preferred over deckUrl so we avoid client-side pdf.js entirely.
+  deckCoverPath?: string | null;
   // Signed URL for the project's pitch deck PDF (page 1 is rendered as the tile).
   // Caller is responsible for generating this only when appropriate for the surface.
   deckUrl?: string | null;
@@ -103,7 +106,7 @@ interface Props {
   className?: string;
 }
 
-export default function ProjectThumbnail({ posterPath, deckUrl, title, genre, supabaseUrl, className = "" }: Props) {
+export default function ProjectThumbnail({ posterPath, deckCoverPath, deckUrl, title, genre, supabaseUrl, className = "" }: Props) {
   // Priority: poster > pitch deck page 1 > pastel title card
   if (posterPath) {
     return (
@@ -111,6 +114,17 @@ export default function ProjectThumbnail({ posterPath, deckUrl, title, genre, su
         src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`}
         alt={`${title} poster`}
         className={`${className} object-cover`}
+        loading="lazy"
+      />
+    );
+  }
+
+  if (deckCoverPath) {
+    return (
+      <img
+        src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${deckCoverPath}`}
+        alt={`${title} pitch deck cover`}
+        className={`${className} object-contain bg-[#F5F5F0]`}
         loading="lazy"
       />
     );

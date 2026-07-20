@@ -11,6 +11,7 @@ import type {
 } from "@/services/fylympitchEngine";
 import type { MatchRow } from "@/components/MatchList";
 import RerunEngineButton from "@/components/RerunEngineButton";
+import DeckCoverBackfill from "@/components/DeckCoverBackfill";
 import BookmarkButton from "@/components/BookmarkButton";
 import { getSavedOpportunityIds } from "@/lib/saved-actions";
 import ProjectAnalysisLoader from "@/components/ProjectAnalysisLoader";
@@ -252,6 +253,13 @@ export default async function ProjectDetailPage({
 
   return (
     <div style={{ background: S.canvas, minHeight: "100vh", overflowX: "hidden" }}>
+      {isOwner && (
+        <DeckCoverBackfill
+          projectId={project.id}
+          deckPath={(project as any).pitch_deck_path}
+          hasCover={!!(project as any).deck_cover_path}
+        />
+      )}
       {isOwner && !discovery && !simpleView && <ProjectAnalysisLoader projectId={project.id} />}
 
       {/* ── BITCOIN ANCHORED BANNER ─────────────────────────────── */}

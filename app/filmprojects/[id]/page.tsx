@@ -53,7 +53,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   }
 
   const { data: p } = await supabase.from("projects")
-    .select("id, slug, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, director_name, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, is_public, poster_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username)")
+    .select("id, slug, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, director_name, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, is_public, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username)")
     .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
 
   if (!p) notFound();
@@ -64,7 +64,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
-  const deckUrl = (!p.poster_path && p.pitch_deck_path)
+  const deckUrl = (!p.poster_path && !p.deck_cover_path && p.pitch_deck_path)
     ? (await supabase.storage.from("pitch-decks").createSignedUrl(p.pitch_deck_path, 3600)).data?.signedUrl
     : null;
 
@@ -101,7 +101,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           <span className="text-ink uppercase" style={{ letterSpacing: "-0.01em" }}>{p.title}</span>
         </p>
 
-        <ProjectThumbnail posterPath={p.poster_path} deckUrl={deckUrl} title={p.title} genre={p.genre}
+        <ProjectThumbnail posterPath={p.poster_path} deckCoverPath={p.deck_cover_path} deckUrl={deckUrl} title={p.title} genre={p.genre}
           supabaseUrl={supabaseUrl} className="rounded-card mb-8 w-full max-h-[420px]" />
 
         <div className="flex items-start justify-between gap-4 mb-4">
