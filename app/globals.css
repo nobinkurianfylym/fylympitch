@@ -114,6 +114,21 @@ select:focus-visible, textarea:focus-visible {
   outline: 2px solid var(--color-gold); outline-offset: 2px;
 }
 
+/* ── Mobile ergonomics ────────────────────────────────────── */
+/* iOS Safari zooms the whole page when a focused form control renders
+   below 16px. The platform's .field controls (and their !text-[12px] /
+   !text-[13px] overrides in search, filters and profile) all trip this.
+   Force 16px on form controls at mobile widths only — the !important is
+   required to beat Tailwind's !text-[Npx] utilities. Desktop density
+   (14px) is untouched: md: styles take over at ≥768px. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* ── Intelligence Ticker ──────────────────────────────────── */
 /* Keyframe for infinite scroll — translates -50% (second copy lands at 0) */
 @keyframes fylym-ticker {

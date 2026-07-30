@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Montserrat, Playfair_Display } from "next/font/google";
 import JsonLd from "@/components/JsonLd";
@@ -31,6 +31,18 @@ export const metadata: Metadata = {
   title: "PITCH.FYLYM — Where films find their financiers",
   description:
     "Intelligent matchmaking between film projects and producers, funds, grants, labs, markets, distributors and investors worldwide.",
+};
+
+// Mobile viewport — themeColor paints the browser chrome ink (not default
+// white), viewportFit:"cover" lets content honour safe-area insets on notched
+// devices, and device-width/initialScale:1 keeps the platform zoom-neutral
+// without ever locking the user's pinch-zoom (accessibility preserved).
+export const viewport: Viewport = {
+  themeColor: "#1A1815",
+  colorScheme: "light",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 const SUPABASE_HOST = process.env.NEXT_PUBLIC_SUPABASE_URL

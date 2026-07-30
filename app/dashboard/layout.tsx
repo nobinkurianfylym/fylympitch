@@ -59,7 +59,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen md:flex">
-      <aside className="md:w-60 md:min-h-screen border-b md:border-b-0 md:border-r border-line px-6 py-7 flex md:flex-col gap-6 md:gap-0 items-center md:items-start overflow-x-auto">
+      <aside className="md:w-60 md:min-h-screen border-b md:border-b-0 md:border-r border-line px-6 py-7 flex md:flex-col gap-6 md:gap-0 items-center md:items-start overflow-x-auto no-scrollbar">
         <div className="flex flex-col gap-1">
           <Wordmark href="/" />
           <span className="text-[10px] tracking-[0.22em] uppercase text-ash mt-1">Dashboard</span>
