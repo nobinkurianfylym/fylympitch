@@ -24,8 +24,8 @@ export default function AvatarUpload({ currentUrl, userId, name, onUpload }: Pro
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Max 2MB");
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Max 10MB");
       return;
     }
 
@@ -89,7 +89,7 @@ export default function AvatarUpload({ currentUrl, userId, name, onUpload }: Pro
         >
           {uploading ? "Uploading…" : preview ? "Change photo" : "Upload photo"}
         </button>
-        <p className="text-[11px] text-ash/60 mt-1">JPG, PNG or WebP · max 2MB</p>
+        <p className="text-[11px] text-ash/60 mt-1">JPG, PNG or WebP · max 10MB</p>
         {error && <p className="text-[11px] text-red-500 mt-1">{error}</p>}
         <input
           ref={inputRef}
