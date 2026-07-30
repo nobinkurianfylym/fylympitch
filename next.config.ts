@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
   // Cloudflare Workers lacks canvas, so PDF parsing must happen in the browser.
   experimental: {
     optimizePackageImports: ["resend", "@supabase/ssr", "@supabase/supabase-js"],
+
+    // The custom domain (pitch.fylym.com) sits in front of the Cloudflare
+    // Worker host (fylympitch.nobinkurian.workers.dev). Without this, Next's
+    // CSRF check rejects every Server Action POST with:
+    //   "`x-forwarded-host` does not match `origin` … Aborting the action."
+    // which surfaces to users as "This page couldn't load. A server error occurred."
+    // List origins WITHOUT protocol.
+    serverActions: {
+      allowedOrigins: ["pitch.fylym.com", "fylympitch.nobinkurian.workers.dev"],
+    },
   },
 
   // ── Compiler optimisations ────────────────────────────────────
