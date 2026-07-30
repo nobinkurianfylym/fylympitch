@@ -82,6 +82,11 @@ export default async function ProjectsPage({
             )}
           </div>
         </div>
+        {/* MOBILE NAV — desktop nav hidden below md; surface cross-links */}
+        <nav className="md:hidden max-w-[1180px] mx-auto px-6 pb-3 flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase text-ash">
+          <Link href="/filmprojects" className="py-2.5 text-ink">Film Projects</Link>
+          <Link href="/opportunities" className="py-2.5 hover:text-ink transition-colors">Opportunities</Link>
+        </nav>
       </header>
 
       <main className="max-w-[1180px] mx-auto px-6 py-12">

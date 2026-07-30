@@ -135,6 +135,14 @@ export default async function Home() {
           </div>
         </header>
 
+        {/* MOBILE NAV — the desktop header nav (Platform / Film Projects /
+            Opportunities) is hidden below md; surface the two primary
+            destinations here so mobile visitors aren't sent to the footer. */}
+        <nav className="md:hidden max-w-6xl mx-auto w-full px-6 -mt-2 pb-1 flex items-center gap-8 text-[12px] tracking-[0.18em] uppercase text-ash">
+          <Link href="/filmprojects" className="py-3 hover:text-ink transition-colors">Film Projects</Link>
+          <Link href="/opportunities" className="py-3 hover:text-ink transition-colors">Opportunities</Link>
+        </nav>
+
         {/* HERO — grows to fill remaining viewport */}
         <HeroToggle isLoggedIn={!!user} accountRole={accountRole} />
       </div>
