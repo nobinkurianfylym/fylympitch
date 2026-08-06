@@ -15,6 +15,16 @@ import { createClient } from "@/lib/supabase/server";
 import ProducerProjectTicker from "@/components/ProducerProjectTicker";
 import { Icon } from "@/components/Icon";
 
+// Honest floor for on-page opportunity copy — always rounds DOWN so the
+// number can never overstate the live count (508 -> "500+", 1,240 -> "1,000+").
+// Returns "" when the count is unknown so copy can degrade gracefully.
+function floorPlus(n: number): string {
+  if (!n || n < 1) return "";
+  if (n < 100)  return `${Math.floor(n / 10) * 10}+`;
+  if (n < 1000) return `${Math.floor(n / 100) * 100}+`;
+  return `${Math.floor(n / 1000).toLocaleString("en-US")},000+`;
+}
+
 const STEPS = [
   {
     num: "01",
@@ -26,7 +36,7 @@ const STEPS = [
     num: "02",
     icon: "target",
     title: "Match With Global Opportunities",
-    body: "The PITCH.FYLYM ENGINE™ scores your project against 1,000+ grants, funds, labs, investors, studios and co-productions worldwide — and tells you exactly why each one fits.",
+    body: "The PITCH.FYLYM ENGINE™ scores your project against %OPPS% grants, funds, labs, investors, studios and co-productions worldwide — and tells you exactly why each one fits.",
   },
   {
     num: "03",
@@ -111,6 +121,28 @@ export default async function Home() {
     });
   } catch { /* ticker shows empty state gracefully */ }
 
+  // Live opportunity count for on-page copy — same source PlatformMetrics uses
+  // (latest daily snapshot, with a live count fallback). Floored so the copy
+  // never claims more opportunities than actually exist.
+  let oppCount = 0;
+  try {
+    const { data: snap } = await supabase
+      .from("platform_metrics")
+      .select("active_opportunities")
+      .order("computed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    oppCount = (snap as any)?.active_opportunities ?? 0;
+    if (!oppCount) {
+      const { count } = await supabase
+        .from("opportunities")
+        .select("id", { count: "exact", head: true })
+        .eq("is_active", true);
+      oppCount = count ?? 0;
+    }
+  } catch { oppCount = 0; }
+  const oppLabel = floorPlus(oppCount);
+
   return (
     <RoleProvider initialRole={initialRole}>
     <main>
@@ -185,7 +217,7 @@ export default async function Home() {
                   <div>
                     <p className="text-[10px] tracking-[0.2em] uppercase text-ash/50 mb-2">{s.num}</p>
                     <h3 className="font-display text-[22px] font-normal mb-3">{s.title}</h3>
-                    <p className="text-[16px] leading-[1.7] text-ash">{s.body}</p>
+                    <p className="text-[16px] leading-[1.7] text-ash">{s.body.replace("%OPPS% ", oppLabel ? oppLabel + " " : "")}</p>
                   </div>
                 </div>
               </div>
@@ -380,7 +412,7 @@ export default async function Home() {
               </p>
               <div className="mb-10">
                 {[
-                  "Match scores across 1,000+ verified opportunities",
+                  oppLabel ? `Match scores across ${oppLabel} verified opportunities` : "Match scores across every verified opportunity",
                   "Filter by budget, stage, territory and deadline",
                   "Apply in two clicks and track every submission",
                   "Field direct offers from approved producers and investors",
@@ -413,7 +445,7 @@ export default async function Home() {
                 </div>
               ))}
               <p className="mt-6 text-[11px] tracking-[0.18em] uppercase text-ash/50">
-                Full access requires filmmaker verification
+                Free for filmmakers — no verification needed
               </p>
             </div>
 
@@ -472,7 +504,7 @@ export default async function Home() {
                 </div>
               ))}
               <p className="mt-6 text-[11px] tracking-[0.18em] uppercase text-ash/50">
-                Full producer access — no approval needed
+                Private projects unlock after verification
               </p>
             </div>
 
