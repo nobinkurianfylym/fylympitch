@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { supabaseUrl as getSupabaseUrl, supabaseAnonKey as getSupabaseAnonKey, supabaseServiceRoleKey as getSupabaseServiceRoleKey } from "@/lib/supabase/env";
 import { createClient } from "@supabase/supabase-js";
 
 // Returns the role of an existing account for a given email, or null if not found.
@@ -8,8 +9,8 @@ export async function GET(req: NextRequest) {
   if (!email) return NextResponse.json({ role: null });
 
   const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    getSupabaseUrl(),
+    getSupabaseServiceRoleKey(),
     { auth: { persistSession: false } }
   );
 

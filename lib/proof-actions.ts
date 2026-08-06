@@ -1,4 +1,5 @@
 "use server";
+import { supabaseUrl as getSupabaseUrl, supabaseAnonKey as getSupabaseAnonKey, supabaseServiceRoleKey as getSupabaseServiceRoleKey } from "@/lib/supabase/env";
 
 interface TriggerProjectProofArgs {
   projectId: string;
@@ -24,8 +25,8 @@ interface TriggerProjectProofArgs {
 async function getServiceClient() {
   const { createClient } = await import("@supabase/supabase-js");
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    getSupabaseUrl(),
+    getSupabaseServiceRoleKey(),
     { auth: { persistSession: false } }
   );
 }

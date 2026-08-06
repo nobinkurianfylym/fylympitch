@@ -4,6 +4,7 @@
 // Shows Bitcoin block, submission date, status, independent verification steps
 
 import { createClient } from "@supabase/supabase-js";
+import { supabaseUrl as getSupabaseUrl, supabaseAnonKey as getSupabaseAnonKey, supabaseServiceRoleKey as getSupabaseServiceRoleKey } from "@/lib/supabase/env";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -33,8 +34,8 @@ export default async function VerifyPage({
   if (!/^[0-9a-f]{64}$/i.test(hash)) notFound();
 
   const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    getSupabaseUrl(),
+    getSupabaseServiceRoleKey()
   );
 
   // Look up proof by hash — service role bypasses RLS

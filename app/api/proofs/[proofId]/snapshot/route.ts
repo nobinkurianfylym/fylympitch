@@ -4,6 +4,7 @@
 // Reads snapshot_json column first (new rows), falls back to Storage (old rows).
 
 import { NextRequest, NextResponse } from "next/server";
+import { supabaseUrl as getSupabaseUrl, supabaseAnonKey as getSupabaseAnonKey, supabaseServiceRoleKey as getSupabaseServiceRoleKey } from "@/lib/supabase/env";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 
@@ -16,8 +17,8 @@ export async function GET(
   try {
     const { proofId } = await params;
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      getSupabaseUrl(),
+      getSupabaseAnonKey(),
       { cookies: { get(name) { return req.cookies.get(name)?.value; } } }
     );
 
@@ -25,8 +26,8 @@ export async function GET(
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const serviceSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      getSupabaseUrl(),
+      getSupabaseServiceRoleKey()
     );
 
     // Verify ownership + fetch snapshot_json in one query

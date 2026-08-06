@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { supabaseUrl as getSupabaseUrl, supabaseAnonKey as getSupabaseAnonKey, supabaseServiceRoleKey as getSupabaseServiceRoleKey } from "@/lib/supabase/env";
 import { after } from "next/server";
 import { toLiveUSD, validateBudgetSplit } from "@/lib/currency";
 import { redirect } from "next/navigation";
@@ -1321,8 +1322,8 @@ export async function toggleProjectLove(
     // platform_errors is RLS-scoped to admins — requires the service-role client
     const { createClient: createAdmin } = await import("@supabase/supabase-js");
     const admin = createAdmin(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      getSupabaseUrl(),
+      getSupabaseServiceRoleKey(),
       { auth: { persistSession: false } }
     );
     await admin.from("platform_errors").insert({
@@ -1515,8 +1516,8 @@ export async function deleteAccount() {
   // failure, to log to platform_errors (RLS only allows service-role inserts).
   const { createClient: createAdmin } = await import("@supabase/supabase-js");
   const admin = createAdmin(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    getSupabaseUrl(),
+    getSupabaseServiceRoleKey(),
     { auth: { persistSession: false } }
   );
 

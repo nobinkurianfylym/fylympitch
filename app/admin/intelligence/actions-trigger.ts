@@ -4,6 +4,7 @@
 // The edge function runs independently; page polls for results.
 
 import { createClient } from "@/lib/supabase/server";
+import { supabaseUrl as getSupabaseUrl, supabaseAnonKey as getSupabaseAnonKey, supabaseServiceRoleKey as getSupabaseServiceRoleKey } from "@/lib/supabase/env";
 import { revalidatePath } from "next/cache";
 
 export async function triggerCrawlRun(): Promise<{
@@ -18,8 +19,8 @@ export async function triggerCrawlRun(): Promise<{
     .from("profiles").select("role").eq("id", user.id).single();
   if (me?.role !== "admin") return { error: "Not admin" };
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabaseUrl = getSupabaseUrl();
+  const serviceKey  = getSupabaseServiceRoleKey();
 
   if (!serviceKey) {
     return { error: "Service role key not configured" };

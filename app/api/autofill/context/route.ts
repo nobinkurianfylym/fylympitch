@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { supabaseUrl as getSupabaseUrl, supabaseAnonKey as getSupabaseAnonKey, supabaseServiceRoleKey as getSupabaseServiceRoleKey } from "@/lib/supabase/env";
 import { createClient } from "@supabase/supabase-js";
 
 /**
@@ -32,8 +33,8 @@ export async function GET(req: NextRequest) {
 
   // Verify token against Supabase (anon key + user JWT)
   const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    getSupabaseUrl(),
+    getSupabaseAnonKey()
   );
   const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
   if (!user || authErr) {

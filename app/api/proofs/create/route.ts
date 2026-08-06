@@ -4,6 +4,7 @@
 // Keeps Supabase service key off the client.
 
 import { NextRequest, NextResponse } from "next/server";
+import { supabaseUrl as getSupabaseUrl, supabaseAnonKey as getSupabaseAnonKey, supabaseServiceRoleKey as getSupabaseServiceRoleKey } from "@/lib/supabase/env";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 
@@ -23,8 +24,8 @@ export async function POST(req: NextRequest) {
 
     // ── Auth: verify session cookie ───────────────────────────────────────────
     const supabaseAnon = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      getSupabaseUrl(),
+      getSupabaseAnonKey(),
       {
         cookies: {
           get(name) {
@@ -41,8 +42,8 @@ export async function POST(req: NextRequest) {
 
     // ── Ownership: verify this user owns the project ──────────────────────────
     const serviceSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      getSupabaseUrl(),
+      getSupabaseServiceRoleKey()
     );
 
     const { data: project } = await serviceSupabase
@@ -56,13 +57,13 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Forward to Edge Function ──────────────────────────────────────────────
-    const edgeUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-proof`;
+    const edgeUrl = `${getSupabaseUrl()}/functions/v1/create-proof`;
 
     const edgeRes = await fetch(edgeUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        Authorization: `Bearer ${getSupabaseServiceRoleKey()}`,
       },
       body: JSON.stringify({ project_id, sha256_hash, file_name, proof_type, version }),
     });
