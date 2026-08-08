@@ -1,75 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import { DEMO_PROJECTS, type DemoProject } from "./homepage-demo-data";
 
-const PROJECTS = [
-  {
-    title: "SAMPLE FEATURE — COMEDY",
-    genre: "Comedy", format: "Feature", country: "—", budget: "—", seeking: "—",
-    fundable: "—", sources: 0, readiness: 0,
-    breakdown: [{ l: "Grants", a: "—" }, { l: "Labs", a: "—" }, { l: "Co-Pro", a: "—" }, { l: "Funds", a: "—" }],
-    matches: [
-      { name: "Illustrative lab", country: "—", type: "Development Lab", award: "—", deadline: "—", score: 0 },
-      { name: "Illustrative lab", country: "—", type: "Script Lab", award: "—", deadline: "—", score: 0 },
-      { name: "Illustrative fund", country: "—", type: "Grant", award: "—", deadline: "—", score: 0 },
-    ],
-    ep: "Example only — submit your project to see your own funding readiness score and matched opportunities.",
-    stages: [
-      { l: "Script", s: "completed" }, { l: "Script Labs", s: "current" }, { l: "Dev Labs", s: "ready" },
-      { l: "Dev Grants", s: "upcoming" }, { l: "Co-Pro", s: "locked" }, { l: "Production", s: "locked" },
-    ],
-  },
-  {
-    title: "SAMPLE FEATURE — DRAMA",
-    genre: "Drama", format: "Feature", country: "—", budget: "—", seeking: "—",
-    fundable: "—", sources: 0, readiness: 0,
-    breakdown: [{ l: "Grants", a: "—" }, { l: "Labs", a: "—" }, { l: "Co-Pro", a: "—" }, { l: "Funds", a: "—" }],
-    matches: [
-      { name: "Illustrative fund", country: "—", type: "Development Grant", award: "—", deadline: "—", score: 0 },
-      { name: "Illustrative fund", country: "—", type: "Co-Development", award: "—", deadline: "—", score: 0 },
-      { name: "Illustrative fund", country: "—", type: "Grant", award: "—", deadline: "—", score: 0 },
-    ],
-    ep: "Example only — submit your project to see your own funding readiness score and matched opportunities.",
-    stages: [
-      { l: "Script", s: "completed" }, { l: "Script Labs", s: "completed" }, { l: "Dev Labs", s: "current" },
-      { l: "Dev Grants", s: "ready" }, { l: "Co-Pro", s: "upcoming" }, { l: "Production", s: "locked" },
-    ],
-  },
-  {
-    title: "SAMPLE FEATURE — DOCUMENTARY",
-    genre: "Documentary", format: "Documentary", country: "—", budget: "—", seeking: "—",
-    fundable: "—", sources: 0, readiness: 0,
-    breakdown: [{ l: "Grants", a: "—" }, { l: "Labs", a: "—" }, { l: "Streamers", a: "—" }, { l: "Funds", a: "—" }],
-    matches: [
-      { name: "Illustrative fund", country: "—", type: "Documentary Grant", award: "—", deadline: "—", score: 0 },
-      { name: "Illustrative fund", country: "—", type: "Development Fund", award: "—", deadline: "—", score: 0 },
-      { name: "Illustrative fund", country: "—", type: "Development Grant", award: "—", deadline: "—", score: 0 },
-    ],
-    ep: "Example only — submit your project to see your own funding readiness score and matched opportunities.",
-    stages: [
-      { l: "Script", s: "completed" }, { l: "Script Labs", s: "current" }, { l: "Dev Labs", s: "ready" },
-      { l: "Dev Grants", s: "upcoming" }, { l: "Co-Pro", s: "locked" }, { l: "Production", s: "locked" },
-    ],
-  },
-];
+// ============================================================
+// HomepageDemo — "See the engine in action"
+//
+// Renders REAL FYLYMPITCH ENGINE output (services/fylympitchEngine.ts)
+// for representative sample projects. Every score, readiness value,
+// match count and award is genuine engine output baked at authoring
+// time from the live MASTER_DATA catalog — see components/homepage-demo-data.ts
+// and scripts/gen-homepage-demo.ts. No fabricated or hand-tuned numbers.
+// ============================================================
 
-const STAGE_STYLE: Record<string, { dot: string; text: string; bg: string; label: string }> = {
-  completed: { dot: "#BF9953", text: "#7a5e1a", bg: "rgba(191,153,83,0.14)", label: "Done" },
-  current:   { dot: "#BF9953", text: "#7a5e1a", bg: "rgba(191,153,83,0.18)", label: "Current" },
-  ready:     { dot: "#2a6b2a", text: "#2a6b2a", bg: "rgba(42,107,42,0.12)",  label: "Ready" },
-  upcoming:  { dot: "rgba(26,24,21,0.2)", text: "#8A857C", bg: "rgba(26,24,21,0.07)", label: "Soon" },
-  locked:    { dot: "rgba(26,24,21,0.12)", text: "#b0aba4", bg: "rgba(26,24,21,0.04)", label: "—" },
+const STAGE_STYLE: Record<DemoProject["roadmap"][number]["status"], { dot: string; text: string; bg: string; label: string }> = {
+  done:     { dot: "#BF9953", text: "#7a5e1a", bg: "rgba(191,153,83,0.16)", label: "Done" },
+  current:  { dot: "#BF9953", text: "#7a5e1a", bg: "rgba(191,153,83,0.20)", label: "Current" },
+  upcoming: { dot: "rgba(26,24,21,0.2)", text: "#8A857C", bg: "rgba(26,24,21,0.06)", label: "Upcoming" },
 };
 
 function scoreBadge(score: number) {
-  if (score >= 90) return { bg: "rgba(191,153,83,0.14)", color: "#7a5e1a" };
-  if (score >= 80) return { bg: "rgba(42,107,42,0.12)", color: "#2a6b2a" };
+  if (score >= 90) return { bg: "rgba(191,153,83,0.16)", color: "#7a5e1a" };
+  if (score >= 75) return { bg: "rgba(42,107,42,0.12)", color: "#2a6b2a" };
   return { bg: "rgba(26,24,21,0.08)", color: "#8A857C" };
 }
 
 export default function HomepageDemo() {
   const [idx, setIdx] = useState(0);
-  const p = PROJECTS[idx];
+  const p = DEMO_PROJECTS[idx];
 
   return (
     <div style={{ fontFamily: "'Montserrat', sans-serif", color: "#1A1815" }}>
@@ -81,12 +39,12 @@ export default function HomepageDemo() {
           <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "30px", fontWeight: 400, color: "#1A1815", marginBottom: "8px", lineHeight: 1.2 }}>
             See the engine in action
           </h2>
-          <p style={{ fontSize: "14px", color: "#8A857C", maxWidth: "420px", lineHeight: 1.65 }}>
-            Submit any project. The engine scores it against every active opportunity and produces your complete funding intelligence.
+          <p style={{ fontSize: "14px", color: "#8A857C", maxWidth: "440px", lineHeight: 1.65 }}>
+            These are real engine results for sample projects, scored against every active opportunity in the platform. Submit your own to see your funding readiness and matched sources.
           </p>
         </div>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "4px" }}>
-          {PROJECTS.map((proj, i) => (
+          {DEMO_PROJECTS.map((proj, i) => (
             <button
               key={proj.title}
               onClick={() => setIdx(i)}
@@ -100,7 +58,7 @@ export default function HomepageDemo() {
                 cursor: "pointer", transition: "all 0.2s",
               }}
             >
-              {proj.title}
+              {proj.genre}
             </button>
           ))}
         </div>
@@ -112,17 +70,17 @@ export default function HomepageDemo() {
           PITCH.FYLYM ENGINE
         </p>
         <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "26px", fontWeight: 400, color: "#F8F5F0", lineHeight: 1.25, marginBottom: "6px" }}>
-          <em>{p.title}</em> can raise{" "}
-          <span style={{ color: "#BF9953" }}>{p.fundable}</span>
+          <em>{p.title}</em> matches{" "}
+          <span style={{ color: "#BF9953" }}>{p.matchedSources} active funding sources</span>
         </h3>
         <p style={{ fontSize: "12px", color: "rgba(248,245,240,0.45)", marginBottom: "20px" }}>
-          from {p.sources} matched sources across grants, labs, co-production and funds
+          scored against every live opportunity — grants, labs, markets and platforms
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "20px" }}>
-          {p.breakdown.map((b) => (
-            <div key={b.l} style={{ background: "rgba(255,255,255,0.08)", borderRadius: "9px", padding: "10px 14px", textAlign: "center", minWidth: "80px" }}>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "16px", color: "#BF9953" }}>{b.a}</div>
-              <div style={{ fontSize: "9px", letterSpacing: "0.16em", textTransform: "uppercase", color: "rgba(248,245,240,0.38)", marginTop: "3px" }}>{b.l}</div>
+          {p.categories.map((c) => (
+            <div key={c.label} style={{ background: "rgba(255,255,255,0.08)", borderRadius: "9px", padding: "10px 14px", textAlign: "center", minWidth: "96px" }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "20px", color: "#BF9953" }}>{c.count}</div>
+              <div style={{ fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(248,245,240,0.42)", marginTop: "3px" }}>{c.label}</div>
             </div>
           ))}
         </div>
@@ -141,17 +99,17 @@ export default function HomepageDemo() {
         <div style={{ border: "0.5px solid rgba(26,24,21,0.12)", borderRadius: "12px", overflow: "hidden" }}>
           <div style={{ padding: "12px 16px", borderBottom: "0.5px solid rgba(26,24,21,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <p style={{ fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "#8A857C" }}>Top matches</p>
-            <span style={{ fontSize: "11px", color: "#8A857C" }}>{p.sources} total</span>
+            <span style={{ fontSize: "11px", color: "#8A857C" }}>{p.matchedSources} total</span>
           </div>
-          {p.matches.map((m) => {
+          {p.topMatches.map((m) => {
             const bs = scoreBadge(m.score);
             return (
               <div key={m.name} style={{ padding: "12px 16px", borderBottom: "0.5px solid rgba(26,24,21,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: "13px", fontWeight: 500, color: "#1A1815", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.name}</div>
-                  <div style={{ fontSize: "11px", color: "#8A857C", marginTop: "2px" }}>{m.country} · {m.award} · {m.deadline}</div>
+                  <div style={{ fontSize: "11px", color: "#8A857C", marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.typeLabel} · {m.country} · {m.award}</div>
                 </div>
-                <span style={{ background: bs.bg, color: bs.color, fontSize: "10px", letterSpacing: "0.12em", textTransform: "uppercase", padding: "3px 9px", borderRadius: "20px", whiteSpace: "nowrap" }}>
+                <span style={{ background: bs.bg, color: bs.color, fontSize: "10px", letterSpacing: "0.06em", padding: "3px 9px", borderRadius: "20px", whiteSpace: "nowrap", fontWeight: 600 }}>
                   {m.score}%
                 </span>
               </div>
@@ -164,13 +122,14 @@ export default function HomepageDemo() {
           <div style={{ border: "0.5px solid rgba(26,24,21,0.12)", borderRadius: "12px", padding: "14px 16px", flex: 1 }}>
             <p style={{ fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "#8A857C", marginBottom: "12px" }}>Funding Journey</p>
             <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
-              {p.stages.map((st) => {
-                const ss = STAGE_STYLE[st.s];
+              {p.roadmap.map((st) => {
+                const ss = STAGE_STYLE[st.status];
+                const rightLabel = st.status === "upcoming" && st.live > 0 ? `${st.live} live` : ss.label;
                 return (
-                  <div key={st.l} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div key={st.label} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: ss.dot, flexShrink: 0 }} />
-                    <span style={{ fontSize: "12px", color: st.s === "current" ? "#1A1815" : "#8A857C", flex: 1, fontWeight: st.s === "current" ? 500 : 400 }}>{st.l}</span>
-                    <span style={{ fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", background: ss.bg, color: ss.text, padding: "2px 7px", borderRadius: "20px" }}>{ss.label}</span>
+                    <span style={{ fontSize: "12px", color: st.status === "current" ? "#1A1815" : "#8A857C", flex: 1, fontWeight: st.status === "current" ? 500 : 400 }}>{st.label}</span>
+                    <span style={{ fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", background: ss.bg, color: ss.text, padding: "2px 7px", borderRadius: "20px" }}>{rightLabel}</span>
                   </div>
                 );
               })}
@@ -188,9 +147,9 @@ export default function HomepageDemo() {
       <div style={{ background: "#F8F5F0", borderRadius: "10px", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
         <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
           {[
-            `${p.genre} · ${p.format}`,
-            `Budget — ${p.budget}`,
-            `Seeking — ${p.seeking}`,
+            `${p.genre} · ${p.format[0].toUpperCase()}${p.format.slice(1)}`,
+            `Budget — ${p.budgetLabel}`,
+            `Seeking — ${p.seekingLabel}`,
             `Country — ${p.country}`,
           ].map((item) => (
             <span key={item} style={{ fontSize: "12px", color: "#8A857C" }}>{item}</span>
