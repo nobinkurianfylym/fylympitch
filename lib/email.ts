@@ -406,7 +406,8 @@ export async function sendNewMessageNotification({
 
 // ── Broadcast / Newsletter ────────────────────────────────────
 /**
- * Send a broadcast/newsletter email to a list of recipients via Resend batch.
+ * Send a broadcast/newsletter email to a list of recipients via the Resend
+ * batch REST API (fetch-based — reliable in Cloudflare Workers).
  * Splits into chunks of 100 (Resend's batch limit) automatically.
  * Returns total sent and failed counts.
  */
@@ -419,8 +420,8 @@ export async function sendBroadcastEmail({
   subject: string;
   body: string;
 }): Promise<{ sent: number; failed: number }> {
-  const resend = getResend();
-  if (!resend) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) {
     console.warn("[email] RESEND_API_KEY not set — skipping broadcast email");
     return { sent: 0, failed: 0 };
   }
@@ -462,12 +463,25 @@ export async function sendBroadcastEmail({
     }));
 
     try {
-      const { data, error } = await resend.batch.send(messages);
-      if (error) {
-        console.error("[email] sendBroadcastEmail batch error:", error);
+      // Use fetch directly — more reliable than the SDK in Cloudflare Workers
+      const res = await fetch("https://api.resend.com/emails/batch", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(messages),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => res.statusText);
+        console.error(`[email] sendBroadcastEmail batch HTTP ${res.status}:`, errText);
         failed += chunk.length;
       } else {
-        sent += (data as any[])?.length ?? chunk.length;
+        const json: any = await res.json().catch(() => null);
+        // Resend batch response: { data: [...] }
+        const count = Array.isArray(json?.data) ? json.data.length : chunk.length;
+        sent += count;
       }
     } catch (e) {
       console.error("[email] sendBroadcastEmail exception:", e);
