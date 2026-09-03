@@ -15,12 +15,17 @@ export default function BroadcastComposer() {
   const [audience, setAudience] = useState<BroadcastAudience>("all");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [sendEmail, setSendEmail] = useState(false);
   const [ok, setOk] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   function send() {
     if (!body.trim() || pending) return;
+    if (sendEmail && !subject.trim()) {
+      setErr("Subject is required when sending as email.");
+      return;
+    }
     setErr(null);
     setOk(null);
     start(async () => {
@@ -28,14 +33,19 @@ export default function BroadcastComposer() {
         audience,
         subject: subject.trim() || undefined,
         body: body.trim(),
+        sendEmail,
       });
       if ("error" in res) {
         setErr(res.error);
         return;
       }
-      setOk(
-        `Sent to ${res.recipients.toLocaleString()} ${res.recipients === 1 ? "person" : "people"}.`,
-      );
+      let msg = `In-app notification sent to ${res.recipients.toLocaleString()} ${res.recipients === 1 ? "person" : "people"}.`;
+      if (res.emailsSent != null) {
+        msg += ` Emails delivered: ${res.emailsSent.toLocaleString()}`;
+        if (res.emailsFailed) msg += ` (${res.emailsFailed} failed)`;
+        msg += ".";
+      }
+      setOk(msg);
       setSubject("");
       setBody("");
       router.refresh();
@@ -61,11 +71,13 @@ export default function BroadcastComposer() {
         ))}
       </div>
 
-      <label className="field-label">Subject (optional)</label>
+      <label className="field-label">
+        Subject{sendEmail ? " (required for email)" : " (optional)"}
+      </label>
       <input
         value={subject}
         onChange={(e) => setSubject(e.target.value)}
-        placeholder="A message from PITCH.FYLYM"
+        placeholder="e.g. New funds added this week on PITCH.FYLYM"
         className="field mb-5"
       />
 
@@ -73,27 +85,54 @@ export default function BroadcastComposer() {
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        rows={4}
-        placeholder="Write your announcement…"
+        rows={6}
+        placeholder="Write your announcement — new fund added, platform update, etc."
         className="field resize-none"
       />
 
-      <div className="flex items-center justify-between gap-4 mt-4">
-        <div className="text-[12px]">
+      {/* Email toggle */}
+      <label className="flex items-start gap-3 cursor-pointer mt-5 mb-1 select-none">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={sendEmail}
+          onClick={() => setSendEmail((v) => !v)}
+          className={`relative mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+            sendEmail ? "bg-gold" : "bg-ash/30"
+          }`}
+        >
+          <span
+            className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${
+              sendEmail ? "translate-x-4" : "translate-x-0.5"
+            }`}
+          />
+        </button>
+        <span className="text-[13px] text-ink leading-snug">
+          Also send as email to all registered users
+          <span className="block text-[11px] text-ash mt-0.5">
+            Sends a formatted PITCH.FYLYM branded email via Resend to every account in the selected audience.
+          </span>
+        </span>
+      </label>
+
+      <div className="flex items-center justify-between gap-4 mt-5">
+        <div className="text-[12px] max-w-xs leading-relaxed">
           {err && <span className="text-red-600">{err}</span>}
           {ok && <span className="text-green-700">{ok}</span>}
         </div>
         <button
           onClick={send}
           disabled={pending || !body.trim()}
-          className="btn-gold disabled:opacity-40"
+          className="btn-gold disabled:opacity-40 shrink-0"
         >
-          {pending ? "Sending…" : "Send broadcast"}
+          {pending ? "Sending…" : sendEmail ? "Send broadcast + email" : "Send broadcast"}
         </button>
       </div>
       <p className="text-[11px] text-ash mt-3 leading-relaxed">
-        Delivered to each recipient&rsquo;s notifications and their PITCH.FYLYM inbox. Announcements
-        are one-way — recipients can&rsquo;t reply to a broadcast.
+        In-app notifications are delivered to each recipient&rsquo;s PITCH.FYLYM inbox.
+        {sendEmail
+          ? " Emails are sent via Resend in batches of 100 and require a subject line."
+          : " Toggle email above to also send a real email."}
       </p>
     </div>
   );

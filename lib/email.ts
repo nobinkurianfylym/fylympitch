@@ -404,6 +404,80 @@ export async function sendNewMessageNotification({
   }
 }
 
+// ── Broadcast / Newsletter ────────────────────────────────────
+/**
+ * Send a broadcast/newsletter email to a list of recipients via Resend batch.
+ * Splits into chunks of 100 (Resend's batch limit) automatically.
+ * Returns total sent and failed counts.
+ */
+export async function sendBroadcastEmail({
+  recipients,
+  subject,
+  body,
+}: {
+  recipients: { email: string; name: string | null }[];
+  subject: string;
+  body: string;
+}): Promise<{ sent: number; failed: number }> {
+  const resend = getResend();
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY not set — skipping broadcast email");
+    return { sent: 0, failed: 0 };
+  }
+  if (!recipients.length) return { sent: 0, failed: 0 };
+
+  const htmlBody = `
+    <h1 style="margin:0 0 8px;font-size:28px;font-weight:400;font-family:Georgia,serif;color:#1A1815;">
+      ${subject}
+    </h1>
+    <p style="margin:0 0 32px;font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#8A857C;">
+      PITCH.FYLYM Updates
+    </p>
+
+    <div style="font-size:16px;line-height:1.75;color:#1A1815;white-space:pre-wrap;">${body}</div>
+
+    ${divider()}
+
+    <p style="margin:0;font-size:13px;line-height:1.6;color:#8A857C;">
+      You're receiving this because you have an account on
+      <a href="${SITE_URL}" style="color:#BF9953;text-decoration:none;">PITCH.FYLYM</a>.
+      Questions? Write to us at
+      <a href="mailto:hello@fylym.com" style="color:#BF9953;text-decoration:none;">hello@fylym.com</a>
+    </p>
+  `;
+  const html = wrap(htmlBody);
+
+  let sent = 0;
+  let failed = 0;
+
+  // Resend batch limit is 100 per call
+  const CHUNK = 100;
+  for (let i = 0; i < recipients.length; i += CHUNK) {
+    const chunk = recipients.slice(i, i + CHUNK);
+    const messages = chunk.map((r) => ({
+      from: FROM_ADDRESS,
+      to: r.email,
+      subject,
+      html,
+    }));
+
+    try {
+      const { data, error } = await resend.batch.send(messages);
+      if (error) {
+        console.error("[email] sendBroadcastEmail batch error:", error);
+        failed += chunk.length;
+      } else {
+        sent += (data as any[])?.length ?? chunk.length;
+      }
+    } catch (e) {
+      console.error("[email] sendBroadcastEmail exception:", e);
+      failed += chunk.length;
+    }
+  }
+
+  return { sent, failed };
+}
+
 // ── Engine Ready ─────────────────────────────────────────────
 export async function sendEngineReady({
   to,

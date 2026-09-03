@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { sendBroadcastEmail } from "@/lib/email";
 
 export type BroadcastAudience = "all" | "filmmakers" | "producers";
 
@@ -25,7 +26,9 @@ export async function sendBroadcast(input: {
   audience: BroadcastAudience;
   subject?: string;
   body: string;
-}): Promise<{ ok: true; id: string; recipients: number } | { error: string }> {
+  /** When true, also fires a real email to each recipient via Resend. */
+  sendEmail?: boolean;
+}): Promise<{ ok: true; id: string; recipients: number; emailsSent?: number; emailsFailed?: number } | { error: string }> {
   const { supabase, isAdmin } = await requireAdmin();
   if (!isAdmin) return { error: "Not authorized." };
   if (!input.body?.trim()) return { error: "Message body is required." };
@@ -49,8 +52,43 @@ export async function sendBroadcast(input: {
     .single();
   if (row?.recipient_count != null) recipients = row.recipient_count;
 
+  // Optionally send real emails via Resend.
+  let emailsSent: number | undefined;
+  let emailsFailed: number | undefined;
+  if (input.sendEmail) {
+    try {
+      const { createAdminClient } = await import("@/lib/supabase/admin");
+      const admin = createAdminClient();
+
+      // Build role filter for the query.
+      let profileQuery = admin.from("profiles").select("id, full_name, email");
+      if (input.audience === "filmmakers") {
+        profileQuery = profileQuery.eq("role", "filmmaker");
+      } else if (input.audience === "producers") {
+        profileQuery = profileQuery.in("role", ["producer", "investor"]);
+      }
+      // else "all" — no role filter
+
+      const { data: profiles } = await profileQuery;
+      const emailRecipients = (profiles ?? [])
+        .filter((p: any) => !!p.email)
+        .map((p: any) => ({ email: p.email as string, name: p.full_name as string | null }));
+
+      const result = await sendBroadcastEmail({
+        recipients: emailRecipients,
+        subject: input.subject?.trim() || "A message from PITCH.FYLYM",
+        body: input.body.trim(),
+      });
+      emailsSent = result.sent;
+      emailsFailed = result.failed;
+    } catch (e) {
+      console.error("[admin-messaging] email broadcast failed:", e);
+      emailsFailed = recipients; // conservative — assume all failed
+    }
+  }
+
   revalidatePath("/admin/messages");
-  return { ok: true, id: id as string, recipients };
+  return { ok: true, id: id as string, recipients, emailsSent, emailsFailed };
 }
 
 /** Admin → open (or find) the 1:1 support thread for a specific user. */
