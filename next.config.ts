@@ -52,14 +52,7 @@ const nextConfig: NextConfig = {
   },
 
   // ── Response headers ──────────────────────────────────────────
-    async rewrites() {
-    return [
-      {
-        source: "/auth/callback",
-        destination: "/api/auth/callback",
-      },
-    ];
-  },async headers() {
+  async headers() {
     return [
       // Eager Supabase TLS preconnect ONLY on authenticated data routes that hit
       // Supabase immediately on load. Kept off public pages (/, /filmprojects) where
