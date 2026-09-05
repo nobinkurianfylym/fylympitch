@@ -11,7 +11,7 @@
 // Env vars required (Supabase → Edge Functions → Secrets):
 //   SUPABASE_URL
 //   SUPABASE_SERVICE_ROLE_KEY
-//   FIRECRAWL_API_KEY          fc-ed8b65a125ac4ccab6b3d9ad65b750bb
+//   FIRECRAWL_API_KEY          <set as a Supabase secret>
 //   CEREBERAS_API              (existing — same key as CF Workers)
 //   GROQ_API_KEY               (existing)
 //   OPENAI_API_KEY             (existing)
@@ -26,13 +26,22 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // ─── Env ──────────────────────────────────────────────────────
 const SUPABASE_URL    = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY     = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const FIRECRAWL_KEY   = Deno.env.get("FIRECRAWL_API_KEY") ?? "fc-ed8b65a125ac4ccab6b3d9ad65b750bb";
+const FIRECRAWL_KEY   = Deno.env.get("FIRECRAWL_API_KEY");
 const CEREBRAS_KEY    = Deno.env.get("CEREBERAS_API");   // note: typo preserved to match CF dashboard
 const GROQ_KEY        = Deno.env.get("GROQ_API_KEY");
 const OPENAI_KEY      = Deno.env.get("OPENAI_API_KEY");
 
 const CONFIDENCE_GATE   = 70;
-const CRAWL_CONCURRENCY = 6;
+
+// Firecrawl rate limiting. Concurrency was 6 with no retry, which tripped the
+// API rate limit after ~10 sources and failed the remaining ~39 every run.
+const CRAWL_CONCURRENCY    = 2;
+const SCRAPE_RETRIES       = 3;
+const SCRAPE_BASE_DELAY_MS = 2000;
+const INTER_BATCH_DELAY_MS = 1200;
+// Bound each run so it cannot exceed the Edge Function wall clock. Sources
+// rotate because last_crawled_at is now recorded on every path, success or not.
+const MAX_SOURCES_PER_RUN  = 25;
 
 // ─── AI provider config (mirrors aiEngine.ts) ─────────────────
 const CEREBRAS_URL   = "https://api.cerebras.ai/v1/chat/completions";
@@ -86,6 +95,7 @@ interface FundingSource {
   crawl_frequency: "daily" | "weekly" | "monthly";
   last_crawled_at: string | null;
   last_success_at: string | null;
+  fail_count: number | null;
 }
 
 // Hours threshold per frequency before re-crawling
@@ -255,31 +265,90 @@ async function callLLM(
 }
 
 // ─── Firecrawl scrape ─────────────────────────────────────────
-async function scrapeUrl(url: string): Promise<string | null> {
-  try {
-    const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${FIRECRAWL_KEY}`,
-      },
-      body: JSON.stringify({
-        url,
-        formats: ["markdown"],
-        onlyMainContent: true,
-        timeout: 30000,
-      }),
-    });
-    if (!res.ok) {
-      console.error(`[firecrawl] ${res.status} for ${url}`);
-      return null;
-    }
-    const data = await res.json();
-    return data?.data?.markdown ?? null;
-  } catch (err) {
-    console.error(`[firecrawl] Error for ${url}:`, err);
-    return null;
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Scrape one URL via Firecrawl.
+ * Retries on 429 / 5xx with exponential backoff, honouring Retry-After.
+ * Returns the real failure reason so it can be stored on funding_crawl_items
+ * instead of the useless generic "Firecrawl returned no content".
+ */
+async function scrapeUrl(
+  url: string,
+): Promise<{ markdown: string | null; error: string | null }> {
+  if (!FIRECRAWL_KEY) {
+    return { markdown: null, error: "FIRECRAWL_API_KEY is not set" };
   }
+
+  let lastError = "unknown";
+
+  for (let attempt = 0; attempt <= SCRAPE_RETRIES; attempt++) {
+    try {
+      const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${FIRECRAWL_KEY}`,
+        },
+        body: JSON.stringify({
+          url,
+          formats: ["markdown"],
+          onlyMainContent: true,
+          timeout: 30000,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const markdown = data?.data?.markdown ?? null;
+        if (markdown) return { markdown, error: null };
+        lastError = "Firecrawl 200 but empty markdown";
+        break;
+      }
+
+      const body = (await res.text()).slice(0, 180).replace(/\s+/g, " ");
+      lastError = `Firecrawl HTTP ${res.status}: ${body}`;
+
+      // Rate limited or upstream error — back off and retry.
+      if (res.status === 429 || res.status >= 500) {
+        if (attempt === SCRAPE_RETRIES) break;
+        const retryAfter = Number(res.headers.get("retry-after"));
+        const wait = Number.isFinite(retryAfter) && retryAfter > 0
+          ? Math.min(retryAfter * 1000, 15000)
+          : SCRAPE_BASE_DELAY_MS * Math.pow(2, attempt);
+        console.warn(`[firecrawl] ${res.status} ${url} — retry ${attempt + 1}/${SCRAPE_RETRIES} in ${wait}ms`);
+        await sleep(wait);
+        continue;
+      }
+
+      // 4xx other than 429 (bad URL, 402 out of credits) — retrying won't help.
+      break;
+    } catch (err) {
+      lastError = `Firecrawl exception: ${err instanceof Error ? err.message : String(err)}`;
+      if (attempt === SCRAPE_RETRIES) break;
+      await sleep(SCRAPE_BASE_DELAY_MS * Math.pow(2, attempt));
+    }
+  }
+
+  console.error(`[firecrawl] FAILED ${url} — ${lastError}`);
+  return { markdown: null, error: lastError };
+}
+
+/** Record a crawl attempt on the source, whatever the outcome. */
+async function recordAttempt(
+  supabase: ReturnType<typeof getSupabase>,
+  sourceId: string,
+  ok: boolean,
+  currentFailCount: number,
+): Promise<void> {
+  const now = new Date().toISOString();
+  await supabase.from("funding_sources").update(
+    ok
+      ? { last_crawled_at: now, last_success_at: now, fail_count: 0 }
+      : { last_crawled_at: now, fail_count: currentFailCount + 1 },
+  ).eq("id", sourceId);
 }
 
 // ─── Extraction system prompt ──────────────────────────────────
@@ -568,13 +637,14 @@ async function processSource(
 ): Promise<void> {
   stats.pages_visited++;
 
-  const markdown = await scrapeUrl(source.url);
+  const { markdown, error: scrapeError } = await scrapeUrl(source.url);
   if (!markdown) {
     stats.failed_crawls++;
     await supabase.from("funding_crawl_items").insert({
       run_id: runId, source_id: source.id,
-      action: "failed", error_message: "Firecrawl returned no content",
+      action: "failed", error_message: scrapeError ?? "Firecrawl returned no content",
     });
+    await recordAttempt(supabase, source.id, false, source.fail_count ?? 0);
     return;
   }
 
@@ -585,6 +655,7 @@ async function processSource(
       run_id: runId, source_id: source.id,
       action: "failed", error_message: "AI extraction returned null",
     });
+    await recordAttempt(supabase, source.id, false, source.fail_count ?? 0);
     return;
   }
 
@@ -605,21 +676,35 @@ async function processSource(
         run_id: runId, source_id: source.id, opportunity_id: existing.id,
         action: "skipped", confidence: extracted.confidence,
       });
+      await recordAttempt(supabase, source.id, true, source.fail_count ?? 0);
       return;
     }
-    // Genuinely new record — queue for admin review
-    stats.pending_review++;
-    await supabase.from("admin_review_queue").insert({
-      run_id: runId, source_id: source.id,
-      source_url: source.url,
-      extracted_data: extracted as unknown as Record<string, unknown>,
-      confidence: extracted.confidence,
-    });
+    // Genuinely new record — queue for admin review, but only once.
+    // Previously this inserted on every run, producing hundreds of duplicate
+    // rows for the same handful of sources.
+    const { data: alreadyQueued } = await supabase
+      .from("admin_review_queue")
+      .select("id")
+      .eq("source_url", source.url)
+      .eq("status", "pending")
+      .limit(1)
+      .maybeSingle();
+
+    if (!alreadyQueued) {
+      stats.pending_review++;
+      await supabase.from("admin_review_queue").insert({
+        run_id: runId, source_id: source.id,
+        source_url: source.url,
+        extracted_data: extracted as unknown as Record<string, unknown>,
+        confidence: extracted.confidence,
+      });
+    }
     await supabase.from("funding_crawl_items").insert({
       run_id: runId, source_id: source.id, action: "queued_review",
       confidence: extracted.confidence,
       raw_extraction: extracted as unknown as Record<string, unknown>,
     });
+    await recordAttempt(supabase, source.id, true, source.fail_count ?? 0);
     return;
   }
 
@@ -650,6 +735,7 @@ async function runInBatches<T>(
 ): Promise<void> {
   for (let i = 0; i < items.length; i += concurrency) {
     await Promise.all(items.slice(i, i + concurrency).map(fn));
+    if (i + concurrency < items.length) await sleep(INTER_BATCH_DELAY_MS);
   }
 }
 
@@ -684,7 +770,7 @@ Deno.serve(async (req: Request) => {
       .from("funding_sources")
       .select("*")
       .eq("crawl_active", true)
-      .order("last_verified_at", { ascending: true, nullsFirst: true });
+      .order("last_crawled_at", { ascending: true, nullsFirst: true });
 
     if (!allSources || allSources.length === 0) {
       await supabase.from("funding_crawl_runs").update({
@@ -695,8 +781,9 @@ Deno.serve(async (req: Request) => {
     }
 
     // Filter to only sources due for a crawl based on their frequency
-    const sources = (allSources as FundingSource[]).filter(isDue);
-    const skipped  = allSources.length - sources.length;
+    const due     = (allSources as FundingSource[]).filter(isDue);
+    const sources = due.slice(0, MAX_SOURCES_PER_RUN);
+    const skipped = allSources.length - sources.length;
 
     console.log(`[intelligence] ${sources.length} due / ${allSources.length} total / ${skipped} skipped (not due)`);
 
