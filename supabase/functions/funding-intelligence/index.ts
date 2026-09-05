@@ -27,7 +27,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL    = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY     = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FIRECRAWL_KEY   = Deno.env.get("FIRECRAWL_API_KEY");
-const CEREBRAS_KEY    = Deno.env.get("CEREBERAS_API");   // note: typo preserved to match CF dashboard
+// The original name is misspelled and was set on Cloudflare, not Supabase —
+// so on this runtime it resolved to undefined and every extraction silently
+// fell through to the 8B fallback model. Accept all spellings.
+const CEREBRAS_KEY    = Deno.env.get("CEREBERAS_API")
+                     ?? Deno.env.get("CEREBRAS_API")
+                     ?? Deno.env.get("CEREBRAS_API_KEY");
 const GROQ_KEY        = Deno.env.get("GROQ_API_KEY");
 const OPENAI_KEY      = Deno.env.get("OPENAI_API_KEY");
 
@@ -221,11 +226,41 @@ async function callLLM(
       if (text) return { text, provider: "cerebras" };
       throw new Error("Empty Cerebras response");
     } catch (e) {
-      console.warn("[intelligence] Cerebras failed, trying Groq:", (e as Error).message);
+      console.warn("[intelligence] Cerebras failed, trying OpenAI:", (e as Error).message);
     }
   }
 
-  // 2. Groq — secondary, high rate limit
+  // 2. OpenAI — second by capability. This sits ahead of Groq deliberately:
+  //    extraction quality drives the confidence score, and everything below
+  //    the gate of 70 is discarded, so a weaker model here costs real data.
+  //    response_format forces valid JSON and removes a class of parse failures.
+  if (OPENAI_KEY) {
+    try {
+      const res = await fetch(OPENAI_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${OPENAI_KEY}`,
+        },
+        body: JSON.stringify({
+          model: OPENAI_MODEL,
+          max_tokens: maxTokens,
+          messages,
+          response_format: { type: "json_object" },
+        }),
+      });
+      if (!res.ok) throw new Error(`OpenAI HTTP ${res.status}: ${await res.text()}`);
+      const data = await res.json();
+      const text = data.choices?.[0]?.message?.content ?? "";
+      if (text) return { text, provider: "openai" };
+      throw new Error("Empty OpenAI response");
+    } catch (e) {
+      console.warn("[intelligence] OpenAI failed, trying Groq:", (e as Error).message);
+    }
+  }
+
+  // 3. Groq — last resort. llama-3.1-8b is fast and cheap but the weakest of
+  //    the three at structured extraction from dense multilingual pages.
   if (GROQ_KEY) {
     try {
       const res = await fetch(GROQ_URL, {
@@ -246,31 +281,7 @@ async function callLLM(
       if (text) return { text, provider: "groq" };
       throw new Error("Empty Groq response");
     } catch (e) {
-      console.warn("[intelligence] Groq failed, trying OpenAI:", (e as Error).message);
-    }
-  }
-
-  // 3. OpenAI — last resort
-  if (OPENAI_KEY) {
-    try {
-      const res = await fetch(OPENAI_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENAI_KEY}`,
-        },
-        body: JSON.stringify({
-          model: OPENAI_MODEL,
-          max_tokens: maxTokens,
-          messages,
-        }),
-      });
-      if (!res.ok) throw new Error(`OpenAI HTTP ${res.status}`);
-      const data = await res.json();
-      const text = data.choices?.[0]?.message?.content ?? "";
-      return { text, provider: "openai" };
-    } catch (e) {
-      console.error("[intelligence] OpenAI failed:", (e as Error).message);
+      console.error("[intelligence] Groq failed:", (e as Error).message);
     }
   }
 
@@ -464,6 +475,10 @@ ${content.slice(0, 12000)}`;
     const clean = text.replace(/```json|```/g, "").trim();
     const parsed = JSON.parse(clean) as ExtractedOpportunity;
     parsed.url = parsed.url || source.url;
+    // Stamped into funding_crawl_items.raw_extraction so the serving model is
+    // visible from SQL instead of only in ephemeral function logs. Not a column
+    // on opportunities — upsert writes an explicit field list.
+    (parsed as unknown as Record<string, unknown>)._provider = provider;
     console.log(`[${provider}] Extracted "${parsed.title}" conf=${parsed.confidence}`);
     return parsed;
   } catch (err) {
