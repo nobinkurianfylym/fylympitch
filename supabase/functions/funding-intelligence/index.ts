@@ -326,10 +326,37 @@ async function scrapeUrl(
 
       if (res.ok) {
         const data = await res.json();
-        const markdown = data?.data?.markdown ?? null;
-        if (markdown) return { markdown, error: null };
-        lastError = "Firecrawl 200 but empty markdown";
-        break;
+        const markdown: string | null = data?.data?.markdown ?? null;
+
+        // Firecrawl reports the ORIGIN's status in metadata. A site that serves
+        // a styled 404 with HTTP 200 still shows up here. Ignoring this is why
+        // dead sources looked like successful crawls for months.
+        const originStatus = Number(data?.data?.metadata?.statusCode ?? 200);
+        if (originStatus >= 400) {
+          return { markdown: null, error: `Origin returned HTTP ${originStatus} (dead or moved URL)` };
+        }
+
+        if (!markdown) {
+          lastError = "Firecrawl 200 but empty markdown";
+          break;
+        }
+
+        // Soft 404: the page resolves but carries no programme content. The
+        // extractor would otherwise invent a record from the prompt hints.
+        const probe = markdown.slice(0, 1200).toLowerCase();
+        const deadPhrases = [
+          "page not found", "404 not found", "page cannot be found",
+          "page doesn't exist", "page does not exist", "no longer available",
+          "seite nicht gefunden", "page introuvable", "pagina non trovata",
+        ];
+        if (deadPhrases.some((phrase) => probe.includes(phrase))) {
+          return { markdown: null, error: "Soft 404 — page content says not found" };
+        }
+        if (markdown.trim().length < 400) {
+          return { markdown: null, error: `Content too thin (${markdown.trim().length} chars) — likely a shell or consent wall` };
+        }
+
+        return { markdown, error: null };
       }
 
       const body = (await res.text()).slice(0, 180).replace(/\s+/g, " ");
@@ -380,6 +407,15 @@ const EXTRACTION_SYSTEM = `You are a film funding data extraction specialist for
 
 Extract structured funding opportunity data from the provided webpage content.
 Respond ONLY with a single valid JSON object — no markdown fences, no preamble, no explanation.
+
+CRITICAL — DO NOT INVENT:
+The Organization / Program / URL lines below the content are routing hints, NOT
+source data. If the WEBPAGE CONTENT is an error page, a "page not found" page, a
+cookie or consent wall, a login wall, or otherwise does not actually describe
+this funding programme, you MUST return confidence 0 and set confidence_notes to
+"page unavailable". Never reconstruct a record from the hints alone, and never
+carry a deadline, award amount or eligibility rule that does not literally
+appear in the webpage content. A missing field must be null, never a guess.
 
 TAXONOMY — use ONLY these exact values:
 
@@ -707,7 +743,9 @@ async function processSource(
         // being discarded — the ones worth inspecting when tuning the gate.
         raw_extraction: extracted as unknown as Record<string, unknown>,
       });
-      await recordAttempt(supabase, source.id, true, source.fail_count ?? 0);
+      // Not a success: nothing usable was extracted. Stamping last_success_at
+      // here is what made dead URLs look healthy in funding_sources.
+      await recordAttempt(supabase, source.id, false, source.fail_count ?? 0);
       return;
     }
     // Genuinely new record — queue for admin review, but only once.
@@ -735,7 +773,7 @@ async function processSource(
       confidence: extracted.confidence,
       raw_extraction: extracted as unknown as Record<string, unknown>,
     });
-    await recordAttempt(supabase, source.id, true, source.fail_count ?? 0);
+    await recordAttempt(supabase, source.id, false, source.fail_count ?? 0);
     return;
   }
 
