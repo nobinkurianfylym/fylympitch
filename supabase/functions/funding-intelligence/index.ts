@@ -703,6 +703,9 @@ async function processSource(
       await supabase.from("funding_crawl_items").insert({
         run_id: runId, source_id: source.id, opportunity_id: existing.id,
         action: "skipped", confidence: extracted.confidence,
+        // Was omitted here, which hid the extraction for exactly the rows
+        // being discarded — the ones worth inspecting when tuning the gate.
+        raw_extraction: extracted as unknown as Record<string, unknown>,
       });
       await recordAttempt(supabase, source.id, true, source.fail_count ?? 0);
       return;
