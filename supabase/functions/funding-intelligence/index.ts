@@ -35,13 +35,26 @@ const CONFIDENCE_GATE   = 70;
 
 // Firecrawl rate limiting. Concurrency was 6 with no retry, which tripped the
 // API rate limit after ~10 sources and failed the remaining ~39 every run.
-const CRAWL_CONCURRENCY    = 2;
+// Firecrawl reports the ceiling in its 429 body: ~17 req/min on this plan.
+// Serial requests with a 3.5s gap keep us near 12/min including scrape time.
+const CRAWL_CONCURRENCY    = 1;
 const SCRAPE_RETRIES       = 3;
 const SCRAPE_BASE_DELAY_MS = 2000;
-const INTER_BATCH_DELAY_MS = 1200;
+const SCRAPE_MAX_WAIT_MS   = 8000;
+const INTER_BATCH_DELAY_MS = 3500;
+const SCRAPE_TIMEOUT_MS    = 45000;
+
 // Bound each run so it cannot exceed the Edge Function wall clock. Sources
-// rotate because last_crawled_at is now recorded on every path, success or not.
-const MAX_SOURCES_PER_RUN  = 25;
+// rotate because last_crawled_at is recorded on every path, success or not,
+// so a small batch per run still covers every source within a day.
+const MAX_SOURCES_PER_RUN  = 12;
+
+// Hard stop for starting NEW work. The platform kills the function at its own
+// wall clock, and a killed function never reaches the catch block — which is
+// why runs were left stuck at status 'running' forever. We stop early and
+// finalise the row ourselves instead.
+const RUN_DEADLINE_MS      = 100_000;
+let   runDeadline          = Number.MAX_SAFE_INTEGER;
 
 // ─── AI provider config (mirrors aiEngine.ts) ─────────────────
 const CEREBRAS_URL   = "https://api.cerebras.ai/v1/chat/completions";
@@ -296,7 +309,7 @@ async function scrapeUrl(
           url,
           formats: ["markdown"],
           onlyMainContent: true,
-          timeout: 30000,
+          timeout: SCRAPE_TIMEOUT_MS,
         }),
       });
 
@@ -316,7 +329,7 @@ async function scrapeUrl(
         if (attempt === SCRAPE_RETRIES) break;
         const retryAfter = Number(res.headers.get("retry-after"));
         const wait = Number.isFinite(retryAfter) && retryAfter > 0
-          ? Math.min(retryAfter * 1000, 15000)
+          ? Math.min(retryAfter * 1000, SCRAPE_MAX_WAIT_MS)
           : SCRAPE_BASE_DELAY_MS * Math.pow(2, attempt);
         console.warn(`[firecrawl] ${res.status} ${url} — retry ${attempt + 1}/${SCRAPE_RETRIES} in ${wait}ms`);
         await sleep(wait);
@@ -734,6 +747,10 @@ async function runInBatches<T>(
   fn: (item: T) => Promise<void>,
 ): Promise<void> {
   for (let i = 0; i < items.length; i += concurrency) {
+    if (Date.now() > runDeadline) {
+      console.warn(`[intelligence] deadline reached — stopping after ${i}/${items.length} sources`);
+      break;
+    }
     await Promise.all(items.slice(i, i + concurrency).map(fn));
     if (i + concurrency < items.length) await sleep(INTER_BATCH_DELAY_MS);
   }
@@ -758,6 +775,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const runId = run.id;
+  runDeadline = Date.now() + RUN_DEADLINE_MS;
   const stats: CrawlStats = {
     sources_crawled: 0, pages_visited: 0, new_opportunities: 0,
     updated_opportunities: 0, expired_opportunities: 0,
