@@ -527,7 +527,12 @@ RULES:
 - languages: ISO language names (English, French, Arabic, etc.)
 - country: full country name, or null for worldwide
 - deadline: ISO date YYYY-MM-DD, or null if rolling/no fixed date
-- max_award_usd: numeric USD amount, or null
+- max_award_usd: the maximum a SINGLE project can receive, in USD.
+  This is NOT the programme's annual budget, NOT the fund's total corpus, and
+  NOT a company's or streamer's content spend. If the page only states a total
+  budget across many projects, or gives no per-project ceiling, return null.
+  A wrong ceiling is far worse than a missing one — it misleads a filmmaker
+  about what they can actually apply for.
 - confidence: 0-100. Score LOWER if page is generic, deadline missing, or award amount absent
 MULTIPLE PROGRAMMES — IMPORTANT:
 A single page often lists several distinct funding programmes: an index of
