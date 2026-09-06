@@ -68,6 +68,39 @@ const MAX_OPPS_PER_PAGE    = 20;
 const MAX_NEW_BROADCASTS_PER_RUN = 5;
 let   broadcastsThisRun    = 0;
 
+// ─── Discovery (mode=discover) ────────────────────────────────────────────
+// Searches the open web for funding programmes not yet in funding_sources,
+// then puts each candidate through the same scrape -> extract -> confidence
+// gate pipeline as a known source.
+const DISCOVERY_QUERIES_PER_RUN    = 3;
+const DISCOVERY_CANDIDATES_PER_RUN = 6;
+const DISCOVERY_RESULTS_PER_QUERY  = 8;
+
+const DISCOVERY_TOPICS = [
+  "film production fund open call for applications",
+  "documentary film grant application deadline",
+  "co-production market call for projects",
+  "film development fund submissions open",
+  "screenwriting lab call for applications",
+  "post-production finishing fund for feature films",
+  "international film fund for foreign filmmakers",
+  "film residency open call filmmakers",
+  "first feature film funding scheme",
+  "national film institute production funding",
+];
+
+const DISCOVERY_REGIONS = [
+  "Europe", "Asia", "Africa", "Latin America", "Middle East",
+  "Nordic", "Southeast Asia", "Caribbean", "Oceania", "",
+];
+
+// Aggregators, social and listing sites — not a funder's own page.
+const DISCOVERY_HOST_DENYLIST = [
+  "wikipedia.org", "facebook.com", "instagram.com", "x.com", "twitter.com",
+  "linkedin.com", "youtube.com", "reddit.com", "medium.com", "pinterest.com",
+  "filmfreeway.com", "amazon.", "quora.com", "tiktok.com", "blogspot.",
+];
+
 // Hard stop for starting NEW work. The platform kills the function at its own
 // wall clock, and a killed function never reaches the catch block — which is
 // why runs were left stuck at status 'running' forever. We stop early and
@@ -137,11 +170,20 @@ const FREQUENCY_HOURS: Record<string, number> = {
   monthly: 28 * 24,  // 28d  — fires once a month
 };
 
+// Re-verifying known sources is now the background job: finding NEW funding is
+// the priority. This floor applies on top of each source's own frequency, so
+// nothing is re-crawled more often than every 10 days, without touching the
+// crawl_frequency column or its CHECK constraint.
+const MIN_RECRAWL_HOURS = 240;
+
 function isDue(source: FundingSource): boolean {
   if (!source.last_crawled_at) return true; // never crawled yet
   const hoursSince =
     (Date.now() - new Date(source.last_crawled_at).getTime()) / 36e5;
-  const threshold = FREQUENCY_HOURS[source.crawl_frequency] ?? 20;
+  const threshold = Math.max(
+    FREQUENCY_HOURS[source.crawl_frequency] ?? 20,
+    MIN_RECRAWL_HOURS,
+  );
   return hoursSince >= threshold;
 }
 
@@ -187,6 +229,20 @@ interface CrawlStats {
 }
 
 // ─── Supabase client ──────────────────────────────────────────
+/** Normalise a URL for duplicate comparison: no protocol, no www, no query,
+ *  no trailing slash, lowercased. */
+function normaliseUrl(raw: string): string {
+  try {
+    const u = new URL(raw);
+    const host = u.hostname.replace(/^www\./, "").toLowerCase();
+    const path = u.pathname.replace(/\/+$/, "").toLowerCase();
+    return host + path;
+  } catch {
+    return raw.trim().toLowerCase()
+      .replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/+$/, "");
+  }
+}
+
 function getSupabase() {
   return createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { persistSession: false },
@@ -876,6 +932,212 @@ async function processSource(
   await recordAttempt(supabase, source.id, anyAccepted, source.fail_count ?? 0);
 }
 
+// ─── Discovery: search the web for funds we do not have ───────────────────
+
+/** Firecrawl web search. Returns candidate result URLs. */
+async function searchWeb(query: string): Promise<{ url: string; title: string }[]> {
+  if (!FIRECRAWL_KEY) return [];
+  try {
+    const res = await fetch("https://api.firecrawl.dev/v1/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${FIRECRAWL_KEY}`,
+      },
+      body: JSON.stringify({ query, limit: DISCOVERY_RESULTS_PER_QUERY }),
+    });
+    if (!res.ok) {
+      console.warn(`[discover] search HTTP ${res.status} for "${query}"`);
+      return [];
+    }
+    const json = await res.json();
+    const rows = Array.isArray(json?.data) ? json.data : [];
+    return rows
+      .map((r: Record<string, unknown>) => ({
+        url: String(r.url ?? ""),
+        title: String(r.title ?? ""),
+      }))
+      .filter((r: { url: string }) => r.url.startsWith("http"));
+  } catch (err) {
+    console.warn(`[discover] search error for "${query}":`, err);
+    return [];
+  }
+}
+
+/** Every URL we already know about, normalised, so discovery never re-adds one. */
+async function loadKnownUrls(
+  supabase: ReturnType<typeof getSupabase>,
+): Promise<Set<string>> {
+  const known = new Set<string>();
+
+  const { data: sources } = await supabase.from("funding_sources").select("url");
+  for (const row of sources ?? []) {
+    if (row.url) known.add(normaliseUrl(row.url as string));
+  }
+
+  const { data: opps } = await supabase
+    .from("opportunities").select("source_url").not("source_url", "is", null);
+  for (const row of opps ?? []) {
+    if (row.source_url) known.add(normaliseUrl(row.source_url as string));
+  }
+
+  return known;
+}
+
+/** Pick this run's queries, rotating by hour so runs don't repeat each other. */
+function buildQueries(): string[] {
+  const seed = Math.floor(Date.now() / 3_600_000);
+  const year = new Date().getFullYear();
+  const out: string[] = [];
+  for (let i = 0; i < DISCOVERY_QUERIES_PER_RUN; i++) {
+    const topic  = DISCOVERY_TOPICS[(seed + i * 3) % DISCOVERY_TOPICS.length];
+    const region = DISCOVERY_REGIONS[(seed + i * 5) % DISCOVERY_REGIONS.length];
+    out.push(`${topic} ${region} ${year}`.replace(/\s+/g, " ").trim());
+  }
+  return out;
+}
+
+/**
+ * Discovery run. Searches, filters to genuinely unknown URLs, scrapes each
+ * through the existing guards (dead-page detection, thin-content rejection),
+ * extracts programmes, and stores only those clearing the confidence gate.
+ * Anything weaker goes to admin_review_queue for a human.
+ */
+async function runDiscovery(
+  supabase: ReturnType<typeof getSupabase>,
+  runId: string,
+  stats: CrawlStats,
+): Promise<{ queries: string[]; candidates: number; registered: number }> {
+  const queries = buildQueries();
+  const known   = await loadKnownUrls(supabase);
+  console.log(`[discover] ${known.size} known URLs; queries: ${queries.join(" | ")}`);
+
+  // Collect and dedupe candidates across all queries.
+  const seen: Set<string> = new Set();
+  const candidates: { url: string; title: string }[] = [];
+
+  for (const q of queries) {
+    if (Date.now() > runDeadline) break;
+    const results = await searchWeb(q);
+    for (const r of results) {
+      const norm = normaliseUrl(r.url);
+      if (known.has(norm) || seen.has(norm)) continue;
+      if (DISCOVERY_HOST_DENYLIST.some((bad) => norm.includes(bad))) continue;
+      seen.add(norm);
+      candidates.push(r);
+    }
+    await sleep(INTER_BATCH_DELAY_MS);
+  }
+
+  const shortlist = candidates.slice(0, DISCOVERY_CANDIDATES_PER_RUN);
+  console.log(`[discover] ${candidates.length} new candidates, taking ${shortlist.length}`);
+
+  let registered = 0;
+
+  for (const cand of shortlist) {
+    if (Date.now() > runDeadline) {
+      console.warn("[discover] deadline reached — stopping candidate loop");
+      break;
+    }
+
+    stats.pages_visited++;
+
+    const { markdown, error: scrapeError } = await scrapeUrl(cand.url);
+    if (!markdown) {
+      stats.failed_crawls++;
+      console.log(`[discover] skip ${cand.url} — ${scrapeError}`);
+      await sleep(INTER_BATCH_DELAY_MS);
+      continue;
+    }
+
+    // A candidate has no curated hints, which is deliberate: the extractor must
+    // read everything off the page. That also means a page which isn't really a
+    // funding programme scores low and is filtered out below.
+    const pseudoSource: FundingSource = {
+      id: "", organization_name: cand.title || "Unknown", program_name: cand.title || "Unknown",
+      url: cand.url, country: null, region: null, expected_opp_type: null,
+      notes: null, crawl_frequency: "monthly",
+      last_crawled_at: null, last_success_at: null, fail_count: 0,
+    };
+
+    const extractedList = (await extractWithAI(markdown, pseudoSource)).map(normalize);
+    for (const e of extractedList) stats.confidences.push(e.confidence);
+
+    const accepted = extractedList.filter((e) => e.confidence >= CONFIDENCE_GATE);
+
+    if (accepted.length === 0) {
+      // Nothing trustworthy. Queue the best attempt for a human if it is at
+      // least plausible, otherwise drop it silently.
+      const best = extractedList.sort((a, b) => b.confidence - a.confidence)[0];
+      if (best && best.confidence >= 40) {
+        const { data: dupe } = await supabase
+          .from("admin_review_queue")
+          .select("id").eq("source_url", cand.url).eq("status", "pending").limit(1);
+        if (!dupe || dupe.length === 0) {
+          stats.pending_review++;
+          await supabase.from("admin_review_queue").insert({
+            run_id: runId, source_url: cand.url,
+            extracted_data: best as unknown as Record<string, unknown>,
+            confidence: best.confidence,
+          });
+        }
+      }
+      await sleep(INTER_BATCH_DELAY_MS);
+      continue;
+    }
+
+    // Good enough to keep — register it as a real source so it is verified
+    // from now on, then write its programmes.
+    const org = accepted[0].organization_name || cand.title || "Unknown";
+    const { data: newSource, error: srcErr } = await supabase
+      .from("funding_sources")
+      .insert({
+        organization_name: org,
+        program_name: accepted[0].title,
+        url: cand.url,
+        country: accepted[0].country,
+        region: accepted[0].region,
+        expected_opp_type: accepted[0].opp_type,
+        crawl_active: true,
+        crawl_frequency: "monthly",
+        notes: `Auto-discovered ${new Date().toISOString().slice(0, 10)} by funding-intelligence discovery.`,
+        last_crawled_at: new Date().toISOString(),
+        last_success_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
+
+    if (srcErr || !newSource) {
+      // Most likely the UNIQUE index on url — another run got here first.
+      console.warn(`[discover] could not register ${cand.url}: ${srcErr?.message}`);
+      await sleep(INTER_BATCH_DELAY_MS);
+      continue;
+    }
+
+    registered++;
+    const realSource: FundingSource = { ...pseudoSource, id: newSource.id, organization_name: org };
+
+    for (const item of accepted) {
+      const { action, opportunityId } = await upsertOpportunity(supabase, item, realSource);
+      if (action === "inserted")     stats.new_opportunities++;
+      else if (action === "updated") stats.updated_opportunities++;
+      else                           stats.duplicates_prevented++;
+
+      await supabase.from("funding_crawl_items").insert({
+        run_id: runId, source_id: newSource.id, opportunity_id: opportunityId,
+        action, confidence: item.confidence,
+        raw_extraction: item as unknown as Record<string, unknown>,
+      });
+    }
+
+    console.log(`[discover] registered ${cand.url} -> ${accepted.length} programme(s)`);
+    await sleep(INTER_BATCH_DELAY_MS);
+  }
+
+  stats.sources_crawled = shortlist.length;
+  return { queries, candidates: candidates.length, registered };
+}
+
 // ─── Concurrency limiter ──────────────────────────────────────
 async function runInBatches<T>(
   items: T[],
@@ -898,6 +1160,18 @@ Deno.serve(async (req: Request) => {
     return new Response("Method not allowed", { status: 405 });
   }
 
+  // mode=discover  -> search the web for funds we do not have (the priority job)
+  // mode=verify    -> re-check known sources (background; floored at 10 days)
+  let mode = "verify";
+  try {
+    const qs = new URL(req.url).searchParams.get("mode");
+    if (qs) mode = qs;
+    else if (req.method === "POST") {
+      const body = await req.json().catch(() => ({} as Record<string, unknown>));
+      if (body && typeof body.mode === "string") mode = body.mode;
+    }
+  } catch { /* keep default */ }
+
   const supabase = getSupabase();
 
   const { data: run, error: runErr } = await supabase
@@ -919,6 +1193,55 @@ Deno.serve(async (req: Request) => {
     failed_crawls: 0, pending_review: 0, duplicates_prevented: 0,
     confidences: [],
   };
+
+  // ── Discovery mode: find funds we do not have yet ────────────────────────
+  if (mode === "discover") {
+    try {
+      const result = await runDiscovery(supabase, runId, stats);
+
+      const avgConf = stats.confidences.length > 0
+        ? stats.confidences.reduce((a, b) => a + b, 0) / stats.confidences.length
+        : null;
+
+      await supabase.from("funding_crawl_runs").update({
+        status: "complete", finished_at: new Date().toISOString(),
+        sources_crawled: stats.sources_crawled, pages_visited: stats.pages_visited,
+        new_opportunities: stats.new_opportunities,
+        updated_opportunities: stats.updated_opportunities,
+        pending_review: stats.pending_review, failed_crawls: stats.failed_crawls,
+        duplicates_prevented: stats.duplicates_prevented,
+        avg_confidence: avgConf,
+        error_summary: `mode=discover | sources registered: ${result.registered} | candidates seen: ${result.candidates} | queries: ${result.queries.join(" ;; ")}`,
+      }).eq("id", runId);
+
+      const summary = {
+        mode: "discover", run_id: runId,
+        queries: result.queries,
+        candidates_found: result.candidates,
+        candidates_crawled: stats.sources_crawled,
+        sources_registered: result.registered,
+        new_opportunities: stats.new_opportunities,
+        pending_review: stats.pending_review,
+        failed: stats.failed_crawls,
+        avg_confidence: avgConf?.toFixed(1),
+      };
+      console.log("DISCOVERY COMPLETE:", JSON.stringify(summary));
+
+      try { await supabase.rpc("refresh_platform_metrics"); } catch (_) { /* non-fatal */ }
+
+      return new Response(JSON.stringify(summary), {
+        status: 200, headers: { "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      console.error("[discover] Fatal:", err);
+      await logError(supabase, `Fatal discovery error: ${String(err)}`, { run_id: runId }, "critical");
+      await supabase.from("funding_crawl_runs").update({
+        status: "failed", finished_at: new Date().toISOString(),
+        error_summary: `mode=discover | ${String(err)}`,
+      }).eq("id", runId);
+      return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
+    }
+  }
 
   try {
     const { data: allSources } = await supabase
