@@ -52,7 +52,21 @@ const SCRAPE_TIMEOUT_MS    = 45000;
 // Bound each run so it cannot exceed the Edge Function wall clock. Sources
 // rotate because last_crawled_at is recorded on every path, success or not,
 // so a small batch per run still covers every source within a day.
-const MAX_SOURCES_PER_RUN  = 12;
+// Array extraction makes each source slower (bigger prompt, bigger response),
+// so fewer sources per run. Sources rotate via last_crawled_at, and the cron
+// runs hourly, so all 49 are still covered well within a day.
+const MAX_SOURCES_PER_RUN  = 8;
+
+// One page can list many programmes. These bound the blast radius.
+const CONTENT_CHAR_LIMIT   = 30000;   // was 12000 — truncated long index pages
+const EXTRACT_MAX_TOKENS   = 4000;    // was 1200 — could not hold >2 objects
+const MAX_OPPS_PER_PAGE    = 20;
+
+// auto_broadcast_new_fund notifies every filmmaker on each insert. Array
+// extraction can produce dozens of inserts in one run, so cap the notifications
+// or the first good crawl spams the entire user base.
+const MAX_NEW_BROADCASTS_PER_RUN = 5;
+let   broadcastsThisRun    = 0;
 
 // Hard stop for starting NEW work. The platform kills the function at its own
 // wall clock, and a killed function never reaches the catch block — which is
@@ -450,9 +464,21 @@ RULES:
 - deadline: ISO date YYYY-MM-DD, or null if rolling/no fixed date
 - max_award_usd: numeric USD amount, or null
 - confidence: 0-100. Score LOWER if page is generic, deadline missing, or award amount absent
-- Extract only the PRIMARY / most prominent program if multiple exist on one page
+MULTIPLE PROGRAMMES — IMPORTANT:
+A single page often lists several distinct funding programmes: an index of
+schemes, a "programmes" or "funds" page, or a table of deadlines. Extract EVERY
+distinct programme as its own object, each with its own title, deadline and
+award amount. Do not merge them, and do not pick only the most prominent one.
+If the page genuinely describes one programme, return exactly one object.
+Return at most 20 objects, most important first.
 
-JSON schema (respond with this object only):
+Each programme gets its own confidence score. Score a programme LOWER if its
+deadline or award amount is missing from the page.
+
+Respond with this exact wrapper:
+{ "opportunities": [ <programme object>, ... ] }
+
+Each programme object:
 {
   "title": string,
   "organization_name": string,
@@ -486,7 +512,7 @@ JSON schema (respond with this object only):
 async function extractWithAI(
   content: string,
   source: FundingSource,
-): Promise<ExtractedOpportunity | null> {
+): Promise<ExtractedOpportunity[]> {
   const userPrompt = `Organization: ${source.organization_name}
 Program: ${source.program_name}
 Official URL: ${source.url}
@@ -495,31 +521,49 @@ Country hint: ${source.country ?? "international"}
 Region hint: ${source.region ?? "global"}
 
 --- WEBPAGE CONTENT ---
-${content.slice(0, 12000)}`;
+${content.slice(0, CONTENT_CHAR_LIMIT)}`;
 
   const { text, provider } = await callLLM(
     [
       { role: "system", content: EXTRACTION_SYSTEM },
       { role: "user",   content: userPrompt },
     ],
-    1200,
+    EXTRACT_MAX_TOKENS,
   );
 
-  if (!text) return null;
+  if (!text) return [];
 
   try {
     const clean = text.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(clean) as ExtractedOpportunity;
-    parsed.url = parsed.url || source.url;
-    // Stamped into funding_crawl_items.raw_extraction so the serving model is
-    // visible from SQL instead of only in ephemeral function logs. Not a column
-    // on opportunities — upsert writes an explicit field list.
-    (parsed as unknown as Record<string, unknown>)._provider = provider;
-    console.log(`[${provider}] Extracted "${parsed.title}" conf=${parsed.confidence}`);
-    return parsed;
+    const parsed = JSON.parse(clean) as unknown;
+
+    // Accept the wrapper, a bare array, or a single object, so a model that
+    // ignores the wrapper instruction still yields usable data.
+    let list: ExtractedOpportunity[];
+    if (Array.isArray(parsed)) {
+      list = parsed as ExtractedOpportunity[];
+    } else if (parsed && Array.isArray((parsed as Record<string, unknown>).opportunities)) {
+      list = (parsed as { opportunities: ExtractedOpportunity[] }).opportunities;
+    } else if (parsed && typeof parsed === "object" && (parsed as ExtractedOpportunity).title) {
+      list = [parsed as ExtractedOpportunity];
+    } else {
+      console.warn(`[${provider}] Unrecognised extraction shape`);
+      return [];
+    }
+
+    list = list.filter((o) => o && typeof o.title === "string" && o.title.trim().length > 0)
+               .slice(0, MAX_OPPS_PER_PAGE);
+
+    for (const item of list) {
+      item.url = item.url || source.url;
+      (item as unknown as Record<string, unknown>)._provider = provider;
+    }
+
+    console.log(`[${provider}] Extracted ${list.length} programme(s) from ${source.url}`);
+    return list;
   } catch (err) {
     console.error(`[intelligence] JSON parse error (${provider}):`, err, "\nRaw:", text.slice(0, 200));
-    return null;
+    return [];
   }
 }
 
@@ -535,7 +579,30 @@ function normalize(raw: ExtractedOpportunity): ExtractedOpportunity {
   }
   const validGender = ["women","non_binary","women_and_non_binary"];
   if (raw.gender_focus && !validGender.includes(raw.gender_focus)) raw.gender_focus = null;
-  if (raw.deadline && !/^\d{4}-\d{2}-\d{2}$/.test(raw.deadline)) raw.deadline = null;
+  // Previously any non-ISO string was silently discarded, throwing away real
+  // dates the model had found ("15 March 2026"). Now: keep ISO, try to parse
+  // unambiguous written dates, and preserve anything else as a note rather
+  // than losing it. Numeric slash formats are NOT parsed — 03/04/2026 is
+  // ambiguous between locales and a wrong deadline is worse than none.
+  if (raw.deadline) {
+    const d = raw.deadline.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      // already ISO — leave it
+    } else if (/^\d{1,2}\s+[A-Za-z]{3,}\s+\d{4}$/.test(d) || /^[A-Za-z]{3,}\s+\d{1,2},?\s+\d{4}$/.test(d)) {
+      const parsed = new Date(`${d} UTC`);
+      if (!isNaN(parsed.getTime())) {
+        raw.deadline = parsed.toISOString().slice(0, 10);
+      } else {
+        raw.deadline_note = raw.deadline_note || d;
+        raw.deadline = null;
+      }
+    } else {
+      // Partial or descriptive ("March 2026", "Annual") — not a usable date,
+      // but still information. Keep it where it can be read.
+      raw.deadline_note = raw.deadline_note || d;
+      raw.deadline = null;
+    }
+  }
   raw.genres    = (raw.genres ?? []).filter(Boolean);
   raw.languages = (raw.languages ?? []).filter(Boolean);
   raw.confidence = Math.max(0, Math.min(100, raw.confidence ?? 0));
@@ -548,22 +615,28 @@ async function findExisting(
   extracted: ExtractedOpportunity,
   sourceUrl: string,
 ): Promise<{ id: string; version_number: number } | null> {
-  // 1. Match by source_url
-  const { data: byUrl } = await supabase
+  // A source page can now yield many opportunities, so source_url alone is no
+  // longer a unique key — maybeSingle() on it would throw the moment a second
+  // opportunity was extracted from the same page. Identity is page + title.
+  const { data: byUrlTitle } = await supabase
     .from("opportunities")
     .select("id, version_number")
     .eq("source_url", sourceUrl)
-    .maybeSingle();
-  if (byUrl) return byUrl;
+    .ilike("title", extracted.title)
+    .limit(1);
+  if (byUrlTitle && byUrlTitle.length > 0) return byUrlTitle[0];
 
-  // 2. Match by title + organization_name
+  // Fall back to organisation + title, so a programme that moved to a new page
+  // is updated rather than duplicated.
   const { data: byTitle } = await supabase
     .from("opportunities")
     .select("id, version_number")
     .ilike("title", extracted.title)
     .ilike("organization_name", extracted.organization_name)
-    .maybeSingle();
-  return byTitle ?? null;
+    .limit(1);
+  if (byTitle && byTitle.length > 0) return byTitle[0];
+
+  return null;
 }
 
 // ─── Change detection ─────────────────────────────────────────
@@ -682,12 +755,19 @@ async function upsertOpportunity(
     change_source: "auto_crawl",
   });
 
-  // Notify filmmakers
-  await supabase.rpc("auto_broadcast_new_fund", {
-    p_opp_id:   inserted.id,
-    p_title:    extracted.title,
-    p_opp_type: extracted.opp_type,
-  });
+  // Notify filmmakers — but never more than a handful per run. Array
+  // extraction can insert dozens at once; without this cap the first healthy
+  // crawl would notify every user dozens of times.
+  if (broadcastsThisRun < MAX_NEW_BROADCASTS_PER_RUN) {
+    broadcastsThisRun++;
+    await supabase.rpc("auto_broadcast_new_fund", {
+      p_opp_id:   inserted.id,
+      p_title:    extracted.title,
+      p_opp_type: extracted.opp_type,
+    });
+  } else {
+    console.log(`[intelligence] broadcast cap reached — skipping notify for "${extracted.title}"`);
+  }
 
   return { action: "inserted", opportunityId: inserted.id };
 }
@@ -712,88 +792,88 @@ async function processSource(
     return;
   }
 
-  const raw = await extractWithAI(markdown, source);
-  if (!raw) {
+  const rawList = await extractWithAI(markdown, source);
+  if (rawList.length === 0) {
     stats.failed_crawls++;
     await supabase.from("funding_crawl_items").insert({
       run_id: runId, source_id: source.id,
-      action: "failed", error_message: "AI extraction returned null",
+      action: "failed", error_message: "AI extraction returned no programmes",
     });
     await recordAttempt(supabase, source.id, false, source.fail_count ?? 0);
     return;
   }
 
-  const extracted = normalize(raw);
-  stats.confidences.push(extracted.confidence);
+  // One page can describe several programmes. Each is judged, deduped and
+  // written on its own — a weak entry no longer discards the whole page.
+  let anyAccepted = false;
 
-  // Smart confidence gate:
-  // - EXISTING record + low confidence → touch last_verified_at only, skip review
-  // - NEW record + low confidence → admin review queue
-  if (extracted.confidence < CONFIDENCE_GATE) {
-    const existing = await findExisting(supabase, extracted, source.url);
-    if (existing) {
-      await supabase.from("opportunities")
-        .update({ last_verified_at: new Date().toISOString() })
-        .eq("id", existing.id);
-      stats.duplicates_prevented++;
+  for (const raw of rawList) {
+    const extracted = normalize(raw);
+    stats.confidences.push(extracted.confidence);
+
+    if (extracted.confidence < CONFIDENCE_GATE) {
+      const existing = await findExisting(supabase, extracted, source.url);
+
+      if (existing) {
+        // Known programme, weak read — touch the verification stamp only.
+        // Never overwrite good stored values with a low-confidence guess.
+        await supabase.from("opportunities")
+          .update({ last_verified_at: new Date().toISOString() })
+          .eq("id", existing.id);
+        stats.duplicates_prevented++;
+        await supabase.from("funding_crawl_items").insert({
+          run_id: runId, source_id: source.id, opportunity_id: existing.id,
+          action: "skipped", confidence: extracted.confidence,
+          raw_extraction: extracted as unknown as Record<string, unknown>,
+        });
+        continue;
+      }
+
+      // Unknown programme, weak read — queue for a human, once per title.
+      const { data: alreadyQueued } = await supabase
+        .from("admin_review_queue")
+        .select("id")
+        .eq("source_url", source.url)
+        .eq("status", "pending")
+        .ilike("extracted_data->>title", extracted.title)
+        .limit(1);
+
+      if (!alreadyQueued || alreadyQueued.length === 0) {
+        stats.pending_review++;
+        await supabase.from("admin_review_queue").insert({
+          run_id: runId, source_id: source.id,
+          source_url: source.url,
+          extracted_data: extracted as unknown as Record<string, unknown>,
+          confidence: extracted.confidence,
+        });
+      }
       await supabase.from("funding_crawl_items").insert({
-        run_id: runId, source_id: source.id, opportunity_id: existing.id,
-        action: "skipped", confidence: extracted.confidence,
-        // Was omitted here, which hid the extraction for exactly the rows
-        // being discarded — the ones worth inspecting when tuning the gate.
+        run_id: runId, source_id: source.id, action: "queued_review",
+        confidence: extracted.confidence,
         raw_extraction: extracted as unknown as Record<string, unknown>,
       });
-      // Not a success: nothing usable was extracted. Stamping last_success_at
-      // here is what made dead URLs look healthy in funding_sources.
-      await recordAttempt(supabase, source.id, false, source.fail_count ?? 0);
-      return;
+      continue;
     }
-    // Genuinely new record — queue for admin review, but only once.
-    // Previously this inserted on every run, producing hundreds of duplicate
-    // rows for the same handful of sources.
-    const { data: alreadyQueued } = await supabase
-      .from("admin_review_queue")
-      .select("id")
-      .eq("source_url", source.url)
-      .eq("status", "pending")
-      .limit(1)
-      .maybeSingle();
 
-    if (!alreadyQueued) {
-      stats.pending_review++;
-      await supabase.from("admin_review_queue").insert({
-        run_id: runId, source_id: source.id,
-        source_url: source.url,
-        extracted_data: extracted as unknown as Record<string, unknown>,
-        confidence: extracted.confidence,
-      });
-    }
+    // Cleared the gate — write it.
+    const { action, opportunityId } = await upsertOpportunity(supabase, extracted, source);
+
+    if (action === "inserted")     stats.new_opportunities++;
+    else if (action === "updated") stats.updated_opportunities++;
+    else                           stats.duplicates_prevented++;
+
+    anyAccepted = true;
+
     await supabase.from("funding_crawl_items").insert({
-      run_id: runId, source_id: source.id, action: "queued_review",
-      confidence: extracted.confidence,
+      run_id: runId, source_id: source.id, opportunity_id: opportunityId,
+      action, confidence: extracted.confidence,
       raw_extraction: extracted as unknown as Record<string, unknown>,
     });
-    await recordAttempt(supabase, source.id, false, source.fail_count ?? 0);
-    return;
   }
 
-  const { action, opportunityId } = await upsertOpportunity(supabase, extracted, source);
-
-  if (action === "inserted")       stats.new_opportunities++;
-  else if (action === "updated")   stats.updated_opportunities++;
-  else                             stats.duplicates_prevented++;
-
-  await supabase.from("funding_crawl_items").insert({
-    run_id: runId, source_id: source.id, opportunity_id: opportunityId,
-    action, confidence: extracted.confidence,
-    raw_extraction: extracted as unknown as Record<string, unknown>,
-  });
-
-  await supabase.from("funding_sources").update({
-    last_crawled_at: new Date().toISOString(),
-    last_success_at: new Date().toISOString(),
-    fail_count: 0,
-  }).eq("id", source.id);
+  // The source counts as a success only if at least one programme was good
+  // enough to store, so fail_count keeps surfacing sources that read poorly.
+  await recordAttempt(supabase, source.id, anyAccepted, source.fail_count ?? 0);
 }
 
 // ─── Concurrency limiter ──────────────────────────────────────
@@ -832,6 +912,7 @@ Deno.serve(async (req: Request) => {
 
   const runId = run.id;
   runDeadline = Date.now() + RUN_DEADLINE_MS;
+  broadcastsThisRun = 0;
   const stats: CrawlStats = {
     sources_crawled: 0, pages_visited: 0, new_opportunities: 0,
     updated_opportunities: 0, expired_opportunities: 0,
