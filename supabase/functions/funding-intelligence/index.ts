@@ -94,6 +94,15 @@ const DISCOVERY_REGIONS = [
   "Nordic", "Southeast Asia", "Caribbean", "Oceania", "",
 ];
 
+// Announcement and article paths. A press release describes a programme but
+// is a snapshot: it never updates, so it cannot be re-verified and it rots into
+// a stale deadline. Prefer the funder's canonical programme page.
+const DISCOVERY_PATH_DENYLIST = [
+  "/news/", "/press/", "/press-release", "/blog/", "/article/", "/articles/",
+  "/announcement", "/story/", "/stories/", "/media-centre", "/newsroom",
+  "/2019/", "/2020/", "/2021/", "/2022/", "/2023/", "/2024/",
+];
+
 // Aggregators, social and listing sites — not a funder's own page.
 const DISCOVERY_HOST_DENYLIST = [
   "wikipedia.org", "facebook.com", "instagram.com", "x.com", "twitter.com",
@@ -659,6 +668,21 @@ function normalize(raw: ExtractedOpportunity): ExtractedOpportunity {
       raw.deadline = null;
     }
   }
+  // A deadline in the past must never surface as upcoming. Discovery finds old
+  // press releases (a 2024 announcement was ingested with deadline 2024-11-07),
+  // and showing a filmmaker a two-year-old date as live is worse than showing
+  // nothing. Keep the date for the record, but mark the programme closed.
+  if (raw.deadline && /^\d{4}-\d{2}-\d{2}$/.test(raw.deadline)) {
+    const today = new Date().toISOString().slice(0, 10);
+    if (raw.deadline < today) {
+      raw.submission_status = "closed";
+      raw.is_active = false;
+      raw.deadline_note = raw.deadline_note
+        ? `${raw.deadline_note} (last known deadline ${raw.deadline}, now passed)`
+        : `Last known deadline ${raw.deadline} — now passed`;
+    }
+  }
+
   raw.genres    = (raw.genres ?? []).filter(Boolean);
   raw.languages = (raw.languages ?? []).filter(Boolean);
   raw.confidence = Math.max(0, Math.min(100, raw.confidence ?? 0));
@@ -1023,6 +1047,7 @@ async function runDiscovery(
       const norm = normaliseUrl(r.url);
       if (known.has(norm) || seen.has(norm)) continue;
       if (DISCOVERY_HOST_DENYLIST.some((bad) => norm.includes(bad))) continue;
+      if (DISCOVERY_PATH_DENYLIST.some((bad) => ("/" + norm).includes(bad))) continue;
       seen.add(norm);
       candidates.push(r);
     }
@@ -1063,7 +1088,12 @@ async function runDiscovery(
     const extractedList = (await extractWithAI(markdown, pseudoSource)).map(normalize);
     for (const e of extractedList) stats.confidences.push(e.confidence);
 
-    const accepted = extractedList.filter((e) => e.confidence >= CONFIDENCE_GATE);
+    // Also drop anything normalize() has just marked closed: a stale
+    // announcement is not a new opportunity, and registering it as a source
+    // would keep re-verifying a page that will never change.
+    const accepted = extractedList.filter(
+      (e) => e.confidence >= CONFIDENCE_GATE && e.is_active !== false,
+    );
 
     if (accepted.length === 0) {
       // Nothing trustworthy. Queue the best attempt for a human if it is at
