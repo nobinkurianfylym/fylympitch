@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { Footer } from "@/components/Footer";
+import ListShareButton from "@/components/ListShareButton";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 
@@ -158,6 +159,13 @@ export default async function ListWithUsPage() {
           <p className="mt-6 text-[12px] text-ash">
             Questions? <a href="mailto:hello@fylym.com" className="underline underline-offset-4 decoration-ash/40 hover:text-ink">Write to us</a>.
           </p>
+
+          <div className="mt-14 pt-10 border-t border-line max-w-md mx-auto">
+            <p className="text-[13px] text-ash mb-5">
+              Know a fund, festival or producer who should be listed?
+            </p>
+            <ListShareButton />
+          </div>
         </section>
 
       </main>
