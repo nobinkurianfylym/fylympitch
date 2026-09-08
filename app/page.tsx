@@ -274,7 +274,7 @@ export default async function Home() {
 
       {/* — Hero: dark — */}
       <section className="bg-deep text-ivory">
-        <div className="max-w-3xl mx-auto px-6 py-24 md:py-32 text-center">
+        <div className="max-w-3xl mx-auto px-6 pt-24 md:pt-32 pb-16 text-center">
 
           <p className="text-[10px] tracking-[0.28em] uppercase text-ivory/40 mb-5">
             The safest place to submit your film
@@ -306,14 +306,13 @@ export default async function Home() {
           </Link>
 
         </div>
-      </section>
 
-      {/* — How it works + Certificate + Trust signals: light — */}
-      <section className="bg-ivory">
-        <div className="max-w-5xl mx-auto px-6 py-20 md:py-28">
+        {/* How it works, the certificate and the trust row — same ground, so the
+            whole proof story reads as one chapter rather than three bands. */}
+        <div className="max-w-5xl mx-auto px-6 pb-20 md:pb-24">
 
           {/* Steps */}
-          <p className="eyebrow text-center mb-14">How it works</p>
+          <p className="eyebrow text-center mb-14" style={{ color: "rgba(245,245,247,0.45)" }}>How it works</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
             {[
               { icon: "file-text",       label: "Upload your deck",    sub: "A PDF. It stays in private storage.",          gold: false },
@@ -324,12 +323,15 @@ export default async function Home() {
               <div key={step.label} className="flex flex-col items-center text-center">
                 <div
                   className="w-11 h-11 rounded-full flex items-center justify-center mb-4 shrink-0"
-                  style={{ background: step.gold ? "#BF9953" : "#1A1815" }}
+                  style={{
+                    background: step.gold ? "#BF9953" : "rgba(245,245,247,0.07)",
+                    border: step.gold ? "none" : "1px solid rgba(245,245,247,0.14)",
+                  }}
                 >
-                  <Icon name={step.icon} className="text-ivory" style={{ fontSize: 18 }} />
+                  <Icon name={step.icon} className={step.gold ? "text-deep" : "text-ivory"} style={{ fontSize: 18 }} />
                 </div>
-                <p className="text-[12px] font-semibold text-ink leading-snug mb-2">{step.label}</p>
-                <p className="text-[11px] text-ash leading-relaxed">{step.sub}</p>
+                <p className="text-[12px] font-semibold text-ivory leading-snug mb-2">{step.label}</p>
+                <p className="text-[11px] text-ivory/45 leading-relaxed">{step.sub}</p>
               </div>
             ))}
           </div>
@@ -337,7 +339,11 @@ export default async function Home() {
           {/* Proof certificate card */}
           <div
             className="bg-white rounded-card mx-auto mb-14 max-w-md"
-            style={{ border: "1px solid rgba(26,24,21,0.1)", padding: "24px 28px" }}
+            style={{
+              border: "1px solid rgba(26,24,21,0.1)",
+              padding: "24px 28px",
+              boxShadow: "0 24px 60px -30px rgba(0,0,0,0.75)",
+            }}
           >
             <div className="flex justify-between items-start mb-5">
               <div>
@@ -388,7 +394,7 @@ export default async function Home() {
           {/* Trust signals */}
           <div
             className="grid grid-cols-3"
-            style={{ border: "1px solid rgba(26,24,21,0.1)", borderRadius: 8, overflow: "hidden" }}
+            style={{ border: "1px solid rgba(245,245,247,0.12)", borderRadius: 8, overflow: "hidden" }}
           >
             {[
               { icon: "lock",         label: "Private",   sub: "We store the fingerprint, never your file."   },
@@ -398,26 +404,28 @@ export default async function Home() {
               <div
                 key={item.label}
                 className="p-5"
-                style={{ borderLeft: i > 0 ? "1px solid rgba(26,24,21,0.1)" : undefined }}
+                style={{ borderLeft: i > 0 ? "1px solid rgba(245,245,247,0.12)" : undefined }}
               >
-                <Icon name={item.icon} className="text-ink" style={{ fontSize: 20, display: "block", marginBottom: 10 }} />
-                <p className="text-[12px] font-semibold text-ink mb-1.5">{item.label}</p>
-                <p className="text-[11px] text-ash leading-relaxed">{item.sub}</p>
+                <Icon name={item.icon} className="text-gold" style={{ fontSize: 20, display: "block", marginBottom: 10 }} />
+                <p className="text-[12px] font-semibold text-ivory mb-1.5">{item.label}</p>
+                <p className="text-[11px] text-ivory/45 leading-relaxed">{item.sub}</p>
               </div>
             ))}
           </div>
 
         </div>
-      </section>
 
-      {/* — Tagline: dark — */}
-      <section className="bg-ink">
-        <div className="max-w-3xl mx-auto px-6 py-10 text-center">
-          <p className="font-display text-[18px] md:text-[22px] text-ivory/90">
-            Your idea. Your creation. Your proof.{" "}
-            <span className="italic text-gold">Forever.</span>
-          </p>
+        {/* Closing line — inside the same ground, separated by a hairline
+            rather than by a change of background. */}
+        <div className="max-w-5xl mx-auto px-6 pb-24">
+          <div className="pt-10 text-center" style={{ borderTop: "1px solid rgba(245,245,247,0.10)" }}>
+            <p className="font-display text-[18px] md:text-[22px] text-ivory/90">
+              Your idea. Your creation. Your proof.{" "}
+              <span className="italic text-gold">Forever.</span>
+            </p>
+          </div>
         </div>
+
       </section>
 
       {/* FOR FILMMAKERS */}
