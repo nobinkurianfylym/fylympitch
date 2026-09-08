@@ -32,7 +32,13 @@ export function organizationSchema(): Json {
     logo: `${SITE.host}/logos/fylym-mark.png`,
     description:
       "PITCH.FYLYM is a verified directory and matching platform connecting filmmakers with film grants, funds, producers, co-productions, labs, markets, investors and tax incentives worldwide.",
-    sameAs: [] as string[],
+    // The brand's own profiles. Google uses these to tie the site to its
+    // social accounts in the knowledge panel.
+    sameAs: [
+      "https://x.com/fylymhq",
+      "https://www.instagram.com/fylymHQ",
+      "https://www.facebook.com/fylymHQ",
+    ] as string[],
   };
 }
 
