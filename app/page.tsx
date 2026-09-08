@@ -276,6 +276,9 @@ export default async function Home() {
       <section className="bg-deep text-ivory">
         <div className="max-w-3xl mx-auto px-6 py-24 md:py-32 text-center">
 
+          <p className="text-[10px] tracking-[0.28em] uppercase text-ivory/40 mb-5">
+            The safest place to submit your film
+          </p>
           <p className="eyebrow text-gold mb-8">Proof of existence</p>
 
           <h2 className="font-display text-[30px] md:text-[46px] leading-[1.12] font-normal mb-8">
