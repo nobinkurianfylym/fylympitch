@@ -183,6 +183,7 @@ export function Footer() {
                 <li><Link href="/opportunities?type=packaging_markets" className={LI}>Co-Productions</Link></li>
                 <li><Link href="/opportunities?type=tax_incentives"    className={LI}>Tax Incentives</Link></li>
                 <li><Link href="/opportunities/submit"                 className={LI}>Submit an Opportunity</Link></li>
+                <li><Link href="/list"                                className={LI}>List With Us</Link></li>
               </ul>
             </div>
             <div>

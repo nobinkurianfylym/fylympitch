@@ -15,3 +15,6 @@ __pycache__/
 !.dev.vars.example
 
 !.env.example
+
+# Claude session scratch
+Claude outputs/
