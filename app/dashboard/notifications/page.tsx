@@ -44,16 +44,39 @@ export default async function NotificationsPage() {
   const posterMap = new Map((projectData ?? []).map((p: any) => [p.id, p.poster_path]));
 
   // ── Thumbnails: opportunities (new_opportunity / new_fund) ────────────────
-  // Extract slug from links like /opportunities/some-slug-abc123
-  const oppSlugs = (items ?? [])
-    .filter((n: any) => n.link?.startsWith("/opportunities/"))
-    .map((n: any) => n.link.replace("/opportunities/", "").split("/")[0])
-    .filter(Boolean);
-  const uniqueOppSlugs = [...new Set(oppSlugs)];
-  const { data: oppData } = uniqueOppSlugs.length
-    ? await supabase.from("opportunities").select("slug, poster_url").in("slug", uniqueOppSlugs)
-    : { data: [] };
-  const oppPosterMap = new Map((oppData ?? []).map((o: any) => [o.slug, o.poster_url as string | null]));
+  // The link carries the identifier, so read it from there. Current links are
+  // /dashboard/opportunities/{uuid}; rows written before migration 067 are
+  // /opportunities/{slug}, so both shapes are resolved.
+  function oppRef(link: string | null): { id?: string; slug?: string } | null {
+    if (!link) return null;
+    if (link.startsWith("/dashboard/opportunities/")) {
+      const id = link.replace("/dashboard/opportunities/", "").split(/[/?#]/)[0];
+      return id ? { id } : null;
+    }
+    if (link.startsWith("/opportunities/")) {
+      const slug = link.replace("/opportunities/", "").split(/[/?#]/)[0];
+      return slug ? { slug } : null;
+    }
+    return null;
+  }
+
+  const refs     = (items ?? []).map((n: any) => oppRef(n.link)).filter(Boolean) as { id?: string; slug?: string }[];
+  const oppIds   = [...new Set(refs.map((r) => r.id).filter(Boolean) as string[])];
+  const oppSlugs = [...new Set(refs.map((r) => r.slug).filter(Boolean) as string[])];
+
+  const [{ data: oppById }, { data: oppBySlug }] = await Promise.all([
+    oppIds.length
+      ? supabase.from("opportunities").select("id, poster_url").in("id", oppIds)
+      : Promise.resolve({ data: [] as any[] }),
+    oppSlugs.length
+      ? supabase.from("opportunities").select("slug, poster_url").in("slug", oppSlugs)
+      : Promise.resolve({ data: [] as any[] }),
+  ]);
+
+  const oppPosterMap = new Map<string, string | null>([
+    ...(oppById   ?? []).map((o: any) => [o.id   as string, o.poster_url as string | null] as const),
+    ...(oppBySlug ?? []).map((o: any) => [o.slug as string, o.poster_url as string | null] as const),
+  ]);
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
@@ -146,10 +169,9 @@ export default async function NotificationsPage() {
             : null;
 
           // 2. Opportunity poster (new_opportunity, new_fund)
-          const oppSlug   = n.link?.startsWith("/opportunities/")
-            ? n.link.replace("/opportunities/", "").split("/")[0]
-            : null;
-          const oppThumb  = oppSlug ? (oppPosterMap.get(oppSlug) ?? null) : null;
+          const ref      = oppRef(n.link);
+          const oppKey   = ref?.id ?? ref?.slug ?? null;
+          const oppThumb = oppKey ? (oppPosterMap.get(oppKey) ?? null) : null;
 
           const thumbUrl  = projectThumb || oppThumb;
 

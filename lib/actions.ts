@@ -430,7 +430,12 @@ export async function createProducerOpportunity(formData: FormData) {
         kind:    "new_opportunity",
         title:   `${producerLabel} is looking for projects — "${title}"`,
         body:    bodySnippet,
-        link:    `/opportunities/${opp!.slug}`,
+        // The dashboard detail page, not the public one: recipients are
+        // signed-in filmmakers, and that page scores the brief against their
+        // project and carries Apply/Save. Keyed on id, which always exists —
+        // slug is set by a trigger and was one null away from
+        // "/opportunities/undefined".
+        link:    `/dashboard/opportunities/${opp!.id}`,
       }))
     );
   }
