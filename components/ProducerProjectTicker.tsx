@@ -6,6 +6,7 @@ import ProjectThumbnail from "@/components/ProjectThumbnail";
 
 export type ProducerProject = {
   id:      string;
+  slug:    string | null;
   title:   string;
   genre:   string;
   format:  string;
@@ -13,6 +14,12 @@ export type ProducerProject = {
   country: string;
   budget:  string;
   seeking: string;
+  /** Uploaded poster, then the pre-rendered pitch-deck cover. Either one turns
+   *  the tile into real artwork; without both, ProjectThumbnail draws its
+   *  generated title card. No deckUrl here — signing deck URLs is for
+   *  authenticated surfaces, and this ticker is on the public homepage. */
+  posterPath:    string | null;
+  deckCoverPath: string | null;
 };
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -101,18 +108,23 @@ export default function ProducerProjectTicker({
           {TRACK.map((p, i) => (
             <Link
               key={`${p.id}-${i}`}
-              href={`/filmprojects/${p.id}`}
+              href={`/filmprojects/${p.slug ?? p.id}`}
               className="group shrink-0 mx-2 bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold/40 transition-colors"
-              style={{ width: 192 }}
+              style={{ width: 176 }}
             >
-              {/* Thumbnail */}
-              <ProjectThumbnail
-                title={p.title}
-                genre={p.genre}
-                supabaseUrl={SUPA_URL}
-                className="w-full"
-                style={{ height: 128 }}
-              />
+              {/* Poster. 2:3 to match the poster treatment on the project page —
+                  the old 192x128 landscape tile cropped away nearly half of a
+                  poster's height. */}
+              <div className="aspect-[2/3] overflow-hidden">
+                <ProjectThumbnail
+                  posterPath={p.posterPath}
+                  deckCoverPath={p.deckCoverPath}
+                  title={p.title}
+                  genre={p.genre}
+                  supabaseUrl={SUPA_URL}
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
               {/* Body */}
               <div className="px-3 pt-2.5 pb-3.5">

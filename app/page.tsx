@@ -97,13 +97,14 @@ export default async function Home() {
     initialRole = accountRole === "PRODUCER" ? "producer" : "filmmaker";
   }
   let trendingProjects: {
-    id: string; title: string; genre: string; format: string;
+    id: string; slug: string | null; title: string; genre: string; format: string;
     stage: string; country: string; budget: string; seeking: string;
+    posterPath: string | null; deckCoverPath: string | null;
   }[] = [];
   try {
     const { data: raw } = await supabase
       .from("projects")
-      .select("id, title, genre, format, stage, country, budget_usd")
+      .select("id, slug, title, genre, format, stage, country, budget_usd, poster_path, deck_cover_path")
       .eq("is_public", true)
     .is("target_producer_id", null)
       .order("created_at", { ascending: false })
@@ -119,9 +120,11 @@ export default async function Home() {
         production: "Line Producer", post_production: "Sales Agent", completed: "Distribution",
       };
       return {
-        id: p.id, title: p.title, genre: p.genre, format: p.format,
+        id: p.id, slug: p.slug ?? null, title: p.title, genre: p.genre, format: p.format,
         stage: p.stage, country: p.country ?? "International",
         budget, seeking: seeking[p.stage] ?? "Producer",
+        posterPath: p.poster_path ?? null,
+        deckCoverPath: p.deck_cover_path ?? null,
       };
     });
   } catch { /* ticker shows empty state gracefully */ }
