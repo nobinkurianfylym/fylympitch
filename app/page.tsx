@@ -609,16 +609,42 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* CONTACT */}
-      <section id="contact" className="max-w-6xl mx-auto px-6 py-24">
-        <div className="hairline-gold pt-10 md:flex items-end justify-between gap-12">
-          <div>
-            <p className="eyebrow mb-4">Contact</p>
-            <h2 className="font-display text-[28px] md:text-[36px] max-w-lg leading-tight">
-              Festivals, funds and institutions — list your programme on PITCH.FYLYM.
+      {/* CONTACT — closing invitation to the supply side.
+          A parchment panel so it separates from the ivory FAQ above without
+          adding a third dark band to the page. The gold top rule is the same
+          device used on the transactional emails. */}
+      <section id="contact" className="max-w-6xl mx-auto px-6 pt-8 pb-24">
+        <div
+          className="rounded-card overflow-hidden"
+          style={{ background: "#F1EDE4", border: "1px solid #E5E0D5" }}
+        >
+          <div style={{ height: 3, background: "#BF9953" }} />
+
+          <div className="px-8 py-14 md:px-16 md:py-20 text-center">
+            <p className="eyebrow mb-6">For funders and producers</p>
+
+            <h2 className="font-display text-[30px] md:text-[42px] leading-[1.15] font-normal max-w-2xl mx-auto text-balance">
+              If you fund or produce films, filmmakers should be able to{" "}
+              <span className="italic text-gold">find you.</span>
             </h2>
+
+            {/* Makes "an opportunity" concrete without a paragraph explaining it */}
+            <p className="mt-8 text-[11px] tracking-[0.18em] uppercase text-ash">
+              Grants <span className="text-gold">·</span> Funds <span className="text-gold">·</span> Labs{" "}
+              <span className="text-gold">·</span> Markets <span className="text-gold">·</span> Co-productions{" "}
+              <span className="text-gold">·</span> Producer calls
+            </p>
+
+            <Link href="/opportunities/submit" className="btn-gold mt-10 inline-block">
+              List an opportunity
+            </Link>
+
+            {/* Every one of these is verified in submitPublicOpportunity: no auth
+                check, and rows insert as pending / is_active false. */}
+            <p className="mt-5 text-[12px] text-ash">
+              Free. No account needed. Reviewed before it goes live.
+            </p>
           </div>
-          <a href="mailto:hello@fylym.com" className="btn-ghost mt-8 md:mt-0 shrink-0">Write to us</a>
         </div>
       </section>
 
