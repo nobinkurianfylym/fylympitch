@@ -176,7 +176,7 @@ export default async function Home() {
         </nav>
 
         {/* HERO — grows to fill remaining viewport */}
-        <HeroToggle isLoggedIn={!!user} accountRole={accountRole} />
+        <HeroToggle isLoggedIn={!!user} accountRole={accountRole} oppLabel={oppLabel} />
       </div>
 
       {/* PLATFORM METRICS — live counts above the ticker */}

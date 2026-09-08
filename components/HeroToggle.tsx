@@ -12,7 +12,7 @@ const CONTENT = {
         <span className="italic text-gold">for your film.</span>
       </>
     ),
-    body: "Every pitch is analyzed against 500+ verified grants, labs, markets, and tax incentives — matched, ranked, and ready to apply. At the same time, verified producers actively searching for projects to finance, co-produce, or acquire see your pitch directly.",
+    body: "Every pitch is analyzed against %OPPS% verified grants, labs, markets, and tax incentives — matched, ranked, and ready to apply. At the same time, verified producers actively searching for projects to finance, co-produce, or acquire see your pitch directly.",
     proof: "From the moment you submit, your work is cryptographically timestamped on the Bitcoin blockchain — permanent proof, your ideas yours forever.",
     primary: { label: "Get started", href: "/signup" },
     secondary: { label: "See how it works", href: "#how" },
@@ -46,12 +46,21 @@ const PRODUCER_TAGS = [
 export default function HeroToggle({
   isLoggedIn  = false,
   accountRole = "FILMMAKER",
+  oppLabel    = "",
 }: {
   isLoggedIn?:  boolean
   accountRole?: string
+  /** Live opportunity count, already passed through floorPlus() on the server
+   *  so it can never overstate the real total. Empty string when unknown. */
+  oppLabel?:    string
 }) {
   const { role, setRole } = useRole();
   const c = CONTENT[role];
+
+  // Same substitution the STEPS copy uses. Dropping the token (rather than
+  // printing a stale hardcoded figure) means the sentence still reads correctly
+  // when the count is unavailable: "analyzed against verified grants, labs..."
+  const bodyCopy = c.body.replace("%OPPS% ", oppLabel ? `${oppLabel} ` : "");
 
   // Logged-in CTAs
   const loggedInPrimary =
@@ -100,7 +109,7 @@ export default function HeroToggle({
           {c.headline}
         </h1>
         <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-ash">
-          {c.body}
+          {bodyCopy}
         </p>
         {c.proof && (
           <p className="mt-4 max-w-xl text-[13px] leading-relaxed text-ash/50 flex items-start gap-2">
