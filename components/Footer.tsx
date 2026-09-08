@@ -11,7 +11,7 @@ function SocialIcon({ href, label, children }: { href: string; label: string; ch
 }
 
 const HD = "text-[10px] tracking-[0.2em] uppercase font-[600] text-ivory/40 mb-5 block relative pb-2";
-const LN = "absolute bottom-0 left-0 w-6 h-[1.5px]";
+const LN = "absolute bottom-0 left-0 w-6 h-[1.5px] bg-gold opacity-70";
 const LI = "text-[13px] text-ivory/55 hover:text-gold transition-colors leading-none";
 
 export function Footer() {
@@ -44,7 +44,7 @@ export function Footer() {
               PITCH.FYLYM is the intelligent global funding network for film &mdash;
               connecting projects, capital and industry partners to get great films made.
             </p>
-            <p className="mt-3 text-[10px] tracking-[0.16em] uppercase text-ivory/30 font-normal leading-relaxed">
+            <p className="mt-3 text-[10px] tracking-[0.2em] uppercase text-ivory/30 font-normal leading-relaxed">
               PITCH.FYLYM — Where films find funding.
             </p>
             <div className="mt-6 flex items-center gap-5">
@@ -74,7 +74,7 @@ export function Footer() {
           {/* 4 columns */}
           <div className="mt-10 md:mt-2 grid grid-cols-2 sm:grid-cols-4 gap-10 text-[13px] flex-1">
             <div>
-              <span className={HD}>Opportunities<span className={LN} style={{background:"linear-gradient(90deg,#FF3B30,#FF9500)"}}/></span>
+              <span className={HD}>Opportunities<span className={LN} /></span>
               <ul className="space-y-3.5">
                 <li><Link href="/filmprojects"                     className={LI}>Film Projects</Link></li>
                 <li><Link href="/opportunities?type=development"       className={LI}>Grants</Link></li>
@@ -88,7 +88,7 @@ export function Footer() {
               </ul>
             </div>
             <div>
-              <span className={HD}>Industry<span className={LN} style={{background:"linear-gradient(90deg,#FFCC00,#34C759)"}}/></span>
+              <span className={HD}>Industry<span className={LN} /></span>
               <ul className="space-y-3.5">
                 <li><Link href="/signup?role=producer" className={LI}>Producers</Link></li>
                 <li><Link href="/signup?role=producer" className={LI}>Production Companies</Link></li>
@@ -99,21 +99,21 @@ export function Footer() {
               </ul>
             </div>
             <div>
-              <span className={HD}>Platform<span className={LN} style={{background:"linear-gradient(90deg,#007AFF,#5AC8FA)"}}/></span>
+              <span className={HD}>Platform<span className={LN} /></span>
               <ul className="space-y-3.5">
-                <li><a href="#features" className={LI}>How it Works</a></li>
-                <li><a href="#features" className={LI}>FYLYMPITCH Engine™</a></li>
-                <li><a href="#beta"  className={LI}>Beta</a></li>
+                <li><Link href="/#features" className={LI}>How it Works</Link></li>
+                <li><Link href="/#features" className={LI}>FYLYMPITCH Engine™</Link></li>
+                <li><Link href="/#beta" className={LI}>Beta</Link></li>
                 <li><Link href="/signup" className={LI}>Join Free</Link></li>
                 <li><Link href="/login"  className={LI}>Sign In</Link></li>
               </ul>
             </div>
             <div>
-              <span className={HD}>Legal<span className={LN} style={{background:"linear-gradient(90deg,#AF52DE,#FF2D55)"}}/></span>
+              <span className={HD}>Legal<span className={LN} /></span>
               <ul className="space-y-3.5">
-                <li><a href="/privacy" className={LI}>Privacy</a></li>
-                <li><a href="/terms"   className={LI}>Terms</a></li>
-                <li><a href="/cookies" className={LI}>Cookies</a></li>
+                <li><Link href="/privacy" className={LI}>Privacy</Link></li>
+                <li><Link href="/terms" className={LI}>Terms</Link></li>
+                <li><Link href="/cookies" className={LI}>Cookies</Link></li>
                 <li><a href="mailto:hello@fylym.com" className={LI}>Contact</a></li>
                 <li><a href="mailto:hello@fylym.com?subject=Bug Report" className={LI}>Bug Report</a></li>
                 <li><a href="mailto:hello@fylym.com?subject=Broken Link Report" className={LI}>Broken Link Report</a></li>
@@ -136,9 +136,6 @@ export function Footer() {
             </a>{" "}
             Company
           </p>
-          <p className="text-[10px] tracking-[0.14em] uppercase text-ivory/20 font-normal">
-            Where films find funding
-          </p>
         </div>
       </div>
 
@@ -147,11 +144,11 @@ export function Footer() {
         <span style={{
           fontFamily:"var(--font-sans,sans-serif)",
           fontWeight:800,
-          fontSize:"clamp(90px,16vw,200px)",
+          fontSize:"clamp(58px,11vw,150px)",
           letterSpacing:"-0.04em",
           color:"rgba(255,255,255,0.038)",
           display:"block",
-        }}>FYLYM</span>
+        }}>PITCH.FYLYM</span>
       </div>
     </footer>
   );
