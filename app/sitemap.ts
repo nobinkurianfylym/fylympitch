@@ -16,6 +16,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/filmprojects`, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/login`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/signup`, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${BASE}/list`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${BASE}/terms`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${BASE}/cookies`, changeFrequency: "yearly", priority: 0.2 },
   ];
 
   // ── Opportunity record pages (indexation-threshold gated) ─────

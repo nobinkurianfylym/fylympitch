@@ -171,3 +171,22 @@ section[aria-label="Global Film Industry Intelligence Ticker"] div::-webkit-scro
 /* .text-primary   → text-ink  font-weight:400 */
 /* .text-secondary → text-ash  font-weight:400 */
 /* .text-muted     → text-ash  font-weight:400  opacity lower via color only */
+
+/* ── Legal pages (/privacy, /terms, /cookies) ────────────────────────────── */
+/* Plain prose rhythm. Kept here rather than repeated as utility classes on
+   every paragraph, because these pages are written and edited as text. */
+.legal-body h2 {
+  @apply font-display text-[21px] font-normal mt-12 mb-3 leading-snug;
+}
+.legal-body h2:first-child { @apply mt-0; }
+.legal-body p  { @apply text-[15px] leading-[1.75] text-ink/80 mb-4; }
+.legal-body ul { @apply list-disc pl-5 mb-4 space-y-2; }
+.legal-body li { @apply text-[15px] leading-[1.7] text-ink/80; }
+.legal-body a  { @apply underline underline-offset-4 decoration-ash/40 hover:text-ink; }
+.legal-body strong { @apply font-medium text-ink; }
+.legal-body code {
+  @apply font-mono text-[13px] bg-parchment border border-line rounded px-1.5 py-0.5;
+}
+.legal-body .note {
+  @apply text-[14px] leading-[1.7] text-ash bg-parchment border border-line rounded-card px-5 py-4 mb-4;
+}
