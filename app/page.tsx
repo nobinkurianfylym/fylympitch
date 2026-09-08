@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { Footer } from "@/components/Footer";
+import ListShareButton from "@/components/ListShareButton";
 import HomepageDemo from "@/components/HomepageDemo";
 import HeroToggle from "@/components/HeroToggle";
 
@@ -666,6 +667,16 @@ export default async function Home() {
                 <p className="mt-4 text-[12px] text-ash">Verification is free.</p>
               </div>
 
+            </div>
+
+            {/* Pass it on. Shares /list, the standalone version of this block,
+                so the recipient lands on the invitation rather than the
+                bottom of the homepage. */}
+            <div className="mt-10 flex flex-col items-center gap-4">
+              <p className="text-[13px] text-ash">
+                Know a fund, festival or producer who should be listed?
+              </p>
+              <ListShareButton />
             </div>
           </div>
         </div>
