@@ -15,14 +15,18 @@ import { createClient } from "@/lib/supabase/server";
 import ProducerProjectTicker from "@/components/ProducerProjectTicker";
 import { Icon } from "@/components/Icon";
 
-// Honest floor for on-page opportunity copy — always rounds DOWN so the
-// number can never overstate the live count (508 -> "500+", 1,240 -> "1,000+").
-// Returns "" when the count is unknown so copy can degrade gracefully.
-function floorPlus(n: number): string {
+// Exact live opportunity count for on-page copy.
+//
+// This replaced a floor-and-round helper that turned 536 into "500+". The exact
+// figure is both more persuasive and just as honest: it is read straight from
+// the catalogue, so it can never overstate it. It also moves on its own as
+// discovery adds funds, instead of sitting on a round number for months.
+//
+// Returns "" when the count is unknown so copy can degrade gracefully — every
+// caller drops the number rather than printing a stale one.
+function exactCount(n: number): string {
   if (!n || n < 1) return "";
-  if (n < 100)  return `${Math.floor(n / 10) * 10}+`;
-  if (n < 1000) return `${Math.floor(n / 100) * 100}+`;
-  return `${Math.floor(n / 1000).toLocaleString("en-US")},000+`;
+  return n.toLocaleString("en-US");
 }
 
 const STEPS = [
@@ -141,7 +145,7 @@ export default async function Home() {
       oppCount = count ?? 0;
     }
   } catch { oppCount = 0; }
-  const oppLabel = floorPlus(oppCount);
+  const oppLabel = exactCount(oppCount);
 
   return (
     <RoleProvider initialRole={initialRole}>

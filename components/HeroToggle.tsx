@@ -50,8 +50,9 @@ export default function HeroToggle({
 }: {
   isLoggedIn?:  boolean
   accountRole?: string
-  /** Live opportunity count, already passed through floorPlus() on the server
-   *  so it can never overstate the real total. Empty string when unknown. */
+  /** Live opportunity count, formatted on the server and read straight from
+   *  the catalogue. Empty string when unknown, in which case the sentence
+   *  drops the number rather than printing a stale one. */
   oppLabel?:    string
 }) {
   const { role, setRole } = useRole();
