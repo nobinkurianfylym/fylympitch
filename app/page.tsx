@@ -228,16 +228,38 @@ export default async function Home() {
             ))}
           </div>
 
-          {/* Closing */}
-          <div className="mt-24 border-t border-line pt-16 text-center">
-            <p className="eyebrow mb-5">One Platform. Two Needs. One Mission.</p>
-            <p className="font-display text-[28px] md:text-[38px] leading-tight font-normal italic max-w-2xl mx-auto">
-              "Filmmakers need funding. Producers need stories.<br className="hidden md:block" />
-              PITCH.FYLYM is where both discover each other."
+          {/* Closing — the two needs, shown meeting rather than described.
+              The layout carries the argument: two halves, a join, a resolution. */}
+          <div className="mt-24 border-t border-line pt-16">
+            <p className="eyebrow text-center mb-12">The idea</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-y-8 gap-x-10 max-w-4xl mx-auto">
+              <p className="font-display text-[26px] md:text-[32px] leading-[1.25] font-normal text-center md:text-right">
+                Filmmakers need <span className="text-gold">funding</span>.
+              </p>
+
+              {/* Join — a hairline through a gold lozenge. Horizontal on mobile,
+                  vertical on desktop, so the two halves always read as meeting. */}
+              <div className="flex md:flex-col items-center justify-center gap-3" aria-hidden="true">
+                <span className="block h-px w-14 md:h-12 md:w-px bg-line" />
+                <span className="block h-[7px] w-[7px] rotate-45 bg-gold shrink-0" />
+                <span className="block h-px w-14 md:h-12 md:w-px bg-line" />
+              </div>
+
+              <p className="font-display text-[26px] md:text-[32px] leading-[1.25] font-normal text-center md:text-left">
+                Producers need <span className="text-gold">stories</span>.
+              </p>
+            </div>
+
+            <p className="font-display text-[24px] md:text-[34px] leading-[1.3] font-normal text-center mt-14 max-w-3xl mx-auto text-balance">
+              PITCH.FYLYM is where they <span className="italic text-gold">find each other</span>.
             </p>
-            <Link href="/signup" className="btn-gold mt-10 inline-block">
-              Create your free account
-            </Link>
+
+            <div className="text-center">
+              <Link href="/signup" className="btn-gold mt-12 inline-block">
+                Create your free account
+              </Link>
+            </div>
           </div>
 
         </div>
