@@ -33,26 +33,26 @@ const STEPS = [
   {
     num: "01",
     icon: "file-pencil",
-    title: "Create Your Project",
-    body: "Build a professional project profile — logline, synopsis, budget, pitch deck, cast and crew. Your film, presented at its best.",
+    title: "Add your film",
+    body: "Title, logline, budget and your pitch deck. Takes about ten minutes.",
   },
   {
     num: "02",
     icon: "target",
-    title: "Match With Global Opportunities",
-    body: "The PITCH.FYLYM ENGINE™ scores your project against %OPPS% grants, funds, labs, investors, studios and co-productions worldwide — and tells you exactly why each one fits.",
+    title: "See which funds fit",
+    body: "We check your film against %OPPS% grants, funds and labs worldwide, then show you the ones you qualify for and why.",
   },
   {
     num: "03",
     icon: "eye",
-    title: "Get Discovered by Producers",
-    body: "Make your project visible to producers actively searching for their next film — whether they're seeking financing, co-production partners, or creative attachment.",
+    title: "Get seen by producers",
+    body: "Producers looking for their next film can find your project and contact you directly.",
   },
   {
     num: "04",
-    icon: "movie",
-    title: "Turn Projects Into Productions",
-    body: "Connect with the right people, unlock funding, build lasting partnerships. Move your film from development to the screen.",
+    icon: "check",
+    title: "Apply and keep track",
+    body: "Deadlines, materials and submissions in one place, instead of a spreadsheet.",
   },
 ];
 
@@ -197,12 +197,12 @@ export default async function Home() {
           <div className="max-w-3xl mb-20">
             <p className="eyebrow mb-5">Platform</p>
             <h2 className="font-display text-[36px] md:text-[52px] leading-[1.08] font-normal">
-              Every great film starts with<br className="hidden md:block" />{" "}
-              <span className="italic text-gold">the right discovery.</span>
+              Four steps.<br className="hidden md:block" />{" "}
+              <span className="italic text-gold">About ten minutes.</span>
             </h2>
             <p className="mt-6 text-[18px] leading-[1.7] text-ash max-w-xl">
-              Every year, exceptional films go unmade — not for lack of vision,
-              but for lack of the right introduction.
+              Add your film once. We do the searching, the matching and the
+              deadline-chasing.
             </p>
           </div>
 
