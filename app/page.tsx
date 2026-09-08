@@ -635,15 +635,38 @@ export default async function Home() {
               <span className="text-gold">·</span> Producer calls
             </p>
 
-            <Link href="/opportunities/submit" className="btn-gold mt-10 inline-block">
-              List an opportunity
-            </Link>
+            {/* Two paths, because the code has two. submitPublicOpportunity takes
+                anyone and queues the listing as pending/inactive.
+                createProducerOpportunity requires an approved producer and writes
+                it live, attributed, and notifies filmmakers — so routing producers
+                to the public form would hand them the worse of the two. */}
+            <div className="grid md:grid-cols-2 gap-px mt-12 text-left rounded-card overflow-hidden"
+                 style={{ background: "#E5E0D5", border: "1px solid #E5E0D5" }}>
 
-            {/* Every one of these is verified in submitPublicOpportunity: no auth
-                check, and rows insert as pending / is_active false. */}
-            <p className="mt-5 text-[12px] text-ash">
-              Free. No account needed. Reviewed before it goes live.
-            </p>
+              <div className="bg-ivory px-7 py-8 flex flex-col">
+                <p className="eyebrow mb-3">Festivals, funds &amp; institutions</p>
+                <p className="text-[15px] leading-[1.65] text-ink mb-6 grow">
+                  Submit a grant, lab or fund. We check it and add it to the database.
+                </p>
+                <Link href="/opportunities/submit" className="btn-gold self-start">
+                  List an opportunity
+                </Link>
+                <p className="mt-4 text-[12px] text-ash">No account needed.</p>
+              </div>
+
+              <div className="bg-ivory px-7 py-8 flex flex-col">
+                <p className="eyebrow mb-3">Producers &amp; production companies</p>
+                <p className="text-[15px] leading-[1.65] text-ink mb-6 grow">
+                  Post from your producer profile. Once you&rsquo;re verified, your call
+                  goes live straight away — and filmmakers are notified.
+                </p>
+                <Link href="/signup?role=producer" className="btn-ghost self-start">
+                  Create a producer account
+                </Link>
+                <p className="mt-4 text-[12px] text-ash">Verification is free.</p>
+              </div>
+
+            </div>
           </div>
         </div>
       </section>
