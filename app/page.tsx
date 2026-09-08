@@ -276,19 +276,16 @@ export default async function Home() {
       <section className="bg-deep text-ivory">
         <div className="max-w-3xl mx-auto px-6 py-24 md:py-32 text-center">
 
-          <p className="text-[10px] tracking-[0.28em] uppercase text-ivory/30 mb-5">
-            The most trusted place to submit your film project
-          </p>
-          <p className="eyebrow text-gold mb-8">Proof of Existence</p>
+          <p className="eyebrow text-gold mb-8">Proof of existence</p>
 
           <h2 className="font-display text-[30px] md:text-[46px] leading-[1.12] font-normal mb-8">
-            Before your project reaches a producer, it receives a permanent,{" "}
-            <span className="italic text-gold">Bitcoin-verified proof of its existence.</span>
+            Prove it was{" "}
+            <span className="italic text-gold">yours first.</span>
           </h2>
 
           <p className="text-[16px] leading-[1.8] text-ivory/50 mb-10 max-w-xl mx-auto">
-            Your project is never exposed. Only its unique digital fingerprint is
-            recorded — permanent, independent, and verifiable by anyone on earth.
+            Nobody sees your deck. We record a fingerprint of it on Bitcoin, so
+            you can always prove the date your version existed.
           </p>
 
           <div
@@ -302,7 +299,7 @@ export default async function Home() {
           </div>
 
           <Link href="/signup" className="btn-gold">
-            Timestamp Your Pitch Deck →
+            Timestamp your deck →
           </Link>
 
         </div>
@@ -316,10 +313,10 @@ export default async function Home() {
           <p className="eyebrow text-center mb-14">How it works</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
             {[
-              { icon: "file-text",       label: "Upload your pitch deck", sub: "PDF only. Your file never leaves our servers.", gold: false },
-              { icon: "fingerprint",     label: "Fingerprint created",    sub: "A unique SHA-256 hash of your document.",        gold: false },
-              { icon: "currency-bitcoin",label: "Anchored to Bitcoin",    sub: "Via OpenTimestamps. Permanent, immutable.",        gold: true  },
-              { icon: "certificate",     label: "Certificate issued",     sub: "Instant. Includes a public verification link.",  gold: false },
+              { icon: "file-text",       label: "Upload your deck",    sub: "A PDF. It stays in private storage.",          gold: false },
+              { icon: "fingerprint",     label: "We take a fingerprint", sub: "A short code unique to your file.",           gold: false },
+              { icon: "currency-bitcoin",label: "We record it on Bitcoin", sub: "Where nobody can change or delete it.",     gold: true  },
+              { icon: "certificate",     label: "You get a certificate", sub: "Instantly, with a link anyone can check.",     gold: false },
             ].map((step) => (
               <div key={step.label} className="flex flex-col items-center text-center">
                 <div
@@ -341,9 +338,9 @@ export default async function Home() {
           >
             <div className="flex justify-between items-start mb-5">
               <div>
-                <p className="text-[9px] tracking-[0.2em] uppercase text-ash mb-2">Proof of Existence</p>
+                <p className="text-[9px] tracking-[0.2em] uppercase text-ash mb-2">Proof of existence</p>
                 <p className="text-[12px] text-ash leading-snug">
-                  Your pitch deck fingerprint has been<br />anchored to the Bitcoin blockchain.
+                  Your deck&rsquo;s fingerprint is now<br />recorded on Bitcoin.
                 </p>
               </div>
               <div
@@ -391,9 +388,9 @@ export default async function Home() {
             style={{ border: "1px solid rgba(26,24,21,0.1)", borderRadius: 8, overflow: "hidden" }}
           >
             {[
-              { icon: "lock",         label: "Private",      sub: "Your content stays secure. Only the fingerprint is stored." },
-              { icon: "shield-check", label: "Tamper-proof", sub: "No one can alter the record. Not even us."                   },
-              { icon: "world",        label: "Verifiable",   sub: "Anyone can verify independently, anytime, anywhere."         },
+              { icon: "lock",         label: "Private",   sub: "We store the fingerprint, never your file."   },
+              { icon: "shield-check", label: "Permanent", sub: "Nobody can change the record. Not even us."    },
+              { icon: "world",        label: "Checkable", sub: "Anyone can verify it, from anywhere, anytime." },
             ].map((item, i) => (
               <div
                 key={item.label}
