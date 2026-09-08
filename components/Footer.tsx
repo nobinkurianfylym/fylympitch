@@ -141,10 +141,11 @@ export function Footer() {
         <div className="md:flex justify-between gap-12">
 
           {/* Left */}
-          <div className="max-w-[220px] shrink-0">
+          <div className="max-w-[300px] shrink-0">
             <FylymLogo />
             <p className="mt-2 text-[12px] leading-relaxed text-ivory/40 font-normal">
-              We help films find the funding, partners and people they need to get made.
+              PITCH.FYLYM is the intelligent global funding network for film &mdash;
+              connecting projects, capital and industry partners to get great films made.
             </p>
             <p className="mt-3 text-[10px] tracking-[0.16em] uppercase text-ivory/30 font-normal leading-relaxed">
               PITCH.FYLYM — Where films find funding.
