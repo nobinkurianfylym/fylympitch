@@ -287,8 +287,8 @@ export default async function Home() {
           </h2>
 
           <p className="text-[16px] leading-[1.8] text-ivory/50 mb-10 max-w-xl mx-auto">
-            Nobody sees your deck. We record a fingerprint of it on Bitcoin, so
-            you can always prove the date your version existed.
+            We record a fingerprint of your deck on Bitcoin, so you can always
+            prove the date your version existed.
           </p>
 
           <div
