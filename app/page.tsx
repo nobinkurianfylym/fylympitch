@@ -283,13 +283,28 @@ export default async function Home() {
           <p className="eyebrow text-gold mb-8">Proof of existence</p>
 
           <h2 className="font-display text-[30px] md:text-[46px] leading-[1.12] font-normal mb-8">
-            Prove it was{" "}
-            <span className="italic text-gold">yours first.</span>
+            Time-stamped{" "}
+            <span className="italic text-gold">the moment you submit.</span>
           </h2>
 
-          <p className="text-[16px] leading-[1.8] text-ivory/50 mb-10 max-w-xl mx-auto">
-            We record a fingerprint of your deck on Bitcoin, so you can always
-            prove the date your version existed.
+          <p className="text-[16px] leading-[1.8] text-ivory/50 mb-5 max-w-xl mx-auto">
+            We record a fingerprint of your deck on Bitcoin &mdash; a permanent,
+            independent record of the date your version existed. Your file never
+            leaves your account.
+          </p>
+
+          <p className="text-[16px] leading-[1.8] text-ivory/50 mb-6 max-w-xl mx-auto">
+            If authorship is ever disputed, that&rsquo;s dated evidence you can
+            produce: exactly what you had, and when. Not our word for it &mdash;
+            a record neither we nor anyone else can alter.
+          </p>
+
+          {/* Says the limit out loud. A timestamp is evidence of date, not
+              ownership, and copyright registration is a separate thing — the
+              Terms page says so, and this line keeps the two in step. */}
+          <p className="text-[13px] leading-[1.7] text-ivory/35 mb-10 max-w-xl mx-auto">
+            Supports a copyright claim by establishing when your version existed.
+            It is evidence of date, not a substitute for registration.
           </p>
 
           <div
