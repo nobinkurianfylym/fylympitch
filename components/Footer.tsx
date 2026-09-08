@@ -144,7 +144,10 @@ export function Footer() {
           <div className="max-w-[220px] shrink-0">
             <FylymLogo />
             <p className="mt-2 text-[12px] leading-relaxed text-ivory/40 font-normal">
-              Funding intelligence for filmmakers. Connecting creators with grants, funds, producers and investors worldwide.
+              We help films find the funding, partners and people they need to get made.
+            </p>
+            <p className="mt-3 text-[10px] tracking-[0.16em] uppercase text-ivory/30 font-normal leading-relaxed">
+              PITCH.FYLYM — Where films find funding.
             </p>
             <div className="mt-6 flex items-center gap-5">
               <SocialIcon href="https://x.com/fylym" label="X">
