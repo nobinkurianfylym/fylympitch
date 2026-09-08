@@ -197,12 +197,12 @@ export default async function Home() {
           <div className="max-w-3xl mb-20">
             <p className="eyebrow mb-5">Platform</p>
             <h2 className="font-display text-[36px] md:text-[52px] leading-[1.08] font-normal">
-              Four steps.<br className="hidden md:block" />{" "}
-              <span className="italic text-gold">About ten minutes.</span>
+              You add the film pitch.<br className="hidden md:block" />{" "}
+              <span className="italic text-gold">We find the funds.</span>
             </h2>
             <p className="mt-6 text-[18px] leading-[1.7] text-ash max-w-xl">
-              Add your film once. We do the searching, the matching and the
-              deadline-chasing.
+              Add it once, and we keep checking — new grants, closing dates, and
+              which ones you actually qualify for.
             </p>
           </div>
 
