@@ -41,6 +41,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     openGraph: {
+    // Declared explicitly: a page-level openGraph replaces the root
+    // layout's outright, so omitting this shares with no image at all.
+    images: [{ url: "/og-default.png", width: 1200, height: 630 }],
       title,
       description,
       url: `https://pitch.fylym.com/opportunities/${slug}`,
@@ -48,6 +51,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "website",
     },
     twitter: {
+    images: ["/og-default.png"],
       card: "summary",
       title,
       description,

@@ -19,6 +19,9 @@ export const metadata: Metadata = {
     "If you fund or produce films, filmmakers should be able to find you. List a grant, fund, lab or producer call. Free, and we keep it current.",
   alternates: { canonical: "/list" },
   openGraph: {
+    // Declared explicitly: a page-level openGraph replaces the root
+    // layout's outright, so omitting this shares with no image at all.
+    images: [{ url: "/og-default.png", width: 1200, height: 630 }],
     title: "List with PITCH.FYLYM — for funders and producers",
     description:
       "If you fund or produce films, filmmakers should be able to find you. List a grant, fund, lab or producer call. Free, and we keep it current.",
@@ -27,6 +30,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: {
+    images: ["/og-default.png"],
     card: "summary",
     title: "List with PITCH.FYLYM — for funders and producers",
     description:

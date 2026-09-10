@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   description:
     "Discover 180+ film grants, labs, funds, co-productions, sales agents, distributors, tax incentives and investors from 38+ countries. Find the right financing for your independent film.",
   openGraph: {
+    // Declared explicitly: a page-level openGraph replaces the root
+    // layout's outright, so omitting this shares with no image at all.
+    images: [{ url: "/og-default.png", width: 1200, height: 630 }],
     title: "Film Funds, Grants & Opportunities — PITCH.FYLYM",
     description:
       "Discover 180+ film grants, labs, funds, co-productions, sales agents, distributors, tax incentives and investors from 38+ countries.",
