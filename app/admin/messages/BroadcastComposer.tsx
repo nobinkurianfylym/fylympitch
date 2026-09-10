@@ -1,14 +1,26 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { sendBroadcast, type BroadcastAudience } from "@/lib/admin-messaging";
 
-const AUDIENCES: { value: BroadcastAudience; label: string }[] = [
-  { value: "all", label: "Everyone" },
-  { value: "filmmakers", label: "Filmmakers" },
-  { value: "producers", label: "Producers" },
+const AUDIENCES: { value: BroadcastAudience; label: string; who: string }[] = [
+  { value: "all",        label: "Everyone",   who: "Every account except admins." },
+  { value: "filmmakers", label: "Filmmakers", who: "Accounts with the filmmaker role." },
+  { value: "producers",  label: "Producers",  who: "Producers, investors and organizations." },
 ];
+
+const MAX_FILE_MB = 25;
+const MAX_FILES   = 5;
+
+type Attachment = { name: string; url: string; size: number };
+
+function prettySize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
 
 export default function BroadcastComposer() {
   const router = useRouter();
@@ -16,12 +28,50 @@ export default function BroadcastComposer() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sendEmail, setSendEmail] = useState(false);
+  const [files, setFiles] = useState<Attachment[]>([]);
+  const [uploading, setUploading] = useState(false);
   const [ok, setOk] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const selected = AUDIENCES.find((a) => a.value === audience)!;
+
+  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files ?? []);
+    if (!picked.length) return;
+    e.target.value = "";                       // allow re-picking the same file
+    if (files.length + picked.length > MAX_FILES) {
+      setErr(`Up to ${MAX_FILES} attachments per broadcast.`);
+      return;
+    }
+    setErr(null);
+    setUploading(true);
+    const supabase = createClient();
+    const added: Attachment[] = [];
+    for (const f of picked) {
+      if (f.size > MAX_FILE_MB * 1024 * 1024) {
+        setErr(`"${f.name}" is over ${MAX_FILE_MB} MB.`);
+        continue;
+      }
+      const safe = f.name.replace(/[^a-zA-Z0-9_.-]/g, "_");
+      const path = `${crypto.randomUUID()}/${safe}`;
+      const { error } = await supabase.storage
+        .from("broadcast-attachments")
+        .upload(path, f, { contentType: f.type || "application/octet-stream" });
+      if (error) {
+        setErr(`Upload failed for "${f.name}": ${error.message}`);
+        continue;
+      }
+      const { data } = supabase.storage.from("broadcast-attachments").getPublicUrl(path);
+      added.push({ name: f.name, url: data.publicUrl, size: f.size });
+    }
+    setFiles((prev) => [...prev, ...added]);
+    setUploading(false);
+  }
 
   function send() {
-    if (!body.trim() || pending) return;
+    if (!body.trim() || pending || uploading) return;
     if (sendEmail && !subject.trim()) {
       setErr("Subject is required when sending as email.");
       return;
@@ -34,6 +84,7 @@ export default function BroadcastComposer() {
         subject: subject.trim() || undefined,
         body: body.trim(),
         sendEmail,
+        attachments: files,
       });
       if ("error" in res) {
         setErr(res.error);
@@ -48,6 +99,7 @@ export default function BroadcastComposer() {
       setOk(msg);
       setSubject("");
       setBody("");
+      setFiles([]);
       router.refresh();
     });
   }
@@ -57,19 +109,44 @@ export default function BroadcastComposer() {
       <p className="eyebrow">Broadcast</p>
       <h2 className="font-display text-[20px] font-normal mt-1 mb-5">Announce to users</h2>
 
+      {/* ── Audience ──────────────────────────────────────────────────────────
+          The selected option is filled, not just outlined: this control decides
+          who receives an irreversible send, so "which one is on" must be
+          readable at a glance rather than inferred from a border colour. */}
       <label className="field-label">Audience</label>
-      <div className="flex flex-wrap gap-2 mb-5">
-        {AUDIENCES.map((a) => (
-          <button
-            key={a.value}
-            type="button"
-            onClick={() => setAudience(a.value)}
-            className={`btn-ghost ${audience === a.value ? "border-gold text-ink" : ""}`}
-          >
-            {a.label}
-          </button>
-        ))}
+      <div
+        role="radiogroup"
+        aria-label="Audience"
+        className="inline-flex flex-wrap gap-1.5 p-1.5 rounded-card bg-parchment border border-line mb-2"
+      >
+        {AUDIENCES.map((a) => {
+          const on = audience === a.value;
+          return (
+            <button
+              key={a.value}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => setAudience(a.value)}
+              className={`inline-flex items-center gap-2 rounded-[10px] px-5 py-2.5 text-[12px] tracking-[0.12em] uppercase transition-colors ${
+                on
+                  ? "bg-ink text-ivory shadow-sm"
+                  : "text-ash hover:text-ink hover:bg-white/70"
+              }`}
+              style={on ? { fontWeight: 500 } : undefined}
+            >
+              <span
+                aria-hidden
+                className={`inline-block w-1.5 h-1.5 rounded-full ${on ? "bg-gold" : "bg-ash/35"}`}
+              />
+              {a.label}
+            </button>
+          );
+        })}
       </div>
+      <p className="text-[12px] text-ash mb-5">
+        Sending to <span className="text-ink">{selected.label}</span> — {selected.who}
+      </p>
 
       <label className="field-label">
         Subject{sendEmail ? " (required for email)" : " (optional)"}
@@ -89,6 +166,60 @@ export default function BroadcastComposer() {
         placeholder="Write your announcement — new fund added, platform update, etc."
         className="field resize-none"
       />
+
+      {/* ── Attachments ─────────────────────────────────────────────────────── */}
+      <div className="mt-5">
+        <label className="field-label">Attachments (optional)</label>
+
+        {files.length > 0 && (
+          <ul className="mb-3 divide-y divide-line border border-line rounded-card overflow-hidden">
+            {files.map((f, i) => (
+              <li key={f.url} className="flex items-center gap-3 px-4 py-2.5 bg-white/60">
+                <span className="text-gold text-[13px] shrink-0">◆</span>
+                <a
+                  href={f.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[13px] text-ink truncate hover:text-gold transition-colors"
+                >
+                  {f.name}
+                </a>
+                <span className="text-[11px] text-ash shrink-0 ml-auto">{prettySize(f.size)}</span>
+                <button
+                  type="button"
+                  aria-label={`Remove ${f.name}`}
+                  onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
+                  className="text-ash/50 hover:text-red-600 transition-colors text-[18px] leading-none shrink-0"
+                >
+                  ×
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <input
+          ref={fileInput}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={handleFiles}
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,image/*"
+        />
+        <button
+          type="button"
+          onClick={() => fileInput.current?.click()}
+          disabled={uploading || files.length >= MAX_FILES}
+          className="btn-ghost !px-5 !py-2.5 !text-[12px] disabled:opacity-40"
+        >
+          {uploading ? "Uploading…" : files.length ? "Add another file" : "Attach files"}
+        </button>
+        <p className="text-[11px] text-ash mt-2 leading-relaxed">
+          Up to {MAX_FILES} files, {MAX_FILE_MB} MB each. Sent as links, so they keep working when
+          someone reopens the email later — which also means anyone with the link can open them.
+          Don&rsquo;t attach anything confidential.
+        </p>
+      </div>
 
       {/* Email toggle */}
       <label className="flex items-start gap-3 cursor-pointer mt-5 mb-1 select-none">
@@ -122,10 +253,12 @@ export default function BroadcastComposer() {
         </div>
         <button
           onClick={send}
-          disabled={pending || !body.trim()}
+          disabled={pending || uploading || !body.trim()}
           className="btn-gold disabled:opacity-40 shrink-0"
         >
-          {pending ? "Sending…" : sendEmail ? "Send broadcast + email" : "Send broadcast"}
+          {pending
+            ? "Sending…"
+            : `${sendEmail ? "Send broadcast + email" : "Send broadcast"} to ${selected.label}`}
         </button>
       </div>
       <p className="text-[11px] text-ash mt-3 leading-relaxed">

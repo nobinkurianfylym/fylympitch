@@ -13,6 +13,30 @@ function fmtDate(iso: string): string {
   });
 }
 
+/**
+ * Broadcast bodies can carry attachment URLs (admin composer appends them), and
+ * a bare URL in pre-wrapped text is not clickable. Split on http(s) runs and
+ * render those as links; everything else stays plain text, so nothing in the
+ * message is ever interpreted as markup.
+ */
+function linkify(text: string): React.ReactNode[] {
+  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-gold underline underline-offset-2 break-all hover:text-ink transition-colors"
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    ),
+  );
+}
+
 export default async function SupportPage() {
   const supabase = await createClient();
   const {
@@ -76,7 +100,7 @@ export default async function SupportPage() {
                   </div>
                   {a.body && (
                     <p className="text-[14px] text-ink/80 mt-1 whitespace-pre-wrap leading-relaxed">
-                      {a.body}
+                      {linkify(a.body)}
                     </p>
                   )}
                 </div>

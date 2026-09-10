@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { sendBroadcastEmail } from "@/lib/email";
+import { sendBroadcastEmail, type BroadcastAttachment } from "@/lib/email";
 
 export type BroadcastAudience = "all" | "filmmakers" | "producers";
 
@@ -28,6 +28,8 @@ export async function sendBroadcast(input: {
   body: string;
   /** When true, also fires a real email to each recipient via Resend. */
   sendEmail?: boolean;
+  /** Public URLs in the broadcast-attachments bucket, uploaded by the composer. */
+  attachments?: BroadcastAttachment[];
 }): Promise<{ ok: true; id: string; recipients: number; emailsSent?: number; emailsFailed?: number } | { error: string }> {
   const { supabase, isAdmin } = await requireAdmin();
   if (!isAdmin) return { error: "Not authorized." };
@@ -36,10 +38,20 @@ export async function sendBroadcast(input: {
     return { error: "Invalid audience." };
   }
 
+  // Attachments ride along inside the body rather than in a new column: the
+  // RPC fans out to notifications.body, and /support linkifies URLs, so the
+  // files are reachable in-app with no schema change. The email gets the same
+  // list as proper anchors (see sendBroadcastEmail).
+  const files = (input.attachments ?? []).filter((f) => f?.url && f?.name);
+  const bodyWithFiles = files.length
+    ? `${input.body.trim()}\n\n${files.length === 1 ? "Attachment" : "Attachments"}:\n` +
+      files.map((f) => `${f.name} — ${f.url}`).join("\n")
+    : input.body.trim();
+
   const { data: id, error } = await supabase.rpc("send_admin_broadcast", {
     p_audience: input.audience,
     p_subject: input.subject?.trim() || null,
-    p_body: input.body.trim(),
+    p_body: bodyWithFiles,
   });
   if (error) return { error: error.message };
 
@@ -77,7 +89,10 @@ export async function sendBroadcast(input: {
       const result = await sendBroadcastEmail({
         recipients: emailRecipients,
         subject: input.subject?.trim() || "A message from PITCH.FYLYM",
+        // The un-appended body: the email renders attachments as its own
+        // styled block, so repeating the raw URLs here would duplicate them.
         body: input.body.trim(),
+        attachments: files,
       });
       emailsSent = result.sent;
       emailsFailed = result.failed;

@@ -411,14 +411,49 @@ export async function sendNewMessageNotification({
  * Splits into chunks of 100 (Resend's batch limit) automatically.
  * Returns total sent and failed counts.
  */
+export type BroadcastAttachment = { name: string; url: string; size?: number };
+
+function attachmentsBlock(files: BroadcastAttachment[]): string {
+  if (!files.length) return "";
+  const rows = files
+    .map(
+      (f) => `
+      <tr><td style="padding:6px 0;">
+        <a href="${f.url}" style="color:#BF9953;text-decoration:none;font-size:15px;">
+          ${escapeHtml(f.name)}
+        </a>
+        ${f.size ? `<span style="color:#8A857C;font-size:12px;"> &nbsp;${(f.size / 1024 / 1024).toFixed(1)} MB</span>` : ""}
+      </td></tr>`,
+    )
+    .join("");
+  return `
+    <div style="margin:32px 0 0;padding:20px 24px;background:#F1EDE4;border:1px solid #E5E0D5;border-radius:14px;">
+      <p style="margin:0 0 10px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#8A857C;">
+        ${files.length === 1 ? "Attachment" : "Attachments"}
+      </p>
+      <table style="border-collapse:collapse;">${rows}</table>
+    </div>`;
+}
+
+/** File names come from whatever the admin uploaded — never trust them raw. */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 export async function sendBroadcastEmail({
   recipients,
   subject,
   body,
+  attachments = [],
 }: {
   recipients: { email: string; name: string | null }[];
   subject: string;
   body: string;
+  /** Rendered as a styled list of links, not as real email attachments — a
+   *  link keeps the message small and still works when the mail is reopened. */
+  attachments?: BroadcastAttachment[];
 }): Promise<{ sent: number; failed: number }> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
@@ -436,6 +471,8 @@ export async function sendBroadcastEmail({
     </p>
 
     <div style="font-size:16px;line-height:1.75;color:#1A1815;white-space:pre-wrap;">${body}</div>
+
+    ${attachmentsBlock(attachments)}
 
     ${divider()}
 
