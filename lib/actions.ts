@@ -179,6 +179,17 @@ export async function createProject(formData: FormData) {
   // OPENAI_API_KEY is unset or the call fails), and the dream scenario.
   // Cached into `matches` (tiered) and `project_intelligence`. The
   // project page reads from this cache — no recompute, no AI on load.
+  // Written separately, not as part of the insert: share_card_path arrives with
+  // migration 069, and an insert naming a column the database does not have yet
+  // fails the whole save. As its own update the worst case is a project without
+  // a share card, which the metadata chain already falls back from.
+  const shareCard = str(formData, "share_card_path");
+  if (shareCard) {
+    const { error: cardErr } = await supabase
+      .from("projects").update({ share_card_path: shareCard }).eq("id", data.id);
+    if (cardErr) console.warn("[share-card] could not store path:", cardErr.message);
+  }
+
   const { data: opps } = await supabase.from("opportunities").select("*").eq("is_active", true);
   const { data: project } = await supabase.from("projects").select("*").eq("id", data.id).single();
 

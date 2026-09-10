@@ -55,12 +55,16 @@ export async function renderDeckCoverBlob(
 
 /**
  * Generate the cover and upload it to `thumbnails/deck-covers/…`.
- * Returns the storage path, or null on any failure (caller falls back to pdf.js).
+ *
+ * Returns the storage path and the rendered blob. The blob is handed back so
+ * the share card can be composed from the same render instead of paying for a
+ * second pdf.js pass; `path` is null on any failure (caller falls back to
+ * pdf.js at view time).
  */
 export async function generateAndUploadDeckCover(
   source: File | string,
   keyHint?: string,
-): Promise<string | null> {
+): Promise<{ path: string | null; blob: Blob | null }> {
   try {
     const blob = await renderDeckCoverBlob(source);
     const supabase = createClient();
@@ -69,9 +73,9 @@ export async function generateAndUploadDeckCover(
     const { error } = await supabase.storage
       .from("thumbnails")
       .upload(path, blob, { contentType: "image/jpeg", upsert: true });
-    if (error) return null;
-    return path;
+    if (error) return { path: null, blob };
+    return { path, blob };
   } catch {
-    return null;
+    return { path: null, blob: null };
   }
 }

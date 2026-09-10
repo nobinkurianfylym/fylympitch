@@ -28,7 +28,7 @@ export default function DeckCoverBackfill({
       const supabase = createClient();
       const { data } = await supabase.storage.from("pitch-decks").createSignedUrl(deckPath, 3600);
       if (!data?.signedUrl) return;
-      const cover = await generateAndUploadDeckCover(data.signedUrl, projectId);
+      const { path: cover } = await generateAndUploadDeckCover(data.signedUrl, projectId);
       if (cover) await saveDeckCover(projectId, cover);
     })().catch(() => {});
   }, [projectId, deckPath, hasCover]);

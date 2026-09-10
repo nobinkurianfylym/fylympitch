@@ -24,11 +24,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const supabase = await createClient();
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   const { data: p } = await supabase
-    .from("projects").select("title, genre, logline, synopsis, poster_path, country, slug, is_public, admin_hidden")
+    .from("projects").select("title, genre, logline, synopsis, poster_path, deck_cover_path, share_card_path, country, slug, is_public, admin_hidden")
     .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
   if (!p) return { title: "Project — PITCH.FYLYM" };
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const image = p.poster_path ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${p.poster_path}` : null;
+  // Share card first: it is composed at 1200x630, so nothing is cropped and it
+  // carries the title. The poster and deck cover are fallbacks — better than no
+  // image, but a social card slot is ~1.91:1 and will centre-crop a 2:3 poster.
+  const art =
+    (p as any).share_card_path ?? p.poster_path ?? (p as any).deck_cover_path ?? null;
+  const image = art ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${art}` : null;
   const desc = p.logline ?? `A ${p.genre} from ${p.country} — now pitching on PITCH.FYLYM`;
   return {
     title: `${p.title} — PITCH.FYLYM`,

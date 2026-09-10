@@ -7,6 +7,7 @@ import { createProject } from "@/lib/actions";
 import { CURRENCIES } from "@/lib/format";
 import { hashFile } from "@/lib/proofUtils";
 import { generateAndUploadDeckCover } from "@/lib/deck-cover";
+import { generateAndUploadShareCard } from "@/lib/share-card";
 
 const GENRES = ["Drama","Comedy","Thriller","Horror","Romance","Action","Documentary","Family","Crime","Sci-Fi","Fantasy","Musical"];
 
@@ -135,6 +136,10 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
   const [deckFileName, setDeckFileName] = useState("");
   const [scriptPath, setScriptPath] = useState("");
   const [posterPath, setPosterPath] = useState("");
+  // The artwork itself, kept so the share card can be composed at submit —
+  // by which point the title and logline are final. Poster wins over the deck
+  // cover when both exist.
+  const [cardArt, setCardArt] = useState<File | Blob | null>(null);
   const [visibility, setVisibility] = useState<"true" | "false">("true");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [budgetError, setBudgetError]   = useState<string | null>(null);
@@ -270,7 +275,12 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
     // to the client-side deck thumbnail and the owner backfills on next visit.
     setDeckCoverPath("");
     generateAndUploadDeckCover(file)
-      .then((cover) => { if (cover) setDeckCoverPath(cover); })
+      .then(({ path: cover, blob }) => {
+        if (cover) setDeckCoverPath(cover);
+        // Page 1 doubles as the share artwork when no poster is uploaded.
+        // A poster already chosen wins, so never overwrite a File.
+        if (blob) setCardArt((prev) => (prev instanceof File ? prev : blob));
+      })
       .catch(() => {});
     try {
       let body: Record<string, unknown>;
@@ -330,7 +340,7 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
     if (!file) return;
     setUploading("thumbnails");
     const path = await uploadPoster(file);
-    if (path) setPosterPath(path);
+    if (path) { setPosterPath(path); setCardArt(file); }
     setUploading(null);
   }
 
@@ -345,6 +355,18 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
     const formData = new FormData(e.currentTarget);
     flushSync(() => { setError(null); setBusy(true); });
     startTransition(async () => {
+      // Compose the 1200x630 social card now that title and logline are final.
+      // Best-effort: on failure the page falls back to the poster, so a bad
+      // card never blocks a save.
+      if (cardArt) {
+        const card = await generateAndUploadShareCard(cardArt, {
+          title:   fields.title,
+          logline: fields.logline,
+          genre:   fields.genre,
+          country: fields.country,
+        }).catch(() => null);
+        if (card) formData.set("share_card_path", card);
+      }
       const result = await createProject(formData);
       if (result?.error) { setError(result.error); setBusy(false); }
     });

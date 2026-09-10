@@ -12,6 +12,7 @@ import type {
 import type { MatchRow } from "@/components/MatchList";
 import RerunEngineButton from "@/components/RerunEngineButton";
 import DeckCoverBackfill from "@/components/DeckCoverBackfill";
+import ShareCardBackfill from "@/components/ShareCardBackfill";
 import BookmarkButton from "@/components/BookmarkButton";
 import { getSavedOpportunityIds } from "@/lib/saved-actions";
 import ProjectAnalysisLoader from "@/components/ProjectAnalysisLoader";
@@ -258,6 +259,23 @@ export default async function ProjectDetailPage({
           projectId={project.id}
           deckPath={(project as any).pitch_deck_path}
           hasCover={!!(project as any).deck_cover_path}
+        />
+      )}
+      {isOwner && (
+        <ShareCardBackfill
+          projectId={project.id}
+          artUrl={
+            (project as any).poster_path
+              ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${(project as any).poster_path}`
+              : (project as any).deck_cover_path
+                ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${(project as any).deck_cover_path}`
+                : null
+          }
+          hasCard={!!(project as any).share_card_path}
+          title={project.title}
+          logline={(project as any).logline}
+          genre={(project as any).genre}
+          country={(project as any).country}
         />
       )}
       {isOwner && !discovery && !simpleView && <ProjectAnalysisLoader projectId={project.id} />}
