@@ -24,7 +24,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const supabase = await createClient();
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   const { data: p } = await supabase
-    .from("projects").select("title, genre, logline, synopsis, poster_path, deck_cover_path, share_card_path, country, slug, is_public, admin_hidden")
+    // select("*") on purpose: naming share_card_path explicitly would error on
+    // a database that has not run migration 069 yet, and a failed select here
+    // returns null — which would strip the metadata off every project page,
+    // the exact opposite of the fix. With "*" the column is simply absent
+    // until it exists.
+    .from("projects").select("*")
     .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
   if (!p) return { title: "Project — PITCH.FYLYM" };
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
