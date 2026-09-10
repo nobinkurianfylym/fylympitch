@@ -204,7 +204,7 @@ export default function FilmmakerWorkspace({
               return (
                 <Link
                   key={d.id}
-                  href={`/dashboard/opportunities/${d.id}?project=${projectId}`}
+                  href={`/dashboard/opportunities/${d.id}?project=${projectId}`} target="_blank" rel="noopener noreferrer"
                   style={{
                     display:        "flex",
                     alignItems:     "flex-start",

@@ -44,7 +44,7 @@ export default function MatchList({
       {visible.map((o) => (
         <Link
           key={o.id}
-          href={`/dashboard/opportunities/${o.id}?project=${projectId}`}
+          href={`/dashboard/opportunities/${o.id}?project=${projectId}`} target="_blank" rel="noopener noreferrer"
           className="hairline py-5 flex items-center justify-between gap-6 hover:bg-parchment/60 px-2 -mx-2 transition-colors"
         >
           <div className="min-w-0">

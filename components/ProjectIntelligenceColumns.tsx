@@ -162,7 +162,7 @@ export default function ProjectIntelligenceColumns({
                 {ranked.slice(0, 6).map((m) => (
                   <Link
                     key={m.id}
-                    href={`/dashboard/opportunities/${m.id}?project=${projectId}`}
+                    href={`/dashboard/opportunities/${m.id}?project=${projectId}`} target="_blank" rel="noopener noreferrer"
                     style={{
                       display: "flex", alignItems: "center", gap: 8,
                       padding: "8px 10px", borderRadius: 8,

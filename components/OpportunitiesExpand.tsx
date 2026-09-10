@@ -30,7 +30,7 @@ export default function OpportunitiesExpand({ matches }: { matches: MatchedOppor
         {visible.map((m) => (
           <Link
             key={m.opportunities.id}
-            href={`/dashboard/opportunities/${m.opportunities.id}`}
+            href={`/dashboard/opportunities/${m.opportunities.id}`} target="_blank" rel="noopener noreferrer"
             className="hairline py-5 flex items-center justify-between gap-6 hover:bg-parchment/60 transition-colors px-2 -mx-2"
           >
             <div className="min-w-0">

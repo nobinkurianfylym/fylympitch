@@ -168,7 +168,7 @@ export default function ProjectIntelligenceBox({
                   {ranked.slice(0, 6).map((m) => (
                     <Link
                       key={m.id}
-                      href={`/dashboard/opportunities/${m.id}?project=${projectId}`}
+                      href={`/dashboard/opportunities/${m.id}?project=${projectId}`} target="_blank" rel="noopener noreferrer"
                       className="group flex items-center gap-3 p-3 rounded-[10px] transition-all hover:border-white/25 hover:bg-white/[0.07]"
                       style={{
                         border: "0.5px solid rgba(255,255,255,0.12)",

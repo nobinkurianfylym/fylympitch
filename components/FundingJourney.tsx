@@ -163,7 +163,7 @@ function OppCard({ opp, projectId }: { opp: JourneyOpp; projectId: string }) {
             style={{ fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", background: "#1A1815", color: "#F8F5F0", padding: "7px 14px", borderRadius: "6px", textDecoration: "none", fontFamily: "'Montserrat',sans-serif" }}>
             Apply →
           </a>
-          <a href={`/dashboard/opportunities/${opp.id}?project=${projectId}`}
+          <a href={`/dashboard/opportunities/${opp.id}?project=${projectId}`} target="_blank" rel="noopener noreferrer"
             style={{ fontSize: "11px", letterSpacing: "0.12em", textTransform: "uppercase", border: "0.5px solid rgba(26,24,21,0.2)", color: "#1A1815", padding: "7px 14px", borderRadius: "6px", textDecoration: "none", fontFamily: "'Montserrat',sans-serif" }}>
             Details
           </a>

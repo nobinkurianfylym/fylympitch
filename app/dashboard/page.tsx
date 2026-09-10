@@ -319,7 +319,7 @@ export default async function DashboardPage() {
                     const opp = m.opportunities;
                     const days = daysUntil(opp.deadline);
                     return (
-                      <Link key={opp.id} href={`/dashboard/opportunities/${opp.id}`}
+                      <Link key={opp.id} href={`/dashboard/opportunities/${opp.id}`} target="_blank" rel="noopener noreferrer"
                         className="card p-4 flex items-start justify-between gap-3 hover:border-gold transition-colors">
                         <div className="min-w-0">
                           <p className="text-[13px] text-ink font-medium leading-snug truncate">{opp.title}</p>

@@ -541,7 +541,7 @@ export default async function ProjectDetailPage({
                       initialSaved={savedIds.has(m.id)}
                     />
                     <Link
-                      href={`/dashboard/opportunities/${m.id}?project=${project.id}`}
+                      href={`/dashboard/opportunities/${m.id}?project=${project.id}`} target="_blank" rel="noopener noreferrer"
                       style={{
                         flexShrink:    0,
                         fontSize:      10,
@@ -678,7 +678,7 @@ export default async function ProjectDetailPage({
                 </div>
               )}
               {epBrief.next_best_move?.opportunity_id && (
-                <Link href={`/dashboard/opportunities/${epBrief.next_best_move.opportunity_id}?project=${project.id}`} className="btn-gold inline-flex">
+                <Link href={`/dashboard/opportunities/${epBrief.next_best_move.opportunity_id}?project=${project.id}`} target="_blank" rel="noopener noreferrer" className="btn-gold inline-flex">
                   {epBrief.next_best_move.action_label ?? "Apply now"} →
                 </Link>
               )}
