@@ -26,11 +26,29 @@ const playfair = Playfair_Display({
   preload: true,
 });
 
+const SITE_TITLE = "PITCH.FYLYM — Where films find their financiers";
+const SITE_DESC =
+  "Intelligent matchmaking between film projects and producers, funds, grants, labs, markets, distributors and investors worldwide.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.host),
-  title: "PITCH.FYLYM — Where films find their financiers",
-  description:
-    "Intelligent matchmaking between film projects and producers, funds, grants, labs, markets, distributors and investors worldwide.",
+  title: SITE_TITLE,
+  description: SITE_DESC,
+  // Every page inherits a share image unless it sets its own. Without this a
+  // page with no artwork shares as a blank grey box with no branding at all.
+  openGraph: {
+    type: "website",
+    siteName: "PITCH.FYLYM",
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    images: [{ url: "/og-default.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    images: ["/og-default.png"],
+  },
 };
 
 // Mobile viewport — themeColor paints the browser chrome ink (not default

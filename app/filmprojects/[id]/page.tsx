@@ -38,13 +38,18 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   // image, but a social card slot is ~1.91:1 and will centre-crop a 2:3 poster.
   const art =
     (p as any).share_card_path ?? p.poster_path ?? (p as any).deck_cover_path ?? null;
-  const image = art ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${art}` : null;
+  // Falls through to the site default rather than to nothing: an explicit
+  // empty images array here would override the one set in the root layout, so
+  // a project with no artwork would share with no picture at all.
+  const image = art
+    ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${art}`
+    : absoluteUrl("/og-default.png");
   const desc = p.logline ?? `A ${p.genre} from ${p.country} — now pitching on PITCH.FYLYM`;
   return {
     title: `${p.title} — PITCH.FYLYM`,
     description: desc,
-    openGraph: { title: p.title, description: desc, images: image ? [image] : [], type: "article" },
-    twitter: { card: "summary_large_image", title: p.title, description: desc, images: image ? [image] : [] },
+    openGraph: { title: p.title, description: desc, images: [image], type: "article" },
+    twitter: { card: "summary_large_image", title: p.title, description: desc, images: [image] },
     alternates: { canonical: absoluteUrl(`/filmprojects/${p.slug}`) },
     robots: projectRobots(p as any),
   };
