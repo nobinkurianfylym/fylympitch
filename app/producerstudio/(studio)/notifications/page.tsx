@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
 import { markAllRead, deleteNotification, deleteAllNotifications } from "@/lib/auth-actions";
+import { parseBroadcastBody, attachmentSummary } from "@/lib/broadcast-body";
 
 export const dynamic = "force-dynamic";
 
@@ -79,9 +80,21 @@ export default async function ProducerNotificationsPage() {
       <div>
         {(items ?? []).map((n: any) => {
           const posterPath = n.project_id ? posterMap.get(n.project_id) : null;
-          const posterUrl = posterPath
+          const projectUrl = posterPath
             ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`
             : null;
+
+          // Announcements carry their attachments as a trailer on the body.
+          // Producer Studio has its own notifications page, so the same
+          // treatment the filmmaker dashboard got has to be applied here too —
+          // otherwise producers see a raw storage URL where the poster should
+          // be.
+          const bc          = parseBroadcastBody(n.body ?? "");
+          const bcImage     = bc.files.find((f: any) => f.isImage)?.url ?? null;
+          const previewText = bc.files.length ? bc.text : (n.body ?? "");
+          const bcNote      = attachmentSummary(bc.files);
+
+          const posterUrl   = projectUrl || bcImage;
 
           const inner = (
             <div className={`hairline py-4 flex items-start gap-3 pr-10 group ${
@@ -106,8 +119,11 @@ export default async function ProducerNotificationsPage() {
                 }`}>
                   {n.title}
                 </p>
-                {n.body && (
-                  <p className="mt-1 text-[13px] text-ash">{n.body}</p>
+                {previewText && (
+                  <p className="mt-1 text-[13px] text-ash line-clamp-2 leading-relaxed">{previewText}</p>
+                )}
+                {bcNote && (
+                  <p className="mt-1.5 text-[11px] tracking-[0.1em] uppercase text-gold">◆ {bcNote}</p>
                 )}
               </div>
 
