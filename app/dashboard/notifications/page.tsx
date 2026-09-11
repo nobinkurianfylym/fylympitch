@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
 import { markAllRead, deleteNotification, deleteAllNotifications } from "@/lib/auth-actions";
+import { parseBroadcastBody, attachmentSummary } from "@/lib/broadcast-body";
 
 export const dynamic = "force-dynamic";
 
@@ -173,7 +174,16 @@ export default async function NotificationsPage() {
           const oppKey   = ref?.id ?? ref?.slug ?? null;
           const oppThumb = oppKey ? (oppPosterMap.get(oppKey) ?? null) : null;
 
-          const thumbUrl  = projectThumb || oppThumb;
+          // 3. Broadcast attachment — an admin announcement with a poster should
+          //    show the poster, not a generic icon. Also splits the raw
+          //    attachment URLs out of the two-line preview, where they were
+          //    swallowing the message itself.
+          const bc          = parseBroadcastBody(n.body ?? "");
+          const bcImage     = bc.files.find((f) => f.isImage)?.url ?? null;
+          const previewText = bc.files.length ? bc.text : (n.body ?? "");
+          const bcNote      = attachmentSummary(bc.files);
+
+          const thumbUrl  = projectThumb || oppThumb || bcImage;
 
           // Inner row — shared between linked and plain variants
           const inner = (
@@ -204,8 +214,11 @@ export default async function NotificationsPage() {
                 }`}>
                   {n.title}
                 </p>
-                {n.body && (
-                  <p className="mt-1 text-[13px] text-ash leading-relaxed line-clamp-2">{n.body}</p>
+                {previewText && (
+                  <p className="mt-1 text-[13px] text-ash leading-relaxed line-clamp-2">{previewText}</p>
+                )}
+                {bcNote && (
+                  <p className="mt-1.5 text-[11px] tracking-[0.1em] uppercase text-gold">◆ {bcNote}</p>
                 )}
               </div>
 

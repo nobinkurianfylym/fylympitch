@@ -413,25 +413,54 @@ export async function sendNewMessageNotification({
  */
 export type BroadcastAttachment = { name: string; url: string; size?: number };
 
+const IMAGE_EXT = /\.(png|jpe?g|webp|gif|avif|bmp)(\?|#|$)/i;
+
 function attachmentsBlock(files: BroadcastAttachment[]): string {
   if (!files.length) return "";
-  const rows = files
+
+  const images = files.filter((f) => IMAGE_EXT.test(f.url));
+  const others = files.filter((f) => !IMAGE_EXT.test(f.url));
+
+  // A poster IS the message — show it, don't make someone click a storage URL.
+  // The filename stays a link underneath, because most mail clients block
+  // remote images until the reader allows them, and an invisible attachment
+  // would otherwise look like no attachment at all.
+  const imageHtml = images
     .map(
       (f) => `
+      <div style="margin:0 0 18px;">
+        <a href="${f.url}" style="text-decoration:none;">
+          <img src="${f.url}" alt="${escapeHtml(f.name)}" width="520"
+               style="display:block;width:100%;max-width:520px;height:auto;border:1px solid #E5E0D5;border-radius:10px;" />
+        </a>
+        <a href="${f.url}" style="display:inline-block;margin-top:8px;color:#8A857C;text-decoration:none;font-size:12px;">
+          ${escapeHtml(f.name)}
+        </a>
+      </div>`,
+    )
+    .join("");
+
+  const otherHtml = others.length
+    ? `<table style="border-collapse:collapse;">${others
+        .map(
+          (f) => `
       <tr><td style="padding:6px 0;">
         <a href="${f.url}" style="color:#BF9953;text-decoration:none;font-size:15px;">
           ${escapeHtml(f.name)}
         </a>
         ${f.size ? `<span style="color:#8A857C;font-size:12px;"> &nbsp;${(f.size / 1024 / 1024).toFixed(1)} MB</span>` : ""}
       </td></tr>`,
-    )
-    .join("");
+        )
+        .join("")}</table>`
+    : "";
+
   return `
     <div style="margin:32px 0 0;padding:20px 24px;background:#F1EDE4;border:1px solid #E5E0D5;border-radius:14px;">
-      <p style="margin:0 0 10px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#8A857C;">
+      <p style="margin:0 0 14px;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:#8A857C;">
         ${files.length === 1 ? "Attachment" : "Attachments"}
       </p>
-      <table style="border-collapse:collapse;">${rows}</table>
+      ${imageHtml}
+      ${otherHtml}
     </div>`;
 }
 

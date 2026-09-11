@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { parseBroadcastBody } from "@/lib/broadcast-body";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import AdminChat, { type AdminChatMessage } from "@/components/AdminChat";
@@ -14,10 +15,72 @@ function fmtDate(iso: string): string {
 }
 
 /**
- * Broadcast bodies can carry attachment URLs (admin composer appends them), and
- * a bare URL in pre-wrapped text is not clickable. Split on http(s) runs and
- * render those as links; everything else stays plain text, so nothing in the
- * message is ever interpreted as markup.
+ * A broadcast's own text, then its attachments. Images render as images — a
+ * poster is the message, and a raw storage URL is not something anyone reads.
+ * Everything else stays a named link. URLs left inside the text are linkified
+ * so a link an admin typed by hand still works.
+ */
+function BroadcastBody({ body }: { body: string | null }) {
+  if (!body) return null;
+  const { text, files } = parseBroadcastBody(body);
+  const images = files.filter((f) => f.isImage);
+  const others = files.filter((f) => !f.isImage);
+
+  return (
+    <>
+      {text && (
+        <p className="text-[14px] text-ink/80 mt-1 whitespace-pre-wrap leading-relaxed">
+          {linkify(text)}
+        </p>
+      )}
+
+      {images.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-3">
+          {images.map((f) => (
+            <a
+              key={f.url}
+              href={f.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-card overflow-hidden border border-line hover:border-gold transition-colors"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={f.url}
+                alt={f.name}
+                loading="lazy"
+                className="block max-h-[320px] w-auto object-contain bg-parchment"
+              />
+            </a>
+          ))}
+        </div>
+      )}
+
+      {others.length > 0 && (
+        <ul className="mt-4 space-y-1.5">
+          {others.map((f) => (
+            <li key={f.url}>
+              <a
+                href={f.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-[13px] text-ink hover:text-gold transition-colors"
+              >
+                <span className="text-gold">◆</span>
+                <span className="underline underline-offset-2 decoration-ash/40">{f.name}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
+  );
+}
+
+/**
+ * Bare URLs inside the message text are not clickable in pre-wrapped text.
+ * Split on http(s) runs and render those as links; everything else stays plain
+ * text, so nothing in a message is ever interpreted as markup.
  */
 function linkify(text: string): React.ReactNode[] {
   return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
@@ -98,11 +161,7 @@ export default async function SupportPage() {
                     <p className="font-normal text-ink">{a.title}</p>
                     <span className="text-[11px] text-ash shrink-0">{fmtDate(a.created_at)}</span>
                   </div>
-                  {a.body && (
-                    <p className="text-[14px] text-ink/80 mt-1 whitespace-pre-wrap leading-relaxed">
-                      {linkify(a.body)}
-                    </p>
-                  )}
+                  <BroadcastBody body={a.body} />
                 </div>
               ))}
             </div>
