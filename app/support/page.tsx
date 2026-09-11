@@ -111,7 +111,7 @@ export default async function SupportPage() {
     supabase.from("admin_threads").select("id").eq("user_id", user.id).maybeSingle(),
     supabase
       .from("notifications")
-      .select("id, title, body, created_at")
+      .select("*")
       .eq("user_id", user.id)
       .eq("kind", "admin_broadcast")
       .order("created_at", { ascending: false })
@@ -159,7 +159,12 @@ export default async function SupportPage() {
                 <div key={a.id} className="px-5 py-4">
                   <div className="flex items-center justify-between gap-4">
                     <p className="font-normal text-ink">{a.title}</p>
-                    <span className="text-[11px] text-ash shrink-0">{fmtDate(a.created_at)}</span>
+                    <span className="text-[11px] text-ash shrink-0">
+                      {fmtDate(a.created_at)}
+                      {/* Recipients read one version and may now be reading
+                          another. Say so rather than rewriting it silently. */}
+                      {(a as any).edited_at && <span className="text-gold"> · Edited</span>}
+                    </span>
                   </div>
                   <BroadcastBody body={a.body} />
                 </div>

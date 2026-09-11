@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import BroadcastComposer from "./BroadcastComposer";
+import BroadcastHistory from "./BroadcastHistory";
 
 export const dynamic = "force-dynamic";
 
@@ -9,12 +10,6 @@ const ROLE_LABEL: Record<string, string> = {
   producer: "Producer",
   investor: "Investor",
   organization: "Organization",
-};
-
-const AUDIENCE_LABEL: Record<string, string> = {
-  all: "Everyone",
-  filmmakers: "Filmmakers",
-  producers: "Producers",
 };
 
 function timeAgo(iso: string | null): string {
@@ -44,7 +39,7 @@ export default async function AdminMessages() {
       .limit(100),
     supabase
       .from("admin_broadcasts")
-      .select("id, audience, subject, body, recipient_count, created_at")
+      .select("*")
       .order("created_at", { ascending: false })
       .limit(15),
   ]);
@@ -135,23 +130,7 @@ export default async function AdminMessages() {
       <div className="mt-12">
         <p className="eyebrow">Recent broadcasts</p>
         <div className="card mt-4 divide-y divide-line">
-          {broadcasts.length === 0 ? (
-            <p className="px-5 py-6 text-[13px] text-ash">No broadcasts sent yet.</p>
-          ) : (
-            broadcasts.map((b) => (
-              <div key={b.id} className="px-5 py-4">
-                <div className="flex items-center justify-between gap-4">
-                  <p className="font-normal text-ink">{b.subject ?? "A message from PITCH.FYLYM"}</p>
-                  <span className="text-[11px] text-ash shrink-0">{timeAgo(b.created_at)}</span>
-                </div>
-                <p className="text-[13px] text-ash mt-1 line-clamp-2 leading-relaxed">{b.body}</p>
-                <p className="text-[10px] tracking-[0.14em] uppercase text-ash mt-2">
-                  {AUDIENCE_LABEL[b.audience] ?? b.audience} · {b.recipient_count.toLocaleString()}{" "}
-                  {b.recipient_count === 1 ? "recipient" : "recipients"}
-                </p>
-              </div>
-            ))
-          )}
+          <BroadcastHistory broadcasts={broadcasts as any} />
         </div>
       </div>
     </div>

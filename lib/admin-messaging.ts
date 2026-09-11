@@ -106,6 +106,47 @@ export async function sendBroadcast(input: {
   return { ok: true, id: id as string, recipients, emailsSent, emailsFailed };
 }
 
+/**
+ * Admin → correct a broadcast after it has gone out.
+ *
+ * Updates the stored broadcast and every delivered in-app copy. It cannot
+ * touch email that has already been sent, and it deliberately does not
+ * re-notify: fixing a typo should not mark the message unread again for every
+ * recipient.
+ *
+ * Attachments are preserved by the caller, which edits only the message text
+ * and re-appends the file trailer (see lib/broadcast-body.ts).
+ */
+export async function editBroadcast(input: {
+  id: string;
+  subject?: string;
+  body: string;
+  attachments?: BroadcastAttachment[];
+}): Promise<{ ok: true; updated: number } | { error: string }> {
+  const { supabase, isAdmin } = await requireAdmin();
+  if (!isAdmin) return { error: "Not authorized." };
+  if (!input.id) return { error: "No broadcast specified." };
+  if (!input.body?.trim()) return { error: "Message body is required." };
+
+  const files = (input.attachments ?? []).filter((f) => f?.url && f?.name);
+  const bodyWithFiles = files.length
+    ? `${input.body.trim()}\n\n${files.length === 1 ? "Attachment" : "Attachments"}:\n` +
+      files.map((f) => `${f.name} — ${f.url}`).join("\n")
+    : input.body.trim();
+
+  const { data, error } = await supabase.rpc("edit_admin_broadcast", {
+    p_id: input.id,
+    p_subject: input.subject?.trim() || null,
+    p_body: bodyWithFiles,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/messages");
+  revalidatePath("/support");
+  revalidatePath("/dashboard/notifications");
+  return { ok: true, updated: (data as number) ?? 0 };
+}
+
 /** Admin → open (or find) the 1:1 support thread for a specific user. */
 export async function openThread(
   userId: string,
