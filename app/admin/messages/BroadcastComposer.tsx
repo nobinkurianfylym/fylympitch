@@ -28,6 +28,7 @@ export default function BroadcastComposer() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sendEmail, setSendEmail] = useState(false);
+  const [copyMe, setCopyMe] = useState(true);
   const [files, setFiles] = useState<Attachment[]>([]);
   const [uploading, setUploading] = useState(false);
   const [ok, setOk] = useState<string | null>(null);
@@ -85,6 +86,7 @@ export default function BroadcastComposer() {
         body: body.trim(),
         sendEmail,
         attachments: files,
+        includeSelf: copyMe,
       });
       if ("error" in res) {
         setErr(res.error);
@@ -242,6 +244,34 @@ export default function BroadcastComposer() {
           Also send as email to all registered users
           <span className="block text-[11px] text-ash mt-0.5">
             Sends a formatted PITCH.FYLYM branded email via Resend to every account in the selected audience.
+          </span>
+        </span>
+      </label>
+
+      {/* Copy to self. Admins are excluded from every audience, so without this
+          the only way to see what you actually sent is to sign in as someone
+          else — which is exactly what made a working broadcast look broken. */}
+      <label className="flex items-start gap-3 cursor-pointer mt-4 select-none">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={copyMe}
+          onClick={() => setCopyMe((v) => !v)}
+          className={`relative mt-0.5 inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+            copyMe ? "bg-gold" : "bg-ash/30"
+          }`}
+        >
+          <span
+            className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform ${
+              copyMe ? "translate-x-4" : "translate-x-0.5"
+            }`}
+          />
+        </button>
+        <span className="text-[13px] text-ink leading-snug">
+          Send me a copy
+          <span className="block text-[11px] text-ash mt-0.5">
+            Admins are not part of any audience. Turn this on to receive the broadcast
+            yourself{sendEmail ? ", in your inbox and by email" : ""}, so you can check how it landed.
           </span>
         </span>
       </label>

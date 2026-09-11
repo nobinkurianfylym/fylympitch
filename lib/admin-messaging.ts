@@ -30,6 +30,8 @@ export async function sendBroadcast(input: {
   sendEmail?: boolean;
   /** Public URLs in the broadcast-attachments bucket, uploaded by the composer. */
   attachments?: BroadcastAttachment[];
+  /** Deliver a copy to the sending admin, who is otherwise excluded. */
+  includeSelf?: boolean;
 }): Promise<{ ok: true; id: string; recipients: number; emailsSent?: number; emailsFailed?: number } | { error: string }> {
   const { supabase, isAdmin } = await requireAdmin();
   if (!isAdmin) return { error: "Not authorized." };
@@ -52,6 +54,7 @@ export async function sendBroadcast(input: {
     p_audience: input.audience,
     p_subject: input.subject?.trim() || null,
     p_body: bodyWithFiles,
+    p_include_self: !!input.includeSelf,
   });
   if (error) return { error: error.message };
 
@@ -69,22 +72,19 @@ export async function sendBroadcast(input: {
   let emailsFailed: number | undefined;
   if (input.sendEmail) {
     try {
-      const { createAdminClient } = await import("@/lib/supabase/admin");
-      const admin = createAdminClient();
+      // Same SQL function the fan-out uses, so the email list and the in-app
+      // list cannot disagree. This replaced a second, hand-written role filter
+      // here that excluded 'organization' and did not exclude admins — one
+      // action with two different definitions of its own audience.
+      const { data: audience, error: audErr } = await supabase.rpc(
+        "admin_broadcast_audience",
+        { p_audience: input.audience, p_include_self: !!input.includeSelf },
+      );
+      if (audErr) throw new Error(audErr.message);
 
-      // Build role filter for the query.
-      let profileQuery = admin.from("profiles").select("id, full_name, email");
-      if (input.audience === "filmmakers") {
-        profileQuery = profileQuery.eq("role", "filmmaker");
-      } else if (input.audience === "producers") {
-        profileQuery = profileQuery.in("role", ["producer", "investor"]);
-      }
-      // else "all" — no role filter
-
-      const { data: profiles } = await profileQuery;
-      const emailRecipients = (profiles ?? [])
-        .filter((p: any) => !!p.email)
-        .map((p: any) => ({ email: p.email as string, name: p.full_name as string | null }));
+      const emailRecipients = ((audience ?? []) as any[])
+        .filter((p) => !!p.email)
+        .map((p) => ({ email: p.email as string, name: (p.full_name ?? null) as string | null }));
 
       const result = await sendBroadcastEmail({
         recipients: emailRecipients,
