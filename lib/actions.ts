@@ -296,11 +296,56 @@ export async function createProject(formData: FormData) {
     revalidatePath(`/filmprojects/${slug}`);
     revalidatePath("/sitemap.xml");
   }
-  // Notify approved producers if project is public
+  // Notify approved producers if project is public. broadcast_new_project
+  // skips exclusive pitches on purpose, so those are handled separately below.
   if (formData.get("is_public") !== "false") {
     await supabase.rpc("broadcast_new_project", { p_project_id: data.id });
   }
+  if (str(formData, "target_producer_id")) {
+    await notifyExclusivePitch(supabase, data.id);
+  }
   redirect(`/dashboard/projects/${data.id}`);
+}
+
+/**
+ * Tell the one producer an exclusive pitch was addressed to.
+ *
+ * Both routes that can set target_producer_id call this: submitting through a
+ * producer's public profile, and applying to an opportunity that producer
+ * posted. Without it the pitch waits silently in Discover — the producer only
+ * learns of it by happening to open the page.
+ *
+ * The RPC writes the in-app notification (notifications has no INSERT policy,
+ * so a filmmaker cannot write a row for someone else) and hands back the
+ * addresses for the email. It is idempotent: re-saving a project does not ring
+ * the same bell twice. Never allowed to break the submission — a pitch that
+ * saved but failed to notify is recoverable; one that failed to save is not.
+ */
+async function notifyExclusivePitch(supabase: any, projectId: string) {
+  try {
+    const { data, error } = await supabase.rpc("notify_exclusive_pitch", {
+      p_project_id: projectId,
+    });
+    if (error) { console.error("[exclusive-pitch] notify failed:", error.message); return; }
+
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row?.producer_email) return;   // already notified, or no email on file
+
+    const { data: proj } = await supabase
+      .from("projects").select("logline").eq("id", projectId).single();
+
+    const { sendExclusivePitchEmail } = await import("@/lib/email");
+    await sendExclusivePitchEmail({
+      to: row.producer_email,
+      producerName: row.producer_name ?? null,
+      filmmakerName: row.filmmaker_name ?? "A filmmaker",
+      projectTitle: row.project_title ?? "a project",
+      logline: proj?.logline ?? null,
+      projectId,
+    });
+  } catch (e) {
+    console.error("[exclusive-pitch] notify/email failed:", e);
+  }
 }
 
 export async function deleteProject(formData: FormData) {
@@ -342,10 +387,13 @@ export async function applyToOpportunity(formData: FormData) {
   // public profile page. Only set if not already assigned to another producer.
   const oppData = opp as Opportunity;
   if (oppData.posted_by_producer_id && !(project as Project & { target_producer_id?: string | null }).target_producer_id) {
-    await supabase.from("projects")
+    const { error: tgtErr } = await supabase.from("projects")
       .update({ target_producer_id: oppData.posted_by_producer_id })
       .eq("id", project_id)
       .eq("owner_id", user.id);
+    // Only notify when this call is what made it exclusive — otherwise a
+    // second application to the same producer would notify again.
+    if (!tgtErr) await notifyExclusivePitch(supabase, project_id);
   }
 
   await supabase.from("activity_logs").insert({

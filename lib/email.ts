@@ -404,6 +404,70 @@ export async function sendNewMessageNotification({
   }
 }
 
+// ── Exclusive pitch → the one producer it was sent to ─────────
+export async function sendExclusivePitchEmail({
+  to,
+  producerName,
+  filmmakerName,
+  projectTitle,
+  logline,
+  projectId,
+}: {
+  to: string;
+  producerName: string | null;
+  filmmakerName: string;
+  projectTitle: string;
+  logline: string | null;
+  projectId: string;
+}): Promise<void> {
+  const resend = getResend();
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY not set — skipping exclusive pitch email");
+    return;
+  }
+
+  const first = (producerName ?? "").split(" ")[0];
+  const href = `${SITE_URL}/producerstudio/projects/${projectId}`;
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:28px;font-weight:400;font-family:Georgia,serif;color:#1A1815;">
+      A pitch, sent only to you
+    </h1>
+    <p style="margin:0 0 32px;font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#8A857C;">
+      PITCH.FYLYM Producer Studio
+    </p>
+
+    <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#1A1815;">
+      ${first ? `Hi ${first},` : "Hello,"}
+    </p>
+
+    <p style="margin:0 0 24px;font-size:16px;line-height:1.65;color:#1A1815;">
+      <strong>${filmmakerName}</strong> has pitched <strong>${projectTitle}</strong> directly to
+      you. No other producer can see this project or open its files.
+    </p>
+
+    ${
+      logline
+        ? `<div style="margin:0 0 28px;padding:18px 22px;background:#F1EDE4;border-left:2px solid #BF9953;font-size:16px;line-height:1.65;color:#1A1815;">${logline}</div>`
+        : ""
+    }
+
+    ${goldButton("Read the pitch", href)}
+  `;
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: `${filmmakerName} pitched "${projectTitle}" to you`,
+      html: wrap(body),
+    });
+    if (error) console.error("[email] sendExclusivePitchEmail:", error);
+  } catch (e) {
+    console.error("[email] sendExclusivePitchEmail exception:", e);
+  }
+}
+
 // ── Broadcast / Newsletter ────────────────────────────────────
 /**
  * Send a broadcast/newsletter email to a list of recipients via the Resend

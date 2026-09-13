@@ -11,6 +11,7 @@ const KIND_META: Record<string, { label: string; dot: string; icon: string; icon
   offer_received:     { label: "Offer",             dot: "bg-emerald-500",  icon: "✦", iconBg: "bg-emerald-50 text-emerald-600" },
   match_found:        { label: "New Match",         dot: "bg-blue-500",     icon: "▲", iconBg: "bg-blue-50 text-blue-500" },
   new_project:        { label: "New Project",       dot: "bg-blue-500",     icon: "▶", iconBg: "bg-blue-50 text-blue-500" },
+  exclusive_pitch:    { label: "Exclusive Pitch",   dot: "bg-gold",         icon: "✦", iconBg: "bg-gold/10 text-gold" },
   application_update: { label: "Application",       dot: "bg-violet-500",   icon: "●", iconBg: "bg-violet-50 text-violet-500" },
   new_opportunity:    { label: "Producer Brief",    dot: "bg-gold",         icon: "◉", iconBg: "bg-gold/10 text-gold" },
   new_fund:           { label: "New Fund",          dot: "bg-blue-500",     icon: "◈", iconBg: "bg-blue-50 text-blue-500" },
