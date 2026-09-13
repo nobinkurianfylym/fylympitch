@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const supabase = await createClient();
   const { data: opp } = await supabase
     .from("opportunities")
-    .select("slug, title, opp_type, description, country, region, deadline, max_award_usd, min_award_usd, is_active, is_producer_post, posted_by_producer_id, eligible_countries, career_stages")
+    .select("slug, title, opp_type, description, country, region, deadline, max_award_usd, min_award_usd, is_active, is_producer_post, posted_by_producer_id, eligible_countries, career_stages, poster_url")
     .eq("slug", slug)
     .eq("is_active", true)
     .single<any>();
@@ -38,13 +38,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = `${opp.title} — ${typeLabel} · ${location}${award} | PITCH.FYLYM`;
 
+  // The opportunity's own poster when it has one — a producer's call for
+  // scripts is a designed image, and sharing it as a generic card throws that
+  // away. Falls back to the site default.
+  //
+  // The card type follows the image rather than being fixed. og-default is
+  // built at 1200x630, which is what summary_large_image expects. A poster is
+  // portrait: in a large card it gets centre-cropped to a letterbox and loses
+  // the title treatment at the top and the credits at the bottom, so it is
+  // shown as a summary thumbnail, uncropped, beside the text.
+  const poster = (opp as any).poster_url as string | null;
+  const image = poster || "/og-default.png";
+
   return {
     title,
     description,
     openGraph: {
-    // Declared explicitly: a page-level openGraph replaces the root
-    // layout's outright, so omitting this shares with no image at all.
-    images: [{ url: "/og-default.png", width: 1200, height: 630 }],
+      // Declared explicitly: a page-level openGraph replaces the root layout's
+      // outright, so omitting this shares with no image at all.
+      images: poster
+        ? [{ url: poster, alt: opp.title }]
+        : [{ url: "/og-default.png", width: 1200, height: 630 }],
       title,
       description,
       url: `https://pitch.fylym.com/opportunities/${slug}`,
@@ -52,8 +66,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: "website",
     },
     twitter: {
-    images: ["/og-default.png"],
-      card: "summary",
+      images: [image],
+      card: poster ? "summary" : "summary_large_image",
       title,
       description,
     },
