@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import ShareLinkButton from "@/components/ShareLinkButton";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -220,9 +221,29 @@ export default async function FundDetailPage({ params }: Props) {
           )}
           <div className="flex-1 min-w-0">
           <p className="eyebrow mb-4">{typeLabel} · {location}</p>
-          <h1 className="font-display text-[46px] md:text-[58px] font-[400] leading-[1.1] text-ink">
-            {opp.title}
-          </h1>
+          {/* Share sits with the title, not down by the apply button: the thing
+              people pass on is "look at this fund", and they decide that while
+              reading the name and the award, not after. */}
+          <div className="flex items-start justify-between gap-6">
+            <h1 className="font-display text-[46px] md:text-[58px] font-[400] leading-[1.1] text-ink">
+              {opp.title}
+            </h1>
+            <div className="shrink-0 mt-2">
+              <ShareLinkButton
+                compact
+                label="Share this opportunity"
+                path={`/opportunities/${slug}`}
+                title={`${opp.title} — ${typeLabel} on PITCH.FYLYM`}
+                text={`${opp.title}${
+                  opp.max_award_usd != null ? ` — up to ${usd(opp.max_award_usd)}` : ""
+                }${
+                  opp.deadline || opp.deadline_note
+                    ? `, deadline ${formatDeadline(opp.deadline, opp.deadline_note ?? null)}`
+                    : ""
+                }. Found on PITCH.FYLYM.`}
+              />
+            </div>
+          </div>
 
           {/* Key facts strip */}
           <div className="mt-8 flex flex-wrap gap-x-10 gap-y-4">

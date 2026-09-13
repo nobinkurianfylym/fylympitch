@@ -5,6 +5,7 @@ import { usd, TYPE_LABEL, STAGE_LABEL } from "@/lib/format";
 import { applyToOpportunity, toggleSaved } from "@/lib/actions";
 import { ExportPacketButton } from "@/components/ExportPacketButton";
 import TrackOpportunityView from "@/components/TrackOpportunityView";
+import ShareLinkButton from "@/components/ShareLinkButton";
 import type { Opportunity, Project } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,26 @@ export default async function OpportunityDetailPage({
     <div className="max-w-3xl">
       <TrackOpportunityView opportunityId={opp.id} />
       <p className="eyebrow mb-3">{TYPE_LABEL[opp.opp_type]}{opp.region ? ` · ${opp.region}` : opp.country ? ` · ${opp.country}` : " · Worldwide"}</p>
-      <h1 className="font-display text-[34px]">{opp.title}</h1>
+      <div className="flex items-start justify-between gap-6">
+        <h1 className="font-display text-[34px]">{opp.title}</h1>
+        {/* Shares the PUBLIC page, never this one. /dashboard/opportunities/[id]
+            needs a login, so sending that link hands the recipient a sign-in
+            screen instead of the fund. Only offered when there is a public page
+            to point at — a slug, and still active. */}
+        {(opp as any).slug && opp.is_active && (
+          <div className="shrink-0 mt-1">
+            <ShareLinkButton
+              compact
+              label="Share this opportunity"
+              path={`/opportunities/${(opp as any).slug}`}
+              title={`${opp.title} on PITCH.FYLYM`}
+              text={`${opp.title}${
+                opp.max_award_usd != null ? ` — up to ${usd(opp.max_award_usd)}` : ""
+              }. Found on PITCH.FYLYM.`}
+            />
+          </div>
+        )}
+      </div>
 
       <div className="mt-6 flex flex-wrap gap-x-10 gap-y-3 text-[13px] text-ash">
         {opp.max_award_usd != null && <span>Up to — <span className="text-gold font-normal">{usd(opp.max_award_usd)}</span></span>}

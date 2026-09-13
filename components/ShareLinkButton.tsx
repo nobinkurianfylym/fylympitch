@@ -4,14 +4,31 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 /**
- * Share control for /list.
+ * Share control for any page on the site.
  *
- * Deliberately separate from ShareButton, which is bound to a film project
- * (id, slug, /filmprojects/... url). This one shares a single fixed page and
- * leads with email, because the intended use is sending the page to a festival
- * programmer or a production company rather than posting it.
+ * Was ListShareButton, hard-coded to /list. Opportunities needed the same
+ * thing, and a third share component was not the answer — there were already
+ * two. Deliberately still separate from ShareButton, which is bound to a film
+ * project's id and slug and builds a /filmprojects URL.
+ *
+ * Email leads the menu: these links are sent to a person far more often than
+ * they are posted.
  */
-export default function ListShareButton() {
+export default function ShareLinkButton({
+  path,
+  title,
+  text,
+  label = "Share this page",
+  compact = false,
+}: {
+  /** Site-relative, e.g. "/list" or "/opportunities/sundance-doc-fund". */
+  path: string;
+  title: string;
+  text: string;
+  label?: string;
+  /** Icon-only, for sitting beside a heading rather than under a paragraph. */
+  compact?: boolean;
+}) {
   const [open, setOpen]           = useState(false);
   const [copied, setCopied]       = useState(false);
   const [mounted, setMounted]     = useState(false);
@@ -26,9 +43,7 @@ export default function ListShareButton() {
   }, []);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pitch.fylym.com";
-  const url     = `${siteUrl}/list`;
-  const title   = "List your fund or producer call on PITCH.FYLYM";
-  const text    = "If you fund or produce films, filmmakers should be able to find you. Listing on PITCH.FYLYM is free.";
+  const url     = `${siteUrl}${path}`;
 
   const links = [
     {
@@ -132,9 +147,26 @@ export default function ListShareButton() {
         onClick={handleToggle}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-5 py-2.5 text-[12px] tracking-[0.14em] uppercase text-ash transition-colors hover:border-gold hover:text-ink"
+        aria-label={label}
+        title={label}
+        className={
+          compact
+            ? "inline-flex items-center justify-center w-9 h-9 rounded-full border border-line bg-white text-ash transition-colors hover:border-gold hover:text-ink"
+            : "inline-flex items-center gap-2 rounded-full border border-line bg-white px-5 py-2.5 text-[12px] tracking-[0.14em] uppercase text-ash transition-colors hover:border-gold hover:text-ink"
+        }
       >
-        <span className="text-[13px]">↑</span> Share this page
+        {/* Standard share glyph: a node linked to two others. Reads as "send
+            this elsewhere" far better than an arrow, which people take for
+            upload. */}
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <circle cx="18" cy="5" r="3" />
+          <circle cx="6" cy="12" r="3" />
+          <circle cx="18" cy="19" r="3" />
+          <line x1="8.6" y1="10.5" x2="15.4" y2="6.5" />
+          <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" />
+        </svg>
+        {!compact && label}
       </button>
       {dropdown}
     </>

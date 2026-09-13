@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { Footer } from "@/components/Footer";
-import ListShareButton from "@/components/ListShareButton";
+import ShareLinkButton from "@/components/ShareLinkButton";
 import HomepageDemo from "@/components/HomepageDemo";
 import HeroToggle from "@/components/HeroToggle";
 
@@ -694,7 +694,11 @@ export default async function Home() {
               <p className="text-[13px] text-ash">
                 Know a fund, festival or producer who should be listed?
               </p>
-              <ListShareButton />
+              <ShareLinkButton
+                path="/list"
+                title="List your fund or producer call on PITCH.FYLYM"
+                text="If you fund or produce films, filmmakers should be able to find you. Listing on PITCH.FYLYM is free."
+              />
             </div>
           </div>
         </div>

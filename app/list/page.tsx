@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { Footer } from "@/components/Footer";
-import ListShareButton from "@/components/ListShareButton";
+import ShareLinkButton from "@/components/ShareLinkButton";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 
@@ -168,7 +168,11 @@ export default async function ListWithUsPage() {
             <p className="text-[13px] text-ash mb-5">
               Know a fund, festival or producer who should be listed?
             </p>
-            <ListShareButton />
+            <ShareLinkButton
+              path="/list"
+              title="List your fund or producer call on PITCH.FYLYM"
+              text="If you fund or produce films, filmmakers should be able to find you. Listing on PITCH.FYLYM is free."
+            />
           </div>
         </section>
 
