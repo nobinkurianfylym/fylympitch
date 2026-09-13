@@ -325,14 +325,34 @@ export default async function ProducerDiscoverPage({
         <>
           {/* Exclusive pitches — passed ones excluded */}
           {exclusivePitches.length > 0 && (
-            <div className="mb-10">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] tracking-[0.14em] uppercase font-semibold bg-gold/10 text-gold border border-gold/30">
-                  ✦ Exclusive Pitches
-                </span>
-                <span className="text-[12px] text-ash">Submitted directly to you</span>
-              </div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            /* These are not another row of cards to graze. A filmmaker chose
+               this producer specifically and nothing else reaches them, so the
+               section gets its own panel, the house gold rule and a two-column
+               grid — the devices used elsewhere to mark something as the point
+               of the page rather than part of a feed. */
+            <div
+              className="mb-12 rounded-card overflow-hidden"
+              style={{ background: "#F1EDE4", border: "1px solid #E5E0D5" }}
+            >
+              <div style={{ height: 3, background: "#BF9953" }} />
+              <div className="px-6 py-7 md:px-8 md:py-8">
+                <div className="flex flex-wrap items-baseline justify-between gap-3 mb-6">
+                  <div>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] tracking-[0.14em] uppercase font-semibold bg-gold/15 text-gold border border-gold/30">
+                      ✦ Exclusive
+                    </span>
+                    <h2 className="font-display text-[24px] font-normal mt-3 leading-snug">
+                      {exclusivePitches.length === 1
+                        ? "A filmmaker pitched this to you directly"
+                        : `${exclusivePitches.length} filmmakers pitched to you directly`}
+                    </h2>
+                    <p className="text-[13px] text-ash mt-1.5 max-w-md leading-relaxed">
+                      Sent to you and nobody else. No other producer can see these projects
+                      or open their files.
+                    </p>
+                  </div>
+                </div>
+              <div className="grid sm:grid-cols-2 gap-5">
                 {exclusivePitches.map((p: any) => {
                   const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
                   const crm       = crmByProject.get(p.id);
@@ -369,8 +389,12 @@ export default async function ProducerDiscoverPage({
                   );
                 })}
               </div>
-              {top9.length > 0 && <div className="h-px bg-line mt-10 mb-8" />}
+              </div>
             </div>
+          )}
+
+          {top9.length > 0 && exclusivePitches.length > 0 && (
+            <p className="eyebrow mb-5">Matched to your taste profile</p>
           )}
 
           {/* Top 9 grid or empty state */}
