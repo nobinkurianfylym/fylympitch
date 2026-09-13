@@ -26,7 +26,7 @@ const playfair = Playfair_Display({
   preload: true,
 });
 
-const SITE_TITLE = "PITCH.FYLYM — Where films find their financiers";
+const SITE_TITLE = "PITCH.FYLYM — Where films find funding";
 const SITE_DESC =
   "Intelligent matchmaking between film projects and producers, funds, grants, labs, markets, distributors and investors worldwide.";
 
