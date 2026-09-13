@@ -32,6 +32,34 @@ interface Metrics {
   computed_at:              string | null;
 }
 
+/** Filmmakers, projects and verified producers. Fetched separately from the
+ *  catalogue snapshot because RLS hides private and exclusively-pitched
+ *  projects from an anonymous visitor — counting them from here would report
+ *  the public subset and label it the total. The RPC (migration 076) returns
+ *  integers only. */
+interface Community {
+  registered_filmmakers: number;
+  projects_submitted:    number;
+  verified_producers:    number;
+}
+
+async function fetchCommunity(): Promise<Community> {
+  const empty = { registered_filmmakers: 0, projects_submitted: 0, verified_producers: 0 };
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("community_metrics");
+    if (error) return empty;                       // migration not run yet
+    const row = Array.isArray(data) ? data[0] : data;
+    return {
+      registered_filmmakers: row?.registered_filmmakers ?? 0,
+      projects_submitted:    row?.projects_submitted    ?? 0,
+      verified_producers:    row?.verified_producers    ?? 0,
+    };
+  } catch {
+    return empty;
+  }
+}
+
 const FALLBACK: Metrics = {
   active_opportunities:  0,
   partner_organizations: 0,
@@ -107,9 +135,10 @@ async function fetchMetrics(): Promise<Metrics> {
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export default async function PlatformMetrics() {
-  const m = await fetchMetrics();
+  const [m, c] = await Promise.all([fetchMetrics(), fetchCommunity()]);
 
-  const STATS = [
+  // ── Band 1: what the platform tracks ──────────────────────────────────────
+  const CATALOGUE = [
     {
       value: fmtCount(m.active_opportunities),
       label: "Active Opportunities",
@@ -137,6 +166,32 @@ export default async function PlatformMetrics() {
     },
   ];
 
+  // ── Band 2: who is on it ──────────────────────────────────────────────────
+  // A zero renders as an absence, not as modesty: "0 Verified Producers" beside
+  // "593 Active Opportunities" reads as a platform nobody has joined. Each tile
+  // appears only once it has something to say, and the band disappears entirely
+  // until then.
+  const COMMUNITY = [
+    {
+      value: fmtCount(c.registered_filmmakers),
+      label: "Filmmakers",
+      sub:   "Registered on the platform",
+      n:     c.registered_filmmakers,
+    },
+    {
+      value: fmtCount(c.projects_submitted),
+      label: "Projects Submitted",
+      sub:   "Public and private",
+      n:     c.projects_submitted,
+    },
+    {
+      value: fmtCount(c.verified_producers),
+      label: "Verified Producers",
+      sub:   "Identity checked",
+      n:     c.verified_producers,
+    },
+  ].filter((s) => s.n > 0);
+
   // Formatted update timestamp
   const updatedStr = m.computed_at
     ? new Date(m.computed_at).toLocaleDateString("en-GB", {
@@ -155,78 +210,28 @@ export default async function PlatformMetrics() {
         overflow:     "hidden",
       }}
     >
-      {/* ── Metrics grid ─────────────────────────────────────── */}
-      <div
-        style={{
-          display:             "grid",
-          gridTemplateColumns: "repeat(5, 1fr)",
-          maxWidth:            1152,
-          margin:              "0 auto",
-          padding:             "0 32px",
-        }}
-        className="platform-metrics-grid"
-      >
-        {STATS.map(({ value, label, sub }, i) => (
-          <div
-            key={label}
-            style={{
-              display:       "flex",
-              flexDirection: "column",
-              alignItems:    "center",
-              textAlign:     "center",
-              padding:       "28px 16px 24px",
-              borderLeft:    i > 0
-                ? "1px solid rgba(26,24,21,0.07)"
-                : undefined,
-            }}
-          >
-            {/* Big number — ink, Playfair, dominant */}
-            <div
-              style={{
-                fontFamily:         "var(--font-display, 'Playfair Display', Georgia, serif)",
-                fontSize:           "clamp(32px, 4vw, 56px)",
-                fontWeight:         700,
-                color:              "#1A1815",
-                lineHeight:         1,
-                letterSpacing:      "-0.02em",
-                fontVariantNumeric: "tabular-nums",
-                marginBottom:       10,
-              }}
-            >
-              {value}
-            </div>
+      {/* Two bands, because these are two different claims. The first is what
+          the platform has catalogued; the second is who has turned up. Running
+          them together in one row of eight would read as a single undifferentiated
+          scoreboard and let the small numbers borrow authority from the large
+          ones. A quiet label over each says which is which. */}
 
-            {/* Label — gold, uppercase */}
-            <div
-              style={{
-                fontSize:      9,
-                letterSpacing: "0.22em",
-                textTransform: "uppercase",
-                color:         "#BF9953",
-                fontWeight:    600,
-                fontFamily:    "var(--font-body, Montserrat, sans-serif)",
-                marginBottom:  5,
-                lineHeight:    1.4,
-              }}
-            >
-              {label}
-            </div>
+      <Band
+        eyebrow="What we track"
+        stats={CATALOGUE}
+        columns={5}
+        gridClass="platform-metrics-grid"
+      />
 
-            {/* Sub-label — ash, quiet */}
-            <div
-              style={{
-                fontSize:      8,
-                letterSpacing: "0.08em",
-                color:         "#8A857C",
-                fontFamily:    "var(--font-body, Montserrat, sans-serif)",
-                lineHeight:    1.4,
-              }}
-            >
-              {sub}
-            </div>
-          </div>
-        ))}
-      </div>
+      {COMMUNITY.length > 0 && (
+        <Band
+          eyebrow="Who's on the platform"
+          stats={COMMUNITY}
+          columns={COMMUNITY.length}
+          gridClass="platform-community-grid"
+          divider
+        />
+      )}
 
       {/* ── Updated timestamp — bottom right, unobtrusive ────── */}
       {updatedStr && (
@@ -272,17 +277,133 @@ export default async function PlatformMetrics() {
           50%       { opacity: 0.4; transform: scale(0.65); }
         }
         @media (max-width: 767px) {
-          .platform-metrics-grid {
+          .platform-metrics-grid,
+          .platform-community-grid {
             grid-template-columns: repeat(2, 1fr) !important;
             padding: 0 20px !important;
           }
-          .platform-metrics-grid > div:nth-child(5) {
+          /* Funding Tracked is the widest value in its band and the community
+             band can end on an orphan — let the last tile of an odd row span. */
+          .platform-metrics-grid > div:nth-child(5),
+          .platform-community-grid > div:nth-child(3) {
             grid-column: 1 / -1;
             border-left: none !important;
             border-top: 1px solid rgba(26,24,21,0.07);
           }
+          .platform-metrics-grid > div:nth-child(odd),
+          .platform-community-grid > div:nth-child(odd) {
+            border-left: none !important;
+          }
         }
       `}</style>
     </section>
+  );
+}
+
+// ─── Band ──────────────────────────────────────────────────────────────────
+
+function Band({
+  eyebrow,
+  stats,
+  columns,
+  gridClass,
+  divider = false,
+}: {
+  eyebrow: string;
+  stats: { value: string; label: string; sub: string }[];
+  columns: number;
+  gridClass: string;
+  divider?: boolean;
+}) {
+  return (
+    <div style={divider ? { borderTop: "1px solid rgba(26,24,21,0.07)" } : undefined}>
+      <div
+        style={{
+          maxWidth: 1152,
+          margin: "0 auto",
+          padding: divider ? "22px 32px 0" : "24px 32px 0",
+        }}
+      >
+        <p
+          style={{
+            fontSize: 9,
+            letterSpacing: "0.26em",
+            textTransform: "uppercase",
+            color: "#8A857C",
+            fontFamily: "var(--font-body, Montserrat, sans-serif)",
+            fontWeight: 500,
+            textAlign: "center",
+            margin: 0,
+          }}
+        >
+          {eyebrow}
+        </p>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${columns}, 1fr)`,
+          maxWidth: 1152,
+          margin: "0 auto",
+          padding: "0 32px",
+        }}
+        className={gridClass}
+      >
+        {stats.map(({ value, label, sub }, i) => (
+          <div
+            key={label}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              padding: "18px 16px 26px",
+              borderLeft: i > 0 ? "1px solid rgba(26,24,21,0.07)" : undefined,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "var(--font-display, 'Playfair Display', Georgia, serif)",
+                fontSize: "clamp(30px, 3.6vw, 52px)",
+                fontWeight: 700,
+                color: "#1A1815",
+                lineHeight: 1,
+                letterSpacing: "-0.02em",
+                fontVariantNumeric: "tabular-nums",
+                marginBottom: 10,
+              }}
+            >
+              {value}
+            </div>
+            <div
+              style={{
+                fontSize: 9,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "#BF9953",
+                fontWeight: 600,
+                fontFamily: "var(--font-body, Montserrat, sans-serif)",
+                marginBottom: 5,
+                lineHeight: 1.4,
+              }}
+            >
+              {label}
+            </div>
+            <div
+              style={{
+                fontSize: 8,
+                letterSpacing: "0.08em",
+                color: "#8A857C",
+                fontFamily: "var(--font-body, Montserrat, sans-serif)",
+                lineHeight: 1.4,
+              }}
+            >
+              {sub}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
