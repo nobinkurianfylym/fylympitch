@@ -367,6 +367,18 @@ export async function applyToOpportunity(formData: FormData) {
   const { data: opp } = await supabase.from("opportunities").select("*").eq("id", opportunity_id).single();
   if (!project || !opp) return { error: "Project or opportunity not found." };
 
+  // ── Consent gate for producer briefs ──────────────────────────────────────
+  // Applying to a producer-posted opportunity turns the project into an
+  // exclusive pitch to that producer (below). That is a real commitment, so the
+  // filmmaker has to tick a box for it. The checkbox is `required` in the form;
+  // this is the half that survives a crafted POST. Checked before the insert so
+  // a refusal leaves no orphan application row.
+  const oppData = opp as Opportunity;
+  const alreadyTargeted = !!(project as Project & { target_producer_id?: string | null }).target_producer_id;
+  if (oppData.posted_by_producer_id && !alreadyTargeted && str(formData, "confirm_exclusive") !== "yes") {
+    return { error: "Tick the confirmation box to send this project to the producer as an exclusive pitch." };
+  }
+
   const { calculateMatchScore } = await import("@/services/matching");
   const match = calculateMatchScore(project as Project, opp as Opportunity);
 
@@ -385,8 +397,7 @@ export async function applyToOpportunity(formData: FormData) {
   // If the opportunity was posted by a producer, mark this project as an
   // exclusive pitch to that producer — identical to submitting via their
   // public profile page. Only set if not already assigned to another producer.
-  const oppData = opp as Opportunity;
-  if (oppData.posted_by_producer_id && !(project as Project & { target_producer_id?: string | null }).target_producer_id) {
+  if (oppData.posted_by_producer_id && !alreadyTargeted) {
     const { error: tgtErr } = await supabase.from("projects")
       .update({ target_producer_id: oppData.posted_by_producer_id })
       .eq("id", project_id)
