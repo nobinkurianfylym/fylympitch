@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { preferThumb } from "@/lib/poster-url";
 import { createClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
 import { markAllRead, deleteNotification, deleteAllNotifications } from "@/lib/auth-actions";
@@ -82,7 +83,7 @@ export default async function ProducerNotificationsPage() {
         {(items ?? []).map((n: any) => {
           const posterPath = n.project_id ? posterMap.get(n.project_id) : null;
           const projectUrl = posterPath
-            ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`
+            ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${preferThumb(posterPath)}`
             : null;
 
           // Announcements carry their attachments as a trailer on the body.

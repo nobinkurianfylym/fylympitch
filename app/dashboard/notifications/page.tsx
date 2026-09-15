@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { preferThumb } from "@/lib/poster-url";
 import { createClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
 import { markAllRead, deleteNotification, deleteAllNotifications } from "@/lib/auth-actions";
@@ -167,7 +168,7 @@ export default async function NotificationsPage() {
           // 1. Project poster (producer_interest, offer_received, match_found…)
           const posterPath   = n.project_id ? posterMap.get(n.project_id) : null;
           const projectThumb = posterPath
-            ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`
+            ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${preferThumb(posterPath)}`
             : null;
 
           // 2. Opportunity poster (new_opportunity, new_fund)

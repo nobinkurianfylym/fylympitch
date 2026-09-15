@@ -1,4 +1,5 @@
 import React from "react";
+import { preferThumb } from "@/lib/poster-url";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -602,7 +603,7 @@ export default async function PublicProfilePage({
                         style={{display:"flex",alignItems:"center",gap:12,textDecoration:"none",padding:"8px 0",borderBottom:"1px solid rgba(26,24,21,0.06)"}}>
                         {p.poster_path && (
                           <div style={{width:40,height:54,borderRadius:6,overflow:"hidden",flexShrink:0,background:"rgba(26,24,21,0.06)"}}>
-                            <img src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${p.poster_path}`}
+                            <img src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${preferThumb(p.poster_path)}`}
                               alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover"}} />
                           </div>
                         )}

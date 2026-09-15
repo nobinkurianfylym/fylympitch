@@ -1,4 +1,5 @@
 "use client";
+import { resizeForUpload, IMMUTABLE_CACHE } from "@/lib/image-resize";
 
 import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -35,12 +36,19 @@ export default function AvatarUpload({ currentUrl, userId, name, onUpload }: Pro
 
     try {
       const supabase = createClient();
-      const ext = file.name.split(".").pop() ?? "jpg";
-      const path = `${userId}/avatar.${ext}`;
+      // Avatars render at 36px or smaller everywhere. A 10MB upload was being
+      // served in full for that, on every page with a byline.
+      const sized = await resizeForUpload(file);
+      const body  = sized ? sized.thumb.blob : file;
+      const ext   = sized ? sized.thumb.ext : (file.name.split(".").pop() ?? "jpg");
+      const type  = sized ? sized.thumb.contentType : file.type;
+      const path  = `${userId}/avatar.${ext}`;
 
+      // This path is overwritten in place, so the long cache is only safe
+      // because the stored URL carries a ?t= cache-bust (added below).
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, body, { upsert: true, contentType: type, cacheControl: IMMUTABLE_CACHE });
 
       if (uploadError) {
         setError("Upload failed");

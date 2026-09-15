@@ -1,4 +1,5 @@
 "use client";
+import { resizeForUpload, IMMUTABLE_CACHE } from "@/lib/image-resize";
 
 import { useState, useTransition, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -113,11 +114,16 @@ function PosterUpload({
     setUploading(true);
     try {
       const supabase = createClient();
-      const ext  = file.name.split(".").pop() ?? "jpg";
-      const path = `${userId}/opp-${Date.now()}.${ext}`;
+      // Kept at the full 1600px rather than thumbnail size: this image is the
+      // opportunity's share card, and a crawler wants the large version.
+      const sized = await resizeForUpload(file);
+      const body  = sized ? sized.full.blob : file;
+      const ext   = sized ? sized.full.ext : (file.name.split(".").pop() ?? "jpg");
+      const type  = sized ? sized.full.contentType : file.type;
+      const path  = `${userId}/opp-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("opportunity-posters")
-        .upload(path, file, { upsert: true, contentType: file.type });
+        .upload(path, body, { upsert: true, contentType: type, cacheControl: IMMUTABLE_CACHE });
       if (uploadError) { setError("Upload failed"); return; }
       const { data } = supabase.storage.from("opportunity-posters").getPublicUrl(path);
       onChange(data.publicUrl);

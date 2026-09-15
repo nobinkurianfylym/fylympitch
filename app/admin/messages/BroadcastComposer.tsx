@@ -1,4 +1,5 @@
 "use client";
+import { IMMUTABLE_CACHE } from "@/lib/image-resize";
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -59,7 +60,7 @@ export default function BroadcastComposer() {
       const path = `${crypto.randomUUID()}/${safe}`;
       const { error } = await supabase.storage
         .from("broadcast-attachments")
-        .upload(path, f, { contentType: f.type || "application/octet-stream" });
+        .upload(path, f, { contentType: f.type || "application/octet-stream", cacheControl: IMMUTABLE_CACHE });
       if (error) {
         setErr(`Upload failed for "${f.name}": ${error.message}`);
         continue;

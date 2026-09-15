@@ -8,6 +8,7 @@ import { CURRENCIES } from "@/lib/format";
 import { hashFile } from "@/lib/proofUtils";
 import { generateAndUploadDeckCover } from "@/lib/deck-cover";
 import { generateAndUploadShareCard } from "@/lib/share-card";
+import { resizeForUpload, IMMUTABLE_CACHE } from "@/lib/image-resize";
 
 const GENRES = ["Drama","Comedy","Thriller","Horror","Romance","Action","Documentary","Family","Crime","Sci-Fi","Fantasy","Musical"];
 
@@ -231,7 +232,8 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
     if (!user) { setError("Session expired — sign in again."); return null; }
     if (file.size > 25 * 1024 * 1024) { setError("Files must be under 25 MB."); return null; }
     const path = `${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9_.-]/g, "_")}`;
-    const { error } = await supabase.storage.from(bucket).upload(path, file);
+    const { error } = await supabase.storage.from(bucket)
+      .upload(path, file, { cacheControl: IMMUTABLE_CACHE });
     if (error) { setError(`Upload failed: ${error.message}`); return null; }
     return path;
   }
@@ -241,11 +243,41 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setError("Session expired — sign in again."); return null; }
     if (file.size > 10 * 1024 * 1024) { setError("Poster must be under 10 MB."); return null; }
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-    const path = `${user.id}/${Date.now()}-poster.${ext}`;
-    const { error } = await supabase.storage.from("thumbnails").upload(path, file, { contentType: file.type });
-    if (error) { setError(`Poster upload failed: ${error.message}`); return null; }
-    return path;
+
+    // Two sizes instead of the original. Every surface that shows a poster —
+    // the homepage ticker, the project grids, the notification rows — renders
+    // it under 480px, so serving a 10MB upload to fill a 176px tile was the
+    // single largest source of Storage egress. The -poster-full / -poster-thumb
+    // pair lets ProjectThumbnail derive the small URL from the stored one with
+    // no extra column.
+    const stamp  = Date.now();
+    const sized  = await resizeForUpload(file);
+
+    if (!sized) {
+      // Unsupported or undecodable — upload the original rather than block.
+      const ext  = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      const path = `${user.id}/${stamp}-poster.${ext}`;
+      const { error } = await supabase.storage
+        .from("thumbnails")
+        .upload(path, file, { contentType: file.type, cacheControl: IMMUTABLE_CACHE });
+      if (error) { setError(`Poster upload failed: ${error.message}`); return null; }
+      return path;
+    }
+
+    const fullPath  = `${user.id}/${stamp}-poster-full.${sized.full.ext}`;
+    const thumbPath = `${user.id}/${stamp}-poster-thumb.${sized.thumb.ext}`;
+
+    const [fullRes, thumbRes] = await Promise.all([
+      supabase.storage.from("thumbnails")
+        .upload(fullPath, sized.full.blob, { contentType: sized.full.contentType, cacheControl: IMMUTABLE_CACHE }),
+      supabase.storage.from("thumbnails")
+        .upload(thumbPath, sized.thumb.blob, { contentType: sized.thumb.contentType, cacheControl: IMMUTABLE_CACHE }),
+    ]);
+    if (fullRes.error) { setError(`Poster upload failed: ${fullRes.error.message}`); return null; }
+    // A missing thumbnail is survivable — the derivation falls back to full.
+    if (thumbRes.error) console.warn("[poster] thumbnail upload failed:", thumbRes.error.message);
+
+    return fullPath;
   }
 
   async function handleDeck(e: React.ChangeEvent<HTMLInputElement>) {

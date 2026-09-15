@@ -1,4 +1,5 @@
 // Client-only utility: render page 1 of a pitch-deck PDF to a watermarked JPEG
+import { IMMUTABLE_CACHE } from "@/lib/image-resize";
 // and store it in the public `thumbnails` bucket, so public pages can show a
 // plain <img> instead of running pdf.js in every visitor's browser.
 //
@@ -72,7 +73,7 @@ export async function generateAndUploadDeckCover(
     const path = `deck-covers/${key}-${Date.now()}.jpg`;
     const { error } = await supabase.storage
       .from("thumbnails")
-      .upload(path, blob, { contentType: "image/jpeg", upsert: true });
+      .upload(path, blob, { contentType: "image/jpeg", upsert: true, cacheControl: IMMUTABLE_CACHE });
     if (error) return { path: null, blob };
     return { path, blob };
   } catch {

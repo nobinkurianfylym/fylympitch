@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { preferThumb } from "@/lib/poster-url";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { formatBudget } from "@/lib/format";
@@ -103,7 +104,7 @@ export default async function ProducerPipelinePage() {
                       const p = row.projects;
                       if (!p) return null;
                       const thumb = p.poster_path
-                        ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${p.poster_path}`
+                        ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${preferThumb(p.poster_path)}`
                         : null;
                       return (
                         <Link key={row.id} href={`/producerstudio/projects/${p.id}`}

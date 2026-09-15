@@ -6,6 +6,7 @@
 //   3. Neither     → Generated pastel title card (inline, instant, no network)
 
 import DeckCoverThumbnail from "./DeckCoverThumbnail";
+import { preferThumb } from "@/lib/poster-url";
 
 const PALETTES = [
   { bg: "#F0E8FF", accent: "#C4A8E8", text: "#4A1D96" },  // lavender
@@ -111,7 +112,7 @@ export default function ProjectThumbnail({ posterPath, deckCoverPath, deckUrl, t
   if (posterPath) {
     return (
       <img
-        src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${posterPath}`}
+        src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${preferThumb(posterPath)}`}
         alt={`${title} poster`}
         className={`${className} object-cover`}
         loading="lazy"

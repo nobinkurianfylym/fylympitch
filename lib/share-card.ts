@@ -1,4 +1,5 @@
 // Client-only: compose a 1200x630 social share card for a project and store it
+import { IMMUTABLE_CACHE } from "@/lib/image-resize";
 // in the public `thumbnails` bucket.
 //
 // Why pre-render rather than generate on request: a poster is 2:3 and every
@@ -212,7 +213,7 @@ export async function generateAndUploadShareCard(
     const path = `share-cards/${key}-${Date.now()}.jpg`;
     const { error } = await supabase.storage
       .from("thumbnails")
-      .upload(path, blob, { contentType: "image/jpeg", upsert: true });
+      .upload(path, blob, { contentType: "image/jpeg", upsert: true, cacheControl: IMMUTABLE_CACHE });
     if (error) return null;
     return path;
   } catch {
