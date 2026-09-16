@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-import { ROBOTS_NOINDEX } from "@/lib/seo";
 "use client";
 
 /**
@@ -28,12 +26,6 @@ import { Suspense, useEffect, useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { supabaseUrl, supabaseAnonKey } from "@/lib/supabase/env";
 import { sanitizeNext } from "@/lib/sanitizeNext";
-
-// An auth handoff that redirects immediately. Nothing to index.
-export const metadata: Metadata = {
-  title: "Signing in",
-  robots: ROBOTS_NOINDEX,
-};
 
 function readCookie(name: string): string | null {
   const match = document.cookie
