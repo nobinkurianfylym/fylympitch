@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
+import { ROBOTS_NOINDEX } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { adminSelfPromote } from "@/lib/actions";
+
+// Debug page. Never indexable.
+export const metadata: Metadata = {
+  title: "Session",
+  robots: ROBOTS_NOINDEX,
+};
 
 export const dynamic = "force-dynamic";
 

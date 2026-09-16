@@ -8,6 +8,7 @@ import { supabaseUrl as getSupabaseUrl, supabaseAnonKey as getSupabaseAnonKey, s
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { ROBOTS_NOINDEX } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +18,14 @@ export async function generateMetadata({
   params: Promise<{ hash: string }>;
 }): Promise<Metadata> {
   const { hash } = await params;
+  // One page per certificate hash, each near-identical to the last and useful
+  // only to the person holding the link. Crawlable and link-passing, but never
+  // in the index — this is precisely the thin programmatic surface that
+  // lib/seo.ts's indexation threshold exists to keep out.
   return {
-    title: "Proof of Existence — Pitch.Fylym",
+    title: "Proof of Existence — PITCH.FYLYM",
     description: `Cryptographic proof anchored to Bitcoin. Hash: ${hash.slice(0, 16)}…`,
+    robots: ROBOTS_NOINDEX,
   };
 }
 

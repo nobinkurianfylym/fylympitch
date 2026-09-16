@@ -14,7 +14,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: BASE, changeFrequency: "weekly", priority: 1.0 },
     { url: `${BASE}/opportunities`, changeFrequency: "daily", priority: 0.9 },
     { url: `${BASE}/filmprojects`, changeFrequency: "daily", priority: 0.7 },
-    { url: `${BASE}/login`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${BASE}/signup`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/list`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${BASE}/privacy`, changeFrequency: "yearly", priority: 0.2 },
@@ -80,5 +79,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     }));
 
-  return [...statics, ...oppUrls, ...projectUrls, ...profileUrls];
+  // ── Public announcements ──────────────────────────────────────
+  // Only announcements sent to everyone get a public page (migration 077
+  // enforces that with a check constraint), so this list is already the
+  // publishable set — no extra filtering needed here.
+  // admin_broadcasts is admin-only for select (063) and the sitemap is built by
+  // an anonymous client, so this goes through a SECURITY DEFINER index function
+  // that returns nothing but the slug and the dates. Returns empty (and the
+  // sitemap simply omits announcements) until migration 078 has been run.
+  const { data: announcements } = await supabase.rpc("public_announcement_index");
+
+  const announcementUrls: MetadataRoute.Sitemap = (announcements ?? []).map((a: any) => ({
+    url: `${BASE}/announcements/${a.public_slug}`,
+    lastModified: a.edited_at ?? a.created_at ?? new Date().toISOString(),
+    changeFrequency: "yearly" as const,
+    priority: 0.4,
+  }));
+
+  return [...statics, ...oppUrls, ...projectUrls, ...profileUrls, ...announcementUrls];
 }

@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
+import { ROBOTS_NOINDEX } from "@/lib/seo";
 "use client";
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+
+// Transactional handoff page — nothing for a searcher.
+export const metadata: Metadata = {
+  title: "Connect extension",
+  robots: ROBOTS_NOINDEX,
+};
 
 type Status = "checking" | "sent" | "no-session";
 

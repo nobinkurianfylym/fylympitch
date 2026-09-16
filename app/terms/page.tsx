@@ -3,7 +3,8 @@ import LegalPage from "@/components/LegalPage";
 
 export const metadata: Metadata = {
   title: "Terms of Service — PITCH.FYLYM",
-  description: "The terms you agree to when you use PITCH.FYLYM, including who owns what you upload.",
+  description:
+    "The terms you agree to when you use PITCH.FYLYM — who owns the scripts, decks and projects you upload, what we may do with them, and how to close your account.",
   alternates: { canonical: "/terms" },
 };
 

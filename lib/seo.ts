@@ -22,6 +22,85 @@ export function absoluteUrl(path = "/"): string {
   return `${SITE.host}${p}`;
 }
 
+// ── Page metadata builder ────────────────────────────────────────────────────
+//
+// Every page was hand-rolling its own metadata object, and they had drifted:
+// some declared openGraph and some did not, some set a canonical and some did
+// not, and the ones that forgot openGraph shared with NO image at all — a
+// page-level openGraph replaces the root layout's outright rather than merging
+// with it, which is the single most-repeated mistake in this codebase.
+//
+// One builder, so a page states what it is about and gets a complete, correct
+// head every time.
+
+export interface PageMetaInput {
+  /** ~50-60 chars. The site name is appended — do not include it. */
+  title: string;
+  /** ~120-160 chars. Written for a human reading a result, not for a crawler. */
+  description: string;
+  /** Site-relative path, e.g. "/opportunities". Becomes the canonical URL. */
+  path: string;
+  /** Absolute URL or site-relative path. Defaults to the 1200x630 site card. */
+  image?: string | null;
+  /** Portrait artwork (a poster) shares as a summary card, not letterboxed. */
+  imageIsPortrait?: boolean;
+  /** Defaults to indexable. Pass false for gated, thin or transactional pages. */
+  index?: boolean;
+  /** "website" (default) or "article". */
+  type?: "website" | "article";
+}
+
+/**
+ * Build a complete Metadata object: title, description, canonical, OpenGraph
+ * and Twitter, all consistent with each other.
+ */
+export function pageMetadata(input: PageMetaInput) {
+  const {
+    title, description, path, image = null,
+    imageIsPortrait = false, index = true, type = "website",
+  } = input;
+
+  const fullTitle = title.includes(SITE.name) ? title : `${title} — ${SITE.name}`;
+  const url = absoluteUrl(path);
+  const img = image || "/og-default.png";
+
+  return {
+    title: fullTitle,
+    description,
+    alternates: { canonical: url },
+    robots: index ? ROBOTS_INDEX : ROBOTS_NOINDEX,
+    openGraph: {
+      title: fullTitle,
+      description,
+      url,
+      siteName: SITE.name,
+      type,
+      images: image && imageIsPortrait
+        ? [{ url: img, alt: title }]
+        : [{ url: img, width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      // A portrait poster centre-cropped into a large card loses its title
+      // treatment at the top and its credits at the bottom. Shown small and
+      // uncropped beside the text instead.
+      card: imageIsPortrait ? ("summary" as const) : ("summary_large_image" as const),
+      title: fullTitle,
+      description,
+      images: [img],
+    },
+  };
+}
+
+/** Trim a body of text into a meta description without cutting mid-word. */
+export function metaDescription(text: string | null | undefined, max = 158): string {
+  const clean = (text ?? "").replace(/\s+/g, " ").trim();
+  if (!clean) return "";
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[,;:.\s]+$/, "") + "…";
+}
+
 /** Next.js `robots` metadata object for an indexable page. */
 export const ROBOTS_INDEX = {
   index: true,

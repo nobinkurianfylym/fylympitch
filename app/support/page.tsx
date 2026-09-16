@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { ROBOTS_NOINDEX } from "@/lib/seo";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -5,6 +7,12 @@ import AdminChat, { type AdminChatMessage } from "@/components/AdminChat";
 import BroadcastBody from "@/components/BroadcastBody";
 import BroadcastActions from "@/components/BroadcastActions";
 import { fetchBroadcastSocial } from "@/lib/broadcast-social";
+
+// Signed-in inbox. Already disallowed in robots.txt; this is the meta-level equivalent.
+export const metadata: Metadata = {
+  title: "Messages",
+  robots: ROBOTS_NOINDEX,
+};
 
 export const dynamic = "force-dynamic";
 

@@ -6,8 +6,19 @@ import ShareButton from "@/components/ShareButton";
 import SearchInput from "@/components/SearchInput";
 import { formatBudget } from "@/lib/format";
 import FilmIdentity from "@/components/FilmIdentity";
+import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+// This page is in the sitemap at priority 0.7 and had no metadata of its own,
+// so it competed for nothing and shared as the generic site card.
+export const metadata: Metadata = pageMetadata({
+  title: "Film Projects Looking for Funding & Producers",
+  description:
+    "Browse independent film projects seeking finance, co-producers and partners — features, documentaries, series and animation from filmmakers worldwide.",
+  path: "/filmprojects",
+});
 
 const FORMATS = ["Feature", "Documentary", "Series", "Animation"];
 

@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
+import { ROBOTS_NOINDEX } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+// Account setup. Covers every step under /onboarding in one place.
+export const metadata: Metadata = {
+  title: "Onboarding",
+  robots: ROBOTS_NOINDEX,
+};
+
 
 export const dynamic = "force-dynamic";
 

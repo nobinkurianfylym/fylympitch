@@ -15,6 +15,52 @@ import HeaderCTA from "@/components/HeaderCTA";
 import { createClient } from "@/lib/supabase/server";
 import ProducerProjectTicker from "@/components/ProducerProjectTicker";
 import { Icon } from "@/components/Icon";
+import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
+
+/** Live count of active opportunities, shared by the metadata and the page. */
+async function activeOpportunityCount(): Promise<number> {
+  try {
+    const supabase = await createClient();
+    const { data: snap } = await supabase
+      .from("platform_metrics")
+      .select("active_opportunities")
+      .order("computed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const cached = (snap as any)?.active_opportunities ?? 0;
+    if (cached) return cached;
+    const { count } = await supabase
+      .from("opportunities")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true);
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+// ── SEO ──────────────────────────────────────────────────────────────────────
+// The homepage had no metadata of its own and fell back to the root layout's,
+// which is written to be a sane default for every page rather than to rank for
+// anything. It is the page most likely to be searched for by name and the one
+// every other page links to, so it states plainly what the site does and for
+// whom, and carries its own canonical.
+//
+// The fund count is read live: a description that says "180+" while the
+// catalogue holds 593 undersells the site by three times and goes stale the
+// moment anything is added.
+export async function generateMetadata(): Promise<Metadata> {
+  const n = await activeOpportunityCount();
+  const scale = n > 0 ? `${n.toLocaleString("en-US")} film funds, grants, labs and markets` : "film funds, grants, labs and markets";
+
+  return pageMetadata({
+    title: "Film Funding for Independent Filmmakers",
+    description:
+      `Find the money for your film. PITCH.FYLYM matches your project against ${scale} worldwide, scores what you qualify for, and connects you to producers and investors.`,
+    path: "/",
+  });
+}
 
 // Exact live opportunity count for on-page copy.
 //

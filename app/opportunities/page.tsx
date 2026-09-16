@@ -3,29 +3,37 @@ import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import SearchInput from "@/components/SearchInput";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export const metadata: Metadata = {
-  title: "Film Funds, Grants & Opportunities — PITCH.FYLYM",
-  description:
-    "Discover 180+ film grants, labs, funds, co-productions, sales agents, distributors, tax incentives and investors from 38+ countries. Find the right financing for your independent film.",
-  openGraph: {
-    // Declared explicitly: a page-level openGraph replaces the root
-    // layout's outright, so omitting this shares with no image at all.
-    images: [{ url: "/og-default.png", width: 1200, height: 630 }],
-    title: "Film Funds, Grants & Opportunities — PITCH.FYLYM",
+// The description used to claim "180+ ... 38+ countries". The catalogue has
+// grown well past that, so the page was underselling itself by several times
+// and would have gone stale again the moment anything was added. Read live,
+// with a fallback that simply drops the number rather than printing a wrong one.
+export async function generateMetadata(): Promise<Metadata> {
+  let n = 0;
+  try {
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("opportunities")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true);
+    n = count ?? 0;
+  } catch {
+    n = 0;
+  }
+
+  const scale = n > 0 ? `${n.toLocaleString("en-US")} ` : "";
+
+  return pageMetadata({
+    title: "Film Funds, Grants, Labs & Co-Production Markets",
     description:
-      "Discover 180+ film grants, labs, funds, co-productions, sales agents, distributors, tax incentives and investors from 38+ countries.",
-    url: "https://pitch.fylym.com/opportunities",
-    siteName: "PITCH.FYLYM",
-    type: "website",
-  },
-  alternates: {
-    canonical: "https://pitch.fylym.com/opportunities",
-  },
-};
+      `Browse ${scale}film funding opportunities worldwide — grants, development funds, labs, co-production markets, tax incentives, sales agents and distributors. Filter by country, stage and budget.`,
+    path: "/opportunities",
+  });
+}
 
 const BAND_LABEL: Record<string, string> = {
   // Development

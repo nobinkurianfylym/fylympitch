@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
+import { ROBOTS_NOINDEX } from "@/lib/seo";
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
+
+// A redirect to /u/{username}. The canonical profile page is the one that should rank.
+export const metadata: Metadata = {
+  title: "Producer",
+  robots: ROBOTS_NOINDEX,
+};
 
 export const dynamic = "force-dynamic";
 

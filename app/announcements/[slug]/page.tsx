@@ -6,7 +6,7 @@ import Wordmark from "@/components/Wordmark";
 import ShareLinkButton from "@/components/ShareLinkButton";
 import BroadcastBody, { firstBroadcastImage } from "@/components/BroadcastBody";
 import { parseBroadcastBody } from "@/lib/broadcast-body";
-import { SITE, absoluteUrl } from "@/lib/seo";
+import { pageMetadata } from "@/lib/seo";
 
 export const revalidate = 300;
 
@@ -47,8 +47,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!a) return { title: "Announcement not found — PITCH.FYLYM" };
 
   const heading = a.subject?.trim() || "An announcement from PITCH.FYLYM";
-  const title = `${heading} | PITCH.FYLYM`;
-
   const plain = parseBroadcastBody(a.body).text.replace(/\s+/g, " ").trim();
   const description = plain
     ? plain.slice(0, 155) + (plain.length > 155 ? "…" : "")
@@ -59,29 +57,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // the root layout's outright, so the fallback has to be spelled out here or
   // the link shares with no image at all.
   const image = firstBroadcastImage(a.body);
-  const url = absoluteUrl(`/announcements/${slug}`);
 
-  return {
-    title,
+  return pageMetadata({
+    title: heading,
     description,
-    openGraph: {
-      title,
-      description,
-      url,
-      siteName: SITE.name,
-      type: "article",
-      images: image
-        ? [{ url: image, alt: heading }]
-        : [{ url: "/og-default.png", width: 1200, height: 630 }],
-    },
-    twitter: {
-      card: image ? "summary" : "summary_large_image",
-      title,
-      description,
-      images: [image || "/og-default.png"],
-    },
-    alternates: { canonical: url },
-  };
+    path: `/announcements/${slug}`,
+    image,
+    imageIsPortrait: !!image,
+    type: "article",
+  });
 }
 
 export default async function AnnouncementPage({ params }: Props) {

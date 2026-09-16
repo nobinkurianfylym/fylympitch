@@ -3,7 +3,8 @@ import LegalPage from "@/components/LegalPage";
 
 export const metadata: Metadata = {
   title: "Cookie Policy — PITCH.FYLYM",
-  description: "The few cookies PITCH.FYLYM sets, what each one does, and how long it lasts.",
+  description:
+    "The few cookies PITCH.FYLYM sets, what each one is for, how long it lasts, and how to refuse the ones that are not needed to keep you signed in.",
   alternates: { canonical: "/cookies" },
 };
 

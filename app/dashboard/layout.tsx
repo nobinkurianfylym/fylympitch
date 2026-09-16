@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { ROBOTS_NOINDEX } from "@/lib/seo";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -5,6 +7,13 @@ import Wordmark from "@/components/Wordmark";
 import DashboardNav from "@/components/DashboardNav";
 import { signOut } from "@/lib/auth-actions";
 import type { Profile } from "@/types";
+
+// Signed-in area. robots.txt already disallows it; the meta tag is the belt to that braces, and covers the case where a URL is linked from outside.
+export const metadata: Metadata = {
+  title: "Dashboard",
+  robots: ROBOTS_NOINDEX,
+};
+
 
 export const dynamic = "force-dynamic";
 

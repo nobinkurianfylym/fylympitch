@@ -3,7 +3,8 @@ import LegalPage from "@/components/LegalPage";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — PITCH.FYLYM",
-  description: "What PITCH.FYLYM collects, why, who it is shared with, and how to get it deleted.",
+  description:
+    "What PITCH.FYLYM collects about filmmakers and producers, why we collect it, who it is shared with, how long we keep it, and how to have it deleted.",
   alternates: { canonical: "/privacy" },
 };
 

@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
+import { ROBOTS_NOINDEX } from "@/lib/seo";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Project, Opportunity } from "@/types";
 import { PrintButton } from "./PrintButton";
+
+// A generated packet for one filmmaker's one application. Private by nature.
+export const metadata: Metadata = {
+  title: "Application packet",
+  robots: ROBOTS_NOINDEX,
+};
 
 export const dynamic = "force-dynamic";
 

@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
+import { ROBOTS_NOINDEX } from "@/lib/seo";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
+
+// Admin only. Never indexable under any circumstances.
+export const metadata: Metadata = {
+  title: "Admin",
+  robots: ROBOTS_NOINDEX,
+};
+
 
 export const dynamic = "force-dynamic";
 

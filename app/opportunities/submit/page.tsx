@@ -3,11 +3,17 @@ import Wordmark from "@/components/Wordmark";
 import { SubmitOpportunityForm } from "./SubmitOpportunityForm";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Submit an Opportunity — PITCH.FYLYM",
-  description: "Know a film grant, fund, or opportunity that filmmakers should know about? Submit it for review.",
-};
+// Disallowed in robots.txt, so the metadata says noindex too rather than
+// sending two different signals. /list is the page that ranks for this intent.
+export const metadata: Metadata = pageMetadata({
+  title: "Submit an Opportunity",
+  description:
+    "Know a film grant, fund, lab or market that filmmakers should know about? Submit it and we will review and add it.",
+  path: "/opportunities/submit",
+  index: false,
+});
 
 export default async function SubmitOpportunityPage() {
   const supabase = await createClient();

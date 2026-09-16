@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
+import { ROBOTS_NOINDEX } from "@/lib/seo";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+// Signed-in producer area. Covers every page under /producerstudio.
+export const metadata: Metadata = {
+  title: "Producer Studio",
+  robots: ROBOTS_NOINDEX,
+};
+
 
 export const dynamic = "force-dynamic";
 
