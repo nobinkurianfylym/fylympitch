@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { parseBroadcastBody } from "@/lib/broadcast-body";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import AdminChat, { type AdminChatMessage } from "@/components/AdminChat";
+import BroadcastBody from "@/components/BroadcastBody";
+import BroadcastActions from "@/components/BroadcastActions";
+import { fetchBroadcastSocial } from "@/lib/broadcast-social";
 
 export const dynamic = "force-dynamic";
 
@@ -12,92 +14,6 @@ function fmtDate(iso: string): string {
     month: "short",
     year: "numeric",
   });
-}
-
-/**
- * A broadcast's own text, then its attachments. Images render as images — a
- * poster is the message, and a raw storage URL is not something anyone reads.
- * Everything else stays a named link. URLs left inside the text are linkified
- * so a link an admin typed by hand still works.
- */
-function BroadcastBody({ body }: { body: string | null }) {
-  if (!body) return null;
-  const { text, files } = parseBroadcastBody(body);
-  const images = files.filter((f) => f.isImage);
-  const others = files.filter((f) => !f.isImage);
-
-  return (
-    <>
-      {text && (
-        <p className="text-[14px] text-ink/80 mt-1 whitespace-pre-wrap leading-relaxed">
-          {linkify(text)}
-        </p>
-      )}
-
-      {images.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-3">
-          {images.map((f) => (
-            <a
-              key={f.url}
-              href={f.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-card overflow-hidden border border-line hover:border-gold transition-colors"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={f.url}
-                alt={f.name}
-                loading="lazy"
-                className="block max-h-[320px] w-auto object-contain bg-parchment"
-              />
-            </a>
-          ))}
-        </div>
-      )}
-
-      {others.length > 0 && (
-        <ul className="mt-4 space-y-1.5">
-          {others.map((f) => (
-            <li key={f.url}>
-              <a
-                href={f.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[13px] text-ink hover:text-gold transition-colors"
-              >
-                <span className="text-gold">◆</span>
-                <span className="underline underline-offset-2 decoration-ash/40">{f.name}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
-    </>
-  );
-}
-
-/**
- * Bare URLs inside the message text are not clickable in pre-wrapped text.
- * Split on http(s) runs and render those as links; everything else stays plain
- * text, so nothing in a message is ever interpreted as markup.
- */
-function linkify(text: string): React.ReactNode[] {
-  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
-    /^https?:\/\//.test(part) ? (
-      <a
-        key={i}
-        href={part}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-gold underline underline-offset-2 break-all hover:text-ink transition-colors"
-      >
-        {part}
-      </a>
-    ) : (
-      part
-    ),
-  );
 }
 
 export default async function SupportPage() {
@@ -120,6 +36,15 @@ export default async function SupportPage() {
 
   const thread = threadRes.data as { id: string } | null;
   const announcements = (announceRes.data ?? []) as any[];
+
+  // Like counts live on admin_broadcasts, which recipients cannot read
+  // directly — one notification row per recipient means the count cannot be
+  // derived here. Returns an empty map if migration 077 has not been run, and
+  // the reactions simply do not render.
+  const social = await fetchBroadcastSocial(
+    supabase,
+    announcements.map((a) => a.broadcast_id),
+  );
 
   let messages: AdminChatMessage[] = [];
   if (thread?.id) {
@@ -167,6 +92,18 @@ export default async function SupportPage() {
                     </span>
                   </div>
                   <BroadcastBody body={a.body} />
+
+                  {/* Announcements written before migration 073 have no
+                      broadcast_id, so there is nothing to like or link to. */}
+                  {a.broadcast_id && social.has(a.broadcast_id) && (
+                    <BroadcastActions
+                      broadcastId={a.broadcast_id}
+                      title={a.title}
+                      initialCount={social.get(a.broadcast_id)!.like_count}
+                      initialLiked={social.get(a.broadcast_id)!.liked_by_me}
+                      publicSlug={social.get(a.broadcast_id)!.public_slug}
+                    />
+                  )}
                 </div>
               ))}
             </div>

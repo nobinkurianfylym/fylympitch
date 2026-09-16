@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
 import { markAllRead, deleteNotification, deleteAllNotifications } from "@/lib/auth-actions";
 import { parseBroadcastBody, attachmentSummary } from "@/lib/broadcast-body";
+import BroadcastActions from "@/components/BroadcastActions";
+import { fetchBroadcastSocial } from "@/lib/broadcast-social";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +82,16 @@ export default async function NotificationsPage() {
     ...(oppById   ?? []).map((o: any) => [o.id   as string, o.poster_url as string | null] as const),
     ...(oppBySlug ?? []).map((o: any) => [o.slug as string, o.poster_url as string | null] as const),
   ]);
+
+  // ── Announcement reactions ───────────────────────────────────────────────
+  // One notification row per recipient means a like count cannot be counted
+  // from this table — it lives on admin_broadcasts, which recipients cannot
+  // read directly. Empty map if migration 077 has not run, and the buttons
+  // simply do not render.
+  const social = await fetchBroadcastSocial(
+    supabase,
+    (items ?? []).map((n: any) => n.broadcast_id),
+  );
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
@@ -240,6 +252,22 @@ export default async function NotificationsPage() {
                 </Link>
               ) : (
                 inner
+              )}
+
+              {/* Like + share. Outside the Link for the same reason the delete
+                  button is: a button inside an anchor is invalid markup, and
+                  the share menu opens a portal. Indented to sit under the text
+                  column rather than under the thumbnail. */}
+              {n.broadcast_id && social.has(n.broadcast_id) && (
+                <div className="pl-[84px] pb-4 -mt-2">
+                  <BroadcastActions
+                    broadcastId={n.broadcast_id}
+                    title={n.title}
+                    initialCount={social.get(n.broadcast_id)!.like_count}
+                    initialLiked={social.get(n.broadcast_id)!.liked_by_me}
+                    publicSlug={social.get(n.broadcast_id)!.public_slug}
+                  />
+                </div>
               )}
 
               {/* Delete button — absolutely positioned, never inside the Link */}

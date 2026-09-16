@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { timeAgo } from "@/lib/format";
 import { markAllRead, deleteNotification, deleteAllNotifications } from "@/lib/auth-actions";
 import { parseBroadcastBody, attachmentSummary } from "@/lib/broadcast-body";
+import BroadcastActions from "@/components/BroadcastActions";
+import { fetchBroadcastSocial } from "@/lib/broadcast-social";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,13 @@ export default async function ProducerNotificationsPage() {
     ? await supabase.from("projects").select("id, poster_path").in("id", projectIds)
     : { data: [] };
   const posterMap = new Map((projectData ?? []).map((p: any) => [p.id, p.poster_path]));
+
+  // Same as the filmmaker inbox: the count lives on admin_broadcasts, which
+  // recipients cannot read directly, so it comes back through the RPC.
+  const social = await fetchBroadcastSocial(
+    supabase,
+    (items ?? []).map((n: any) => n.broadcast_id),
+  );
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
@@ -143,6 +152,23 @@ export default async function ProducerNotificationsPage() {
                 </Link>
               ) : (
                 inner
+              )}
+
+              {/* Like + share — outside the Link, same as the delete button:
+                  a button inside an anchor is invalid markup, and the share
+                  menu opens a portal. Producer Studio duplicates this page, so
+                  anything added to the filmmaker inbox has to be added here
+                  too or producers quietly lose the feature. */}
+              {n.broadcast_id && social.has(n.broadcast_id) && (
+                <div className={`pb-4 -mt-2 ${posterUrl ? "pl-[68px]" : ""}`}>
+                  <BroadcastActions
+                    broadcastId={n.broadcast_id}
+                    title={n.title}
+                    initialCount={social.get(n.broadcast_id)!.like_count}
+                    initialLiked={social.get(n.broadcast_id)!.liked_by_me}
+                    publicSlug={social.get(n.broadcast_id)!.public_slug}
+                  />
+                </div>
               )}
 
               {/* Delete button — outside the Link, absolutely positioned */}

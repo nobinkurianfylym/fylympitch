@@ -1635,3 +1635,35 @@ export async function deleteAccount() {
   const { redirect } = await import("next/navigation");
   redirect("/");
 }
+
+// ── ANNOUNCEMENTS: like ──────────────────────────────────────────────────────
+
+/**
+ * Toggle the caller's like on an admin announcement.
+ *
+ * The write goes through toggle_broadcast_like rather than a plain insert so
+ * that the check ("were you actually sent this?") and the read-back of the
+ * count happen in one round trip — a double-click cannot race itself into two
+ * rows, and the client always gets the authoritative number back.
+ */
+export async function toggleBroadcastLike(
+  broadcastId: string
+): Promise<{ ok: boolean; liked: boolean; count: number; error?: string }> {
+  const { supabase } = await requireUser();
+
+  const { data, error } = await supabase.rpc("toggle_broadcast_like", {
+    p_broadcast_id: broadcastId,
+  });
+
+  if (error) {
+    return { ok: false, liked: false, count: 0, error: error.message };
+  }
+
+  // The RPC returns a single row: (liked, like_count).
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    ok: true,
+    liked: !!row?.liked,
+    count: Number(row?.like_count ?? 0),
+  };
+}
