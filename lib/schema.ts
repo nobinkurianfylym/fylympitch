@@ -136,11 +136,10 @@ const ORG_TYPES = new Set([
 ]);
 
 function monetaryAmount(opp: OpportunityLike): Json | undefined {
-  if (opp.max_award_usd == null && opp.min_award_usd == null) return undefined;
+  if (opp.max_award_usd == null) return undefined;
   return clean({
     "@type": "MonetaryAmount",
     currency: "USD",
-    minValue: opp.min_award_usd ?? undefined,
     maxValue: opp.max_award_usd ?? undefined,
   });
 }

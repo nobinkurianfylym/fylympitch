@@ -129,7 +129,6 @@ export type OpportunityLike = {
   country?: string | null;
   region?: string | null;
   deadline?: string | null;
-  min_award_usd?: number | null;
   max_award_usd?: number | null;
   eligible_countries?: string[] | null;
   career_stages?: string[] | null;
@@ -164,7 +163,6 @@ export function opportunityIndexability(opp: OpportunityLike): {
 
   const hasHardFact =
     opp.max_award_usd != null ||
-    opp.min_award_usd != null ||
     !!opp.deadline ||
     !!opp.country ||
     !!opp.region ||

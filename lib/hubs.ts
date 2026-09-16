@@ -23,7 +23,6 @@ export type HubRow = {
   region: string | null;
   deadline: string | null;
   deadline_note: string | null;
-  min_award_usd: number | null;
   max_award_usd: number | null;
   description: string | null;
   career_stages: string[] | null;
@@ -34,7 +33,7 @@ export type HubRow = {
 };
 
 const HUB_SELECT =
-  "id, slug, title, opp_type, country, region, deadline, deadline_note, min_award_usd, max_award_usd, description, career_stages, eligible_countries, is_active, is_producer_post, posted_by_producer_id";
+  "id, slug, title, opp_type, country, region, deadline, deadline_note, max_award_usd, description, career_stages, eligible_countries, is_active, is_producer_post, posted_by_producer_id";
 
 /** All opportunities that pass the indexation threshold, sorted by soonest deadline. */
 export async function getIndexableOpportunities(
@@ -76,8 +75,8 @@ export function hubStats(rows: HubRow[]): HubStats {
   const now = Date.now();
 
   for (const r of rows) {
-    const lo = r.min_award_usd ?? r.max_award_usd;
-    const hi = r.max_award_usd ?? r.min_award_usd;
+    const lo = r.max_award_usd;
+    const hi = r.max_award_usd;
     if (lo != null) minAward = minAward == null ? lo : Math.min(minAward, lo);
     if (hi != null) maxAward = maxAward == null ? hi : Math.max(maxAward, hi);
     if (r.deadline) {

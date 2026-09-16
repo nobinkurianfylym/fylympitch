@@ -24,15 +24,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Opportunity record pages (indexation-threshold gated) ─────
   // Only submit records that actually earn a place in the index. Thin or
   // producer-brief records are intentionally excluded (they render noindex).
-  const { data: opps } = await supabase
+  // select("*") for the same reason as the detail page: this list used to name
+  // min_award_usd, which does not exist, so PostgREST rejected the request and
+  // every single fund URL dropped out of the sitemap without a word. The
+  // sitemap looked fine — it just had 36 entries instead of ~190.
+  const { data: opps, error: oppErr } = await supabase
     .from("opportunities")
-    .select(
-      "slug, updated_at, is_active, is_producer_post, posted_by_producer_id, title, description, opp_type, country, region, deadline, min_award_usd, max_award_usd, eligible_countries, career_stages",
-    )
+    .select("*")
     .eq("is_active", true)
     .not("slug", "is", null)
     .order("updated_at", { ascending: false })
     .limit(5000);
+
+  if (oppErr) console.error("[sitemap] opportunity query failed:", oppErr.message);
 
   const oppUrls: MetadataRoute.Sitemap = (opps ?? [])
     .filter((o: any) => opportunityIndexability(o).index)

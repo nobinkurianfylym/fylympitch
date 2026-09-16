@@ -10,7 +10,7 @@ import type { Opportunity } from "@/types";
 import JsonLd from "@/components/JsonLd";
 import AuthAwareCta from "@/components/AuthAwareCta";
 import { opportunitySchema, breadcrumbSchema, faqPageSchema } from "@/lib/schema";
-import { opportunityRobots } from "@/lib/seo";
+import { opportunityRobots, ROBOTS_NOINDEX } from "@/lib/seo";
 
 export const revalidate = 3600; // ISR — re-generate at most once per hour
 
@@ -20,14 +20,25 @@ type Props = { params: Promise<{ slug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const supabase = await createClient();
-  const { data: opp } = await supabase
+  // select("*") on purpose. A named list here previously included a column
+  // that does not exist on the table; PostgREST rejects the entire request,
+  // `opp` arrives null, and this function falls through to the not-found
+  // branch below — which is how every live fund page came to serve
+  // <title>Fund Not Found</title> with no description and no canonical while
+  // the page body rendered perfectly. A star select cannot fail that way.
+  const { data: opp, error } = await supabase
     .from("opportunities")
-    .select("slug, title, opp_type, description, country, region, deadline, max_award_usd, min_award_usd, is_active, is_producer_post, posted_by_producer_id, eligible_countries, career_stages, poster_url")
+    .select("*")
     .eq("slug", slug)
     .eq("is_active", true)
     .single<any>();
 
-  if (!opp) return { title: "Fund Not Found — PITCH.FYLYM" };
+  if (error) {
+    // Do not let a query fault masquerade as a missing fund ever again.
+    console.error("[opportunity metadata] query failed for slug", slug, error.message);
+  }
+
+  if (!opp) return { title: "Fund Not Found — PITCH.FYLYM", robots: ROBOTS_NOINDEX };
 
   const typeLabel   = TYPE_LABEL[opp.opp_type] ?? opp.opp_type;
   const location    = opp.country || opp.region || "International";
@@ -133,8 +144,6 @@ export default async function FundDetailPage({ params }: Props) {
   const awardText =
     o.max_award_usd != null
       ? `up to ${usd(o.max_award_usd)}`
-      : o.min_award_usd != null
-      ? `from ${usd(o.min_award_usd)}`
       : null;
   const deadlineText = formatDeadline(opp.deadline, opp.deadline_note ?? null);
   const ledeText = `${opp.title} is a ${typeLabel.toLowerCase()} ${
