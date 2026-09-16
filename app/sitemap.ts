@@ -32,8 +32,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from("opportunities")
     .select("*")
     .eq("is_active", true)
-    .not("slug", "is", null)
-    .order("updated_at", { ascending: false })
+    // No .order() on purpose. PostgREST rejects the whole request when ORDER BY
+    // names a column that does not exist — the same failure mode as the select
+    // list, and just as silent. A sitemap has no use for ordering, so this is a
+    // dependency with a real downside and no upside. (slug is NOT NULL per
+    // migration 030, so it needs no filter either.)
     .limit(5000);
 
   if (oppErr) console.error("[sitemap] opportunity query failed:", oppErr.message);
@@ -42,7 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((o: any) => opportunityIndexability(o).index)
     .map((o: any) => ({
       url: `${BASE}/opportunities/${o.slug}`,
-      lastModified: o.updated_at ?? new Date().toISOString(),
+      lastModified: o.updated_at ?? o.created_at ?? new Date().toISOString(),
       changeFrequency: "weekly" as const,
       priority: 0.8,
     }));
