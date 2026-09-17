@@ -71,8 +71,8 @@ export default function BroadcastBody({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={sized(f.url, isLarge ? 1040 : 640)}
-                srcSet={srcSet2x(f.url, isLarge ? 1040 : 640)}
+                src={sized(f.url, isLarge ? 520 : 320, 70, "height")}
+                srcSet={srcSet2x(f.url, isLarge ? 520 : 320, 70, "height")}
                 alt={f.name}
                 loading="lazy"
                 decoding="async"

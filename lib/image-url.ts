@@ -21,9 +21,18 @@
 const OBJECT_PATH = "/storage/v1/object/public/";
 const RENDER_PATH = "/storage/v1/render/image/public/";
 
+/**
+ * Constrain by whichever side the layout actually constrains.
+ *
+ * A portrait image in a `max-h-[520px] w-auto` box is bounded by its HEIGHT —
+ * asking for a width of 1040 there delivers roughly three times the pixels
+ * that are ever painted. Passing "height" sizes it by the real constraint.
+ */
+export type Dimension = "width" | "height";
+
 /** Supabase rejects anything outside 1–2500. */
-function clampWidth(w: number): number {
-  return Math.max(1, Math.min(2500, Math.round(w)));
+function clampSize(n: number): number {
+  return Math.max(1, Math.min(2500, Math.round(n)));
 }
 
 /**
@@ -39,14 +48,15 @@ function clampWidth(w: number): number {
  */
 export function sized(
   url: string | null | undefined,
-  width: number,
+  size: number,
   quality = 70,
+  dimension: Dimension = "width",
 ): string {
   if (!url) return "";
   if (!url.includes(OBJECT_PATH)) return url;
 
   const base = url.split("?")[0].replace(OBJECT_PATH, RENDER_PATH);
-  return `${base}?width=${clampWidth(width)}&quality=${quality}`;
+  return `${base}?${dimension}=${clampSize(size)}&quality=${quality}`;
 }
 
 /**
@@ -59,9 +69,10 @@ export function sized(
  */
 export function srcSet2x(
   url: string | null | undefined,
-  width: number,
+  size: number,
   quality = 70,
+  dimension: Dimension = "width",
 ): string {
   if (!url || !url.includes(OBJECT_PATH)) return "";
-  return `${sized(url, width, quality)} 1x, ${sized(url, width * 2, quality)} 2x`;
+  return `${sized(url, size, quality, dimension)} 1x, ${sized(url, size * 2, quality, dimension)} 2x`;
 }
