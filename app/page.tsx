@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
@@ -18,28 +19,6 @@ import { Icon } from "@/components/Icon";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 
-/** Live count of active opportunities, shared by the metadata and the page. */
-async function activeOpportunityCount(): Promise<number> {
-  try {
-    const supabase = await createClient();
-    const { data: snap } = await supabase
-      .from("platform_metrics")
-      .select("active_opportunities")
-      .order("computed_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const cached = (snap as any)?.active_opportunities ?? 0;
-    if (cached) return cached;
-    const { count } = await supabase
-      .from("opportunities")
-      .select("id", { count: "exact", head: true })
-      .eq("is_active", true);
-    return count ?? 0;
-  } catch {
-    return 0;
-  }
-}
-
 // ── SEO ──────────────────────────────────────────────────────────────────────
 // The homepage had no metadata of its own and fell back to the root layout's,
 // which is written to be a sane default for every page rather than to rank for
@@ -51,7 +30,7 @@ async function activeOpportunityCount(): Promise<number> {
 // catalogue holds 593 undersells the site by three times and goes stale the
 // moment anything is added.
 export async function generateMetadata(): Promise<Metadata> {
-  const n = await activeOpportunityCount();
+  const n = await fetchOppCount(await createClient());
   const scale = n > 0 ? `${n.toLocaleString("en-US")} film funds, grants, labs and markets` : "film funds, grants, labs and markets";
 
   return pageMetadata({
@@ -110,52 +89,26 @@ const FAQS = [
   ["How do producers and investors join?", "Sign up with a single Google account or email — you automatically get access to the Producer Studio. Once an admin verifies your account, you'll also see private projects submitted by filmmakers."],
 ];
 
-export default async function Home() {
-  const cookieStore = await cookies();
-  const rawRole = cookieStore.get("fyp_role")?.value;
+type TrendingProject = {
+  id: string; slug: string | null; title: string; genre: string; format: string;
+  stage: string; country: string; budget: string; seeking: string;
+  posterPath: string | null; deckCoverPath: string | null;
+};
 
-  // Auth + projects in parallel
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  // Fetch profile role + producer status (parallel, skip if not logged in)
-  let accountRole = "FILMMAKER";
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-    const dbRole = (profile as any)?.role ?? "filmmaker";
-    if (dbRole === "admin")    accountRole = "ADMIN";
-    else if (dbRole === "producer") accountRole = "PRODUCER";
-    else                            accountRole = "FILMMAKER";
-  }
-
-  // Role for RoleProvider:
-  // - logged out or admin → use cookie (they can toggle)
-  // - logged-in filmmaker/producer → lock to their actual DB role
-  const isAdmin = accountRole === "ADMIN";
-  let initialRole: Role;
-  if (!user || isAdmin) {
-    initialRole = rawRole === "producer" ? "producer" : "filmmaker";
-  } else {
-    initialRole = accountRole === "PRODUCER" ? "producer" : "filmmaker";
-  }
-  let trendingProjects: {
-    id: string; slug: string | null; title: string; genre: string; format: string;
-    stage: string; country: string; budget: string; seeking: string;
-    posterPath: string | null; deckCoverPath: string | null;
-  }[] = [];
+/** Public projects for the ticker. Independent of who is looking. */
+async function fetchTrending(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<TrendingProject[]> {
   try {
     const { data: raw } = await supabase
       .from("projects")
       .select("id, slug, title, genre, format, stage, country, budget_usd, poster_path, deck_cover_path")
       .eq("is_public", true)
-    .is("target_producer_id", null)
+      .is("target_producer_id", null)
       .order("created_at", { ascending: false })
       .limit(40);
-    trendingProjects = (raw ?? []).map((p: any) => {
+
+    return (raw ?? []).map((p: any) => {
       const usd: number | null = p.budget_usd;
       const budget = !usd ? "TBC"
         : usd >= 1_000_000 ? `$${(usd / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`
@@ -173,12 +126,19 @@ export default async function Home() {
         deckCoverPath: p.deck_cover_path ?? null,
       };
     });
-  } catch { /* ticker shows empty state gracefully */ }
+  } catch {
+    return []; // ticker shows its empty state gracefully
+  }
+}
 
-  // Live opportunity count for on-page copy — same source PlatformMetrics uses
-  // (latest daily snapshot, with a live count fallback). Floored so the copy
-  // never claims more opportunities than actually exist.
-  let oppCount = 0;
+/**
+ * Live opportunity count for the on-page copy — the daily snapshot, falling
+ * back to a live count. Also used by generateMetadata above; both go through
+ * the same source so the description and the page never disagree.
+ */
+const fetchOppCount = cache(async (
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<number> => {
   try {
     const { data: snap } = await supabase
       .from("platform_metrics")
@@ -186,15 +146,65 @@ export default async function Home() {
       .order("computed_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    oppCount = (snap as any)?.active_opportunities ?? 0;
-    if (!oppCount) {
-      const { count } = await supabase
-        .from("opportunities")
-        .select("id", { count: "exact", head: true })
-        .eq("is_active", true);
-      oppCount = count ?? 0;
-    }
-  } catch { oppCount = 0; }
+    const cached = (snap as any)?.active_opportunities ?? 0;
+    if (cached) return cached;
+
+    const { count } = await supabase
+      .from("opportunities")
+      .select("id", { count: "exact", head: true })
+      .eq("is_active", true);
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+});
+
+export default async function Home() {
+  const cookieStore = await cookies();
+  const rawRole = cookieStore.get("fyp_role")?.value;
+  const supabase = await createClient();
+
+  // ── One round trip instead of four ────────────────────────────────────────
+  // These three used to run one after another: auth, then the ticker query,
+  // then the metrics snapshot. None of them needs the result of any other, so
+  // the page spent three round-trips to Supabase doing nothing but waiting.
+  // The queries themselves take single-digit milliseconds; the latency is the
+  // hop, and the hop is what this removes.
+  const [userRes, trendingProjects, oppCount] = await Promise.all([
+    supabase.auth.getUser(),
+    fetchTrending(supabase),
+    fetchOppCount(supabase),
+  ]);
+
+  const user = userRes.data.user;
+
+  // The one query that genuinely depends on another: it needs the user id.
+  // Logged-out visitors — every search engine, and most first-time arrivals —
+  // never pay for it at all.
+  let accountRole = "FILMMAKER";
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    const dbRole = (profile as any)?.role ?? "filmmaker";
+    if (dbRole === "admin")         accountRole = "ADMIN";
+    else if (dbRole === "producer") accountRole = "PRODUCER";
+    else                            accountRole = "FILMMAKER";
+  }
+
+  // Role for RoleProvider:
+  // - logged out or admin → use cookie (they can toggle)
+  // - logged-in filmmaker/producer → lock to their actual DB role
+  const isAdmin = accountRole === "ADMIN";
+  let initialRole: Role;
+  if (!user || isAdmin) {
+    initialRole = rawRole === "producer" ? "producer" : "filmmaker";
+  } else {
+    initialRole = accountRole === "PRODUCER" ? "producer" : "filmmaker";
+  }
+
   const oppLabel = exactCount(oppCount);
 
   return (
