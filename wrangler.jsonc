@@ -1,20 +1,56 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "main": ".open-next/worker.js",
-  "name": "fylympitch",
-  "account_id": "7dc9656937799394535653cb1f73943a",
-  "compatibility_date": "2026-06-15",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS"
-  },
-  "images": {
-    "binding": "IMAGES"
-  },
-  "observability": {
-    "enabled": true
-  }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "fylympitch",
+	"account_id": "7dc9656937799394535653cb1f73943a",
+	"compatibility_date": "2026-06-15",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"images": {
+		"binding": "IMAGES"
+	},
+	"observability": {
+		"enabled": true
+	},
+	// The binding NAME is fixed by OpenNext — it looks up
+	// NEXT_INC_CACHE_R2_BUCKET by that exact string. Wrangler's `r2 bucket
+	// create` helpfully offered "fylympitch_cache"; that name would have been
+	// silently ignored and the cache would never have been used.
+	"r2_buckets": [
+		{
+			"bucket_name": "fylympitch-cache",
+			"binding": "NEXT_INC_CACHE_R2_BUCKET"
+		}
+	],
+
+	// Time-based revalidation needs a queue to do the refresh out of band,
+	// otherwise a stale hit blocks on regenerating the page.
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "NEXT_CACHE_DO_QUEUE",
+				"class_name": "DOQueueHandler"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["DOQueueHandler"]
+		}
+	],
+
+	// The queue calls the worker back to regenerate a page, so the worker
+	// needs a reference to itself.
+	"services": [
+		{
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "fylympitch"
+		}
+	]
 }

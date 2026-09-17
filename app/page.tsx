@@ -18,6 +18,7 @@ import ProducerProjectTicker from "@/components/ProducerProjectTicker";
 import { Icon } from "@/components/Icon";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { getTrendingProjects, getOpportunityCount } from "@/lib/cached-queries";
 
 // ── SEO ──────────────────────────────────────────────────────────────────────
 // The homepage had no metadata of its own and fell back to the root layout's,
@@ -30,7 +31,7 @@ import { pageMetadata } from "@/lib/seo";
 // catalogue holds 593 undersells the site by three times and goes stale the
 // moment anything is added.
 export async function generateMetadata(): Promise<Metadata> {
-  const n = await fetchOppCount(await createClient());
+  const n = await getOpportunityCount();
   const scale = n > 0 ? `${n.toLocaleString("en-US")} film funds, grants, labs and markets` : "film funds, grants, labs and markets";
 
   return pageMetadata({
@@ -89,76 +90,6 @@ const FAQS = [
   ["How do producers and investors join?", "Sign up with a single Google account or email — you automatically get access to the Producer Studio. Once an admin verifies your account, you'll also see private projects submitted by filmmakers."],
 ];
 
-type TrendingProject = {
-  id: string; slug: string | null; title: string; genre: string; format: string;
-  stage: string; country: string; budget: string; seeking: string;
-  posterPath: string | null; deckCoverPath: string | null;
-};
-
-/** Public projects for the ticker. Independent of who is looking. */
-async function fetchTrending(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-): Promise<TrendingProject[]> {
-  try {
-    const { data: raw } = await supabase
-      .from("projects")
-      .select("id, slug, title, genre, format, stage, country, budget_usd, poster_path, deck_cover_path")
-      .eq("is_public", true)
-      .is("target_producer_id", null)
-      .order("created_at", { ascending: false })
-      .limit(40);
-
-    return (raw ?? []).map((p: any) => {
-      const usd: number | null = p.budget_usd;
-      const budget = !usd ? "TBC"
-        : usd >= 1_000_000 ? `$${(usd / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`
-        : usd >= 1_000    ? `$${Math.round(usd / 1_000)}K`
-        : `$${Math.round(usd)}`;
-      const seeking: Record<string, string> = {
-        development: "Co-Producer", pre_production: "Producer",
-        production: "Line Producer", post_production: "Sales Agent", completed: "Distribution",
-      };
-      return {
-        id: p.id, slug: p.slug ?? null, title: p.title, genre: p.genre, format: p.format,
-        stage: p.stage, country: p.country ?? "International",
-        budget, seeking: seeking[p.stage] ?? "Producer",
-        posterPath: p.poster_path ?? null,
-        deckCoverPath: p.deck_cover_path ?? null,
-      };
-    });
-  } catch {
-    return []; // ticker shows its empty state gracefully
-  }
-}
-
-/**
- * Live opportunity count for the on-page copy — the daily snapshot, falling
- * back to a live count. Also used by generateMetadata above; both go through
- * the same source so the description and the page never disagree.
- */
-const fetchOppCount = cache(async (
-  supabase: Awaited<ReturnType<typeof createClient>>,
-): Promise<number> => {
-  try {
-    const { data: snap } = await supabase
-      .from("platform_metrics")
-      .select("active_opportunities")
-      .order("computed_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    const cached = (snap as any)?.active_opportunities ?? 0;
-    if (cached) return cached;
-
-    const { count } = await supabase
-      .from("opportunities")
-      .select("id", { count: "exact", head: true })
-      .eq("is_active", true);
-    return count ?? 0;
-  } catch {
-    return 0;
-  }
-});
-
 export default async function Home() {
   const cookieStore = await cookies();
   const rawRole = cookieStore.get("fyp_role")?.value;
@@ -172,8 +103,8 @@ export default async function Home() {
   // hop, and the hop is what this removes.
   const [userRes, trendingProjects, oppCount] = await Promise.all([
     supabase.auth.getUser(),
-    fetchTrending(supabase),
-    fetchOppCount(supabase),
+    getTrendingProjects(),
+    getOpportunityCount(),
   ]);
 
   const user = userRes.data.user;

@@ -4,6 +4,7 @@ import Wordmark from "@/components/Wordmark";
 import SearchInput from "@/components/SearchInput";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { getOpportunities, getOpportunityCount } from "@/lib/cached-queries";
 import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
@@ -14,17 +15,7 @@ export const revalidate = 0;
 // and would have gone stale again the moment anything was added. Read live,
 // with a fallback that simply drops the number rather than printing a wrong one.
 export async function generateMetadata(): Promise<Metadata> {
-  let n = 0;
-  try {
-    const supabase = await createClient();
-    const { count } = await supabase
-      .from("opportunities")
-      .select("id", { count: "exact", head: true })
-      .eq("is_active", true);
-    n = count ?? 0;
-  } catch {
-    n = 0;
-  }
+  const n = await getOpportunityCount();
 
   const scale = n > 0 ? `${n.toLocaleString("en-US")} ` : "";
 
@@ -139,28 +130,37 @@ export default async function FundsPage({
                       "tv_distribution", "digital_aggregator", "educational_distribution", "airline_distribution"],
   };
 
-  let query = supabase
-    .from("opportunities")
-    .select("id, slug, title, opp_type, description, country, region, deadline, deadline_note, languages, url, app_link, is_producer_post, poster_url, key_person")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false })
-    .limit(user ? 500 : 100);
+  // Shared listing from the cache; search goes direct. The row limit is part
+  // of the cache key rather than a reason to skip caching — signed-in and
+  // signed-out visitors get two different lists, and neither list contains
+  // anything about the person who asked for it.
+  const search = q?.trim();
+  const limit = user ? 500 : 100;
+  const oppTypes = type && CATEGORY_TYPES[type] ? CATEGORY_TYPES[type] : null;
 
-  if (type && CATEGORY_TYPES[type]) {
-    query = query.in("opp_type", CATEGORY_TYPES[type]);
-  }
-  if (q?.trim()) query = (query as any).or(`title.ilike.%${q.trim()}%,description.ilike.%${q.trim()}%`);
+  const listing: Promise<any[]> = search
+    ? (() => {
+        let sq = supabase
+          .from("opportunities")
+          .select("id, slug, title, opp_type, description, country, region, deadline, deadline_note, languages, url, app_link, is_producer_post, poster_url, key_person")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (oppTypes) sq = sq.in("opp_type", oppTypes);
+        return (sq as any)
+          .or(`title.ilike.%${search}%,description.ilike.%${search}%`)
+          .then((r: any) => r.data ?? []);
+      })()
+    : getOpportunities(oppTypes, limit);
 
   // The role lookup only picks which dashboard link the header shows — it has
   // no bearing on the listing, so it rides alongside instead of in front of it.
-  const [opportunitiesRes, roleRes] = await Promise.all([
-    query,
+  const [opps, roleRes] = await Promise.all([
+    listing,
     user
       ? supabase.from("profiles").select("role").eq("id", user.id).single()
       : Promise.resolve({ data: null }),
   ]);
-
-  const opps = opportunitiesRes.data;
   const dashboardHref =
     (roleRes.data as any)?.role === "producer" ? "/producerstudio" : "/dashboard";
   const dashboardLabel = dashboardHref === "/producerstudio" ? "Producer Studio" : "Dashboard";

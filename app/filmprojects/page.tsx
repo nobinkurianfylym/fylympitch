@@ -8,6 +8,7 @@ import { formatBudget } from "@/lib/format";
 import FilmIdentity from "@/components/FilmIdentity";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { getPublicProjects } from "@/lib/cached-queries";
 
 export const dynamic = "force-dynamic";
 
@@ -34,24 +35,28 @@ export default async function ProjectsPage({
   // The listing does not depend on who is asking, so it has no reason to wait
   // for the auth round trip. This page measured ~1s TTFB, and five sequential
   // hops to Supabase were most of it.
-  let query = supabase
-    .from("projects")
-    .select("id, slug, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
-    .eq("is_public", true)
-    .is("target_producer_id", null)
-    .order("created_at", { ascending: false })
-    .limit(60);
+  // The listing is identical for everyone, so it comes from the shared cache.
+  // A search term does not: those are unbounded, so they go straight to the
+  // database rather than filling R2 with entries nobody asks for twice.
+  const search = q?.trim();
+  const listing: Promise<any[]> = search
+    ? (supabase
+        .from("projects")
+        .select("id, slug, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+        .eq("is_public", true)
+        .is("target_producer_id", null)
+        .order("created_at", { ascending: false })
+        .limit(60) as any)
+        .or(`title.ilike.%${search}%,logline.ilike.%${search}%`)
+        .then((r: any) => r.data ?? [])
+    : getPublicProjects(format);
 
-  if (format)    query = query.eq("format", format.toLowerCase());
-  if (q?.trim()) query = (query as any).or(`title.ilike.%${q.trim()}%,logline.ilike.%${q.trim()}%`);
-
-  const [userRes, projectsRes] = await Promise.all([
+  const [userRes, projects] = await Promise.all([
     supabase.auth.getUser(),
-    query,
+    listing,
   ]);
 
   const user = userRes.data.user;
-  const projects = projectsRes.data;
 
   // ── Stage 2: everything that needed the results of stage 1 ────────────────
   // Three more queries that were each awaited separately. The deck covers were
