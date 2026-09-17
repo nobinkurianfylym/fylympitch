@@ -109,8 +109,7 @@ export default function ProducerProjectTicker({
             <Link
               key={`${p.id}-${i}`}
               href={`/filmprojects/${p.slug ?? p.id}`}
-              className="group shrink-0 mx-2 bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold/40 transition-colors"
-              style={{ width: 176 }}
+              className="project-ticker-card group shrink-0 mx-2 bg-white/70 border border-line rounded-card overflow-hidden hover:border-gold/40 transition-colors"
             >
               {/* Poster. 2:3 to match the poster treatment on the project page —
                   the old 192x128 landscape tile cropped away nearly half of a
@@ -128,10 +127,7 @@ export default function ProducerProjectTicker({
 
               {/* Body */}
               <div className="px-3 pt-2.5 pb-3.5">
-                <p
-                  className="eyebrow mb-2"
-                  style={{ fontSize: 8, letterSpacing: "0.1em" }}
-                >
+                <p className="eyebrow project-ticker-eyebrow mb-2">
                   {FORMAT_LABELS[p.format] ?? p.format}
                 </p>
                 <p className="font-display text-[13px] leading-snug mb-1 group-hover:text-gold transition-colors line-clamp-2">

@@ -136,10 +136,75 @@ select:focus-visible, textarea:focus-visible {
   to   { transform: translateX(-50%); }
 }
 
-/* Responsive card sizing via CSS custom properties */
+/* ── Ticker cards ─────────────────────────────────────────────
+   These were styled with inline style={{}} objects. The ticker renders
+   ~108 cards (48 entities plus insights, doubled for the seamless loop),
+   so five style objects per card put ~540 style="" attributes into the
+   homepage HTML — and then again into the RSC payload as props, because
+   inline styles are serialised twice. That was most of the page's 201 KB.
+   Identical styles on every card belong in one rule, not 108 copies. */
 .ticker-card {
   width: 210px;
   min-height: 112px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+.ticker-card--entity  { align-items: center; padding: 0 8px; }
+.ticker-card--insight {
+  justify-content: center;
+  padding: 0 14px;
+  border-left:  1px solid rgba(191, 153, 83, 0.2);
+  border-right: 1px solid rgba(191, 153, 83, 0.2);
+}
+.ticker-logo-box {
+  width: 112px; height: 80px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ticker-logo {
+  max-width: 112px; max-height: 80px;
+  width: auto; height: auto;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  display: block;
+}
+.ticker-category {
+  font-size: 8px;
+  letter-spacing: 0.2em;
+  color: #C8C3BB;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+/* Colours vary per card, so they stay inline; everything else does not. */
+.ticker-status {
+  font-size: 7.5px;
+  letter-spacing: 0.1em;
+  border-radius: 4px;
+  padding: 2px 7px;
+  text-transform: uppercase;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ticker-status-spacer { height: 18px; }
+/* Project ticker: both of these sat inside a loop over 80 cards. */
+.project-ticker-card { width: 176px; }
+.project-ticker-eyebrow { font-size: 8px; letter-spacing: 0.1em; }
+.ticker-insight-label {
+  font-size: 7.5px;
+  letter-spacing: 0.22em;
+  color: #BF9953;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.ticker-insight-text {
+  font-size: 11px;
+  color: #1A1815;
+  line-height: 1.4;
+  font-style: italic;
+  font-family: var(--font-display);
+  max-width: 150px;
 }
 
 /* Hide stats bar scrollbar on webkit */

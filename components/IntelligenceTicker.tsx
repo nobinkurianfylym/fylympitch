@@ -107,66 +107,34 @@ const TRACK = [...BASE, ...BASE];
 
 function EntityCardEl({ card }: { card: EntityCard }) {
   return (
-    <div
-      className="ticker-card"
-      style={{
-        flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 6,
-        padding: "0 8px",
-        textAlign: "center",
-      }}
-    >
+    <div className="ticker-card ticker-card--entity">
       {/* Logo */}
-      <div style={{ width: 112, height: 80, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="ticker-logo-box">
         <img
           src={`/logos/${card.logoFile}.webp`}
           alt={card.name}
           loading="lazy"
+          decoding="async"
           width={112}
           height={80}
-          style={{
-            maxWidth: 112,
-            maxHeight: 80,
-            width: "auto",
-            height: "auto",
-            objectFit: "contain",
-            mixBlendMode: "multiply",
-            display: "block",
-          }}
+          className="ticker-logo"
         />
       </div>
 
       {/* Category */}
-      <div style={{
-        fontSize: 8,
-        letterSpacing: "0.2em",
-        color: "#C8C3BB",
-        textTransform: "uppercase",
-        fontWeight: 500,
-      }}>
-        {card.typeLabel}
-      </div>
+      <div className="ticker-category">{card.typeLabel}</div>
 
-      {/* Status — only if verified */}
+      {/* Status — only if verified. Its two colours are the one thing that
+          genuinely varies per card, so they are the one thing left inline. */}
       {card.status ? (
-        <span style={{
-          fontSize: 7.5,
-          letterSpacing: "0.1em",
-          background: card.statusBg,
-          color: card.statusColor,
-          borderRadius: 4,
-          padding: "2px 7px",
-          textTransform: "uppercase",
-          fontWeight: 600,
-          whiteSpace: "nowrap",
-        }}>
+        <span
+          className="ticker-status"
+          style={{ background: card.statusBg, color: card.statusColor }}
+        >
           {card.status}
         </span>
       ) : (
-        <div style={{ height: 18 }} />
+        <div className="ticker-status-spacer" />
       )}
     </div>
   );
@@ -174,26 +142,9 @@ function EntityCardEl({ card }: { card: EntityCard }) {
 
 function InsightCardEl({ card }: { card: InsightCard }) {
   return (
-    <div
-      className="ticker-card"
-      style={{
-        flexShrink: 0,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        gap: 6,
-        padding: "0 14px",
-        textAlign: "center",
-        borderLeft: "1px solid rgba(191,153,83,0.2)",
-        borderRight: "1px solid rgba(191,153,83,0.2)",
-      }}
-    >
-      <div style={{ fontSize: 7.5, letterSpacing: "0.22em", color: "#BF9953", textTransform: "uppercase", fontWeight: 700 }}>
-        🧠 {card.label}
-      </div>
-      <div style={{ fontSize: 11, color: "#1A1815", lineHeight: 1.4, fontStyle: "italic", fontFamily: "var(--font-display)", maxWidth: 150 }}>
-        {card.text}
-      </div>
+    <div className="ticker-card ticker-card--insight">
+      <div className="ticker-insight-label">🧠 {card.label}</div>
+      <div className="ticker-insight-text">{card.text}</div>
     </div>
   );
 }
