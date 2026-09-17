@@ -29,15 +29,11 @@ export default async function ProjectsPage({
 }) {
   const { format, q } = await searchParams;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  let dashboardHref = "/dashboard";
-  if (user) {
-    const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-    if ((me as any)?.role === "producer") dashboardHref = "/producerstudio";
-  }
-  const dashboardLabel = dashboardHref === "/producerstudio" ? "Producer Studio" : "Dashboard";
-
+  // ── Stage 1: auth and the project list, together ──────────────────────────
+  // The listing does not depend on who is asking, so it has no reason to wait
+  // for the auth round trip. This page measured ~1s TTFB, and five sequential
+  // hops to Supabase were most of it.
   let query = supabase
     .from("projects")
     .select("id, slug, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
@@ -49,29 +45,54 @@ export default async function ProjectsPage({
   if (format)    query = query.eq("format", format.toLowerCase());
   if (q?.trim()) query = (query as any).or(`title.ilike.%${q.trim()}%,logline.ilike.%${q.trim()}%`);
 
-  const { data: projects } = await query;
+  const [userRes, projectsRes] = await Promise.all([
+    supabase.auth.getUser(),
+    query,
+  ]);
 
-  const lovedSet = new Set<string>();
-  if (user && projects?.length) {
-    const { data: loves } = await supabase
-      .from("project_loves").select("project_id")
-      .eq("user_id", user.id)
-      .in("project_id", projects.map((p: any) => p.id));
-    (loves ?? []).forEach((l: any) => lovedSet.add(l.project_id));
-  }
+  const user = userRes.data.user;
+  const projects = projectsRes.data;
+
+  // ── Stage 2: everything that needed the results of stage 1 ────────────────
+  // Three more queries that were each awaited separately. The deck covers were
+  // the worst of them: one createSignedUrl round trip PER project without a
+  // poster. createSignedUrls signs the whole batch in a single request.
+  const deckPaths = (projects ?? [])
+    .filter((p: any) => !p.poster_path && !p.deck_cover_path && p.pitch_deck_path);
+
+  const [roleRes, lovesRes, signedRes] = await Promise.all([
+    user
+      ? supabase.from("profiles").select("role").eq("id", user.id).single()
+      : Promise.resolve({ data: null }),
+    user && projects?.length
+      ? supabase.from("project_loves").select("project_id")
+          .eq("user_id", user.id)
+          .in("project_id", projects.map((p: any) => p.id))
+      : Promise.resolve({ data: null }),
+    deckPaths.length
+      ? supabase.storage.from("pitch-decks")
+          .createSignedUrls(deckPaths.map((p: any) => p.pitch_deck_path), 3600)
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const dashboardHref =
+    (roleRes.data as any)?.role === "producer" ? "/producerstudio" : "/dashboard";
+  const dashboardLabel = dashboardHref === "/producerstudio" ? "Producer Studio" : "Dashboard";
+
+  const lovedSet = new Set<string>(
+    ((lovesRes.data ?? []) as any[]).map((l: any) => l.project_id)
+  );
+
+  // createSignedUrls returns results in the order the paths were given, and
+  // entries can individually fail — a missing deck must not lose the mapping
+  // for every project after it.
+  const deckUrlMap = new Map<string, string>();
+  ((signedRes.data ?? []) as any[]).forEach((row: any, i: number) => {
+    const project = deckPaths[i];
+    if (project && row?.signedUrl) deckUrlMap.set(project.id, row.signedUrl);
+  });
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-
-  // Bulk signed URLs for pitch deck cover tiles (poster takes priority when present)
-  const deckUrlMap = new Map<string, string>();
-  await Promise.all(
-    (projects ?? [])
-      .filter((p: any) => !p.poster_path && !p.deck_cover_path && p.pitch_deck_path)
-      .map(async (p: any) => {
-        const { data } = await supabase.storage.from("pitch-decks").createSignedUrl(p.pitch_deck_path, 3600);
-        if (data?.signedUrl) deckUrlMap.set(p.id, data.signedUrl);
-      })
-  );
 
   return (
     <div className="min-h-screen bg-ivory">

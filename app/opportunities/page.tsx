@@ -124,13 +124,6 @@ export default async function FundsPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let dashboardHref = "/dashboard";
-  if (user) {
-    const { data: me } = await supabase.from("profiles").select("role").eq("id", user.id).single();
-    if ((me as any)?.role === "producer") dashboardHref = "/producerstudio";
-  }
-  const dashboardLabel = dashboardHref === "/producerstudio" ? "Producer Studio" : "Dashboard";
-
   // Map category key → opp_type values
   const CATEGORY_TYPES: Record<string, string[]> = {
     development:     ["lab", "residency", "mentorship", "grant", "fund", "writing_fellowship"],
@@ -158,7 +151,19 @@ export default async function FundsPage({
   }
   if (q?.trim()) query = (query as any).or(`title.ilike.%${q.trim()}%,description.ilike.%${q.trim()}%`);
 
-  const { data: opps } = await query;
+  // The role lookup only picks which dashboard link the header shows — it has
+  // no bearing on the listing, so it rides alongside instead of in front of it.
+  const [opportunitiesRes, roleRes] = await Promise.all([
+    query,
+    user
+      ? supabase.from("profiles").select("role").eq("id", user.id).single()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const opps = opportunitiesRes.data;
+  const dashboardHref =
+    (roleRes.data as any)?.role === "producer" ? "/producerstudio" : "/dashboard";
+  const dashboardLabel = dashboardHref === "/producerstudio" ? "Producer Studio" : "Dashboard";
 
   return (
     <div className="min-h-screen bg-ivory">
