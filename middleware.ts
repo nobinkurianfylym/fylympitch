@@ -81,8 +81,21 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // "/" is deliberately NOT here.
+  //
+  // This middleware exists to make auth decisions: redirect anonymous users
+  // away from protected routes, push incomplete profiles into onboarding, and
+  // bounce signed-in users off /login and /signup. The homepage triggers none
+  // of those — isProtected and isAuthPage are both false for it — so the
+  // supabase.auth.getUser() call above ran on every homepage request and the
+  // result was thrown away.
+  //
+  // That call is a network round trip to Supabase Auth, which sits in another
+  // region: measured at ~200ms, and it was the entire gap between the homepage
+  // (~430ms) and /opportunities or /filmprojects (~215ms), neither of which is
+  // matched here. The homepage calls getUser() itself for rendering, exactly
+  // as those two pages already do.
   matcher: [
-    "/",
     "/dashboard/:path*",
     "/admin/:path*",
     "/producerstudio/:path*",
