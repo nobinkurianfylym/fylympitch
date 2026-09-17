@@ -6,6 +6,7 @@ import { markAllRead, deleteNotification, deleteAllNotifications } from "@/lib/a
 import { parseBroadcastBody, attachmentSummary } from "@/lib/broadcast-body";
 import BroadcastActions from "@/components/BroadcastActions";
 import { fetchBroadcastSocial } from "@/lib/broadcast-social";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -212,7 +213,7 @@ export default async function NotificationsPage() {
               {/* Thumbnail — always rendered, image or fallback icon */}
               <div className="shrink-0 w-[52px] h-[68px] rounded-[4px] overflow-hidden border border-line bg-parchment flex items-center justify-center">
                 {thumbUrl ? (
-                  <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={sized(thumbUrl, 64)} srcSet={srcSet2x(thumbUrl, 64)} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 ) : (
                   <div className={`w-full h-full flex items-center justify-center ${meta.iconBg}`}>
                     <span className="text-[18px] leading-none select-none">{meta.icon}</span>

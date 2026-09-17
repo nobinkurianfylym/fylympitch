@@ -6,6 +6,7 @@ import Link from "next/link";
 import { formatBudget } from "@/lib/format";
 import { formatFormat, formatStage } from "@/lib/film-identity";
 import { lookupUserEmail } from "@/lib/admin-email";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -192,7 +193,7 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
       <div className="flex flex-wrap items-start gap-5 mt-5">
         {avatarSrc ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatarSrc} alt="" className="w-16 h-16 rounded-full object-cover border border-line shrink-0" />
+          <img src={sized(avatarSrc, 64)} srcSet={srcSet2x(avatarSrc, 64)} loading="lazy" decoding="async" alt="" className="w-16 h-16 rounded-full object-cover border border-line shrink-0" />
         ) : (
           <div className="w-16 h-16 rounded-full border border-line bg-parchment flex items-center justify-center text-[16px] text-ash shrink-0">
             {initials}

@@ -5,6 +5,7 @@ import React from "react";
 import type { ConversationListItem } from "./message.types";
 import { getInitials, formatRelativeTime } from "./message.utils";
 import { UnreadBadge } from "./UnreadBadge";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 interface Props {
   conversation: ConversationListItem;
@@ -55,7 +56,10 @@ export const ConversationRow = React.memo(function ConversationRow({
       >
         {counterparty.avatar_url ? (
           <img
-            src={counterparty.avatar_url}
+            src={sized(counterparty.avatar_url, 36)}
+            srcSet={srcSet2x(counterparty.avatar_url, 36)}
+            loading="lazy"
+            decoding="async"
             alt=""
             className="w-full h-full object-cover rounded-full"
           />

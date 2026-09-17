@@ -7,6 +7,7 @@ import Wordmark from "@/components/Wordmark";
 import DashboardNav from "@/components/DashboardNav";
 import { signOut } from "@/lib/auth-actions";
 import type { Profile } from "@/types";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 // Signed-in area. robots.txt already disallows it; the meta tag is the belt to that braces, and covers the case where a URL is linked from outside.
 export const metadata: Metadata = {
@@ -100,7 +101,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Link href="/dashboard/profile" className="shrink-0">
             <div className="w-8 h-8 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center hover:border-gold transition-colors">
               {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+                <img src={sized(profile.avatar_url, 32)} srcSet={srcSet2x(profile.avatar_url, 32)} loading="lazy" decoding="async" alt={profile.full_name} className="w-full h-full object-cover" />
               ) : (
                 <span className="font-display text-[11px] text-ash">
                   {(profile?.full_name ?? "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}

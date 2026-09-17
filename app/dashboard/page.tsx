@@ -6,6 +6,7 @@ import { respondToOffer } from "@/lib/project-actions";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import Greeting from "@/components/Greeting";
 import type { Profile } from "@/types";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -363,7 +364,7 @@ export default async function DashboardPage() {
                         className="card p-4 flex items-start gap-3 hover:border-gold hover:shadow-sm transition-all group">
                         <div className="w-9 h-9 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center shrink-0">
                           {producer?.avatar_url
-                            ? <img src={producer.avatar_url} alt={producer.full_name} className="w-full h-full object-cover" />
+                            ? <img src={sized(producer.avatar_url, 36)} srcSet={srcSet2x(producer.avatar_url, 36)} loading="lazy" decoding="async" alt={producer.full_name} className="w-full h-full object-cover" />
                             : <span className="font-display text-[11px] text-ash">{initials}</span>
                           }
                         </div>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TYPE_LABEL } from "@/lib/format";
 import DeleteOpportunityButton from "@/components/DeleteOpportunityButton";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,7 @@ export default async function MyOpportunitiesPage() {
                 {/* Poster thumb */}
                 {opp.poster_url && (
                   <div className="shrink-0 w-[52px] h-[72px] rounded-sm overflow-hidden border border-line">
-                    <img src={opp.poster_url} alt={opp.title} className="w-full h-full object-cover" />
+                    <img src={sized(opp.poster_url, 52)} srcSet={srcSet2x(opp.poster_url, 52)} loading="lazy" decoding="async" alt={opp.title} className="w-full h-full object-cover" />
                   </div>
                 )}
 

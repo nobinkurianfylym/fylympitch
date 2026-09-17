@@ -4,6 +4,7 @@ import Wordmark from "@/components/Wordmark";
 import SearchInput from "@/components/SearchInput";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -245,7 +246,7 @@ export default async function FundsPage({
                   {/* Poster — producer briefs only */}
                   {o.is_producer_post && o.poster_url && (
                     <div className="h-[140px] overflow-hidden border-b border-line">
-                      <img src={o.poster_url} alt={o.title} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+                      <img src={sized(o.poster_url, 320)} srcSet={srcSet2x(o.poster_url, 320)} alt={o.title} loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500" />
                     </div>
                   )}
 

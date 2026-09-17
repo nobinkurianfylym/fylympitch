@@ -7,6 +7,7 @@ import AddCreditForm from "@/components/AddCreditForm";
 import DeleteAccountModal from "@/components/DeleteAccountModal";
 import { updateCareerStage } from "@/lib/actions";
 import type { Profile } from "@/types";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,7 @@ export default async function ProfilePage({
           )}
           <div className="w-10 h-10 rounded-full overflow-hidden border border-line bg-parchment flex items-center justify-center">
             {profile.avatar_url
-              ? <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
+              ? <img src={sized(profile.avatar_url, 40)} srcSet={srcSet2x(profile.avatar_url, 40)} loading="lazy" decoding="async" alt={profile.full_name} className="w-full h-full object-cover" />
               : <span className="font-display text-[13px] text-ash">
                   {profile.full_name
                     ? profile.full_name.split(" ").map((w: string) => w[0]).join("").slice(0,2).toUpperCase()

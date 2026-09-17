@@ -6,6 +6,7 @@ import { saveProducerProfile, updateUsername } from "@/lib/actions";
 import AvatarUpload from "@/components/AvatarUpload";
 import DeleteAccountModal from "@/components/DeleteAccountModal";
 import Link from "next/link";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -229,7 +230,7 @@ export default function ProducerProfilePage() {
           )}
           <div className="w-10 h-10 rounded-full overflow-hidden border border-line bg-parchment flex items-center justify-center">
             {avatarUrl
-              ? <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+              ? <img src={sized(avatarUrl, 40)} srcSet={srcSet2x(avatarUrl, 40)} loading="lazy" decoding="async" alt={name} className="w-full h-full object-cover" />
               : <span className="font-display text-[13px] text-ash">
                   {name ? name.split(" ").map((w: string) => w[0]).join("").slice(0,2).toUpperCase() : "—"}
                 </span>

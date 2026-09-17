@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { formatBudget } from "@/lib/format";
 import { formatFormat, formatCountry } from "@/lib/film-identity";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -110,7 +111,7 @@ export default async function ProducerPipelinePage() {
                         <Link key={row.id} href={`/producerstudio/projects/${p.id}`}
                           className="card p-4 hover:border-gold transition-colors block">
                           {thumb && (
-                            <img src={thumb} alt={p.title} className="w-full rounded-card mb-3 object-cover" style={{ aspectRatio: "16/9" }} />
+                            <img src={sized(thumb, 320)} srcSet={srcSet2x(thumb, 320)} loading="lazy" decoding="async" alt={p.title} className="w-full rounded-card mb-3 object-cover" style={{ aspectRatio: "16/9" }} />
                           )}
                           {/* L1: Title */}
                           <p

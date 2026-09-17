@@ -11,6 +11,7 @@ import JsonLd from "@/components/JsonLd";
 import AuthAwareCta from "@/components/AuthAwareCta";
 import { opportunitySchema, breadcrumbSchema, faqPageSchema } from "@/lib/schema";
 import { opportunityRobots, ROBOTS_NOINDEX } from "@/lib/seo";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const revalidate = 3600; // ISR — re-generate at most once per hour
 
@@ -239,7 +240,7 @@ export default async function FundDetailPage({ params }: Props) {
           {/* Poster — only for producer-posted briefs */}
           {(opp as any).is_producer_post && (opp as any).poster_url && (
             <div className="shrink-0 w-[120px] h-[168px] rounded-sm overflow-hidden border border-line hidden sm:block">
-              <img src={(opp as any).poster_url} alt={opp.title} className="w-full h-full object-cover" />
+              <img src={sized((opp as any).poster_url, 120)} srcSet={srcSet2x((opp as any).poster_url, 120)} alt={opp.title} decoding="async" className="w-full h-full object-cover" />
             </div>
           )}
           <div className="flex-1 min-w-0">

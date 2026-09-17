@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { adminSetApproval } from "@/lib/actions";
 import Link from "next/link";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +55,7 @@ export default async function AdminUsers({
             <Link href={`/admin/users/${u.id}`} className="min-w-0 flex items-center gap-3 group">
               {u.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={u.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover border border-line shrink-0" />
+                <img src={sized(u.avatar_url, 36)} srcSet={srcSet2x(u.avatar_url, 36)} loading="lazy" decoding="async" alt="" className="w-9 h-9 rounded-full object-cover border border-line shrink-0" />
               ) : (
                 <div className="w-9 h-9 rounded-full border border-line bg-parchment flex items-center justify-center text-[11px] text-ash shrink-0">
                   {(u.full_name ?? "?").split(" ").map((w: string) => w[0]).filter(Boolean).join("").slice(0, 2).toUpperCase()}

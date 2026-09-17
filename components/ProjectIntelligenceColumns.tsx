@@ -8,6 +8,7 @@ import type {
   FundingDiscovery, FundingReadiness, DreamScenario, ProducerMatch,
 } from "@/services/fylympitchEngine";
 import type { MatchRow } from "@/components/MatchList";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 const OPP_LABELS: Record<string, string> = {
@@ -228,7 +229,7 @@ export default function ProjectIntelligenceColumns({
                         fontSize: 10, color: "#F5F5F0",
                       }}>
                         {pm.profile.avatar_url
-                          ? <img src={pm.profile.avatar_url} alt={pm.profile.full_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                          ? <img src={sized(pm.profile.avatar_url, 40)} srcSet={srcSet2x(pm.profile.avatar_url, 40)} loading="lazy" decoding="async" alt={pm.profile.full_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                           : initials}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>

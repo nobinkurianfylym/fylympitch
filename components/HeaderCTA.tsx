@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRole } from "@/components/RoleProvider";
 import { signOut } from "@/lib/auth-actions";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 type Props = {
   isLoggedIn:  boolean;
@@ -64,7 +65,10 @@ export default function HeaderCTA({ isLoggedIn, userName, avatarUrl, accountRole
       >
         {avatarUrl ? (
           <img
-            src={avatarUrl}
+            src={sized(avatarUrl, 26)}
+            srcSet={srcSet2x(avatarUrl, 26)}
+            loading="lazy"
+            decoding="async"
             alt={firstName}
             className="w-[26px] h-[26px] rounded-full object-cover shrink-0"
           />

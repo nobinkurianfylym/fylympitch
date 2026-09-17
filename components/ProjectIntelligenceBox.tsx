@@ -11,6 +11,7 @@ import type {
   ProducerMatch,
 } from "@/services/fylympitchEngine";
 import type { MatchRow } from "@/components/MatchList";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 // ── Helpers ───────────────────────────────────────────────────────────
 const OPP_LABELS: Record<string, string> = {
@@ -249,7 +250,7 @@ export default function ProjectIntelligenceBox({
                       <div className="shrink-0 rounded-full overflow-hidden flex items-center justify-center"
                         style={{ width: 32, height: 32, background: "rgba(255,255,255,0.1)", fontSize: 11, color: "#F5F5F0" }}>
                         {pm.profile.avatar_url
-                          ? <img src={pm.profile.avatar_url} alt={pm.profile.full_name} className="w-full h-full object-cover" />
+                          ? <img src={sized(pm.profile.avatar_url, 40)} srcSet={srcSet2x(pm.profile.avatar_url, 40)} loading="lazy" decoding="async" alt={pm.profile.full_name} className="w-full h-full object-cover" />
                           : initials}
                       </div>
 

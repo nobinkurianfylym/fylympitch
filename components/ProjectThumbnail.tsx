@@ -7,6 +7,7 @@
 
 import DeckCoverThumbnail from "./DeckCoverThumbnail";
 import { preferThumb } from "@/lib/poster-url";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 const PALETTES = [
   { bg: "#F0E8FF", accent: "#C4A8E8", text: "#4A1D96" },  // lavender
@@ -112,10 +113,12 @@ export default function ProjectThumbnail({ posterPath, deckCoverPath, deckUrl, t
   if (posterPath) {
     return (
       <img
-        src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${preferThumb(posterPath)}`}
+        src={sized(`${supabaseUrl}/storage/v1/object/public/thumbnails/${preferThumb(posterPath)}`, 320)}
+        srcSet={srcSet2x(`${supabaseUrl}/storage/v1/object/public/thumbnails/${preferThumb(posterPath)}`, 320)}
         alt={`${title} poster`}
         className={`${className} object-cover`}
         loading="lazy"
+        decoding="async"
       />
     );
   }
@@ -123,10 +126,12 @@ export default function ProjectThumbnail({ posterPath, deckCoverPath, deckUrl, t
   if (deckCoverPath) {
     return (
       <img
-        src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${deckCoverPath}`}
+        src={sized(`${supabaseUrl}/storage/v1/object/public/thumbnails/${deckCoverPath}`, 320)}
+        srcSet={srcSet2x(`${supabaseUrl}/storage/v1/object/public/thumbnails/${deckCoverPath}`, 320)}
         alt={`${title} pitch deck cover`}
         className={`${className} object-contain bg-[#F5F5F0]`}
         loading="lazy"
+        decoding="async"
       />
     );
   }

@@ -7,6 +7,7 @@ import React from "react";
 import Link from "next/link";
 import type { ConversationListItem } from "./message.types";
 import { getInitials } from "./message.utils";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 interface Props {
   conversation: ConversationListItem;
@@ -57,7 +58,10 @@ export const ConversationHeader = React.memo(function ConversationHeader({
       >
         {counterparty.avatar_url ? (
           <img
-            src={counterparty.avatar_url}
+            src={sized(counterparty.avatar_url, 40)}
+            srcSet={srcSet2x(counterparty.avatar_url, 40)}
+            loading="lazy"
+            decoding="async"
             alt={counterparty.full_name ?? ""}
             className="w-full h-full object-cover rounded-full"
           />

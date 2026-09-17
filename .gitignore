@@ -18,3 +18,8 @@ __pycache__/
 
 # Claude session scratch
 Claude outputs/
+
+# Working files handed to the user, not part of the app
+_to_delete/
+*.patch
+RUN_THESE_*.sql

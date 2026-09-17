@@ -1,5 +1,6 @@
 import * as React from "react";
 import { parseBroadcastBody } from "@/lib/broadcast-body";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 /**
  * Bare URLs inside the message text are not clickable in pre-wrapped text.
@@ -70,9 +71,11 @@ export default function BroadcastBody({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={f.url}
+                src={sized(f.url, isLarge ? 1040 : 640)}
+                srcSet={srcSet2x(f.url, isLarge ? 1040 : 640)}
                 alt={f.name}
                 loading="lazy"
+                decoding="async"
                 className={`block w-auto object-contain bg-parchment ${
                   isLarge ? "max-h-[520px]" : "max-h-[320px]"
                 }`}

@@ -11,6 +11,7 @@ import { profileSchema, breadcrumbSchema } from "@/lib/schema";
 import { profileRobots, absoluteUrl } from "@/lib/seo";
 import ProfileNavAuth from "@/components/ProfileNavAuth";
 import AuthLink from "@/components/AuthLink";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 
 // ── SEO ──────────────────────────────────────────────────────────────────────
@@ -287,7 +288,7 @@ export default async function PublicProfilePage({
                   <div style={{display:"flex",alignItems:"flex-start",gap:18,marginBottom:20}}>
                     <div style={{flexShrink:0,width:80,height:80,borderRadius:"50%",overflow:"hidden",border:"2px solid rgba(26,24,21,0.1)",background:"rgba(26,24,21,0.06)",display:"flex",alignItems:"center",justifyContent:"center"}}>
                       {avatarSrc
-                        ? <img src={avatarSrc} alt={profile.full_name} style={{width:"100%",height:"100%",objectFit:"cover"}} />
+                        ? <img src={sized(avatarSrc, 80)} srcSet={srcSet2x(avatarSrc, 80)} loading="lazy" decoding="async" alt={profile.full_name} style={{width:"100%",height:"100%",objectFit:"cover"}} />
                         : <span style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:700,color:"rgba(26,24,21,0.3)"}}>{initials}</span>
                       }
                     </div>
@@ -523,7 +524,7 @@ export default async function PublicProfilePage({
                 <div style={{display:"flex",alignItems:"flex-start",gap:18,marginBottom:20}}>
                   <div style={{flexShrink:0,width:80,height:80,borderRadius:"50%",overflow:"hidden",border:"2px solid rgba(26,24,21,0.1)",background:"rgba(26,24,21,0.06)",display:"flex",alignItems:"center",justifyContent:"center"}}>
                     {avatarSrc
-                      ? <img src={avatarSrc} alt={profile.full_name} style={{width:"100%",height:"100%",objectFit:"cover"}} />
+                      ? <img src={sized(avatarSrc, 80)} srcSet={srcSet2x(avatarSrc, 80)} loading="lazy" decoding="async" alt={profile.full_name} style={{width:"100%",height:"100%",objectFit:"cover"}} />
                       : <span style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:700,color:"rgba(26,24,21,0.3)"}}>{initials}</span>
                     }
                   </div>
@@ -603,7 +604,9 @@ export default async function PublicProfilePage({
                         style={{display:"flex",alignItems:"center",gap:12,textDecoration:"none",padding:"8px 0",borderBottom:"1px solid rgba(26,24,21,0.06)"}}>
                         {p.poster_path && (
                           <div style={{width:40,height:54,borderRadius:6,overflow:"hidden",flexShrink:0,background:"rgba(26,24,21,0.06)"}}>
-                            <img src={`${supabaseUrl}/storage/v1/object/public/thumbnails/${preferThumb(p.poster_path)}`}
+                            <img src={sized(`${supabaseUrl}/storage/v1/object/public/thumbnails/${preferThumb(p.poster_path)}`, 40)}
+                              srcSet={srcSet2x(`${supabaseUrl}/storage/v1/object/public/thumbnails/${preferThumb(p.poster_path)}`, 40)}
+                              loading="lazy" decoding="async"
                               alt={p.title} style={{width:"100%",height:"100%",objectFit:"cover"}} />
                           </div>
                         )}

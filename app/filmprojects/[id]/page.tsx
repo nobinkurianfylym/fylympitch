@@ -13,6 +13,7 @@ import type { Metadata } from "next";
 import JsonLd from "@/components/JsonLd";
 import { projectSchema, breadcrumbSchema } from "@/lib/schema";
 import { projectRobots, absoluteUrl } from "@/lib/seo";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 
 const CAREER_LABEL: Record<string, string> = {
@@ -180,7 +181,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
               <Link href={`/u/${filmmaker.username}`} className="shrink-0 block">
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center hover:border-gold transition-colors">
                   {filmmaker.avatar_url ? (
-                    <img src={filmmaker.avatar_url} alt={filmmaker.full_name} className="w-full h-full object-cover" />
+                    <img src={sized(filmmaker.avatar_url, 48)} srcSet={srcSet2x(filmmaker.avatar_url, 48)} loading="lazy" decoding="async" alt={filmmaker.full_name} className="w-full h-full object-cover" />
                   ) : (
                     <span className="font-display text-[14px] text-ash">
                       {filmmaker.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}
@@ -191,7 +192,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
             ) : (
               <div className="w-12 h-12 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center shrink-0">
                 {filmmaker.avatar_url ? (
-                  <img src={filmmaker.avatar_url} alt={filmmaker.full_name} className="w-full h-full object-cover" />
+                  <img src={sized(filmmaker.avatar_url, 48)} srcSet={srcSet2x(filmmaker.avatar_url, 48)} loading="lazy" decoding="async" alt={filmmaker.full_name} className="w-full h-full object-cover" />
                 ) : (
                   <span className="font-display text-[14px] text-ash">
                     {filmmaker.full_name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}

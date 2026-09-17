@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Wordmark from "@/components/Wordmark";
 import { signOut } from "@/lib/auth-actions";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +74,7 @@ export default async function ProducerStudioLayout({ children }: { children: Rea
           <Link href="/producerstudio/profile" className="shrink-0">
             <div className="w-8 h-8 rounded-full overflow-hidden bg-parchment border border-line flex items-center justify-center hover:border-gold transition-colors">
               {(profile as any)?.avatar_url ? (
-                <img src={(profile as any).avatar_url} alt={(profile as any).full_name ?? ""} className="w-full h-full object-cover" />
+                <img src={sized((profile as any).avatar_url, 32)} srcSet={srcSet2x((profile as any).avatar_url, 32)} loading="lazy" decoding="async" alt={(profile as any).full_name ?? ""} className="w-full h-full object-cover" />
               ) : (
                 <span className="font-display text-[11px] text-ash">
                   {((profile as any)?.full_name ?? "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase()}

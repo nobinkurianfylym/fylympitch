@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import BroadcastComposer from "./BroadcastComposer";
 import BroadcastHistory from "./BroadcastHistory";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -94,7 +95,10 @@ export default async function AdminMessages() {
                   {u.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={u.avatar_url}
+                      src={sized(u.avatar_url, 36)}
+                      srcSet={srcSet2x(u.avatar_url, 36)}
+                      loading="lazy"
+                      decoding="async"
                       alt=""
                       className="w-9 h-9 rounded-full object-cover border border-line shrink-0"
                     />

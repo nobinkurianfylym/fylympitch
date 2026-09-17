@@ -6,6 +6,7 @@ import { markAllRead, deleteNotification, deleteAllNotifications } from "@/lib/a
 import { parseBroadcastBody, attachmentSummary } from "@/lib/broadcast-body";
 import BroadcastActions from "@/components/BroadcastActions";
 import { fetchBroadcastSocial } from "@/lib/broadcast-social";
+import { sized, srcSet2x } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -114,7 +115,7 @@ export default async function ProducerNotificationsPage() {
               {/* Poster thumbnail */}
               {posterUrl && (
                 <div className="shrink-0 w-14 h-[3.5rem] rounded-[4px] overflow-hidden border border-line bg-parchment">
-                  <img src={posterUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={sized(posterUrl, 64)} srcSet={srcSet2x(posterUrl, 64)} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                 </div>
               )}
 

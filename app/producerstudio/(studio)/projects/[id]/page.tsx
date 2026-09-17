@@ -10,6 +10,7 @@ import StarRatingForm from "@/components/StarRatingForm";
 import PrivateNotesForm from "@/components/PrivateNotesForm";
 import PassAndAdvanceButton from "@/components/PassAndAdvanceButton";
 import { ProofVerificationPanel } from "@/components/ProofVerificationPanel";
+import { sized, srcSet2x } from "@/lib/image-url";
 import {
   formatBudgetDisplay,
   formatShortId,
@@ -745,7 +746,10 @@ export default async function ProducerProjectDetailPage({
                 }}>
                   {(filmmaker as any).avatar_url ? (
                     <img
-                      src={(filmmaker as any).avatar_url}
+                      src={sized((filmmaker as any).avatar_url, 36)}
+                      srcSet={srcSet2x((filmmaker as any).avatar_url, 36)}
+                      loading="lazy"
+                      decoding="async"
                       alt={filmmaker.full_name}
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
                     />
