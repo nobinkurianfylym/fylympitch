@@ -56,7 +56,15 @@ export function sized(
   if (!url.includes(OBJECT_PATH)) return url;
 
   const base = url.split("?")[0].replace(OBJECT_PATH, RENDER_PATH);
-  return `${base}?${dimension}=${clampSize(size)}&quality=${quality}`;
+  // resize=contain is NOT optional. Supabase defaults to resize=cover, and
+  // cover with only ONE dimension does not scale — it CROPS, leaving the other
+  // side at its original size. Measured on a 1024x1536 source:
+  //     width=400                  -> 400x1536   (a vertical slice)
+  //     width=400&resize=contain   -> 400x600    (scaled, ratio kept)
+  // Every avatar and thumbnail on the site would have been a sliver of the
+  // real image. The call sites pair this with CSS object-cover, so the browser
+  // does the cropping to the display box, which is what was wanted all along.
+  return `${base}?${dimension}=${clampSize(size)}&resize=contain&quality=${quality}`;
 }
 
 /**
