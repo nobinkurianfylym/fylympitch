@@ -1,6 +1,6 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAnonClient } from "@/lib/supabase/anon";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared, NON user-specific queries, cached in R2.
@@ -21,7 +21,12 @@ import { createClient } from "@/lib/supabase/server";
 // header to everybody. Caching these queries cannot.
 //
 // A Supabase client cannot be passed in — unstable_cache serialises its
-// arguments — so each function makes its own.
+// arguments — so each function makes its own, using the COOKIE-FREE client.
+// lib/supabase/server.ts reads cookies(), and unstable_cache forbids
+// request-scoped data: calling it here throws, the catch below swallowed it,
+// and every listing rendered its empty fallback. The pages had not got faster,
+// they had stopped returning rows. Hence createAnonClient, and hence every
+// catch now logging rather than failing silently.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Five minutes. Long enough to absorb traffic, short enough that a new fund or project shows up quickly. */
@@ -49,7 +54,7 @@ const SEEKING: Record<string, string> = {
 export const getTrendingProjects = unstable_cache(
   async (): Promise<TrendingProject[]> => {
     try {
-      const supabase = await createClient();
+      const supabase = createAnonClient();
       const { data } = await supabase
         .from("projects")
         .select("id, slug, title, genre, format, stage, country, budget_usd, poster_path, deck_cover_path")
@@ -66,7 +71,8 @@ export const getTrendingProjects = unstable_cache(
         posterPath: p.poster_path ?? null,
         deckCoverPath: p.deck_cover_path ?? null,
       }));
-    } catch {
+    } catch (err) {
+      console.error("[cached-queries] getTrendingProjects failed:", err);
       return []; // the ticker has an empty state
     }
   },
@@ -78,7 +84,7 @@ export const getTrendingProjects = unstable_cache(
 export const getOpportunityCount = unstable_cache(
   async (): Promise<number> => {
     try {
-      const supabase = await createClient();
+      const supabase = createAnonClient();
       const { data: snap } = await supabase
         .from("platform_metrics")
         .select("active_opportunities")
@@ -93,7 +99,8 @@ export const getOpportunityCount = unstable_cache(
         .select("id", { count: "exact", head: true })
         .eq("is_active", true);
       return count ?? 0;
-    } catch {
+    } catch (err) {
+      console.error("[cached-queries] getOpportunityCount failed:", err);
       return 0;
     }
   },
@@ -112,7 +119,7 @@ export const getOpportunityCount = unstable_cache(
 export const getPublicProjects = unstable_cache(
   async (format?: string): Promise<any[]> => {
     try {
-      const supabase = await createClient();
+      const supabase = createAnonClient();
       let query = supabase
         .from("projects")
         .select("id, slug, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
@@ -125,7 +132,8 @@ export const getPublicProjects = unstable_cache(
 
       const { data } = await query;
       return data ?? [];
-    } catch {
+    } catch (err) {
+      console.error("[cached-queries] getPublicProjects failed:", err);
       return [];
     }
   },
@@ -143,7 +151,7 @@ export const getPublicProjects = unstable_cache(
 export const getOpportunities = unstable_cache(
   async (oppTypes: string[] | null, limit: number): Promise<any[]> => {
     try {
-      const supabase = await createClient();
+      const supabase = createAnonClient();
       let query = supabase
         .from("opportunities")
         .select("id, slug, title, opp_type, description, country, region, deadline, deadline_note, languages, url, app_link, is_producer_post, poster_url, key_person")
@@ -155,7 +163,8 @@ export const getOpportunities = unstable_cache(
 
       const { data } = await query;
       return data ?? [];
-    } catch {
+    } catch (err) {
+      console.error("[cached-queries] getOpportunities failed:", err);
       return [];
     }
   },

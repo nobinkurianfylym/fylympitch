@@ -11,7 +11,7 @@
 // identical for every visitor, and safe to share.
 
 import { unstable_cache } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAnonClient } from "@/lib/supabase/anon";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -54,7 +54,7 @@ interface Community {
 const fetchCommunity = unstable_cache(async (): Promise<Community> => {
   const empty = { registered_filmmakers: 0, projects_submitted: 0, verified_producers: 0 };
   try {
-    const supabase = await createClient();
+    const supabase = createAnonClient();
     const { data, error } = await supabase.rpc("community_metrics");
     if (error) return empty;                       // migration not run yet
     const row = Array.isArray(data) ? data[0] : data;
@@ -63,7 +63,8 @@ const fetchCommunity = unstable_cache(async (): Promise<Community> => {
       projects_submitted:    row?.projects_submitted    ?? 0,
       verified_producers:    row?.verified_producers    ?? 0,
     };
-  } catch {
+  } catch (err) {
+    console.error("[PlatformMetrics] community metrics failed:", err);
     return empty;
   }
 }, ["platform-community"], { revalidate: 300, tags: ["metrics"] });
@@ -79,7 +80,7 @@ const FALLBACK: Metrics = {
 
 const fetchMetrics = unstable_cache(async (): Promise<Metrics> => {
   try {
-    const supabase = await createClient();
+    const supabase = createAnonClient();
 
     // Try latest snapshot first (fast single-row read)
     const { data: snap, error } = await supabase
@@ -135,7 +136,8 @@ const fetchMetrics = unstable_cache(async (): Promise<Metrics> => {
       funding_tracked_usd:   totalFunding,
       computed_at:           null,
     };
-  } catch {
+  } catch (err) {
+    console.error("[PlatformMetrics] metrics failed:", err);
     return FALLBACK;
   }
 }, ["platform-metrics"], { revalidate: 300, tags: ["metrics"] });
