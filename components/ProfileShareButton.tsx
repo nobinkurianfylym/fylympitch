@@ -6,9 +6,18 @@ interface Props {
   username: string;
   name?: string;
   fullName?: string;
+  /** profiles.role — the share text used to say "Producer" for everybody. */
+  role?: string | null;
 }
 
-export default function ProfileShareButton({ username, name, fullName }: Props) {
+/** "producer" / "filmmaker" as a person would write it, or "" if unknown. */
+function roleWord(role?: string | null): string {
+  if (role === "producer") return "producer";
+  if (role === "filmmaker") return "filmmaker";
+  return ""; // admin, null, anything unexpected — say nothing rather than guess
+}
+
+export default function ProfileShareButton({ username, name, fullName, role }: Props) {
   const displayName = fullName ?? name ?? "";
   const [open, setCopied_open] = useState(false);
   const [copied, setCopied]    = useState(false);
@@ -16,7 +25,13 @@ export default function ProfileShareButton({ username, name, fullName }: Props) 
 
   const siteUrl    = typeof window !== "undefined" ? window.location.origin : "https://pitch.fylym.com";
   const profileUrl = `${siteUrl}/u/${username}`;
-  const shareText  = `${displayName} — Producer on PITCH.FYLYM`;
+  // Was `${displayName} — Producer on PITCH.FYLYM`, which was wrong twice over:
+  // it called every filmmaker a producer, and the em dash construction reads
+  // like machine copy. A person sharing a profile writes it as a possessive.
+  const word      = roleWord(role);
+  const shareText = word
+    ? `${displayName}'s ${word} profile on PITCH.FYLYM`
+    : `${displayName} on PITCH.FYLYM`;
 
   // Close on outside click
   useEffect(() => {

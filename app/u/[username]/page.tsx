@@ -8,7 +8,7 @@ import ProfileShareButton from "@/components/ProfileShareButton";
 import type { Metadata } from "next";
 import JsonLd from "@/components/JsonLd";
 import { profileSchema, breadcrumbSchema } from "@/lib/schema";
-import { profileRobots, absoluteUrl } from "@/lib/seo";
+import { profileRobots, absoluteUrl, metaDescription, ROBOTS_NOINDEX } from "@/lib/seo";
 import ProfileNavAuth from "@/components/ProfileNavAuth";
 import AuthLink from "@/components/AuthLink";
 import { sized, srcSet2x } from "@/lib/image-url";
@@ -28,17 +28,50 @@ export async function generateMetadata({
     .select("full_name, bio, country, avatar_url, username, role, company")
     .eq("username", username)
     .single();
-  if (!p) return { title: "Filmmaker — PITCH.FYLYM" };
+  if (!p) return { title: "Profile not found — PITCH.FYLYM", robots: ROBOTS_NOINDEX };
+
+  // The fallback description said "Filmmaker" for everyone, the same way the
+  // share button said "Producer" for everyone. Read the actual role.
+  const word =
+    (p as any).role === "producer" ? "producer"
+    : (p as any).role === "filmmaker" ? "filmmaker"
+    : "";
+  const company  = (p as any).company as string | null;
+  const fallback = [
+    p.full_name,
+    word ? `${word} on PITCH.FYLYM` : "on PITCH.FYLYM",
+    company ? `at ${company}` : "",
+    (p as any).country ? `· ${(p as any).country}` : "",
+  ].filter(Boolean).join(" ");
+
+  const description = p.bio ? metaDescription(p.bio) : fallback;
+
+  // The profile picture is the share image. It is portrait/square, so it goes
+  // out as a summary card rather than being centre-cropped into a letterbox,
+  // and it is requested at card size instead of whatever was uploaded.
+  // Without a fallback this array was empty when someone had no picture — and
+  // an empty page-level openGraph REPLACES the layout's, so those profiles
+  // shared with no image at all.
+  const avatar = (p as any).avatar_url
+    ? sized((p as any).avatar_url, 600)
+    : null;
+
   return {
     title: `${p.full_name} — PITCH.FYLYM`,
-    description: p.bio
-      ? p.bio.slice(0, 160)
-      : `${p.full_name} · Filmmaker on PITCH.FYLYM`,
+    description,
     openGraph: {
       title: p.full_name,
-      description: p.bio?.slice(0, 160) ?? `${p.full_name} on PITCH.FYLYM`,
-      images: p.avatar_url ? [p.avatar_url] : [],
+      description,
+      images: avatar
+        ? [{ url: avatar, alt: p.full_name }]
+        : [{ url: "/og-default.png", width: 1200, height: 630 }],
       type: "profile",
+    },
+    twitter: {
+      card: avatar ? "summary" : "summary_large_image",
+      title: p.full_name,
+      description,
+      images: [avatar || "/og-default.png"],
     },
     alternates: { canonical: absoluteUrl(`/u/${username}`) },
     robots: profileRobots(p as any),
@@ -281,7 +314,7 @@ export default async function PublicProfilePage({
                     <p style={{fontSize:9,letterSpacing:".3em",textTransform:"uppercase",fontWeight:700,color:"#BF9953",margin:0}}>
                       {isVerified ? "✦  Verified Producer" : "Producer"}
                     </p>
-                    <ProfileShareButton username={profile.username} name={profile.full_name} />
+                    <ProfileShareButton username={profile.username} name={profile.full_name} role={profile.role} />
                   </div>
 
                   {/* Avatar + Name */}
@@ -517,7 +550,7 @@ export default async function PublicProfilePage({
                   <p style={{fontSize:9,letterSpacing:".3em",textTransform:"uppercase",fontWeight:700,color:"#BF9953",margin:0}}>
                     {CAREER_LABEL[(profile as any).career_stage] ?? "Filmmaker"}
                   </p>
-                  <ProfileShareButton username={profile.username} name={profile.full_name} />
+                  <ProfileShareButton username={profile.username} name={profile.full_name} role={profile.role} />
                 </div>
 
                 {/* Avatar + Name */}
