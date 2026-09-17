@@ -334,18 +334,18 @@ export default function ProducerProfilePage() {
                 </div>
                 <div>
                   <label className="field-label mb-1 block">IMDb URL</label>
-                  <input type="url" name="imdb_url" value={imdb} onChange={e => setImdb(e.target.value)}
-                    className="field w-full" placeholder="https://imdb.com/name/…" />
+                  <input type="text" inputMode="url" autoComplete="url" name="imdb_url" value={imdb} onChange={e => setImdb(e.target.value)}
+                    className="field w-full" placeholder="imdb.com/name/…" />
                 </div>
                 <div>
                   <label className="field-label mb-1 block">Website</label>
-                  <input type="url" value={website} onChange={e => setWebsite(e.target.value)}
-                    className="field w-full" placeholder="https://…" />
+                  <input type="text" inputMode="url" autoComplete="url" value={website} onChange={e => setWebsite(e.target.value)}
+                    className="field w-full" placeholder="yourcompany.com" />
                 </div>
                 <div>
                   <label className="field-label mb-1 block">LinkedIn URL</label>
-                  <input type="url" name="linkedin_url" value={linkedin} onChange={e => setLinkedin(e.target.value)}
-                    className="field w-full" placeholder="https://linkedin.com/in/…" />
+                  <input type="text" inputMode="url" autoComplete="url" name="linkedin_url" value={linkedin} onChange={e => setLinkedin(e.target.value)}
+                    className="field w-full" placeholder="linkedin.com/in/…" />
                 </div>
               </div>
             )}

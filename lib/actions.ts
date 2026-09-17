@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { OpportunityIntelligenceExtras, ProducerMatchProfile } from "@/services/fylympitchEngine";
 import type { Opportunity, Project } from "@/types";
+import { normalizeUrl } from "@/lib/normalize-url";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -39,7 +40,7 @@ export async function completeFilmmakerOnboarding(formData: FormData) {
 
   const full_name    = str(formData, "full_name")?.trim();
   const country      = str(formData, "country")?.trim();
-  const imdb_url     = str(formData, "imdb_url")?.trim() || null;
+  const imdb_url     = normalizeUrl(str(formData, "imdb_url"));
   const career_stage = str(formData, "career_stage") || null;
 
   if (!full_name) return { error: "Please enter your name." };
@@ -630,8 +631,8 @@ export async function updateProfile(formData: FormData) {
     company:    str(formData, "company")  || null,
     country:    str(formData, "country")  || null,
     bio:        str(formData, "bio")      || null,
-    website:    str(formData, "website")  || null,
-    imdb_url:   str(formData, "imdb_url") || null,
+    website:    normalizeUrl(str(formData, "website")),
+    imdb_url:   normalizeUrl(str(formData, "imdb_url")),
     ...(avatar_url ? { avatar_url } : {}),
   }).eq("id", user.id);
   if (error) return { error: error.message };
@@ -1182,8 +1183,8 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
   const company     = str(formData, "company");
   const avatar_url  = str(formData, "avatar_url");
   const bio         = str(formData, "bio") || null;
-  const website     = str(formData, "website") || null;
-  const linkedin_url = str(formData, "linkedin_url") || null;
+  const website     = normalizeUrl(str(formData, "website"));
+  const linkedin_url = normalizeUrl(str(formData, "linkedin_url"));
 
   const profileUpdate: Record<string, unknown> = {};
   if (name)       profileUpdate.full_name   = name;
@@ -1201,7 +1202,7 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
     user_id: user.id,
     contact_email: user.email ?? null,
     country: str(formData, "country") ?? "",
-    imdb_url: str(formData, "imdb_url") ?? null,
+    imdb_url: normalizeUrl(str(formData, "imdb_url")),
     genres,
     formats,
     territories,

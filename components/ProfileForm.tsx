@@ -57,11 +57,17 @@ export default function ProfileForm({ profile }: { profile: ProfileFormFields })
         </div>
         <div>
           <label className="field-label" htmlFor="website">Website</label>
-          <input id="website" name="website" type="url" className="field" defaultValue={profile.website ?? ""} placeholder="https://" />
+          {/* type="text", not type="url". The browser's url validation demands a
+              scheme and refuses every bare domain — "example.com" just as much as
+              "mystudio.co.uk" — which read to people as ".com only". The server
+              adds https:// via normalizeUrl(). */}
+          <input id="website" name="website" type="text" inputMode="url" autoComplete="url"
+            className="field" defaultValue={profile.website ?? ""} placeholder="yourstudio.com" />
         </div>
         <div>
           <label className="field-label" htmlFor="imdb_url">IMDb profile</label>
-          <input id="imdb_url" name="imdb_url" type="url" className="field" defaultValue={profile.imdb_url ?? ""} placeholder="https://www.imdb.com/name/…" />
+          <input id="imdb_url" name="imdb_url" type="text" inputMode="url" autoComplete="url"
+            className="field" defaultValue={profile.imdb_url ?? ""} placeholder="imdb.com/name/…" />
         </div>
       </div>
 
