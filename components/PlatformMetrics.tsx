@@ -2,7 +2,15 @@
 // Server component — reads daily snapshot from platform_metrics table.
 // Falls back to live aggregate queries if no snapshot exists yet.
 // Rendered above IntelligenceTicker on the homepage.
+//
+// Both fetchers are cached. This component is why the homepage stayed at
+// ~525ms after the page's own queries were cached, while /filmprojects and
+// /opportunities dropped to the no-database floor of ~215ms: it sits inside
+// the homepage making up to seven database calls of its own, and nothing in
+// the page file showed it. Every number here is a platform-wide aggregate —
+// identical for every visitor, and safe to share.
 
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -43,7 +51,7 @@ interface Community {
   verified_producers:    number;
 }
 
-async function fetchCommunity(): Promise<Community> {
+const fetchCommunity = unstable_cache(async (): Promise<Community> => {
   const empty = { registered_filmmakers: 0, projects_submitted: 0, verified_producers: 0 };
   try {
     const supabase = await createClient();
@@ -58,7 +66,7 @@ async function fetchCommunity(): Promise<Community> {
   } catch {
     return empty;
   }
-}
+}, ["platform-community"], { revalidate: 300, tags: ["metrics"] });
 
 const FALLBACK: Metrics = {
   active_opportunities:  0,
@@ -69,7 +77,7 @@ const FALLBACK: Metrics = {
   computed_at:           null,
 };
 
-async function fetchMetrics(): Promise<Metrics> {
+const fetchMetrics = unstable_cache(async (): Promise<Metrics> => {
   try {
     const supabase = await createClient();
 
@@ -130,7 +138,7 @@ async function fetchMetrics(): Promise<Metrics> {
   } catch {
     return FALLBACK;
   }
-}
+}, ["platform-metrics"], { revalidate: 300, tags: ["metrics"] });
 
 // ─── Component ─────────────────────────────────────────────────────────────
 
