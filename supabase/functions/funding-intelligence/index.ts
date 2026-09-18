@@ -380,6 +380,20 @@ function sleep(ms: number): Promise<void> {
  */
 async function scrapeUrl(
   url: string,
+  /**
+   * onlyMainContent asks Firecrawl to strip navigation, headers and footers.
+   * On a JavaScript-heavy festival site its heuristic can find no "main"
+   * content at all and return an empty string — a 200 with nothing in it.
+   * Four of the most valuable sources in the catalogue were failing that way
+   * on every single run: Busan's Asian Cinema Fund (81 failures), IDFA's Jan
+   * Vrijman Fund (79), the IDFA Forum (79) and Busan's Asian Project Market
+   * (76). The page was fetched and then discarded.
+   *
+   * So an empty result is retried once with the whole page. It costs one extra
+   * Firecrawl credit for the pages that need it, and nothing for the pages
+   * that do not.
+   */
+  mainContentOnly = true,
 ): Promise<{ markdown: string | null; error: string | null }> {
   if (!FIRECRAWL_KEY) {
     return { markdown: null, error: "FIRECRAWL_API_KEY is not set" };
@@ -398,7 +412,7 @@ async function scrapeUrl(
         body: JSON.stringify({
           url,
           formats: ["markdown"],
-          onlyMainContent: true,
+          onlyMainContent: mainContentOnly,
           timeout: SCRAPE_TIMEOUT_MS,
         }),
       });
@@ -416,6 +430,18 @@ async function scrapeUrl(
         }
 
         if (!markdown) {
+          // The fetch worked; the main-content filter is what emptied it.
+          // Ask again for the full page before giving up.
+          if (mainContentOnly) {
+            console.warn(`[firecrawl] empty main content for ${url} — retrying with the full page`);
+            await sleep(SCRAPE_BASE_DELAY_MS);
+            const full = await scrapeUrl(url, false);
+            if (full.markdown) return full;
+            return {
+              markdown: null,
+              error: `Firecrawl 200 but empty markdown (full-page retry also failed: ${full.error})`,
+            };
+          }
           lastError = "Firecrawl 200 but empty markdown";
           break;
         }
