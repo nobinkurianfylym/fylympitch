@@ -39,18 +39,42 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   // image, but a social card slot is ~1.91:1 and will centre-crop a 2:3 poster.
   const art =
     (p as any).share_card_path ?? p.poster_path ?? (p as any).deck_cover_path ?? null;
+
+  // The card SHAPE has to follow the artwork, not be fixed.
+  //
+  // summary_large_image is a 1.91:1 letterbox. A film poster is 2:3 portrait,
+  // so putting one in that slot centre-crops it: the title treatment at the top
+  // and the credits at the bottom are the first things cut, which is most of
+  // what makes a poster worth sharing. A poster therefore goes out as a
+  // "summary" card — shown small, beside the text, and whole.
+  //
+  // The composed share card is built at 1200x630 and the deck cover is a
+  // landscape slide, so both are right for the large card, as is the site
+  // default.
+  const isPortraitPoster = !(p as any).share_card_path && !!p.poster_path;
+
   // Falls through to the site default rather than to nothing: an explicit
   // empty images array here would override the one set in the root layout, so
   // a project with no artwork would share with no picture at all.
   const image = art
-    ? `${supabaseUrl}/storage/v1/object/public/thumbnails/${art}`
+    ? sized(`${supabaseUrl}/storage/v1/object/public/thumbnails/${art}`, 1200)
     : absoluteUrl("/og-default.png");
   const desc = p.logline ?? `A ${p.genre} from ${p.country} — now pitching on PITCH.FYLYM`;
   return {
     title: `${p.title} — PITCH.FYLYM`,
     description: desc,
-    openGraph: { title: p.title, description: desc, images: [image], type: "article" },
-    twitter: { card: "summary_large_image", title: p.title, description: desc, images: [image] },
+    openGraph: {
+      title: p.title,
+      description: desc,
+      images: [{ url: image, alt: `${p.title} poster` }],
+      type: "article",
+    },
+    twitter: {
+      card: isPortraitPoster ? "summary" : "summary_large_image",
+      title: p.title,
+      description: desc,
+      images: [image],
+    },
     alternates: { canonical: absoluteUrl(`/filmprojects/${p.slug}`) },
     robots: projectRobots(p as any),
   };
