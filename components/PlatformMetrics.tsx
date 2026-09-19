@@ -145,7 +145,11 @@ const fetchMetrics = unstable_cache(async (): Promise<Metrics> => {
 // ─── Component ─────────────────────────────────────────────────────────────
 
 export default async function PlatformMetrics() {
-  const [m, c] = await Promise.all([fetchMetrics(), fetchCommunity()]);
+  // fetchCommunity() is deliberately NOT called: its only consumer was the
+  // "Who's on the platform" band. Leaving the call in would keep paying for a
+  // cached RPC round trip on every homepage render to build something nothing
+  // displays.
+  const m = await fetchMetrics();
 
   // ── Band 1: what the platform tracks ──────────────────────────────────────
   const CATALOGUE = [
@@ -176,32 +180,6 @@ export default async function PlatformMetrics() {
     },
   ];
 
-  // ── Band 2: who is on it ──────────────────────────────────────────────────
-  // A zero renders as an absence, not as modesty: "0 Verified Producers" beside
-  // "593 Active Opportunities" reads as a platform nobody has joined. Each tile
-  // appears only once it has something to say, and the band disappears entirely
-  // until then.
-  const COMMUNITY = [
-    {
-      value: fmtCount(c.registered_filmmakers),
-      label: "Filmmakers",
-      sub:   "Registered on the platform",
-      n:     c.registered_filmmakers,
-    },
-    {
-      value: fmtCount(c.projects_submitted),
-      label: "Projects Submitted",
-      sub:   "Public and private",
-      n:     c.projects_submitted,
-    },
-    {
-      value: fmtCount(c.verified_producers),
-      label: "Verified Producers",
-      sub:   "Identity checked",
-      n:     c.verified_producers,
-    },
-  ].filter((s) => s.n > 0);
-
   // Formatted update timestamp
   const updatedStr = m.computed_at
     ? new Date(m.computed_at).toLocaleDateString("en-GB", {
@@ -220,11 +198,12 @@ export default async function PlatformMetrics() {
         overflow:     "hidden",
       }}
     >
-      {/* Two bands, because these are two different claims. The first is what
-          the platform has catalogued; the second is who has turned up. Running
-          them together in one row of eight would read as a single undifferentiated
-          scoreboard and let the small numbers borrow authority from the large
-          ones. A quiet label over each says which is which. */}
+      {/* One band: what the platform has catalogued. A second band showing
+          filmmaker, project and verified-producer counts was removed at the
+          owner's request — early-stage community numbers next to "593 Active
+          Opportunities" undersell the catalogue rather than supporting it.
+          fetchCommunity() and the community_metrics RPC are left in place so
+          the band can come back when the numbers are worth showing. */}
 
       <Band
         eyebrow="What we track"
@@ -232,16 +211,6 @@ export default async function PlatformMetrics() {
         columns={5}
         gridClass="platform-metrics-grid"
       />
-
-      {COMMUNITY.length > 0 && (
-        <Band
-          eyebrow="Who's on the platform"
-          stats={COMMUNITY}
-          columns={COMMUNITY.length}
-          gridClass="platform-community-grid"
-          divider
-        />
-      )}
 
       {/* ── Updated timestamp — bottom right, unobtrusive ────── */}
       {updatedStr && (
