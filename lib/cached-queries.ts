@@ -59,6 +59,7 @@ export const getTrendingProjects = unstable_cache(
         .from("projects")
         .select("id, slug, title, genre, format, stage, country, budget_usd, poster_path, deck_cover_path")
         .eq("is_public", true)
+        .eq("admin_hidden", false)
         .is("target_producer_id", null)
         .order("created_at", { ascending: false })
         .limit(40);
@@ -124,6 +125,11 @@ export const getPublicProjects = unstable_cache(
         .from("projects")
         .select("id, slug, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
         .eq("is_public", true)
+        // admin_hidden belongs in the query as well as in RLS. Relying on a
+        // policy alone means one permissive policy added later silently
+        // unhides everything — which is exactly what projects_select was
+        // doing before migration 081.
+        .eq("admin_hidden", false)
         .is("target_producer_id", null)
         .order("created_at", { ascending: false })
         .limit(60);

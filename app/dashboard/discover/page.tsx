@@ -59,6 +59,10 @@ export default async function DiscoverPage({
     .from("projects")
     .select("id, title, genre, format, language, country, budget_usd, funding_needed_usd, stage, logline, synopsis, pitch_deck_path, script_path, created_at, profiles!projects_owner_id_fkey(full_name, country)")
     .eq("is_public", true)
+    // Neither of these was filtered here, so an approved industry user saw
+    // admin-hidden projects and other producers' exclusive pitches.
+    .eq("admin_hidden", false)
+    .is("target_producer_id", null)
     .order("created_at", { ascending: false })
     .limit(40);
 

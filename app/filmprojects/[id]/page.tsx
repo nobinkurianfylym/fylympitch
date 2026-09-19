@@ -31,7 +31,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     // the exact opposite of the fix. With "*" the column is simply absent
     // until it exists.
     .from("projects").select("*")
-    .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
+    .eq(isUuid ? "id" : "slug", id)
+    .eq("is_public", true)
+    .eq("admin_hidden", false)
+    .is("target_producer_id", null)
+    .single();
   if (!p) return { title: "Project — PITCH.FYLYM" };
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   // Share card first: it is composed at 1200x630, so nothing is cropped and it
@@ -88,13 +92,19 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   // UUID → redirect to slug-based URL (preserve old shared links)
   if (isUuid) {
     const { data: slugRow } = await supabase
-      .from("projects").select("slug").eq("id", id).eq("is_public", true).single();
+      .from("projects").select("slug").eq("id", id)
+      .eq("is_public", true).eq("admin_hidden", false)
+      .is("target_producer_id", null).single();
     if (slugRow?.slug) redirect(`/filmprojects/${slugRow.slug}`);
   }
 
   const { data: p } = await supabase.from("projects")
     .select("id, slug, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, director_name, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, is_public, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username)")
-    .eq(isUuid ? "id" : "slug", id).eq("is_public", true).single();
+    .eq(isUuid ? "id" : "slug", id)
+    .eq("is_public", true)
+    .eq("admin_hidden", false)
+    .is("target_producer_id", null)
+    .single();
 
   if (!p) notFound();
 
