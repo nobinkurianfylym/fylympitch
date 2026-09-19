@@ -54,6 +54,73 @@ const nextConfig: NextConfig = {
   // ── Response headers ──────────────────────────────────────────
   async headers() {
     return [
+      // ── Security headers ─────────────────────────────────────
+      // The site had none. These are the cheap, high-value ones: they
+      // cost nothing, break nothing, and close off whole classes of
+      // attack that otherwise depend on the browser guessing well.
+      {
+        source: "/:path*",
+        headers: [
+          // Clickjacking. Without this, pitch.fylym.com can be framed
+          // invisibly over a decoy page and a filmmaker can be tricked
+          // into clicking "Send this pitch to the producer".
+          { key: "X-Frame-Options", value: "DENY" },
+
+          // Stops the browser second-guessing Content-Type. An uploaded
+          // file served as text/plain cannot be re-interpreted as HTML
+          // and executed.
+          { key: "X-Content-Type-Options", value: "nosniff" },
+
+          // Do not leak the full URL of a private page to third parties.
+          // A filmmaker following an outbound link from
+          // /dashboard/projects/<uuid> should not hand that uuid over.
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+
+          // Nothing here needs a camera, microphone or location, and
+          // saying so explicitly means an injected script cannot ask.
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+          },
+
+          // Two years, subdomains included. Cloudflare already serves
+          // HTTPS; this stops the first request of a session being made
+          // over HTTP and downgraded. Not preloaded — that is a
+          // deliberate, hard-to-reverse commitment and should be a
+          // decision, not a side effect.
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains",
+          },
+
+          // Content-Security-Policy in REPORT-ONLY.
+          //
+          // Next.js inlines its RSC payload and hydration scripts, so a
+          // strict script-src would white-screen the site. Report-only
+          // enforces nothing and breaks nothing: it makes the browser
+          // report what WOULD have been blocked, so the policy can be
+          // tightened against real traffic instead of guesswork.
+          //
+          // Move this to Content-Security-Policy once the reports are
+          // quiet. Do not flip it blind.
+          {
+            key: "Content-Security-Policy-Report-Only",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              `img-src 'self' data: blob: https://${SUPABASE_HOSTNAME}`,
+              "font-src 'self' data:",
+              `connect-src 'self' https://${SUPABASE_HOSTNAME} wss://${SUPABASE_HOSTNAME}`,
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "object-src 'none'",
+            ].join("; "),
+          },
+        ],
+      },
+
       // Eager Supabase TLS preconnect ONLY on authenticated data routes that hit
       // Supabase immediately on load. Kept off public pages (/, /filmprojects) where
       // it is unused — PageSpeed flagged it there. dns-prefetch (layout) still covers all routes.
