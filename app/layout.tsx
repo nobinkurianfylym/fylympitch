@@ -45,6 +45,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    // SITE.twitter existed but was referenced nowhere, so no twitter:site tag
+    // was rendered and X attributed every card to no account.
+    site: SITE.twitter,
+    creator: SITE.twitter,
     title: SITE_TITLE,
     description: SITE_DESC,
     images: ["/og-default.png"],

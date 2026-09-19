@@ -12,8 +12,8 @@
 export const SITE = {
   name: "PITCH.FYLYM",
   host: "https://pitch.fylym.com",
-  twitter: "@fylym",
-  defaultOgImage: "https://pitch.fylym.com/logos/og-default.png",
+  twitter: "@fylymhq",
+  defaultOgImage: "https://pitch.fylym.com/og-default.png",
 } as const;
 
 /** Build an absolute, canonical URL from a path. */
