@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { supabaseUrl as getSupabaseUrl, supabaseAnonKey as getSupabaseAnonKey, supabaseServiceRoleKey as getSupabaseServiceRoleKey } from "@/lib/supabase/env";
 import { after } from "next/server";
 import { toLiveUSD, validateBudgetSplit } from "@/lib/currency";
@@ -291,6 +291,7 @@ export async function createProject(formData: FormData) {
   });
 
   revalidatePath("/dashboard");
+  revalidateTag("projects", { expire: 0 });
   revalidatePath("/filmprojects");
   revalidatePath("/dashboard/projects");
   if (formData.get("is_public") !== "false") {
@@ -305,6 +306,10 @@ export async function createProject(formData: FormData) {
   if (str(formData, "target_producer_id")) {
     await notifyExclusivePitch(supabase, data.id);
   }
+  // A new public project should show up straight away, not in five minutes.
+  revalidateTag("projects", { expire: 0 });
+  revalidatePath("/filmprojects");
+  revalidatePath("/");
   redirect(`/dashboard/projects/${data.id}`);
 }
 
@@ -353,7 +358,10 @@ export async function deleteProject(formData: FormData) {
   const { supabase, user } = await requireUser();
   const id = str(formData, "project_id");
   await supabase.from("projects").delete().eq("id", id).eq("owner_id", user.id);
+  revalidateTag("projects", { expire: 0 });
   revalidatePath("/dashboard/projects");
+  revalidatePath("/filmprojects");
+  revalidatePath("/");
   redirect("/dashboard/projects");
 }
 
@@ -750,9 +758,12 @@ export async function adminToggleProjectVisibility(formData: FormData) {
     actor_id: user.id, action: admin_hidden ? "project_admin_hidden" : "project_admin_unhidden",
     target: "project", target_id: id,
   });
+  revalidateTag("projects", { expire: 0 });
   revalidatePath("/admin/projects");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/projects");
+  revalidatePath("/filmprojects");
+  revalidatePath("/");
 }
 
 export async function adminVerifyProducer(formData: FormData) {
@@ -843,7 +854,19 @@ export async function adminDeleteProject(formData: FormData) {
   await supabase.from("audit_logs").insert({
     actor_id: user.id, action: "project_removed", target: "project", target_id: id,
   });
+  // The cached public listing and homepage ticker live under this tag.
+  // revalidatePath alone leaves them serving a project that no longer exists.
+  //
+  // { expire: 0 } rather than the recommended "max": max serves stale content
+  // while it revalidates, which for a DELETE means continuing to show a
+  // project that has been removed. Zero makes the next request a blocking
+  // cache miss — slower once, correct immediately, which is the right trade
+  // for a removal.
+  revalidateTag("projects", { expire: 0 });
   revalidatePath("/admin/projects");
+  revalidatePath("/filmprojects");
+  revalidatePath("/");
+  revalidatePath("/sitemap.xml");
 }
 
 // ---------- ADMIN: CERTIFICATE MANAGEMENT ----------
