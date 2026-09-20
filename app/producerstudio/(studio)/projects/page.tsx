@@ -252,14 +252,28 @@ export default async function ProducerProjectsPage({
                         isLoggedIn={true}
                         size="sm"
                       />
-                      <ShareButton
-                        projectId={p.id}
-                        slug={(p as any).slug}
-                        title={p.title}
-                        genre={p.genre}
-                        country={p.country}
-                        size="sm"
-                      />
+                      {/* Share is for public projects only. A private project appears here
+                          because a verified producer can see it -- that is access to read,
+                          not permission to broadcast the filmmaker's title to an audience
+                          they never chose. The share sheet puts the title into a tweet, a
+                          WhatsApp message and the clipboard, which is publication. */}
+                      {(p as any).is_public ? (
+                        <ShareButton
+                          projectId={p.id}
+                          slug={(p as any).slug}
+                          title={p.title}
+                          genre={p.genre}
+                          country={p.country}
+                          size="sm"
+                        />
+                      ) : (
+                        <span
+                          title="This project is not public. The filmmaker has not chosen to publish it, so it cannot be shared."
+                          className="inline-flex items-center text-[10px] tracking-[0.1em] uppercase px-2.5 py-1 rounded-full bg-amber-50 text-amber-700"
+                        >
+                          Private
+                        </span>
+                      )}
                     </div>
 
                     {/* Pipeline / pass actions — hidden in passed view */}
