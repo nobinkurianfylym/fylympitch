@@ -8,6 +8,7 @@ import { ExportPacketButton } from "@/components/ExportPacketButton";
 import TrackOpportunityView from "@/components/TrackOpportunityView";
 import ShareLinkButton from "@/components/ShareLinkButton";
 import type { Opportunity, Project } from "@/types";
+import { getProjectAllowance } from "@/lib/project-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,11 @@ export default async function OpportunityDetailPage({
   const { data: savedRow } = await supabase
     .from("saved_opportunities").select("opportunity_id")
     .eq("user_id", user!.id).eq("opportunity_id", id).maybeSingle();
+
+  // A filmmaker who already has projects saw only a picker. The offer to add
+  // a new one lived in the no-projects branch below, which they never reach --
+  // so someone with two projects and a third idea had nowhere to go from here.
+  const allowance = await getProjectAllowance(supabase, user!.id);
 
   // ── Producer brief vs external fund ───────────────────────────────────────
   // These are two different actions wearing the same form. An external fund is
@@ -135,6 +141,28 @@ export default async function OpportunityDetailPage({
                   <button className="btn-ghost !px-5 !py-2.5">Re-score</button>
                 )}
               </div>
+
+              {/* Deliberately a plain link, with no ?producer= on it. Creating
+                  a project WITH a target producer pitches it immediately, which
+                  would route around the consent checkbox this page exists to
+                  show. So: make the project, come back, submit it here through
+                  the one gated path. */}
+              {allowance.canCreate ? (
+                <p className="mt-3 text-[12px] text-ash">
+                  Not the right project?{" "}
+                  <Link href="/dashboard/projects/new" className="underline underline-offset-4 decoration-line hover:text-gold">
+                    Add a new one
+                  </Link>
+                  {!allowance.exempt && allowance.remaining !== null && (
+                    <span className="text-ash/70"> · {allowance.remaining} of {allowance.max} slots left</span>
+                  )}
+                </p>
+              ) : (
+                <p className="mt-3 text-[12px] text-ash/70">
+                  Using {allowance.used} of {allowance.max} project slots. Delete one you are no longer
+                  pitching to add another.
+                </p>
+              )}
             </form>
           )}
 

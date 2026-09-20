@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import ProjectThumbnail from "@/components/ProjectThumbnail";
 import { formatBudget } from "@/lib/format";
 import { formatFormat, formatCountry, formatStage } from "@/lib/film-identity";
+import { getProjectAllowance } from "@/lib/project-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,9 @@ export default async function MyProjectsPage() {
 
   const { data: profile } = await supabase
     .from("profiles").select("full_name").eq("id", user.id).single();
+
+  // Shown beside the button rather than discovered by hitting it.
+  const allowance = await getProjectAllowance(supabase, user.id);
 
   // Include synopsis and pitch_deck_path — no match data needed on this page
   const { data: projects } = await supabase
@@ -56,7 +60,23 @@ export default async function MyProjectsPage() {
           <p className="eyebrow mb-3">My Films</p>
           <h1 className="font-display text-[34px] font-[400]">My Projects</h1>
         </div>
-        <Link href="/dashboard/projects/new" className="btn-gold">New project</Link>
+        <div className="text-right">
+          {allowance.canCreate ? (
+            <Link href="/dashboard/projects/new" className="btn-gold">New project</Link>
+          ) : (
+            <span
+              className="btn-ghost opacity-50 cursor-not-allowed"
+              title="Delete a project you are no longer pitching to add another."
+            >
+              New project
+            </span>
+          )}
+          {!allowance.exempt && (
+            <p className="mt-2 text-[11px] tracking-[0.1em] uppercase text-ash/70">
+              {allowance.used} of {allowance.max} used
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Empty state */}

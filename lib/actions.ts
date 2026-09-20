@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { OpportunityIntelligenceExtras, ProducerMatchProfile } from "@/services/fylympitchEngine";
 import type { Opportunity, Project } from "@/types";
 import { normalizeUrl } from "@/lib/normalize-url";
+import { getProjectAllowance, projectLimitMessage } from "@/lib/project-limits";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -66,22 +67,15 @@ export async function completeFilmmakerOnboarding(formData: FormData) {
 export async function createProject(formData: FormData) {
   const { supabase, user } = await requireUser();
 
-  // ── Project submission limit: max 3 per filmmaker (admins exempt) ──
-  const { data: callerProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (callerProfile?.role !== "admin") {
-    const { count: projectCount } = await supabase
-      .from("projects")
-      .select("id", { count: "exact", head: true })
-      .eq("owner_id", user.id);
-
-    if ((projectCount ?? 0) >= 3) {
-      return { error: "Project limit reached. Filmmakers may submit a maximum of 3 projects." };
-    }
+  // ── Project limit (admins exempt) ──
+  // Still enforced here, because this is the only path that inserts a project
+  // and a UI that merely hides the button stops nothing. What changed is that
+  // the rule now lives in lib/project-limits.ts, so the surfaces that OFFER to
+  // create a project read the same numbers and can say no before the filmmaker
+  // fills the form and uploads a deck, a script and a poster.
+  const allowance = await getProjectAllowance(supabase, user.id);
+  if (!allowance.canCreate) {
+    return { error: projectLimitMessage(allowance) };
   }
 
   // Safety net: ensure profile row exists (with username) before inserting a project.
