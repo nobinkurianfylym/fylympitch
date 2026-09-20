@@ -402,7 +402,7 @@ export default async function PublicProfilePage({
                   {acceptingPitches && (
                     <AuthLink
                       authedHref={`/dashboard/projects/new?producer=${profile.username}`}
-                      anonHref={`/login?next=/dashboard/projects/new?producer=${profile.username}`}
+                      anonHref={`/login?next=${encodeURIComponent(`/dashboard/projects/new?producer=${profile.username}`)}`}
                       style={{display:"inline-flex",alignItems:"center",gap:8,fontSize:10,letterSpacing:".16em",textTransform:"uppercase",fontWeight:700,color:"#F5F5F0",textDecoration:"none",background:"#1A1815",padding:"10px 20px",borderRadius:100}}>
                       <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 5-10 5V7l7-1-7-1V1z" fill="currentColor"/></svg>
                       Send Pitch

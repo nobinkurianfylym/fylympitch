@@ -35,7 +35,12 @@ export async function middleware(request: NextRequest) {
   if (isProtected && (!user || error)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", path);
+    // path + search, not path alone. Sending an anonymous visitor from
+    // /dashboard/opportunities/<id>?project=<id> to login and back dropped
+    // the ?project=, so they returned to the brief with the wrong project
+    // selected. searchParams.set encodes the value, which is correct here --
+    // the redirect above decodes it with searchParams.get.
+    url.searchParams.set("next", path + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 
@@ -71,9 +76,19 @@ export async function middleware(request: NextRequest) {
       !rawNext.startsWith("/signup") &&
       !rawNext.startsWith("/auth");
     const destination = safe ? rawNext : "/dashboard";
-    const url = request.nextUrl.clone();
-    url.search = "";
-    url.pathname = destination;
+
+    // new URL(), not url.pathname = destination.
+    //
+    // Assigning a string with a query to .pathname percent-encodes the "?",
+    // so "/dashboard/projects/new?producer=x" became
+    // "/dashboard/projects/new%3Fproducer=x" -- one path segment, matching no
+    // route, 404. url.search = "" then discarded the query as well. Every
+    // "next" carrying its own query landed on a 404: Send Pitch from a
+    // producer profile, the opportunity CTAs, and /dashboard/messages/open.
+    //
+    // The sanitize above is what keeps this safe: destination is known to
+    // start with a single "/", so it cannot resolve to another origin.
+    const url = new URL(destination, request.nextUrl.origin);
     return NextResponse.redirect(url);
   }
 
