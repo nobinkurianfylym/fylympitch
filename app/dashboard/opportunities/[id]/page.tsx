@@ -150,7 +150,10 @@ export default async function OpportunityDetailPage({
               {allowance.canCreate ? (
                 <p className="mt-3 text-[12px] text-ash">
                   Not the right project?{" "}
-                  <Link href="/dashboard/projects/new" className="underline underline-offset-4 decoration-line hover:text-gold">
+                  <Link
+                    href={`/dashboard/projects/new?opp=${opp.id}`}
+                    className="underline underline-offset-4 decoration-line hover:text-gold"
+                  >
                     Add a new one
                   </Link>
                   {!allowance.exempt && allowance.remaining !== null && (

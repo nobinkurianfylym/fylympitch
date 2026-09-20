@@ -8,9 +8,9 @@ export const dynamic = "force-dynamic";
 export default async function NewProjectPage({
   searchParams,
 }: {
-  searchParams: Promise<{ producer?: string }>;
+  searchParams: Promise<{ producer?: string; opp?: string }>;
 }) {
-  const { producer: producerUsername } = await searchParams;
+  const { producer: producerUsername, opp: oppId } = await searchParams;
 
   // Check the limit BEFORE rendering the form. ProjectForm uploads the deck,
   // script and poster to storage from the browser and only then calls
@@ -26,6 +26,14 @@ export default async function NewProjectPage({
   const targetProducerNote = producerUsername
     ? "You can still pitch a producer with a project you already have — open the brief, or their profile, and choose which one to send."
     : "You can still apply to any opportunity with a project you already have.";
+
+  // Opened from an opportunity. Read it back so the banner can name the brief
+  // -- and so an id that is not a real opportunity quietly becomes no banner
+  // and no return address, rather than a broken round trip.
+  const isUuid = !!oppId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(oppId);
+  const { data: returnOpp } = isUuid
+    ? await supabase.from("opportunities").select("id, title").eq("id", oppId).maybeSingle()
+    : { data: null };
 
   let targetProducer: { id: string; full_name: string; company: string | null } | null = null;
 
@@ -80,8 +88,24 @@ export default async function NewProjectPage({
         </p>
       )}
 
+      {returnOpp && (
+        <div className="mt-4 mb-8 px-4 py-3 rounded-card border border-line bg-parchment">
+          <p className="text-[13px] text-ink">
+            Creating a project to pitch to{" "}
+            <span className="font-semibold">{(returnOpp as { title: string }).title}</span>
+          </p>
+          <p className="text-[12px] text-ash mt-1">
+            Save it and you will come straight back to the brief with this project selected,
+            ready to submit.
+          </p>
+        </div>
+      )}
+
       <div className="mt-6">
-        <ProjectForm targetProducerId={targetProducer?.id ?? null} />
+        <ProjectForm
+          targetProducerId={targetProducer?.id ?? null}
+          returnOpportunityId={(returnOpp as { id: string } | null)?.id ?? null}
+        />
       </div>
     </div>
   );

@@ -123,7 +123,19 @@ function fmtUSD(n: number | null): string {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
-export default function ProjectForm({ targetProducerId = null }: { targetProducerId?: string | null }) {
+export default function ProjectForm({
+  targetProducerId = null,
+  returnOpportunityId = null,
+}: {
+  targetProducerId?: string | null;
+  /** Set when this form was opened from an opportunity. Carried through the
+   *  save so createProject can send the filmmaker back to that brief with the
+   *  new project already selected, instead of stranding them on the project
+   *  page to find the opportunity again. It is a RETURN ADDRESS only -- it
+   *  never makes the project a pitch. Submitting still happens on the brief,
+   *  behind its consent checkbox. */
+  returnOpportunityId?: string | null;
+}) {
   const [fields, setFields]         = useState<Fields>(DEFAULT_FIELDS);
   const [aiFilled, setAiFilled]     = useState<AiFilled>({});
   const [aiLoading, setAiLoading]   = useState(false);
@@ -420,6 +432,7 @@ export default function ProjectForm({ targetProducerId = null }: { targetProduce
       <input type="hidden" name="has_lookbook"      value={String(hasLookbook)} />
       <input type="hidden" name="has_coproducer"    value={String(hasCoproducer)} />
       {targetProducerId && <input type="hidden" name="target_producer_id" value={targetProducerId} />}
+      {returnOpportunityId && <input type="hidden" name="return_opportunity_id" value={returnOpportunityId} />}
 
       {/* ── STEP 1: PITCH DECK ── */}
       <div className="rounded-card border border-line bg-white/60 p-6 space-y-4">

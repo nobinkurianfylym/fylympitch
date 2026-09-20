@@ -304,6 +304,19 @@ export async function createProject(formData: FormData) {
   revalidateTag("projects", { expire: 0 });
   revalidatePath("/filmprojects");
   revalidatePath("/");
+
+  // Opened from an opportunity? Go back to it with the new project selected,
+  // ready to submit. Without this the filmmaker lands on the project page and
+  // has to find the brief again through the listing -- the same loss the
+  // public-page CTAs had.
+  //
+  // UUID-shaped only. It is interpolated into a path, and a value from a form
+  // field has no business steering where anyone is sent.
+  const returnOpp = str(formData, "return_opportunity_id");
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(returnOpp)) {
+    redirect(`/dashboard/opportunities/${returnOpp}?project=${data.id}`);
+  }
+
   redirect(`/dashboard/projects/${data.id}`);
 }
 
