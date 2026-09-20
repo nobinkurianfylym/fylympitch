@@ -60,7 +60,9 @@ export const getTrendingProjects = unstable_cache(
         .select("id, slug, title, genre, format, stage, country, budget_usd, poster_path, deck_cover_path")
         .eq("is_public", true)
         .eq("admin_hidden", false)
-        .is("target_producer_id", null)
+        // Exclusivity is not privacy (085). is_public above already decides who
+        // may see this; a pitch addressed to a producer and marked Public belongs
+        // on the showcase the filmmaker was promised.
         // Posters only. Without one, ProjectThumbnail draws a generated pastel
         // title card in one of eight colours -- next to real 2:3 artwork those
         // read as placeholders, and the ticker looked like a half-finished
@@ -142,7 +144,9 @@ export const getPublicProjects = unstable_cache(
         // unhides everything — which is exactly what projects_select was
         // doing before migration 081.
         .eq("admin_hidden", false)
-        .is("target_producer_id", null)
+        // Exclusivity is not privacy (085). is_public above already decides who
+        // may see this; a pitch addressed to a producer and marked Public belongs
+        // on the showcase the filmmaker was promised.
         .order("created_at", { ascending: false })
         .limit(60);
 

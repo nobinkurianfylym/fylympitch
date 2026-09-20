@@ -62,7 +62,9 @@ export default async function DiscoverPage({
     // Neither of these was filtered here, so an approved industry user saw
     // admin-hidden projects and other producers' exclusive pitches.
     .eq("admin_hidden", false)
-    .is("target_producer_id", null)
+    // Exclusivity is not privacy (085). is_public above already decides who
+    // may see this; a pitch addressed to a producer and marked Public belongs
+    // on the showcase the filmmaker was promised.
     .order("created_at", { ascending: false })
     .limit(40);
 

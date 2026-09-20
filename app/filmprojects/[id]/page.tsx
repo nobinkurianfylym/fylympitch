@@ -34,7 +34,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .eq(isUuid ? "id" : "slug", id)
     .eq("is_public", true)
     .eq("admin_hidden", false)
-    .is("target_producer_id", null)
+    // Exclusivity is not privacy (085). is_public above already decides who
+    // may see this; a pitch addressed to a producer and marked Public belongs
+    // on the showcase the filmmaker was promised.
     .single();
   if (!p) return { title: "Project — PITCH.FYLYM" };
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -94,7 +96,8 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
     const { data: slugRow } = await supabase
       .from("projects").select("slug").eq("id", id)
       .eq("is_public", true).eq("admin_hidden", false)
-      .is("target_producer_id", null).single();
+      // Exclusivity is not privacy (085) -- is_public above decides.
+      .single();
     if (slugRow?.slug) redirect(`/filmprojects/${slugRow.slug}`);
   }
 
@@ -103,7 +106,9 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
     .eq(isUuid ? "id" : "slug", id)
     .eq("is_public", true)
     .eq("admin_hidden", false)
-    .is("target_producer_id", null)
+    // Exclusivity is not privacy (085). is_public above already decides who
+    // may see this; a pitch addressed to a producer and marked Public belongs
+    // on the showcase the filmmaker was promised.
     .single();
 
   if (!p) notFound();

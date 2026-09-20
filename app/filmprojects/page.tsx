@@ -45,7 +45,9 @@ export default async function ProjectsPage({
         .select("id, slug, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
         .eq("is_public", true)
         .eq("admin_hidden", false)
-        .is("target_producer_id", null)
+        // Exclusivity is not privacy (085). is_public above already decides who
+        // may see this; a pitch addressed to a producer and marked Public belongs
+        // on the showcase the filmmaker was promised.
         .order("created_at", { ascending: false })
         .limit(60) as any)
         .or(`title.ilike.%${search}%,logline.ilike.%${search}%`)
