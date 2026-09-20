@@ -108,6 +108,15 @@ export default async function FundDetailPage({ params }: Props) {
 
   // For producer-posted opportunities, fetch producer display info
   let producerInfo: { full_name: string | null; username: string | null; company: string | null } | null = null;
+  // Where every CTA on this page goes. /dashboard/opportunities/[id] is the
+  // gated apply screen: project picker, match score, and the exclusive-pitch
+  // consent checkbox. Sending people to /dashboard instead dropped them on a
+  // generic page with no memory of the brief they had just been reading, and
+  // they had to find it again.
+  const applyPath = `/dashboard/opportunities/${opp.id}`;
+  const authPath  = (route: "login" | "signup") =>
+    `/${route}?next=${encodeURIComponent(applyPath)}`;
+
   if ((opp as any).posted_by_producer_id) {
     const { data: pData } = await supabase
       .from("profiles")
@@ -377,10 +386,10 @@ export default async function FundDetailPage({ params }: Props) {
               — identical to pitching via their producer profile. They will see your
               full project, FRS score, and match analysis.
             </p>
-            <AuthAwareCta authedHref="/dashboard" authedLabel="Submit your project →">
+            <AuthAwareCta authedHref={applyPath} authedLabel="Submit your project →">
               <div className="flex flex-wrap gap-3">
-                <Link href="/signup" className="btn-gold">Create account & submit</Link>
-                <Link href="/login" className="btn-ghost">Sign in</Link>
+                <Link href={authPath("signup")} className="btn-gold">Create account &amp; submit</Link>
+                <Link href={authPath("login")} className="btn-ghost">Sign in</Link>
               </div>
             </AuthAwareCta>
           </div>
@@ -394,10 +403,10 @@ export default async function FundDetailPage({ params }: Props) {
               Submit your project and the PITCH.FYLYM engine scores your match against
               {` ${opp.title}`} and hundreds of other funds, labs and co-producers worldwide.
             </p>
-            <AuthAwareCta authedHref="/dashboard" authedLabel="Go to your dashboard →">
+            <AuthAwareCta authedHref={applyPath} authedLabel="Check your match →">
               <div className="flex flex-wrap gap-3">
-                <Link href="/signup" className="btn-gold">Submit your project</Link>
-                <Link href="/login" className="btn-ghost">Sign in</Link>
+                <Link href={authPath("signup")} className="btn-gold">Submit your project</Link>
+                <Link href={authPath("login")} className="btn-ghost">Sign in</Link>
               </div>
             </AuthAwareCta>
           </div>
