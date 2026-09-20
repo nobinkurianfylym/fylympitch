@@ -133,35 +133,40 @@ export default async function OpportunityDetailPage({
               <label className="field-label" htmlFor="project">
                 {isProducerPost ? "Project you are pitching" : "Check another project"}
               </label>
-              <div className="flex gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <select id="project" name="project" defaultValue={selected.id} className="field !w-72">
                   {projects!.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
                 </select>
                 {(projects?.length ?? 0) > 1 && (
                   <button className="btn-ghost !px-5 !py-2.5">Re-score</button>
                 )}
-              </div>
 
-              {/* Deliberately a plain link, with no ?producer= on it. Creating
-                  a project WITH a target producer pitches it immediately, which
-                  would route around the consent checkbox this page exists to
-                  show. So: make the project, come back, submit it here through
-                  the one gated path. */}
-              {allowance.canCreate ? (
-                <p className="mt-3 text-[12px] text-ash">
-                  Not the right project?{" "}
+                {/* A peer of the picker, not a footnote under it. Pitching a
+                    project you have not written yet is a normal thing to want
+                    on a brief, and it was a 12px underlined link.
+
+                    No ?producer= on the href, on purpose: creating a project
+                    WITH a target producer pitches it on save, routing around
+                    the consent checkbox this page exists to show. Make it,
+                    come back, submit it here through the one gated path. */}
+                {allowance.canCreate && (
                   <Link
                     href={`/dashboard/projects/new?opp=${opp.id}`}
-                    className="underline underline-offset-4 decoration-line hover:text-gold"
+                    className="btn-outline !px-5 !py-2.5 whitespace-nowrap"
                   >
-                    Add a new one
+                    + New project
                   </Link>
-                  {!allowance.exempt && allowance.remaining !== null && (
-                    <span className="text-ash/70"> · {allowance.remaining} of {allowance.max} slots left</span>
-                  )}
-                </p>
+                )}
+              </div>
+
+              {allowance.canCreate ? (
+                !allowance.exempt && allowance.remaining !== null && (
+                  <p className="mt-2.5 text-[12px] text-ash/70">
+                    {allowance.remaining} of {allowance.max} project slots left
+                  </p>
+                )
               ) : (
-                <p className="mt-3 text-[12px] text-ash/70">
+                <p className="mt-2.5 text-[12px] text-ash/70">
                   Using {allowance.used} of {allowance.max} project slots. Delete one you are no longer
                   pitching to add another.
                 </p>
