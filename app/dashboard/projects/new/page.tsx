@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import ProjectForm from "@/components/ProjectForm";
 import { getProjectAllowance, projectLimitMessage } from "@/lib/project-limits";
+import PitchExistingList, { type PitchableProject } from "./PitchExistingList";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +48,20 @@ export default async function NewProjectPage({
     targetProducer = data ?? null;
   }
 
-  if (allowance && !allowance.canCreate) {
+  // Send Pitch used to open a blank form. A filmmaker with finished work had
+  // to type another project, and at the 3-project cap could not pitch at all.
+  const { data: ownProjectRows } = targetProducer && user
+    ? await supabase
+        .from("projects")
+        .select("id, title, logline, poster_path, target_producer_id, is_public")
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: false })
+    : { data: null };
+  const ownProjects = (ownProjectRows ?? []) as PitchableProject[];
+
+  // Only blocks CREATING. Pitching a project that already exists is not
+  // creating one, so a filmmaker at the cap can still send.
+  if (allowance && !allowance.canCreate && ownProjects.length === 0) {
     return (
       <div className="max-w-xl">
         <p className="eyebrow mb-3">New project</p>
@@ -101,12 +115,35 @@ export default async function NewProjectPage({
         </div>
       )}
 
-      <div className="mt-6">
-        <ProjectForm
-          targetProducerId={targetProducer?.id ?? null}
-          returnOpportunityId={(returnOpp as { id: string } | null)?.id ?? null}
-        />
-      </div>
+      {targetProducer && ownProjects.length > 0 && (
+        <div className="mt-8">
+          <p className="eyebrow mb-3">Send a project you already have</p>
+          <PitchExistingList
+            projects={ownProjects}
+            producerId={targetProducer.id}
+            producerName={targetProducer.company || targetProducer.full_name}
+          />
+        </div>
+      )}
+
+      {allowance && !allowance.canCreate ? (
+        <div className="mt-10 card px-5 py-5">
+          <p className="text-[14px] text-ash leading-relaxed">{projectLimitMessage(allowance)}</p>
+          <Link href="/dashboard/projects" className="btn-ghost inline-flex mt-4">
+            Manage your projects →
+          </Link>
+        </div>
+      ) : (
+        <div className="mt-10">
+          {targetProducer && ownProjects.length > 0 && (
+            <p className="eyebrow mb-3">Or pitch something new</p>
+          )}
+          <ProjectForm
+            targetProducerId={targetProducer?.id ?? null}
+            returnOpportunityId={(returnOpp as { id: string } | null)?.id ?? null}
+          />
+        </div>
+      )}
     </div>
   );
 }

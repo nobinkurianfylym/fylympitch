@@ -321,6 +321,84 @@ export async function createProject(formData: FormData) {
 }
 
 /**
+ * Pitch a project the filmmaker ALREADY has to a producer.
+ *
+ * Send Pitch on a producer profile opened a blank project form. A filmmaker
+ * with three finished projects had to type a fourth -- and at the 3-project
+ * cap, could not pitch at all. This is the one-click path for work that
+ * already exists.
+ *
+ * Same end state as submitting the form with ?producer=: target_producer_id
+ * set, notifyExclusivePitch fired. The rules below are the ones the other two
+ * routes already enforce, kept identical on purpose.
+ */
+export async function pitchExistingProject(formData: FormData): Promise<{ error: string } | undefined> {
+  const { supabase, user } = await requireUser();
+  const project_id  = str(formData, "project_id");
+  const producer_id = str(formData, "producer_id");
+  if (!project_id || !producer_id) return { error: "Missing project or producer." };
+
+  if (producer_id === user.id) {
+    return { error: "You cannot pitch a project to yourself." };
+  }
+
+  // Ownership is checked by reading, not asserted. RLS lets a filmmaker read
+  // their own rows, so a project id belonging to someone else comes back null.
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id, title, target_producer_id, owner_id")
+    .eq("id", project_id)
+    .eq("owner_id", user.id)
+    .maybeSingle();
+
+  if (!project) return { error: "Project not found." };
+
+  // The same rule applyToOpportunity uses: a project already addressed to
+  // someone stays with them. Re-pointing it would silently withdraw a pitch
+  // the first producer can currently see, without telling either of them.
+  const existingTarget = (project as { target_producer_id: string | null }).target_producer_id;
+  if (existingTarget) {
+    return {
+      error: existingTarget === producer_id
+        ? "This project has already been pitched to this producer."
+        : "This project is already pitched exclusively to another producer.",
+    };
+  }
+
+  // Producer must exist, be a producer, and still be open to pitches. The
+  // profile page hides Send Pitch when they are not, but a stale tab or a
+  // crafted POST is not stopped by a hidden button.
+  const { data: producer } = await supabase
+    .from("profiles").select("id, role").eq("id", producer_id).eq("role", "producer").maybeSingle();
+  if (!producer) return { error: "Producer not found." };
+
+  const { data: pp } = await supabase
+    .from("producer_profiles").select("accepting_pitches").eq("user_id", producer_id).maybeSingle();
+  if ((pp as { accepting_pitches?: boolean | null } | null)?.accepting_pitches === false) {
+    return { error: "This producer is not accepting pitches right now." };
+  }
+
+  const { error } = await supabase
+    .from("projects")
+    .update({ target_producer_id: producer_id })
+    .eq("id", project_id)
+    .eq("owner_id", user.id);
+  if (error) return { error: error.message };
+
+  await notifyExclusivePitch(supabase, project_id);
+
+  await supabase.from("activity_logs").insert({
+    user_id: user.id, action: "exclusive_pitch_sent", entity: "project", entity_id: project_id,
+  });
+
+  // 085 made this matter: a public project stays on the showcase after being
+  // pitched, so the cached listings need to know it changed.
+  revalidateTag("projects", { expire: 0 });
+  revalidatePath("/dashboard/projects");
+  redirect(`/dashboard/projects/${project_id}?pitched=1`);
+}
+
+/**
  * Tell the one producer an exclusive pitch was addressed to.
  *
  * Both routes that can set target_producer_id call this: submitting through a
