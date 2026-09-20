@@ -1090,6 +1090,29 @@ export async function saveProducerNotes(projectId: string, notes: string): Promi
     const { supabase, user } = await requireUser();
     if (!projectId) return { error: "Missing project ID" };
 
+    // Same single rule as upsertProducerProject: if RLS lets you read the
+    // project, you may keep notes on it. The read IS the check -- a row the
+    // caller may not see comes back null -- so the two CRM writes can never
+    // drift apart, which is how the pipeline gate went wrong in the first
+    // place.
+    //
+    // There was no check here at all. A CRM row could be created for any
+    // project id, which made the upsert a cheap oracle for whether an id
+    // exists. The notes stay private either way, so this is tidying a hole
+    // rather than closing an active leak -- but an unchecked write is how the
+    // next real one starts.
+    //
+    // Unlike upsertProducerProject this returns a message rather than a silent
+    // return: PrivateNotesForm already renders result.error, so a refusal
+    // shows as "Error — retry" instead of a save that appears to work.
+    const { data: project } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("id", projectId)
+      .maybeSingle();
+
+    if (!project) return { error: "This project is no longer available to you." };
+
     // Ensure a CRM row exists first (upsert default status if none)
     await supabase.from("producer_projects").upsert(
       { producer_id: user.id, project_id: projectId, notes: notes.trim() || null, updated_at: new Date().toISOString() },
@@ -1114,21 +1137,29 @@ export async function upsertProducerProject(formData: FormData) {
   const VALID_STATUS = ["saved","shortlisted","in_review","meeting_set","deal_active","passed"];
   if (!VALID_STATUS.includes(status)) return;
 
-  // If the project is private, require verified producer status
+  // Can this caller read the project at all? RLS answers that, so this select
+  // IS the permission check: a row they may not see comes back null.
+  //
+  // This used to demand is_producer_verified for any project with
+  // is_public = false, which contradicted the read rules. Migration 081's
+  // "approved industry reads non-hidden" grants reads to is_approved_industry()
+  // -- producer, investor or organization with approval_status 'approved' --
+  // and says nothing about verification. So an approved but unverified
+  // producer could SEE a private project in the studio, click Save or
+  // Shortlist, and hit the `return` below: no row written, no error, no
+  // message. The button simply did nothing, every time.
+  //
+  // Two rules for the same project disagreeing is the bug. There is now one:
+  // if RLS lets you read it, you may track it in your own pipeline. A CRM row
+  // is private to the producer and grants no further access, so nothing is
+  // widened by this -- it only stops a silent no-op.
   const { data: project } = await supabase
     .from("projects")
-    .select("is_public")
+    .select("id")
     .eq("id", project_id)
-    .single();
+    .maybeSingle();
 
-  if (project && !project.is_public) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_producer_verified, approval_status")
-      .eq("id", user.id)
-      .single();
-    if (!profile?.is_producer_verified || profile?.approval_status !== "approved") return;
-  }
+  if (!project) return;
 
   await supabase.from("producer_projects").upsert(
     { producer_id: user.id, project_id, status, rating, notes, updated_at: new Date().toISOString() },
