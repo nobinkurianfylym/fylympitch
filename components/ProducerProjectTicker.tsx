@@ -59,9 +59,22 @@ export default function ProducerProjectTicker({
     );
   }
 
-  // Duplicate for seamless infinite loop (same pattern as IntelligenceTicker)
-  const TRACK = [...projects, ...projects];
-  const duration = `${Math.max(60, projects.length * 8)}s`;
+  // The marquee translates the track by -50%, so the loop is only seamless
+  // while ONE copy is wider than the viewport. At 176px + 16px margins that is
+  // 192px a tile: 12 projects make a 2,304px copy, which leaves a visible gap
+  // on any monitor wider than that. Filtering the ticker to projects with
+  // posters cut the list roughly in half, so this stopped being hypothetical.
+  //
+  // Repeat the list until a copy clears ~3,840px, then duplicate that for the
+  // loop. Speed is unchanged -- 8s a tile either way -- so a shorter list
+  // simply scrolls through its projects more often.
+  const TILE_PX = 192;
+  const MIN_COPY_PX = 3840;
+  const reps = Math.max(1, Math.ceil(MIN_COPY_PX / TILE_PX / projects.length));
+  const ONE = Array.from({ length: reps }, () => projects).flat();
+
+  const TRACK = [...ONE, ...ONE];
+  const duration = `${Math.max(60, ONE.length * 8)}s`;
 
   return (
     <section aria-label="Live project ticker">

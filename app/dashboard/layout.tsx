@@ -87,42 +87,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
           { href: "/dashboard/opportunities", label: "Opportunities" },
           { href: "/dashboard/applications",  label: "Applications" },
           { href: "/dashboard/saved",         label: "Saved" },
+          // Hidden entirely until an admin publishes something, so filmmakers
+          // never click through to an empty page.
+          ...(resources.length > 0 ? [{
+            href: "/dashboard/resources",
+            label: "Resources",
+            sub: resources.map((r) => ({ href: r.url, label: r.title, title: r.description })),
+          }] : []),
           ...(isIndustry ? [{ href: "/producerstudio", label: "Producer Studio", gold: true }] : []),
           { href: "/dashboard/messages",      label: `Messages${totalMsgUnread > 0 ? ` (${totalMsgUnread})` : ""}`, gold: totalMsgUnread > 0 },
           { href: "/dashboard/notifications", label: `Notifications${(unread ?? 0) > 0 ? ` (${unread})` : ""}`, gold: (unread ?? 0) > 0 },
           { href: "/dashboard/profile",       label: "Profile & Credits" },
           ...(role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
         ]} />
-        {resources.length > 0 && (
-          <div className="hidden md:block md:mt-8">
-            <p className="text-[10px] tracking-[0.22em] uppercase text-ash/70 pl-[14px] mb-2">
-              Filmmaking Resources
-            </p>
-            <nav className="flex flex-col">
-              {resources.map((r) => (
-                <a
-                  key={r.id}
-                  href={r.url}
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  title={r.description}
-                  className="text-[11px] tracking-[0.12em] text-ash/70 hover:text-gold transition-colors truncate"
-                  style={{ padding: "5px 0 5px 14px", maxWidth: 176 }}
-                >
-                  {r.title}
-                </a>
-              ))}
-              <Link
-                href="/dashboard/resources"
-                className="text-[10px] tracking-[0.18em] uppercase text-ash/50 hover:text-gold transition-colors"
-                style={{ padding: "6px 0 5px 14px" }}
-              >
-                See all →
-              </Link>
-            </nav>
-          </div>
-        )}
-
         <nav className="hidden md:flex md:flex-col md:mt-6 md:space-y-1 text-[11px] tracking-[0.16em] uppercase whitespace-nowrap">
           {[
             { href: "/filmprojects", label: "Film showcase" },

@@ -61,6 +61,18 @@ export const getTrendingProjects = unstable_cache(
         .eq("is_public", true)
         .eq("admin_hidden", false)
         .is("target_producer_id", null)
+        // Posters only. Without one, ProjectThumbnail draws a generated pastel
+        // title card in one of eight colours -- next to real 2:3 artwork those
+        // read as placeholders, and the ticker looked like a half-finished
+        // grid rather than a showcase.
+        //
+        // Deliberately not "poster OR deck cover": a deck cover is a landscape
+        // slide cropped to 2:3, which is the same unevenness by another route.
+        //
+        // Filtered in SQL, before the limit, so this searches every public
+        // project for a poster rather than only the 40 newest.
+        .not("poster_path", "is", null)
+        .neq("poster_path", "")
         .order("created_at", { ascending: false })
         .limit(40);
 
