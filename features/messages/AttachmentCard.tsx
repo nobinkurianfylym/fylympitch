@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icon";
 
 import React, { useState, useEffect } from "react";
 import { getFileIcon, formatFileSize } from "./message.utils";
+import { IMAGE_ATTACHMENT_EXTENSIONS } from "./message.types";
 
 interface Props {
   name:        string;
@@ -43,6 +44,36 @@ export const AttachmentCard = React.memo(function AttachmentCard({
   }, [bucket, path, getUrl]);
 
   const icon = getFileIcon(extension);
+  const isImage = IMAGE_ATTACHMENT_EXTENSIONS.has((extension ?? "").toLowerCase());
+
+  // A photo sent as a grey file card with a download arrow is not what anyone
+  // expects in a conversation. Once the signed URL resolves, show the picture;
+  // clicking opens it full size. Falls through to the ordinary card while the
+  // URL loads or if it fails, so nothing is lost on error.
+  if (isImage && url && !error) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer"
+        aria-label={`Open ${name}`}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
+        className="block mt-2 max-w-[300px] rounded-lg overflow-hidden border border-line bg-ivory hover:border-ash transition-colors"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={url}
+          alt={name}
+          loading="lazy"
+          decoding="async"
+          className="block w-full h-auto max-h-[320px] object-contain bg-parchment"
+        />
+        <span className="block px-3 py-1.5 text-[11px] text-ash truncate" title={name}>
+          {name}{size !== null ? ` · ${formatFileSize(size)}` : ""}
+        </span>
+      </a>
+    );
+  }
 
   return (
     <div

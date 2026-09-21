@@ -113,19 +113,37 @@ export type MessageOrOptimistic = Message | OptimisticMessage;
 
 // ── Attachment ────────────────────────────────────────────────
 
-export type AllowedAttachmentExtension = "pdf" | "docx" | "xlsx" | "zip";
+// Images added in migration 090. Three layers enforce this list and all three
+// must agree, or a file passes one and fails at the next:
+//   1. here              -- the file picker and validateAttachment
+//   2. chk_attachment_extension on public.messages
+//   3. allowed_mime_types on the message-attachments bucket
+//
+// SVG is deliberately NOT here. It is an image format that can carry script,
+// and these files are opened by the other party in the conversation.
+export type AllowedAttachmentExtension =
+  | "pdf" | "docx" | "xlsx" | "zip"
+  | "jpg" | "jpeg" | "png" | "webp";
 export const ALLOWED_ATTACHMENT_EXTENSIONS: AllowedAttachmentExtension[] = [
   "pdf",
   "docx",
   "xlsx",
   "zip",
+  "jpg",
+  "jpeg",
+  "png",
+  "webp",
 ];
+export const IMAGE_ATTACHMENT_EXTENSIONS = new Set<string>(["jpg", "jpeg", "png", "webp"]);
 export const ALLOWED_MIME_TYPES = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/zip",
   "application/x-zip-compressed",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
 ];
 /** Mirrors the chk_message_length CHECK constraint in migration 057.
  *  Kept in sync so the user is stopped by the composer rather than by a raw

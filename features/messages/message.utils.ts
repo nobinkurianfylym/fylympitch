@@ -187,7 +187,9 @@ export function validateAttachment(file: File): AttachmentValidationResult {
   if (!ALLOWED_MIME_TYPES.includes(file.type)) {
     return {
       valid: false,
-      error: `MIME type not permitted. Upload a PDF, DOCX, XLSX, or ZIP file.`,
+      // Was hardcoded to "PDF, DOCX, XLSX, or ZIP" -- read from the list so it
+      // cannot go stale the next time a type is added.
+      error: `This file type is not permitted. Accepted: ${ALLOWED_ATTACHMENT_EXTENSIONS.join(", ").toUpperCase()}.`,
     };
   }
 
@@ -307,6 +309,10 @@ export function getFileIcon(extension: string | null): string {
     case "docx": return "file-type-doc";
     case "xlsx": return "file-type-xls";
     case "zip":  return "file-zip";
+    case "jpg":
+    case "jpeg":
+    case "png":
+    case "webp": return "file";
     default:     return "file";
   }
 }
