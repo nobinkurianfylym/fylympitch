@@ -679,14 +679,22 @@ export async function makeOffer(formData: FormData) {
   const message = str(formData, "message");
   if (!message) return { error: "Write a short message with your offer." };
 
-  const { error } = await supabase.from("offers").insert({
+  const { data: offer, error } = await supabase.from("offers").insert({
     project_id,
     from_user_id: user.id,
     amount_usd: num(formData, "amount_usd"),
     offer_type: str(formData, "offer_type") || "investment",
     message,
-  });
-  if (error) return { error: "Could not send offer. Producer and investor accounts must be approved by PITCH.FYLYM first." };
+  }).select("id").single();
+  if (error || !offer) return { error: "Could not send offer. Producer and investor accounts must be approved by PITCH.FYLYM first." };
+
+  // The offer used to be written and announced to nobody. The RPC re-reads it
+  // and composes the message itself, so nothing the producer typed decides who
+  // is notified or what the notification says beyond their own offer text.
+  // Never allowed to fail the offer: a sent offer that did not notify is
+  // recoverable, one that errored after saving would be resubmitted.
+  const { error: notifyErr } = await supabase.rpc("notify_offer_made", { p_offer_id: offer.id });
+  if (notifyErr) console.error("[offer] notify failed:", notifyErr.message);
 
   await supabase.from("activity_logs").insert({
     user_id: user.id, action: "offer_made", entity: "project", entity_id: project_id,
@@ -705,13 +713,12 @@ export async function respondToOffer(formData: FormData) {
     .eq("id", offer_id).single();
   if (!offer) return;
   await supabase.from("offers").update({ status: decision }).eq("id", offer_id);
-  await supabase.from("notifications").insert({
-    user_id: offer.from_user_id,
-    kind: "offer_update",
-    title: `Your offer was ${decision}`,
-    body: null,
-    link: "/producerstudio/projects",
-  });
+  // Was a direct insert into notifications for the producer. notifications has
+  // no INSERT policy, so RLS refused it and the error was never read: no
+  // producer has ever been told their offer was answered. The RPC checks the
+  // caller owns the project and writes the row itself.
+  const { error: notifyErr } = await supabase.rpc("notify_offer_response", { p_offer_id: offer_id });
+  if (notifyErr) console.error("[offer] response notify failed:", notifyErr.message);
   revalidatePath("/dashboard");
 }
 
@@ -1263,10 +1270,16 @@ export async function requestMeeting(formData: FormData) {
   const message = str(formData, "message") ?? null;
   if (!project_id || !filmmaker_id) return;
 
-  const { error } = await supabase.from("meeting_requests").insert({
+  const { data: meeting, error } = await supabase.from("meeting_requests").insert({
     producer_id: user.id, filmmaker_id, project_id, message,
-  });
-  if (!error) {
+  }).select("id").single();
+  if (!error && meeting) {
+    // filmmaker_id comes from the form. The RPC notifies only when it matches
+    // the project's real owner, so a crafted request cannot be used to drop a
+    // "wants to meet" notification on an unrelated user.
+    const { error: notifyErr } = await supabase.rpc("notify_meeting_request", { p_meeting_id: meeting.id });
+    if (notifyErr) console.error("[meeting] notify failed:", notifyErr.message);
+
     await supabase.from("producer_projects").upsert(
       { producer_id: user.id, project_id, status: "meeting_set", updated_at: new Date().toISOString() },
       { onConflict: "producer_id,project_id" }

@@ -45,13 +45,10 @@ export async function respondToOffer(formData: FormData) {
   if (!project || project.owner_id !== user.id) return;
 
   await supabase.from("offers").update({ status: decision }).eq("id", offer_id);
-  await supabase.from("notifications").insert({
-    user_id: offer.from_user_id,
-    kind: "offer_update",
-    title: `Your offer was ${decision}`,
-    body: null,
-    link: "/producerstudio/projects",
-  });
+  // See lib/actions.ts respondToOffer: the direct insert was refused by RLS
+  // (no INSERT policy on notifications) and nobody read the error.
+  const { error: notifyErr } = await supabase.rpc("notify_offer_response", { p_offer_id: offer_id });
+  if (notifyErr) console.error("[offer] response notify failed:", notifyErr.message);
   revalidatePath("/dashboard");
 }
 

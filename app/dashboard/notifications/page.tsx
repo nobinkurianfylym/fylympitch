@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 const KIND_META: Record<string, { label: string; dot: string; icon: string; iconBg: string }> = {
   producer_interest:  { label: "Producer Interest", dot: "bg-gold",         icon: "◆", iconBg: "bg-gold/10 text-gold" },
   offer_received:     { label: "Offer",             dot: "bg-emerald-500",  icon: "✦", iconBg: "bg-emerald-50 text-emerald-600" },
+  meeting_request:    { label: "Meeting Request",   dot: "bg-gold",         icon: "◇", iconBg: "bg-gold/10 text-gold" },
   match_found:        { label: "New Match",         dot: "bg-blue-500",     icon: "▲", iconBg: "bg-blue-50 text-blue-500" },
   new_project:        { label: "New Project",       dot: "bg-blue-500",     icon: "▶", iconBg: "bg-blue-50 text-blue-500" },
   exclusive_pitch:    { label: "Exclusive Pitch",   dot: "bg-gold",         icon: "✦", iconBg: "bg-gold/10 text-gold" },
@@ -102,6 +103,30 @@ export default async function NotificationsPage() {
   ];
   const completion = Math.round(
     (completionFields.filter(Boolean).length / completionFields.length) * 100
+  );
+
+  // ── Who sent it ─────────────────────────────────────────────────────────────
+  // producer_interest rows written after migration 086 carry actor_id. One query
+  // for all of them, so the Reply button can name the producer. Rows written
+  // before 086 have no actor, cannot open a conversation, and get no button --
+  // a Reply that went nowhere would be worse than none.
+  // Every kind a producer sends that a filmmaker can answer. One list, read by
+  // the fetch below and the Reply button, so adding a kind is one edit.
+  const REPLYABLE = new Set(["producer_interest", "offer_received", "meeting_request"]);
+
+  const actorIds = [...new Set(
+    (items ?? [])
+      .filter((n: any) => REPLYABLE.has(n.kind) && n.actor_id)
+      .map((n: any) => n.actor_id as string)
+  )];
+  const { data: actorRows } = actorIds.length
+    ? await supabase.from("profiles").select("id, full_name, company").in("id", actorIds)
+    : { data: [] };
+  const actorName = new Map(
+    (actorRows ?? []).map((a: any) => [
+      a.id as string,
+      ((a.company ?? "").trim() || (a.full_name ?? "").trim() || "the producer") as string,
+    ])
   );
 
   const unreadCount = (items ?? []).filter((n: any) => !n.read).length;
@@ -253,6 +278,23 @@ export default async function NotificationsPage() {
                 </Link>
               ) : (
                 inner
+              )}
+
+              {/* Reply. The whole row already opens the conversation, but "click
+                  the notification" is not an affordance anyone sees -- the ask
+                  was that a filmmaker must be able to reply, and a named button
+                  is what makes that obvious. Outside the Link: a link nested in
+                  a link is invalid markup, same reason the delete button and
+                  BroadcastActions sit out here. */}
+              {REPLYABLE.has(n.kind) && n.actor_id && n.project_id && (
+                <div className="pl-[84px] pb-4 -mt-2">
+                  <Link
+                    href={`/dashboard/messages/open?project=${n.project_id}&producer=${n.actor_id}`}
+                    className="inline-flex items-center gap-1.5 text-[11px] tracking-[0.14em] uppercase px-3.5 py-1.5 rounded-full border border-gold/50 text-[#8A6F3E] bg-gold/5 hover:bg-gold/15 hover:border-gold transition-colors"
+                  >
+                    Reply to {actorName.get(n.actor_id) ?? "the producer"} →
+                  </Link>
+                </div>
               )}
 
               {/* Like + share. Outside the Link for the same reason the delete
