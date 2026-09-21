@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Montserrat, Playfair_Display } from "next/font/google";
 import JsonLd from "@/components/JsonLd";
+import Script from "next/script";
 import { organizationSchema, websiteSchema } from "@/lib/schema";
 import { SITE } from "@/lib/seo";
 
@@ -83,7 +84,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href={`https://${SUPABASE_HOST}`} />
         <JsonLd data={[organizationSchema(), websiteSchema()]} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Cloudflare Web Analytics. Cookieless, so no consent banner is
+            needed. next/script with afterInteractive rather than a raw
+            <script> tag: it loads once the page is usable, so it never delays
+            the first paint, and Next de-duplicates it across client-side
+            navigations instead of injecting it again on every route change.
+            Both hosts it touches are allowed in the CSP in next.config.ts. */}
+        <Script
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon='{"token": "b270150cda5c4eec909a76d56a21268b"}'
+          strategy="afterInteractive"
+        />
+      </body>
     </html>
   );
 }

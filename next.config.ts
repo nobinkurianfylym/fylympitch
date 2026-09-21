@@ -107,11 +107,15 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy-Report-Only",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              // static.cloudflareinsights.com serves the Web Analytics beacon.
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
               "style-src 'self' 'unsafe-inline'",
               `img-src 'self' data: blob: https://${SUPABASE_HOSTNAME}`,
               "font-src 'self' data:",
-              `connect-src 'self' https://${SUPABASE_HOSTNAME} wss://${SUPABASE_HOSTNAME}`,
+              // cloudflareinsights.com is where the beacon sends page views.
+              // Without it here, the day this CSP is switched from
+              // report-only to enforcing, analytics would silently stop.
+              `connect-src 'self' https://${SUPABASE_HOSTNAME} wss://${SUPABASE_HOSTNAME} https://cloudflareinsights.com`,
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
