@@ -16,17 +16,37 @@ import { sendErrorDigestEmail } from "@/lib/email";
 export const dynamic = "force-dynamic";
 
 /** Shared secret, set as CRON_SECRET in the Worker's environment. Without it
- *  this route is a public button that emails your admins on demand. */
-function authorized(req: NextRequest): boolean {
-  const expected = process.env.CRON_SECRET;
-  if (!expected) return false;
-  const got = req.headers.get("authorization") ?? "";
-  return got === `Bearer ${expected}`;
+ *  this route is a public button that emails your admins on demand.
+ *
+ *  Returns WHY it refused, because "not configured" and "wrong value" used to
+ *  be the same 401 and there is no way to tell them apart from the outside.
+ *  Neither answer reveals the secret or whether a guess was close. */
+type AuthResult = "ok" | "not_configured" | "mismatch";
+
+function authorized(req: NextRequest): AuthResult {
+  const expected = (process.env.CRON_SECRET ?? "").trim();
+  if (!expected) return "not_configured";
+  // Trimmed on both sides: a secret pasted into a dashboard field or a SQL
+  // string very often arrives with a trailing newline or space, and an
+  // invisible character is a miserable thing to debug.
+  const got = (req.headers.get("authorization") ?? "").trim();
+  return got === `Bearer ${expected}` ? "ok" : "mismatch";
 }
 
 export async function POST(req: NextRequest) {
-  if (!authorized(req)) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const auth = authorized(req);
+  if (auth === "not_configured") {
+    console.error("[error-digest] CRON_SECRET is not set in this environment");
+    return NextResponse.json(
+      { error: "CRON_SECRET is not set on the Worker" },
+      { status: 503 },
+    );
+  }
+  if (auth !== "ok") {
+    return NextResponse.json(
+      { error: "unauthorized: the bearer token does not match CRON_SECRET" },
+      { status: 401 },
+    );
   }
 
   // Service client: platform_errors is admin-read under RLS, and this runs as
