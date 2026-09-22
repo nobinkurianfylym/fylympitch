@@ -8,7 +8,7 @@ import { formatBudget } from "@/lib/format";
 import FilmIdentity from "@/components/FilmIdentity";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
-import { getPublicProjects } from "@/lib/cached-queries";
+import { getPublicProjects, PUBLIC_PAGE_SIZE } from "@/lib/cached-queries";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +26,11 @@ const FORMATS = ["Feature", "Documentary", "Series", "Animation"];
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ format?: string; q?: string }>;
+  searchParams: Promise<{ format?: string; q?: string; page?: string }>;
 }) {
-  const { format, q } = await searchParams;
+  const { format, q, page: pageParam } = await searchParams;
+  // Clamped: ?page=-1 and ?page=99999999 are both requests someone will make.
+  const page = Math.max(0, Math.min(500, Number.parseInt(pageParam ?? "0", 10) || 0));
   const supabase = await createClient();
 
   // ── Stage 1: auth and the project list, together ──────────────────────────
@@ -49,10 +51,10 @@ export default async function ProjectsPage({
         // may see this; a pitch addressed to a producer and marked Public belongs
         // on the showcase the filmmaker was promised.
         .order("created_at", { ascending: false })
-        .limit(60) as any)
+        .range(page * PUBLIC_PAGE_SIZE, page * PUBLIC_PAGE_SIZE + PUBLIC_PAGE_SIZE) as any)
         .or(`title.ilike.%${search}%,logline.ilike.%${search}%`)
         .then((r: any) => r.data ?? [])
-    : getPublicProjects(format);
+    : getPublicProjects(format, page);
 
   const [userRes, projects] = await Promise.all([
     supabase.auth.getUser(),
@@ -60,6 +62,20 @@ export default async function ProjectsPage({
   ]);
 
   const user = userRes.data.user;
+
+  // The query asked for PAGE_SIZE + 1. That extra row is the answer to "is
+  // there a next page" -- it is dropped here and never rendered.
+  const hasNext = (projects?.length ?? 0) > PUBLIC_PAGE_SIZE;
+  const pageItems = hasNext ? projects.slice(0, PUBLIC_PAGE_SIZE) : projects;
+
+  const pageHref = (n: number) => {
+    const qs = new URLSearchParams();
+    if (format) qs.set("format", format);
+    if (q) qs.set("q", q);
+    if (n > 0) qs.set("page", String(n));
+    const query = qs.toString();
+    return query ? `/filmprojects?${query}` : "/filmprojects";
+  };
 
   // ── Stage 2: everything that needed the results of stage 1 ────────────────
   // Three more queries that were each awaited separately. The deck covers were
@@ -170,13 +186,13 @@ export default async function ProjectsPage({
           )}
         </div>
 
-        {(!projects || projects.length === 0) ? (
+        {(!pageItems || pageItems.length === 0) ? (
           <div className="py-24 text-center text-ash text-[15px]">
             {q ? `No projects found for "${q}".` : `No public projects yet${format ? ` in ${format}` : ""}.`}
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {projects.map((p: any) => {
+            {pageItems.map((p: any) => {
               const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
               return (
                 <FilmIdentity
@@ -220,6 +236,25 @@ export default async function ProjectsPage({
                 />
               );
             })}
+          </div>
+        )}
+
+        {/* Pager. Real links, not a "load more" button: a crawler can follow
+            these, the browser back button works, and a filmmaker can send
+            someone page 3. Only rendered when there is somewhere to go. */}
+        {(page > 0 || hasNext) && (
+          <div className="mt-14 flex items-center justify-between gap-4">
+            {page > 0 ? (
+              <Link href={pageHref(page - 1)} className="btn-ghost">← Previous</Link>
+            ) : <span />}
+
+            <span className="text-[12px] tracking-[0.16em] uppercase text-ash">
+              Page {page + 1}
+            </span>
+
+            {hasNext ? (
+              <Link href={pageHref(page + 1)} className="btn-ghost">Next →</Link>
+            ) : <span />}
           </div>
         )}
       </main>

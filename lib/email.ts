@@ -678,3 +678,86 @@ export async function sendEngineReady({
     console.error("[email] sendEngineReady exception:", e);
   }
 }
+
+// ── Daily error digest ───────────────────────────────────────
+// platform_errors collected errors and /admin/errors displayed them, but
+// nothing told anyone. Called by /api/cron/error-digest once a day, and only
+// when there is something to report.
+export async function sendErrorDigestEmail({
+  to,
+  total,
+  groups,
+}: {
+  to: string[];
+  total: number;
+  groups: { source: string; severity: string; message: string; count: number; last: string }[];
+}) {
+  const resend = getResend();
+  if (!resend) return;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pitch.fylym.com";
+
+  // escapeHtml on every field. An error message can carry whatever a user
+  // typed -- a project title, a filename, a pasted URL -- and this lands in an
+  // admin's inbox. An unescaped message is a way to put markup in front of the
+  // one person who can change anything.
+  const rows = groups
+    .slice(0, 25)
+    .map(
+      (g) => `
+      <tr>
+        <td style="padding:10px 12px;border-bottom:1px solid #E5E0D5;vertical-align:top;">
+          <span style="display:inline-block;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:${
+            g.severity === "error" ? "#B23B3B" : "#8A6F3E"
+          };">${escapeHtml(g.severity)}</span><br/>
+          <span style="font-size:13px;color:#1A1815;">${escapeHtml(g.source)}</span>
+        </td>
+        <td style="padding:10px 12px;border-bottom:1px solid #E5E0D5;font-size:13px;color:#1A1815;">
+          ${escapeHtml(g.message).slice(0, 300)}
+        </td>
+        <td style="padding:10px 12px;border-bottom:1px solid #E5E0D5;font-size:13px;color:#8A857C;text-align:right;white-space:nowrap;">
+          ${g.count}&times;
+        </td>
+      </tr>`
+    )
+    .join("");
+
+  const body = `
+    <p style="margin:0 0 20px;font-size:16px;line-height:1.65;color:#1A1815;">
+      ${total} unresolved error${total === 1 ? "" : "s"} in the last 24 hours,
+      across ${groups.length} distinct fault${groups.length === 1 ? "" : "s"}.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0"
+      style="border:1px solid #E5E0D5;border-radius:10px;overflow:hidden;margin-bottom:28px;">
+      ${rows}
+    </table>
+
+    ${
+      groups.length > 25
+        ? `<p style="margin:0 0 20px;font-size:13px;color:#8A857C;">
+             ${groups.length - 25} further distinct faults not shown.
+           </p>`
+        : ""
+    }
+
+    <a href="${siteUrl}/admin/errors"
+      style="display:inline-block;background:#1A1815;color:#F5F5F0;text-decoration:none;
+             padding:14px 28px;border-radius:999px;font-size:13px;letter-spacing:0.12em;
+             text-transform:uppercase;">
+      Open the error log
+    </a>
+  `;
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: `PITCH.FYLYM — ${total} error${total === 1 ? "" : "s"} in the last 24 hours`,
+      html: wrap(body),
+    });
+    if (error) console.error("[email] sendErrorDigestEmail:", error);
+  } catch (e) {
+    console.error("[email] sendErrorDigestEmail exception:", e);
+  }
+}

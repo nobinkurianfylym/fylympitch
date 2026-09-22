@@ -153,8 +153,20 @@ console.log(`\n4. Funding obstacles (${result.obstacles.length}):`);
 for (const o of result.obstacles) {
   console.log(`   [${o.severity.toUpperCase()}] ${o.label}  →  ${o.action_label} (${o.action_href})`);
 }
-expect("flags missing cast/co-producer/festival strategy",
-  result.obstacles.map((o) => o.id).join(",") === "no_actor,no_coproducer,no_festival_strategy",
+// This asserted three obstacle ids: no_actor, no_coproducer and
+// no_festival_strategy. The first two no longer exist anywhere in the engine,
+// and the third fires only at post_production or completed -- the engine
+// narrowed it on purpose, because earlier stages have no market or
+// distribution categories to match and the check fired falsely every time.
+//
+// This fixture is a COMPLETE development-stage project that scores 100 on FRS
+// two assertions above. Zero obstacles is the correct answer for it; the test
+// was describing an engine that no longer exists.
+expect("a complete development-stage project raises no obstacles",
+  result.obstacles.length === 0,
+  result.obstacles);
+expect("festival strategy is not flagged before post-production",
+  !result.obstacles.some((o) => o.id === "no_festival_strategy"),
   result.obstacles);
 expect("does NOT flag budget — project budget is within matched ranges",
   !result.obstacles.some((o) => o.id === "budget_high"));

@@ -131,8 +131,10 @@ export const getOpportunityCount = unstable_cache(
  * effectively unbounded, and caching them would fill R2 with entries nobody
  * asks for twice.
  */
+export const PUBLIC_PAGE_SIZE = 60;
+
 export const getPublicProjects = unstable_cache(
-  async (format?: string): Promise<any[]> => {
+  async (format?: string, page = 0): Promise<any[]> => {
     try {
       const supabase = createAnonClient();
       let query = supabase
@@ -148,7 +150,9 @@ export const getPublicProjects = unstable_cache(
         // may see this; a pitch addressed to a producer and marked Public belongs
         // on the showcase the filmmaker was promised.
         .order("created_at", { ascending: false })
-        .limit(60);
+        // One extra row, never rendered: its presence is how the page knows a
+        // next page exists without a second count(*) query on every request.
+        .range(page * PUBLIC_PAGE_SIZE, page * PUBLIC_PAGE_SIZE + PUBLIC_PAGE_SIZE);
 
       if (format) query = query.eq("format", format.toLowerCase());
 
