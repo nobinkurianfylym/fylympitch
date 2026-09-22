@@ -23,6 +23,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Before the build, not after: a broken matching engine or a broken
+      # scoring rule should never reach a build step, let alone a deploy.
+      # A failing step here stops the workflow, and the previous version
+      # stays live -- the correct failure mode.
+      - name: Run tests
+        run: |
+          npm run test:matching
+          npm run test:engine
+
       - name: Build for Cloudflare
         run: npx opennextjs-cloudflare build
         env:
