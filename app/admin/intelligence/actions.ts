@@ -5,6 +5,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { normalizeTaxonomy } from "@/lib/funding-taxonomy";
 
 async function assertAdmin() {
   const supabase = await createClient();
@@ -21,6 +22,13 @@ async function upsertOpportunity(
   d: Record<string, unknown>,
   sourceUrl: string,
 ): Promise<{ id: string; action: "inserted" | "updated" } | { error: string }> {
+
+  // opportunities.formats/stages/career_stages are Postgres enum arrays, and a
+  // single bad element makes the whole INSERT fail, which silently loses the
+  // fund. The extractor can return "distribution", "animated" or a phrase of
+  // its own invention, so map everything to the taxonomy before it goes near
+  // the table. Same rules as the crawler, from one shared module.
+  const tax = normalizeTaxonomy(d);
 
   // 1. Check by source_url
   const { data: byUrl } = await supabase
@@ -52,10 +60,10 @@ async function upsertOpportunity(
       is_active:           d.is_active ?? true,
       submission_status:   d.submission_status ?? "open",
       genres:              d.genres ?? [],
-      formats:             d.formats ?? [],
-      stages:              d.stages ?? [],
+      formats:             tax.formats,
+      stages:              tax.stages,
       languages:           d.languages ?? [],
-      career_stages:       d.career_stages ?? [],
+      career_stages:       tax.career_stages,
       gender_focus:        d.gender_focus ?? null,
       copro_required:      d.copro_required ?? false,
       festival_affiliated: d.festival_affiliated ?? false,
@@ -87,15 +95,15 @@ async function upsertOpportunity(
     .from("opportunities")
     .insert({
       title:               d.title,
-      opp_type:            d.opp_type ?? "grant",
+      opp_type:            tax.opp_type,
       description:         d.description,
       country:             d.country ?? null,
       region:              d.region ?? null,
       genres:              d.genres ?? [],
-      formats:             d.formats ?? [],
-      stages:              d.stages ?? [],
+      formats:             tax.formats,
+      stages:              tax.stages,
       languages:           d.languages ?? [],
-      career_stages:       d.career_stages ?? [],
+      career_stages:       tax.career_stages,
       max_award_usd:       d.max_award_usd ?? null,
       min_budget_usd:      d.min_budget_usd ?? null,
       max_budget_usd:      d.max_budget_usd ?? null,

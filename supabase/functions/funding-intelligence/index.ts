@@ -50,11 +50,12 @@ const INTER_BATCH_DELAY_MS = 3500;
 const SCRAPE_TIMEOUT_MS    = 45000;
 
 // Bound each run so it cannot exceed the Edge Function wall clock. Sources
-// rotate because last_crawled_at is recorded on every path, success or not,
-// so a small batch per run still covers every source within a day.
+// rotate via last_crawled_at, ordered oldest-first, so a small batch per run
+// still works through the whole list. A success takes the source's full
+// interval; a failure takes only a short back-off (see FAILURE_BACKOFF_HOURS),
+// so a bad upstream day no longer parks the catalogue for weeks.
 // Array extraction makes each source slower (bigger prompt, bigger response),
-// so fewer sources per run. Sources rotate via last_crawled_at, and the cron
-// runs hourly, so all 49 are still covered well within a day.
+// so fewer sources per run.
 const MAX_SOURCES_PER_RUN  = 8;
 
 // One page can list many programmes. These bound the blast radius.
@@ -154,6 +155,98 @@ const FORMATS  = ["feature","short","documentary","series","animation"] as const
 const STAGES   = ["development","pre_production","production","post_production","completed"] as const;
 const CAREER   = ["debut","second_film","established","veteran"] as const;
 
+// ─── Taxonomy synonyms ────────────────────────────────────────
+// opportunities.formats / stages / career_stages are Postgres enum arrays, and
+// one bad element rejects the whole row, losing the fund. A bare allow-list
+// also threw away terms that plainly map onto the taxonomy ("animated" is
+// animation; a distribution-stage fund supports a film that is completed), so
+// map first and drop only what genuinely has no equivalent.
+//
+// This mirrors lib/funding-taxonomy.ts. It is duplicated rather than imported
+// because this function deploys as a single self-contained file. Change both.
+
+/** lower-case, collapse whitespace, treat - and _ as spaces. */
+function taxKey(value: unknown): string {
+  return String(value ?? "").toLowerCase().replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+const FORMAT_MAP: Record<string, readonly string[]> = {
+  "feature": ["feature"], "short": ["short"], "documentary": ["documentary"],
+  "series": ["series"], "animation": ["animation"],
+  "animated": ["animation"], "animated film": ["animation"], "animation film": ["animation"],
+  "anime": ["animation"], "cartoon": ["animation"],
+  "animated feature": ["animation","feature"], "animated feature film": ["animation","feature"],
+  "animated documentary": ["animation","documentary"], "animated doc": ["animation","documentary"],
+  "animated short": ["animation","short"], "animated short film": ["animation","short"],
+  "animated series": ["animation","series"],
+  "feature film": ["feature"], "feature films": ["feature"], "fiction feature": ["feature"],
+  "narrative feature": ["feature"], "fiction": ["feature"], "live action": ["feature"],
+  "long form": ["feature"],
+  "short film": ["short"], "short films": ["short"], "shorts": ["short"], "short form": ["short"],
+  "doc": ["documentary"], "docs": ["documentary"], "documentaries": ["documentary"],
+  "documentary film": ["documentary"], "documentary feature": ["documentary","feature"],
+  "feature documentary": ["documentary","feature"], "documentary short": ["documentary","short"],
+  "non fiction": ["documentary"], "nonfiction": ["documentary"], "creative documentary": ["documentary"],
+  "tv series": ["series"], "television series": ["series"], "tv": ["series"],
+  "television": ["series"], "drama series": ["series"], "web series": ["series"],
+  "episodic": ["series"], "mini series": ["series"], "miniseries": ["series"],
+  "limited series": ["series"], "serial": ["series"],
+};
+
+const STAGE_MAP: Record<string, readonly string[]> = {
+  "development": ["development"], "pre production": ["pre_production"],
+  "production": ["production"], "post production": ["post_production"], "completed": ["completed"],
+  "script development": ["development"], "screenwriting": ["development"], "writing": ["development"],
+  "treatment": ["development"], "concept": ["development"], "early development": ["development"],
+  "prep": ["pre_production"], "packaging": ["pre_production"], "financing": ["pre_production"],
+  "pre prod": ["pre_production"],
+  "principal photography": ["production"], "shooting": ["production"],
+  "filming": ["production"], "in production": ["production"],
+  "post": ["post_production"], "postproduction": ["post_production"], "finishing": ["post_production"],
+  "rough cut": ["post_production"], "picture lock": ["post_production"], "editing": ["post_production"],
+  "distribution": ["completed"], "theatrical distribution": ["completed"], "release": ["completed"],
+  "released": ["completed"], "exhibition": ["completed"], "theatrical release": ["completed"],
+  "sales": ["completed"], "market": ["completed"], "finished": ["completed"],
+  "final cut": ["completed"], "delivered": ["completed"], "finished film": ["completed"],
+};
+
+const CAREER_MAP: Record<string, readonly string[]> = {
+  "debut": ["debut"], "second film": ["second_film"],
+  "established": ["established"], "veteran": ["veteran"],
+  "first film": ["debut"], "first feature": ["debut"], "emerging": ["debut"],
+  "first time": ["debut"], "first time director": ["debut"], "newcomer": ["debut"],
+  "sophomore": ["second_film"], "mid career": ["established"], "experienced": ["established"],
+  "senior": ["veteran"], "master": ["veteran"],
+};
+
+/** Map each term, keep what resolves, drop what does not, de-duplicate,
+ *  and return in canonical order. */
+function resolveTax(
+  raw: unknown,
+  map: Record<string, readonly string[]>,
+  canonical: readonly string[],
+): string[] {
+  const list = Array.isArray(raw) ? raw : raw == null ? [] : [raw];
+  const hits = new Set<string>();
+  for (const item of list) {
+    for (const mapped of map[taxKey(item)] ?? []) hits.add(mapped);
+  }
+  return canonical.filter(c => hits.has(c));
+}
+
+/** For plain text[] columns: map what we recognise, keep what we do not. */
+function softTax(raw: unknown, map: Record<string, readonly string[]>): string[] {
+  const list = Array.isArray(raw) ? raw : raw == null ? [] : [raw];
+  const out = new Set<string>();
+  for (const item of list) {
+    const k = taxKey(item);
+    if (!k) continue;
+    const mapped = map[k];
+    if (mapped) { for (const m of mapped) out.add(m); } else { out.add(k); }
+  }
+  return [...out];
+}
+
 // ─── Types ────────────────────────────────────────────────────
 interface Message { role: "system" | "user" | "assistant"; content: string; }
 
@@ -185,15 +278,16 @@ const FREQUENCY_HOURS: Record<string, number> = {
 // crawl_frequency column or its CHECK constraint.
 const MIN_RECRAWL_HOURS = 240;
 
+/** Hours a source must wait between crawls: its own frequency, floored. */
+function thresholdHours(frequency?: string | null): number {
+  return Math.max(FREQUENCY_HOURS[frequency ?? ""] ?? 20, MIN_RECRAWL_HOURS);
+}
+
 function isDue(source: FundingSource): boolean {
   if (!source.last_crawled_at) return true; // never crawled yet
   const hoursSince =
     (Date.now() - new Date(source.last_crawled_at).getTime()) / 36e5;
-  const threshold = Math.max(
-    FREQUENCY_HOURS[source.crawl_frequency] ?? 20,
-    MIN_RECRAWL_HOURS,
-  );
-  return hoursSince >= threshold;
+  return hoursSince >= thresholdHours(source.crawl_frequency);
 }
 
 interface ExtractedOpportunity {
@@ -492,19 +586,42 @@ async function scrapeUrl(
   return { markdown: null, error: lastError };
 }
 
+// Hours to wait before retrying a source that just failed, by consecutive
+// failure count. A failed crawl fetched nothing, so it must not consume the
+// same 10-28 day slot a successful crawl earns. Once this ladder is exhausted
+// the source falls back to its normal interval, so a permanently dead URL is
+// not retried forever.
+const FAILURE_BACKOFF_HOURS = [2, 6, 24, 72];
+
 /** Record a crawl attempt on the source, whatever the outcome. */
 async function recordAttempt(
   supabase: ReturnType<typeof getSupabase>,
   sourceId: string,
   ok: boolean,
   currentFailCount: number,
+  frequency?: string | null,
 ): Promise<void> {
-  const now = new Date().toISOString();
-  await supabase.from("funding_sources").update(
-    ok
-      ? { last_crawled_at: now, last_success_at: now, fail_count: 0 }
-      : { last_crawled_at: now, fail_count: currentFailCount + 1 },
-  ).eq("id", sourceId);
+  const now = new Date();
+  if (ok) {
+    const stamp = now.toISOString();
+    await supabase.from("funding_sources").update({
+      last_crawled_at: stamp, last_success_at: stamp, fail_count: 0,
+    }).eq("id", sourceId);
+    return;
+  }
+
+  const nextFailCount = currentFailCount + 1;
+  const backoffHours  = FAILURE_BACKOFF_HOURS[nextFailCount - 1];
+  // isDue compares (now - last_crawled_at) against the threshold, so backdating
+  // the stamp by (threshold - backoff) makes the source due again in exactly
+  // backoffHours without touching isDue or the crawl_frequency column.
+  const stamp = backoffHours === undefined
+    ? now
+    : new Date(now.getTime() - (thresholdHours(frequency) - backoffHours) * 36e5);
+
+  await supabase.from("funding_sources").update({
+    last_crawled_at: stamp.toISOString(), fail_count: nextFailCount,
+  }).eq("id", sourceId);
 }
 
 // ─── Extraction system prompt ──────────────────────────────────
@@ -666,9 +783,11 @@ ${content.slice(0, CONTENT_CHAR_LIMIT)}`;
 // ─── Taxonomy normalizer ──────────────────────────────────────
 function normalize(raw: ExtractedOpportunity): ExtractedOpportunity {
   if (!OPP_TYPES.includes(raw.opp_type as typeof OPP_TYPES[number])) raw.opp_type = "grant";
-  raw.formats       = (raw.formats ?? []).filter(f => FORMATS.includes(f as typeof FORMATS[number]));
-  raw.stages        = (raw.stages ?? []).filter(s => STAGES.includes(s as typeof STAGES[number]));
-  raw.career_stages = (raw.career_stages ?? []).filter(c => CAREER.includes(c as typeof CAREER[number]));
+  raw.formats       = resolveTax(raw.formats,       FORMAT_MAP, FORMATS);
+  raw.stages        = resolveTax(raw.stages,        STAGE_MAP,  STAGES);
+  // career_stages is a plain text[] column, not an enum, so an unrecognised
+  // term cannot break the insert. Map what we recognise and keep the rest.
+  raw.career_stages = softTax(raw.career_stages, CAREER_MAP);
   if (!["high","medium","low"].includes(raw.match_weight)) raw.match_weight = "medium";
   if (!["open","closing_soon","closed","archived","cancelled"].includes(raw.submission_status)) {
     raw.submission_status = "open";
@@ -899,7 +1018,7 @@ async function processSource(
       run_id: runId, source_id: source.id,
       action: "failed", error_message: scrapeError ?? "Firecrawl returned no content",
     });
-    await recordAttempt(supabase, source.id, false, source.fail_count ?? 0);
+    await recordAttempt(supabase, source.id, false, source.fail_count ?? 0, source.crawl_frequency);
     return;
   }
 
@@ -910,7 +1029,7 @@ async function processSource(
       run_id: runId, source_id: source.id,
       action: "failed", error_message: "AI extraction returned no programmes",
     });
-    await recordAttempt(supabase, source.id, false, source.fail_count ?? 0);
+    await recordAttempt(supabase, source.id, false, source.fail_count ?? 0, source.crawl_frequency);
     return;
   }
 
@@ -984,7 +1103,7 @@ async function processSource(
 
   // The source counts as a success only if at least one programme was good
   // enough to store, so fail_count keeps surfacing sources that read poorly.
-  await recordAttempt(supabase, source.id, anyAccepted, source.fail_count ?? 0);
+  await recordAttempt(supabase, source.id, anyAccepted, source.fail_count ?? 0, source.crawl_frequency);
 }
 
 // ─── Discovery: search the web for funds we do not have ───────────────────

@@ -5,6 +5,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { normalizeTaxonomy } from "@/lib/funding-taxonomy";
 
 // ── Types (these are erased at runtime — zero startup cost) ───
 export type GatherResult =
@@ -157,6 +158,11 @@ export async function gatherIntelligenceFromUrl(
   } catch {
     return { success: false, error: "AI returned malformed JSON.", stage: "extract" };
   }
+
+  // Clean the taxonomy before it reaches the queue, so an admin reviews the
+  // values that will actually be written rather than raw model output that
+  // would be rejected by the enum on approval.
+  Object.assign(extracted, normalizeTaxonomy(extracted));
 
   const confidence = Math.max(0, Math.min(100, Number(extracted.confidence ?? 0)));
 
