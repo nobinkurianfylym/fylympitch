@@ -6,11 +6,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getUpcoming, type FeaturedSlot } from "@/lib/featured";
 import FeaturedForm from "./FeaturedForm";
-import {
-  deleteFeaturedSlotForm as deleteFeaturedSlot,
-  toggleFeaturedActiveForm as toggleFeaturedActive,
-  moveFeaturedSlotForm as moveFeaturedSlot,
-} from "@/lib/featured-actions";
+import FeaturedList from "./FeaturedList";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +30,6 @@ export default async function FeaturedAdminPage() {
   ]);
 
   const slots = ((rows ?? []) as any[]).map(r => ({ ...r, rows: Array.isArray(r.rows) ? r.rows : [] })) as FeaturedSlot[];
-  const byKind = ["fund", "producer", "project", "custom"]
-    .map(k => ({ kind: k, items: slots.filter(s => s.kind === k) }))
-    .filter(g => g.items.length > 0);
 
   return (
     <div className="max-w-4xl">
@@ -90,65 +83,7 @@ export default async function FeaturedAdminPage() {
       <section className="mb-14">
         <p className="eyebrow mb-4">The queue</p>
 
-        {byKind.length === 0 ? (
-          <p className="text-[15px] text-ash border border-line rounded-card px-5 py-6">
-            Nothing queued. The homepage is showing the soonest-closing fund
-            until you add something below.
-          </p>
-        ) : byKind.map(group => (
-          <div key={group.kind} className="mb-8">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-ash/60 mb-2">
-              {KIND_LABEL[group.kind]} · {group.items.length}
-            </p>
-            <div className="border-t border-line">
-              {group.items.map((s, i) => (
-                <div key={s.id} className="hairline py-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-                  {s.image_url ? (
-                    <img src={s.image_url} alt="" className="h-10 w-[30px] rounded-[2px] border border-line object-cover shrink-0" />
-                  ) : (
-                    <span className="h-10 w-[30px] rounded-[2px] border border-line bg-parchment shrink-0" />
-                  )}
-
-                  <div className="flex-1 min-w-[180px]">
-                    <p className={`text-[14px] ${s.is_active ? "text-ink" : "text-ash line-through"}`}>
-                      {label(s)}
-                    </p>
-                    {s.hook && <p className="text-[12px] text-ash mt-0.5 line-clamp-1">{s.hook}</p>}
-                  </div>
-
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <form action={moveFeaturedSlot}>
-                      <input type="hidden" name="id" value={s.id} />
-                      <input type="hidden" name="direction" value="up" />
-                      <button disabled={i === 0}
-                        className="text-[13px] px-2 py-1 border border-line rounded text-ash hover:border-gold hover:text-ink disabled:opacity-25 disabled:hover:border-line"
-                        aria-label="Move up">↑</button>
-                    </form>
-                    <form action={moveFeaturedSlot}>
-                      <input type="hidden" name="id" value={s.id} />
-                      <input type="hidden" name="direction" value="down" />
-                      <button disabled={i === group.items.length - 1}
-                        className="text-[13px] px-2 py-1 border border-line rounded text-ash hover:border-gold hover:text-ink disabled:opacity-25 disabled:hover:border-line"
-                        aria-label="Move down">↓</button>
-                    </form>
-                    <form action={toggleFeaturedActive}>
-                      <input type="hidden" name="id" value={s.id} />
-                      <button className="text-[10px] tracking-[0.14em] uppercase px-2.5 py-1.5 border border-line rounded-full text-ash hover:border-gold hover:text-ink">
-                        {s.is_active ? "Pause" : "Resume"}
-                      </button>
-                    </form>
-                    <form action={deleteFeaturedSlot}>
-                      <input type="hidden" name="id" value={s.id} />
-                      <button className="text-[10px] tracking-[0.14em] uppercase px-2.5 py-1.5 border border-line rounded-full text-ash hover:border-red-300 hover:text-red-600">
-                        Delete
-                      </button>
-                    </form>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
+        <FeaturedList slots={slots} />
       </section>
 
       {/* ── Add ── */}

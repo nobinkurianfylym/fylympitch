@@ -7,7 +7,8 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { createFeaturedSlot } from "@/lib/featured-actions";
+import { createFeaturedSlot, updateFeaturedSlot } from "@/lib/featured-actions";
+import type { FeaturedSlot } from "@/lib/featured";
 
 const BUCKET = "featured-images";
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -20,9 +21,18 @@ const KINDS = [
   { key: "custom",   label: "Custom",   help: "Anything else: a partner, a market, a call. You supply all of it." },
 ];
 
-export default function FeaturedForm() {
-  const [kind, setKind]         = useState("fund");
-  const [imageUrl, setImageUrl] = useState("");
+export default function FeaturedForm({
+  existing,
+  onDone,
+}: {
+  /** Present when editing. Its kind is fixed: changing kind would leave
+   *  ref_id pointing at the wrong table, so that is a delete-and-re-add. */
+  existing?: FeaturedSlot;
+  onDone?: () => void;
+} = {}) {
+  const editing = !!existing;
+  const [kind, setKind]         = useState<string>(existing?.kind ?? "fund");
+  const [imageUrl, setImageUrl] = useState(existing?.image_url ?? "");
   const [uploading, setUp]      = useState(false);
   const [error, setError]       = useState<string | null>(null);
   const [pending, start]        = useTransition();
@@ -64,69 +74,86 @@ export default function FeaturedForm() {
   function submit(formData: FormData) {
     setError(null);
     start(async () => {
-      const res = await createFeaturedSlot(formData);
+      const res = editing
+        ? await updateFeaturedSlot(formData)
+        : await createFeaturedSlot(formData);
       if (res?.error) { setError(res.error); return; }
-      formRef.current?.reset();
-      setImageUrl("");
-      if (fileRef.current) fileRef.current.value = "";
+      if (!editing) {
+        formRef.current?.reset();
+        setImageUrl("");
+        if (fileRef.current) fileRef.current.value = "";
+      }
       router.refresh();
+      onDone?.();
     });
   }
+
+  // "Up to | $120,000 | gold" — the same shape the action parses back.
+  const rowsText = (existing?.rows ?? [])
+    .map(r => [r.label, r.value, r.gold ? "gold" : ""].filter(Boolean).join(" | "))
+    .join("\n");
 
   return (
     <form ref={formRef} action={submit} className="border border-line rounded-card bg-white p-6">
       <input type="hidden" name="image_url" value={imageUrl} />
+      {editing && <input type="hidden" name="id" value={existing!.id} />}
 
-      <div className="flex flex-wrap gap-2 mb-2">
-        {KINDS.map(k => (
-          <button
-            key={k.key} type="button" onClick={() => setKind(k.key)}
-            className={`text-[10px] tracking-[0.14em] uppercase rounded-full px-3.5 py-2 border transition-colors ${
-              kind === k.key ? "bg-ink text-ivory border-ink" : "border-line text-ash hover:border-gold"
-            }`}
-          >{k.label}</button>
-        ))}
-      </div>
+      {editing ? (
+        <p className="eyebrow mb-4">
+          Editing · {KINDS.find(k => k.key === kind)?.label}
+        </p>
+      ) : (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {KINDS.map(k => (
+            <button
+              key={k.key} type="button" onClick={() => setKind(k.key)}
+              className={`text-[10px] tracking-[0.14em] uppercase rounded-full px-3.5 py-2 border transition-colors ${
+                kind === k.key ? "bg-ink text-ivory border-ink" : "border-line text-ash hover:border-gold"
+              }`}
+            >{k.label}</button>
+          ))}
+        </div>
+      )}
       <input type="hidden" name="kind" value={kind} />
-      <p className="text-[12.5px] text-ash mb-5">{help}</p>
+      {!editing && <p className="text-[12.5px] text-ash mb-5">{help}</p>}
 
       <div className="grid sm:grid-cols-2 gap-5">
         {!custom && (
           <label className="block sm:col-span-2">
             <span className="eyebrow block mb-2">Id</span>
-            <input name="ref_id" className="field w-full" placeholder="00000000-0000-0000-0000-000000000000" />
+            <input name="ref_id" defaultValue={existing?.ref_id ?? ""} className="field w-full" placeholder="00000000-0000-0000-0000-000000000000" />
           </label>
         )}
 
         <label className="block">
           <span className="eyebrow block mb-2">Title {custom ? "" : "(optional override)"}</span>
-          <input name="title" maxLength={60} className="field w-full" />
+          <input name="title" defaultValue={existing?.title ?? ""} maxLength={60} className="field w-full" />
         </label>
 
         <label className="block">
           <span className="eyebrow block mb-2">Subtitle</span>
-          <input name="subtitle" maxLength={60} className="field w-full" />
+          <input name="subtitle" defaultValue={existing?.subtitle ?? ""} maxLength={60} className="field w-full" />
         </label>
 
         <label className="block sm:col-span-2">
           <span className="eyebrow block mb-2">Hook line</span>
-          <input name="hook" maxLength={120} className="field w-full"
+          <input name="hook" defaultValue={existing?.hook ?? ""} maxLength={120} className="field w-full"
                  placeholder="Left empty on a fund, this counts matching projects automatically." />
         </label>
 
         <label className="block">
           <span className="eyebrow block mb-2">Link {custom ? "" : "(optional override)"}</span>
-          <input name="link_url" className="field w-full" placeholder="https:// or /opportunities/slug" />
+          <input name="link_url" defaultValue={existing?.link_url ?? ""} className="field w-full" placeholder="https:// or /opportunities/slug" />
         </label>
 
         <label className="block">
           <span className="eyebrow block mb-2">Button label</span>
-          <input name="cta_label" maxLength={28} className="field w-full" placeholder="See if you qualify" />
+          <input name="cta_label" defaultValue={existing?.cta_label ?? ""} maxLength={28} className="field w-full" placeholder="See if you qualify" />
         </label>
 
         <label className="block sm:col-span-2">
           <span className="eyebrow block mb-2">Rows — one per line, label | value | gold</span>
-          <textarea name="rows_text" rows={3} className="field w-full font-mono text-[12px]"
+          <textarea name="rows_text" defaultValue={rowsText} rows={3} className="field w-full font-mono text-[12px]"
                     placeholder={"Up to | $120,000 | gold\nOpen to | Worldwide\nCloses | in 24 days | gold"} />
           <span className="block mt-1.5 text-[12px] text-ash">
             Leave blank on a fund, producer or project and these are read live from the record. Three rows maximum.
@@ -152,15 +179,22 @@ export default function FeaturedForm() {
       </div>
 
       <label className="mt-5 flex items-center gap-3 cursor-pointer">
-        <input type="checkbox" name="is_active" defaultChecked />
+        <input type="checkbox" name="is_active" defaultChecked={existing ? existing.is_active : true} />
         <span className="text-[14px] text-ash">Active — include it in the rotation straight away</span>
       </label>
 
       {error && <p className="mt-4 text-[13px] text-red-600">{error}</p>}
 
-      <button type="submit" disabled={pending || uploading} className="btn-gold mt-6 disabled:opacity-50">
-        {pending ? "Adding…" : "Add to the queue"}
-      </button>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <button type="submit" disabled={pending || uploading} className="btn-gold disabled:opacity-50">
+          {pending ? "Saving…" : editing ? "Save changes" : "Add to the queue"}
+        </button>
+        {editing && (
+          <button type="button" onClick={() => onDone?.()} className="btn-ghost">
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 }

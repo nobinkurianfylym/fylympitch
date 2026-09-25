@@ -81,6 +81,67 @@ export async function createFeaturedSlot(formData: FormData): Promise<{ error?: 
   return {};
 }
 
+/**
+ * Edit an existing card. The image round-trips through a hidden field, so
+ * leaving it alone keeps it; replacing it deletes the old file from our
+ * bucket, because nothing else ever references it.
+ *
+ * `kind` is not editable. Changing it would leave a ref_id pointing at the
+ * wrong table, and deleting and re-adding is both clearer and safer.
+ */
+export async function updateFeaturedSlot(formData: FormData): Promise<{ error?: string }> {
+  const { error, supabase } = await assertAdmin();
+  if (error || !supabase) return { error: error ?? "Not admin" };
+
+  const id = str(formData, "id");
+  if (!id) return { error: "Missing id." };
+
+  const { data: existing } = await supabase
+    .from("featured_slots").select("kind, image_url").eq("id", id).maybeSingle();
+  if (!existing) return { error: "That card no longer exists." };
+
+  const refId = nil(str(formData, "ref_id"));
+  const title = nil(str(formData, "title"));
+
+  if (existing.kind === "custom" && !title) return { error: "A custom card needs a title." };
+  if (existing.kind !== "custom" && !refId)  return { error: "Paste the id of the fund, producer or project." };
+  if (refId && !/^[0-9a-f-]{36}$/i.test(refId)) return { error: "That does not look like an id." };
+
+  const rows = str(formData, "rows_text")
+    .split("\n")
+    .map(line => line.split("|").map(p => p.trim()))
+    .filter(p => p[0] && p[1])
+    .slice(0, 3)
+    .map(p => ({ label: p[0], value: p[1], gold: (p[2] ?? "").toLowerCase() === "gold" }));
+
+  const imageUrl = nil(str(formData, "image_url"));
+
+  const { error: upErr } = await supabase.from("featured_slots").update({
+    ref_id:    existing.kind === "custom" ? null : refId,
+    title,
+    subtitle:  nil(str(formData, "subtitle")),
+    hook:      nil(str(formData, "hook")),
+    image_url: imageUrl,
+    link_url:  nil(str(formData, "link_url")),
+    cta_label: nil(str(formData, "cta_label")),
+    rows,
+    is_active: formData.get("is_active") === "on",
+  }).eq("id", id);
+
+  if (upErr) return { error: upErr.message };
+
+  // The old image is now unreferenced. Only ever our own bucket.
+  const marker = `/storage/v1/object/public/${BUCKET}/`;
+  const old = existing.image_url ?? "";
+  if (old && old !== imageUrl && old.includes(marker)) {
+    const path = old.split(marker)[1];
+    if (path) await supabase.storage.from(BUCKET).remove([decodeURIComponent(path)]);
+  }
+
+  refresh();
+  return {};
+}
+
 export async function deleteFeaturedSlot(formData: FormData): Promise<{ error?: string }> {
   const { error, supabase } = await assertAdmin();
   if (error || !supabase) return { error: error ?? "Not admin" };
