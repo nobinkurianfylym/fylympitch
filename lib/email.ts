@@ -772,9 +772,11 @@ export type RadarItem = {
   opportunity_id: string;
   title: string;
   organization: string | null;
-  deadline: string;
-  days_left: number;
+  /** null for rolling programmes, which have no date at all. */
+  deadline: string | null;
+  days_left: number | null;
   score: number;
+  kind: "closing" | "open";
 };
 
 export type RadarProject = {
@@ -792,13 +794,19 @@ function closesIn(days: number): string {
 function radarRow(item: RadarItem): string {
   const name = escapeHtml(item.organization || item.title);
   const sub  = item.organization ? escapeHtml(item.title) : "";
-  const urgent = item.days_left <= 7;
+  const open = item.kind === "open";
+  const urgent = !open && (item.days_left ?? 99) <= 7;
+
+  const status = open
+    ? "Open now · accepts applications year-round"
+    : `${closesIn(item.days_left ?? 0)} · ${item.deadline ?? ""}`;
+
   return `
     <tr><td style="padding:14px 0;border-bottom:1px solid #E5E0D5;">
       <p style="margin:0;font-size:15px;color:#1A1815;font-weight:500;">${name}</p>
       ${sub ? `<p style="margin:2px 0 0;font-size:13px;color:#8A857C;">${sub}</p>` : ""}
-      <p style="margin:6px 0 0;font-size:13px;color:${urgent ? "#C0392B" : "#8A857C"};">
-        ${escapeHtml(closesIn(item.days_left))} · ${item.deadline} · match ${item.score}
+      <p style="margin:6px 0 0;font-size:13px;color:${urgent ? "#C0392B" : open ? "#1E8449" : "#8A857C"};">
+        ${escapeHtml(status)} · match ${item.score}
       </p>
     </td></tr>`;
 }
@@ -818,7 +826,12 @@ export async function sendDeadlineRadarEmail({
   const total = projects.reduce((n, p) => n + p.items.length, 0);
   if (total === 0) return { ok: false, error: "nothing to send" };
 
-  const soonest = Math.min(...projects.flatMap(p => p.items.map(i => i.days_left)));
+  const all      = projects.flatMap(p => p.items);
+  const closing  = all.filter(i => i.kind === "closing");
+  const openNow  = all.filter(i => i.kind === "open");
+  const soonest  = closing.length
+    ? Math.min(...closing.map(i => i.days_left ?? 99))
+    : 99;
 
   const blocks = projects.map(p => `
     <p style="margin:28px 0 4px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A857C;">
@@ -828,16 +841,19 @@ export async function sendDeadlineRadarEmail({
       ${p.items.map(radarRow).join("")}
     </table>`).join("");
 
-  const headline = total === 1
-    ? "1 deadline is closing"
-    : `${total} deadlines are closing`;
+  const headline =
+    closing.length && openNow.length
+      ? `${closing.length} closing, ${openNow.length} open now`
+      : closing.length
+        ? (closing.length === 1 ? "1 deadline is closing" : `${closing.length} deadlines are closing`)
+        : (openNow.length === 1 ? "1 fund is open right now" : `${openNow.length} funds are open right now`);
 
   const content = `
     <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#C0392B;">
       Deadline Radar
     </p>
     <h1 style="margin:0 0 16px;font-size:26px;font-weight:400;line-height:1.25;color:#1A1815;">
-      ${headline}${soonest <= 7 ? ", one within a week" : ""}.
+      ${headline}${closing.length && soonest <= 7 ? ", one within a week" : ""}.
     </h1>
     <p style="margin:0;font-size:15px;line-height:1.7;color:#5A554D;">
       ${escapeHtml(filmmakerName)}, these are funds your ${projects.length === 1 ? "project already matches" : "projects already match"}.
@@ -856,9 +872,13 @@ export async function sendDeadlineRadarEmail({
     const { error } = await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: total === 1
-        ? "1 funding deadline is closing"
-        : `${total} funding deadlines are closing`,
+      subject: closing.length
+        ? (closing.length === 1
+            ? "1 funding deadline is closing"
+            : `${closing.length} funding deadlines are closing`)
+        : (openNow.length === 1
+            ? "A fund you match is open right now"
+            : `${openNow.length} funds you match are open right now`),
       html: wrap(content),
     });
     if (error) return { ok: false, error: String(error) };

@@ -307,6 +307,8 @@ interface ExtractedOpportunity {
   max_budget_usd: number | null;
   deadline: string | null;
   deadline_note: string | null;
+  deadline_type: string;
+  typical_month: number | null;
   app_link: string | null;
   url: string;
   gender_focus: string | null;
@@ -663,6 +665,8 @@ match_weight: high | medium | low
 
 submission_status: open | closing_soon | closed | archived | cancelled
 
+deadline_type: fixed | rolling | annual | windows | unknown
+
 gender_focus: women | non_binary | women_and_non_binary   (or null)
 
 RULES:
@@ -670,6 +674,18 @@ RULES:
 - languages: ISO language names (English, French, Arabic, etc.)
 - country: full country name, or null for worldwide
 - deadline: ISO date YYYY-MM-DD, or null if rolling/no fixed date
+- deadline_type: how this programme opens. This matters as much as the date.
+    fixed   — one dated deadline. Put that date in the deadline field.
+    rolling — accepts applications continuously, year-round, no deadline.
+    annual  — recurs every year, but this page does not give the next date.
+    windows — several cycles or rounds a year.
+    unknown — the page genuinely says nothing about timing.
+  A rolling programme is OPEN RIGHT NOW, which is the most useful thing a
+  filmmaker can be told, so never return unknown when the page says rolling,
+  year-round, continuous or always open.
+- typical_month: for annual and windows only, the month the DEADLINE usually
+  falls in as a number 1-12, if the page says. Not the month applications open.
+  Null otherwise.
 - max_award_usd: the maximum a SINGLE project can receive, in USD.
   This is NOT the programme's annual budget, NOT the fund's total corpus, and
   NOT a company's or streamer's content spend. If the page only states a total
@@ -709,6 +725,8 @@ Each programme object:
   "max_budget_usd": number|null,
   "deadline": string|null,
   "deadline_note": string|null,
+  "deadline_type": string,
+  "typical_month": number|null,
   "app_link": string|null,
   "url": string,
   "gender_focus": string|null,
@@ -780,6 +798,46 @@ ${content.slice(0, CONTENT_CHAR_LIMIT)}`;
   }
 }
 
+// ─── Cadence ──────────────────────────────────────────────────
+// `deadline` alone can only express a fixed date, so a rolling programme and a
+// programme whose date we failed to read look identical: both null. They are
+// not the same thing at all. A rolling fund is open TODAY, which is the most
+// actionable status in the catalogue, and it was being hidden behind a null.
+//
+// These rules mirror migration 093 exactly, so a record the crawler writes and
+// a record the repair classified end up in the same bucket. Change both.
+
+const DEADLINE_TYPES = ["fixed", "rolling", "annual", "windows", "unknown"] as const;
+
+/** Trimmed value, or undefined when it is empty or whitespace. */
+function nullif_blank(v: string | null | undefined): string | undefined {
+  const t = (v ?? "").trim();
+  return t === "" ? undefined : t;
+}
+
+function classifyCadence(note: string | null | undefined): string {
+  const n = (note ?? "").toLowerCase().trim();
+  if (!n) return "unknown";
+  if (/(rolling|year[- ]?round|continuous|always open|ongoing|any ?time|open call)/.test(n)) return "rolling";
+  if (/(window|cycle|[0-9]+\s*rounds?|quarterly|monthly|biannual|twice a year|two rounds)/.test(n)) return "windows";
+  if (/(annual|yearly|each year|every year)/.test(n)) return "annual";
+  return "unknown";
+}
+
+const MONTHS = [
+  "january","february","march","april","august","september","october",
+  "november","december","june","july",
+  "jan","feb","mar","apr","may","jun","jul","aug","sept","sep","oct","nov","dec",
+];
+
+function monthFromText(text: string | null | undefined): number | null {
+  const m = (text ?? "").toLowerCase().match(new RegExp(`(${MONTHS.join("|")})`));
+  if (!m) return null;
+  const order = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+  const idx = order.indexOf(m[1].slice(0, 3));
+  return idx === -1 ? null : idx + 1;
+}
+
 // ─── Taxonomy normalizer ──────────────────────────────────────
 function normalize(raw: ExtractedOpportunity): ExtractedOpportunity {
   if (!OPP_TYPES.includes(raw.opp_type as typeof OPP_TYPES[number])) raw.opp_type = "grant";
@@ -818,6 +876,23 @@ function normalize(raw: ExtractedOpportunity): ExtractedOpportunity {
       raw.deadline = null;
     }
   }
+  raw.deadline_type = DEADLINE_TYPES.includes(raw.deadline_type as typeof DEADLINE_TYPES[number])
+    ? raw.deadline_type
+    : classifyCadence(raw.deadline_note);
+
+  if (raw.deadline) {
+    raw.deadline_type = "fixed";
+  } else if (raw.deadline_type === "fixed") {
+    raw.deadline_type = classifyCadence(raw.deadline_note);
+  }
+
+  if (raw.deadline_type === "annual" || raw.deadline_type === "windows") {
+    const m = Number(raw.typical_month);
+    raw.typical_month = m >= 1 && m <= 12 ? m : monthFromText(raw.deadline_note);
+  } else {
+    raw.typical_month = null;
+  }
+
   // A deadline in the past must never surface as upcoming. Discovery finds old
   // press releases (a 2024 announcement was ingested with deadline 2024-11-07),
   // and showing a filmmaker a two-year-old date as live is worse than showing
@@ -877,6 +952,7 @@ function detectChanges(
   const watchFields = [
     "title","description","deadline","max_award_usd","submission_status",
     "app_link","url","country","genres","formats","stages","is_active","deadline_note",
+    "deadline_type","typical_month",
   ] as const;
 
   const fields: string[] = [];
@@ -931,6 +1007,7 @@ async function upsertOpportunity(
     await supabase.from("opportunities").update({
       title: extracted.title, description: extracted.description,
       deadline: extracted.deadline, deadline_note: extracted.deadline_note,
+      deadline_type: extracted.deadline_type, typical_month: extracted.typical_month,
       max_award_usd: extracted.max_award_usd, min_budget_usd: extracted.min_budget_usd,
       max_budget_usd: extracted.max_budget_usd, app_link: extracted.app_link,
       url: extracted.url, is_active: extracted.is_active,
@@ -963,10 +1040,12 @@ async function upsertOpportunity(
       max_award_usd: extracted.max_award_usd, min_budget_usd: extracted.min_budget_usd,
       max_budget_usd: extracted.max_budget_usd, deadline: extracted.deadline,
       deadline_note: extracted.deadline_note, app_link: extracted.app_link,
+      deadline_type: extracted.deadline_type, typical_month: extracted.typical_month,
       url: extracted.url, is_active: extracted.is_active,
       submission_status: extracted.submission_status, gender_focus: extracted.gender_focus,
       copro_required: extracted.copro_required, festival_affiliated: extracted.festival_affiliated,
-      match_weight: extracted.match_weight, organization_name: extracted.organization_name,
+      match_weight: extracted.match_weight,
+      organization_name: nullif_blank(extracted.organization_name) ?? source.organization_name,
       source_url: source.url, last_verified_at: new Date().toISOString(),
       version_number: 1, auto_crawled: true, crawl_confidence: extracted.confidence,
     })

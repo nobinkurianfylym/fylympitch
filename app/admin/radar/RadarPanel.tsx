@@ -107,11 +107,15 @@ export default function RadarPanel() {
                     {(p.items ?? []).map(i => (
                       <li key={i.opportunity_id} className="text-[14px] leading-[1.6]">
                         <span className="text-ink">{i.organization || i.title}</span>
-                        <span className={i.days_left <= 7 ? "text-red-600" : "text-ash"}>
-                          {" · "}{i.days_left <= 0 ? "today"
-                                 : i.days_left === 1 ? "tomorrow"
-                                 : `${i.days_left} days`}
-                        </span>
+                        {i.kind === "open" ? (
+                          <span className="text-emerald-600">{" · open now"}</span>
+                        ) : (
+                          <span className={(i.days_left ?? 99) <= 7 ? "text-red-600" : "text-ash"}>
+                            {" · "}{(i.days_left ?? 0) <= 0 ? "today"
+                                   : i.days_left === 1 ? "tomorrow"
+                                   : `${i.days_left} days`}
+                          </span>
+                        )}
                         <span className="text-ash">{" · match "}{i.score}</span>
                       </li>
                     ))}

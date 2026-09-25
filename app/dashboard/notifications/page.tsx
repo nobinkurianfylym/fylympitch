@@ -25,6 +25,7 @@ const KIND_META: Record<string, { label: string; dot: string; icon: string; icon
   // the one colour nothing else on this page uses, so it reads as urgent at a
   // glance rather than blending into the gold.
   deadline_radar:     { label: "Deadline",           dot: "bg-red-500",      icon: "◷", iconBg: "bg-red-50 text-red-600" },
+  radar_open:         { label: "Open Now",           dot: "bg-emerald-500",  icon: "◉", iconBg: "bg-emerald-50 text-emerald-600" },
   admin_broadcast:    { label: "Announcement",      dot: "bg-gold",         icon: "◆", iconBg: "bg-gold/10 text-gold" },
   admin_message:      { label: "PITCH.FYLYM",       dot: "bg-gold",         icon: "✉", iconBg: "bg-gold/10 text-gold" },
   system:             { label: "System",            dot: "bg-ash",          icon: "◎", iconBg: "bg-parchment text-ash" },
