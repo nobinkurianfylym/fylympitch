@@ -95,9 +95,14 @@ export function orderedSlots(slots: FeaturedSlot[]): FeaturedSlot[] {
 export function pickForDay(
   slots: FeaturedSlot[],
   day: number,
+  anchorDay = 0,
 ): { kind: FeaturedKind; slot: FeaturedSlot | null; position: number } {
   const period = cycleLength(slots);
-  const p = ((day % period) + period) % period;
+  // Counted from the day the queue was last arranged, so the first row of
+  // the admin list is today rather than whichever day the arithmetic
+  // happened to land on.
+  const offset = day - anchorDay;
+  const p = ((offset % period) + period) % period;
   const queue = orderedSlots(slots);
 
   if (p < queue.length) {
@@ -106,6 +111,16 @@ export function pickForDay(
 
   const auto: FeaturedKind[] = ["fund", "producer", "project"];
   return { kind: auto[p % auto.length], slot: null, position: p };
+}
+
+/** The day the queue was last arranged. Position one belongs to it. */
+export async function anchorDay(): Promise<number> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("featured_config").select("anchor_date").eq("id", true).maybeSingle();
+  if (!data?.anchor_date) return 0;
+  const t = Date.parse(`${data.anchor_date}T00:00:00Z`);
+  return Number.isNaN(t) ? 0 : Math.floor(t / 86_400_000);
 }
 
 async function activeSlots(): Promise<FeaturedSlot[]> {
@@ -361,10 +376,10 @@ async function autoPick(
  * never the same thing two days running.
  */
 export async function getFeaturedToday(): Promise<FeaturedCardData | null> {
-  const slots = await activeSlots();
-  const day   = dayNumber();
+  const [slots, anchor] = await Promise.all([activeSlots(), anchorDay()]);
+  const day = dayNumber();
 
-  const { kind, slot } = pickForDay(slots, day);
+  const { kind, slot } = pickForDay(slots, day, anchor);
   if (slot) {
     const card = await hydrate(slot);
     if (card) return card;
@@ -392,11 +407,11 @@ export async function getFeaturedToday(): Promise<FeaturedCardData | null> {
 export async function getUpcoming(days = 14): Promise<
   { date: string; kind: FeaturedKind; slot: FeaturedSlot | null }[]
 > {
-  const slots = await activeSlots();
+  const [slots, anchor] = await Promise.all([activeSlots(), anchorDay()]);
   const today = dayNumber();
   return Array.from({ length: days }, (_, i) => {
     const day = today + i;
     const d = new Date(day * 86_400_000);
-    return { date: d.toISOString().slice(0, 10), ...pickForDay(slots, day) };
+    return { date: d.toISOString().slice(0, 10), ...pickForDay(slots, day, anchor) };
   });
 }

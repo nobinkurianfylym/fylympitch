@@ -47,12 +47,20 @@ export default async function FeaturedAdminPage() {
         never loops a single card.
       </p>
 
+      {/* ── Queue ── */}
+      <section className="mb-14">
+        <p className="eyebrow mb-4">The queue</p>
+
+        <FeaturedList slots={slots} />
+      </section>
+
       {/* ── Schedule ── */}
       <section className="mb-14">
         <p className="eyebrow mb-2">Next fourteen days</p>
         <p className="text-[13px] leading-[1.7] text-ash mb-4 max-w-2xl">
-          A preview of the result. Drag the queue below to change it: the order
-          there is the order here.
+          What the queue above produces. Your first card runs today, the second
+          tomorrow, and so on; once the queue runs out the rest fills itself.
+          Rearranging the queue re-dates this from today.
         </p>
         <div className="border-t border-line">
           {upcoming.map((d, i) => (
@@ -77,13 +85,6 @@ export default async function FeaturedAdminPage() {
             </div>
           ))}
         </div>
-      </section>
-
-      {/* ── Queue ── */}
-      <section className="mb-14">
-        <p className="eyebrow mb-4">The queue</p>
-
-        <FeaturedList slots={slots} />
       </section>
 
       {/* ── Add ── */}

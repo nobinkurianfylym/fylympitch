@@ -28,6 +28,24 @@ function refresh() {
   revalidatePath("/");
 }
 
+/**
+ * Move position one to today.
+ *
+ * Called when the queue's shape changes — added, removed, reordered —
+ * so what an admin arranges is what runs, starting now. Deliberately
+ * NOT called when a card's own content is edited: fixing a typo should
+ * not reschedule everything.
+ */
+async function resetAnchor(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<void> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { error } = await supabase
+    .from("featured_config")
+    .upsert({ id: true, anchor_date: today, updated_at: new Date().toISOString() });
+  if (error) console.error("[featured] anchor reset failed:", error.message);
+}
+
 export type FeaturableRow = {
   id: string;
   label: string;
@@ -220,6 +238,7 @@ export async function createFeaturedSlot(formData: FormData): Promise<{ error?: 
   });
 
   if (insErr) return { error: insErr.message };
+  await resetAnchor(supabase);
   refresh();
   return {};
 }
@@ -312,6 +331,7 @@ export async function reorderFeaturedSlots(ids: string[]): Promise<{ error?: str
     if (upErr) return { error: upErr.message };
   }
 
+  await resetAnchor(supabase);
   refresh();
   return {};
 }
@@ -329,6 +349,7 @@ export async function deleteFeaturedSlot(formData: FormData): Promise<{ error?: 
 
   const { error: delErr } = await supabase.from("featured_slots").delete().eq("id", id);
   if (delErr) return { error: delErr.message };
+  await resetAnchor(supabase);
 
   const marker = `/storage/v1/object/public/${BUCKET}/`;
   const url = row?.image_url ?? "";
