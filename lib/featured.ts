@@ -65,27 +65,42 @@ export function dayNumber(d = new Date()): number {
 }
 
 /**
- * Pick the slot for a given day from a list of active slots.
- *
- * Only kinds that actually have entries take part, so a queue with
- * nothing but funds shows a fund every day rather than going blank
- * two days in three. Within a kind the queue advances one step each
- * time that kind comes round.
+ * The kinds in the cycle. Always fund, then producer, then project,
+ * whether or not anything is queued for them: a day with nothing
+ * queued is filled automatically from the catalogue rather than
+ * dropped. Custom joins as a fourth only when custom cards exist,
+ * so an admin-made card still gets its turn without taking over.
  */
-export function pickForDay(slots: FeaturedSlot[], day: number): FeaturedSlot | null {
-  const present = KIND_ORDER.filter(k => slots.some(s => s.kind === k));
-  if (present.length === 0) return null;
+export function cycleKinds(slots: FeaturedSlot[]): FeaturedKind[] {
+  const base: FeaturedKind[] = ["fund", "producer", "project"];
+  return slots.some(s => s.kind === "custom") ? [...base, "custom"] : base;
+}
 
-  const kind = present[((day % present.length) + present.length) % present.length];
+/**
+ * Which kind a day belongs to, and the queued card for it if there
+ * is one. A null slot does not mean an empty day: it means nobody
+ * queued anything for that kind, so the automatic pick fills it.
+ *
+ * Within a kind the queue advances one step each time its turn
+ * comes round.
+ */
+export function pickForDay(
+  slots: FeaturedSlot[],
+  day: number,
+): { kind: FeaturedKind; slot: FeaturedSlot | null } {
+  const kinds = cycleKinds(slots);
+  const kind  = kinds[((day % kinds.length) + kinds.length) % kinds.length];
+
   const queue = slots
     .filter(s => s.kind === kind)
     .sort((a, b) =>
       a.sort_order - b.sort_order ||
       a.created_at.localeCompare(b.created_at));
 
-  if (queue.length === 0) return null;
-  const turn = Math.floor(day / present.length);
-  return queue[((turn % queue.length) + queue.length) % queue.length];
+  if (queue.length === 0) return { kind, slot: null };
+
+  const turn = Math.floor(day / kinds.length);
+  return { kind, slot: queue[((turn % queue.length) + queue.length) % queue.length] };
 }
 
 async function activeSlots(): Promise<FeaturedSlot[]> {
@@ -259,13 +274,20 @@ const AUTO_KINDS: FeaturedKind[] = ["fund", "producer", "project"];
  * A kind with no candidates is skipped rather than shown blank, so a
  * platform with nine producers still fills all three days.
  */
-async function autoPick(day: number): Promise<{ kind: FeaturedKind; ref_id: string } | null> {
+async function autoPick(
+  day: number,
+  prefer: FeaturedKind,
+): Promise<{ kind: FeaturedKind; ref_id: string } | null> {
   const supabase = await createClient();
-  const start = ((day % AUTO_KINDS.length) + AUTO_KINDS.length) % AUTO_KINDS.length;
-  const turn  = Math.floor(day / AUTO_KINDS.length);
+  const turn = Math.floor(day / AUTO_KINDS.length);
 
-  for (let step = 0; step < AUTO_KINDS.length; step++) {
-    const kind = AUTO_KINDS[(start + step) % AUTO_KINDS.length];
+  // Try the day's own kind first, then the others, so an empty pool
+  // borrows a neighbour rather than leaving the column blank.
+  const order: FeaturedKind[] = AUTO_KINDS.includes(prefer)
+    ? [prefer, ...AUTO_KINDS.filter(k => k !== prefer)]
+    : [...AUTO_KINDS];
+
+  for (const kind of order) {
     let ids: string[] = [];
 
     if (kind === "fund") {
@@ -337,13 +359,13 @@ export async function getFeaturedToday(): Promise<FeaturedCardData | null> {
   const slots = await activeSlots();
   const day   = dayNumber();
 
-  const chosen = pickForDay(slots, day);
-  if (chosen) {
-    const card = await hydrate(chosen);
+  const { kind, slot } = pickForDay(slots, day);
+  if (slot) {
+    const card = await hydrate(slot);
     if (card) return card;
   }
 
-  const auto = await autoPick(day);
+  const auto = await autoPick(day, kind);
   if (!auto) return null;
 
   return hydrate({
@@ -363,17 +385,13 @@ export async function getFeaturedToday(): Promise<FeaturedCardData | null> {
  * shape of the week, not the specific record.
  */
 export async function getUpcoming(days = 14): Promise<
-  { date: string; slot: FeaturedSlot | null; autoKind: FeaturedKind }[]
+  { date: string; kind: FeaturedKind; slot: FeaturedSlot | null }[]
 > {
   const slots = await activeSlots();
   const today = dayNumber();
   return Array.from({ length: days }, (_, i) => {
     const day = today + i;
     const d = new Date(day * 86_400_000);
-    return {
-      date: d.toISOString().slice(0, 10),
-      slot: pickForDay(slots, day),
-      autoKind: AUTO_KINDS[((day % AUTO_KINDS.length) + AUTO_KINDS.length) % AUTO_KINDS.length],
-    };
+    return { date: d.toISOString().slice(0, 10), ...pickForDay(slots, day) };
   });
 }

@@ -41,9 +41,10 @@ export default async function FeaturedAdminPage() {
       <p className="text-[16px] leading-[1.7] text-ash max-w-2xl mb-10">
         The card beside the hero changes at midnight UTC. The date decides it,
         so nothing can get stuck and every visitor on a given day sees the same
-        thing. Kinds take turns, and within a kind the queue advances one step
-        each time its turn comes round. If the queue is empty the card falls
-        back to the soonest-closing fund in the catalogue, so it is never blank.
+        thing. The cycle is always fund, then producer, then project, with your
+        custom cards taking a fourth turn when any exist. A day with nothing
+        queued is filled automatically from the catalogue rather than skipped,
+        so the column is never blank.
       </p>
 
       {/* ── Schedule ── */}
@@ -55,24 +56,19 @@ export default async function FeaturedAdminPage() {
               <span className={`w-28 ${i === 0 ? "text-gold" : "text-ash"}`}>
                 {i === 0 ? "Today" : new Date(d.date + "T00:00:00Z").toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })}
               </span>
+              <span className="text-[10px] tracking-[0.16em] uppercase px-2 py-0.5 rounded-full bg-parchment text-ash w-20 text-center">
+                {KIND_LABEL[d.kind]}
+              </span>
               {d.slot ? (
-                <>
-                  <span className="text-[10px] tracking-[0.16em] uppercase px-2 py-0.5 rounded-full bg-parchment text-ash">
-                    {KIND_LABEL[d.slot.kind]}
-                  </span>
-                  <span className="text-ink">{label(d.slot)}</span>
-                </>
+                <span className="text-ink">{label(d.slot)}</span>
               ) : (
-                <>
-                  <span className="text-[10px] tracking-[0.16em] uppercase px-2 py-0.5 rounded-full border border-line text-ash/70">
-                    Auto · {KIND_LABEL[d.autoKind]}
-                  </span>
-                  <span className="text-ash/60">
-                    {d.autoKind === "fund"     && "closing soonest"}
-                    {d.autoKind === "producer" && "approved producers, in turn"}
-                    {d.autoKind === "project"  && "newest public project with a poster"}
-                  </span>
-                </>
+                <span className="text-ash/60">
+                  Auto ·{" "}
+                  {d.kind === "fund"     && "closing soonest"}
+                  {d.kind === "producer" && "approved producers, in turn"}
+                  {d.kind === "project"  && "newest public project with a poster"}
+                  {d.kind === "custom"   && "nothing queued"}
+                </span>
               )}
             </div>
           ))}
