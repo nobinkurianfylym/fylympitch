@@ -5,6 +5,7 @@ import { timeAgo } from "@/lib/format";
 import { markAllRead, deleteNotification, deleteAllNotifications } from "@/lib/auth-actions";
 import { parseBroadcastBody, attachmentSummary } from "@/lib/broadcast-body";
 import BroadcastActions from "@/components/BroadcastActions";
+import OutcomeButtons from "@/components/OutcomeButtons";
 import { fetchBroadcastSocial } from "@/lib/broadcast-social";
 import { sized, srcSet2x } from "@/lib/image-url";
 
@@ -26,6 +27,7 @@ const KIND_META: Record<string, { label: string; dot: string; icon: string; icon
   // glance rather than blending into the gold.
   deadline_radar:     { label: "Deadline",           dot: "bg-red-500",      icon: "◷", iconBg: "bg-red-50 text-red-600" },
   radar_open:         { label: "Open Now",           dot: "bg-emerald-500",  icon: "◉", iconBg: "bg-emerald-50 text-emerald-600" },
+  outcome_ask:        { label: "One Question",       dot: "bg-violet-500",   icon: "?", iconBg: "bg-violet-50 text-violet-600" },
   admin_broadcast:    { label: "Announcement",      dot: "bg-gold",         icon: "◆", iconBg: "bg-gold/10 text-gold" },
   admin_message:      { label: "PITCH.FYLYM",       dot: "bg-gold",         icon: "✉", iconBg: "bg-gold/10 text-gold" },
   system:             { label: "System",            dot: "bg-ash",          icon: "◎", iconBg: "bg-parchment text-ash" },
@@ -139,6 +141,15 @@ export default async function NotificationsPage() {
   const hasAny      = (items ?? []).length > 0;
 
   // Runtime link rewrite — catches any stale links already in the DB
+  // The ask carries its application id in the query string, exactly as
+  // opportunity links already carry theirs. Parsed here so the buttons know
+  // which application they are answering for.
+  function askId(link: string | null): string | null {
+    if (!link || !link.startsWith("/dashboard/applications?ask=")) return null;
+    const id = link.split("ask=")[1]?.split(/[&#]/)[0] ?? "";
+    return /^[0-9a-f-]{36}$/i.test(id) ? id : null;
+  }
+
   function safeLink(link: string | null): string | null {
     if (!link) return null;
     if (link === "/projects" || link === "/producer/projects") return "/dashboard/projects";
@@ -292,6 +303,10 @@ export default async function NotificationsPage() {
                   is what makes that obvious. Outside the Link: a link nested in
                   a link is invalid markup, same reason the delete button and
                   BroadcastActions sit out here. */}
+              {n.kind === "outcome_ask" && askId(n.link) && (
+                <OutcomeButtons applicationId={askId(n.link)!} />
+              )}
+
               {REPLYABLE.has(n.kind) && n.actor_id && n.project_id && (
                 <div className="pl-[84px] pb-4 -mt-2">
                   <Link
