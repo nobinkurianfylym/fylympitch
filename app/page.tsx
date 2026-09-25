@@ -33,12 +33,12 @@ import { getTrendingProjects, getOpportunityCount } from "@/lib/cached-queries";
 // moment anything is added.
 export async function generateMetadata(): Promise<Metadata> {
   const n = await getOpportunityCount();
-  const scale = n > 0 ? `${n.toLocaleString("en-US")} film funds, grants, labs and markets` : "film funds, grants, labs and markets";
+  const scale = n > 0 ? `${n.toLocaleString("en-US")} ` : "";
 
   return pageMetadata({
     title: "Film Funding for Independent Filmmakers",
     description:
-      `Find the money for your film. PITCH.FYLYM matches your project against ${scale} worldwide, scores what you qualify for, and connects you to producers and investors.`,
+      `Match your film against ${scale}funds, grants, labs and markets worldwide, see what you qualify for, and reach producers and investors.`,
     path: "/",
   });
 }

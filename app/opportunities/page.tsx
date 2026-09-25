@@ -21,8 +21,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return pageMetadata({
     title: "Film Funds, Grants, Labs & Co-Production Markets",
+    titleShort: "Film Funds, Grants & Labs",
     description:
-      `Browse ${scale}film funding opportunities worldwide — grants, development funds, labs, co-production markets, tax incentives, sales agents and distributors. Filter by country, stage and budget.`,
+      `Browse ${scale}verified film funding opportunities worldwide: grants, development funds, labs, co-production markets and tax incentives.`,
     path: "/opportunities",
   });
 }

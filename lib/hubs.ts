@@ -10,7 +10,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { opportunityIndexability } from "@/lib/seo";
 import { usd } from "@/lib/format";
-import { countrySlug } from "@/lib/opportunity-taxonomy";
+import { countrySlug, RESERVED_OPP_SEGMENTS } from "@/lib/opportunity-taxonomy";
 
 export const HUB_MIN_RECORDS = 3; // a hub must list at least this many to be indexable
 
@@ -27,6 +27,10 @@ export type HubRow = {
   description: string | null;
   career_stages: string[] | null;
   eligible_countries: string[] | null;
+  // Facet columns. Read for /opportunities/for/<facet>; an empty array means
+  // the programme published no restriction, not that it excludes everything.
+  formats: string[] | null;
+  stages: string[] | null;
   is_active: boolean | null;
   is_producer_post: boolean | null;
   posted_by_producer_id: string | null;
@@ -41,7 +45,7 @@ export type HubRow = {
 };
 
 const HUB_SELECT =
-  "id, slug, title, opp_type, country, region, deadline, deadline_note, max_award_usd, description, career_stages, eligible_countries, is_active, is_producer_post, posted_by_producer_id, deadline_type, typical_month, last_verified_at, app_link, organization_name";
+  "id, slug, title, opp_type, country, region, deadline, deadline_note, max_award_usd, description, career_stages, eligible_countries, formats, stages, is_active, is_producer_post, posted_by_producer_id, deadline_type, typical_month, last_verified_at, app_link, organization_name";
 
 /** All opportunities that pass the indexation threshold, sorted by soonest deadline. */
 export async function getIndexableOpportunities(
@@ -55,7 +59,15 @@ export async function getIndexableOpportunities(
     .limit(5000);
 
   const rows = (data ?? []) as HubRow[];
-  const indexable = rows.filter((r) => opportunityIndexability(r).index);
+
+  // A static segment beats a dynamic one in the App Router, so an opportunity
+  // that ever slugged to "for", "type", "country" or "submit" would be
+  // shadowed by the hub route of the same name: /opportunities/for renders the
+  // facet directory, not that record. Listing it here would put a URL in the
+  // hubs, the sitemap and the public API that resolves to a different page.
+  const reachable = rows.filter((r) => !RESERVED_OPP_SEGMENTS.has(r.slug));
+
+  const indexable = reachable.filter((r) => opportunityIndexability(r).index);
 
   // Soonest real deadline first, then rolling programmes (open today, so
   // still useful), then everything undated.

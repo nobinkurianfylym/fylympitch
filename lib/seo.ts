@@ -33,10 +33,85 @@ export function absoluteUrl(path = "/"): string {
 // One builder, so a page states what it is about and gets a complete, correct
 // head every time.
 
+// ── Title and description budgets ────────────────────────────────────────────
+//
+// Google renders a result title in a fixed pixel width, not a fixed character
+// count, but ~60 characters is the honest working limit and ~158 for the
+// description. Past that the tail is replaced with an ellipsis, and whatever
+// was in the tail may as well not have been written.
+//
+// The rule that matters: when a title will not fit, the BRAND is what gets
+// dropped, never the words a person searched for. A result reading
+// "Film Funds, Grants, Labs & Co-Production Markets" earns the click; one
+// reading "Film Funds, Grants, Labs & Co-Produc…" does not, and the site
+// name was never what they were looking for.
+
+export const TITLE_BUDGET = 60;
+export const DESCRIPTION_BUDGET = 158;
+
+const TITLE_SUFFIX = ` — ${SITE.name}`;
+
+/** Cut to `max` on a word boundary, with no trailing punctuation. */
+function clampWords(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1);
+  const space = cut.lastIndexOf(" ");
+  const body = space > max * 0.55 ? cut.slice(0, space) : cut;
+  return body.replace(/[\s,;:.\-–—]+$/, "") + "…";
+}
+
+/**
+ * Build the <title>, spending the 60-character budget in priority order.
+ *
+ *   1. Title plus the site name, when both fit.
+ *   2. The short title plus the site name, when one was supplied.
+ *   3. The full title alone — the brand is dropped, not the keywords.
+ *   4. The shortest thing available, clamped on a word boundary.
+ *
+ * A title that already contains the site name is left to speak for itself.
+ */
+export function composeTitle(title: string, short?: string): string {
+  const t = (title ?? "").replace(/\s+/g, " ").trim();
+  const sh = short?.replace(/\s+/g, " ").trim() || null;
+
+  if (!t) return SITE.name;
+  if (t.includes(SITE.name)) return clampWords(t, TITLE_BUDGET);
+
+  if (t.length + TITLE_SUFFIX.length <= TITLE_BUDGET) return t + TITLE_SUFFIX;
+  if (sh && sh.length + TITLE_SUFFIX.length <= TITLE_BUDGET) return sh + TITLE_SUFFIX;
+  if (t.length <= TITLE_BUDGET) return t;
+  if (sh && sh.length <= TITLE_BUDGET) return sh;
+
+  return clampWords(sh && sh.length < t.length ? sh : t, TITLE_BUDGET);
+}
+
+/**
+ * Shout in development when a page overspends its budget.
+ *
+ * Silent in production: a truncated title is a missed click, not an outage,
+ * and nothing here is worth an error page. The point is that whoever adds
+ * the next route finds out while they are still writing it.
+ */
+function warnOnBudget(path: string, title: string, description: string): void {
+  if (process.env.NODE_ENV === "production") return;
+  if (title.length > TITLE_BUDGET)
+    console.warn(`[seo] title over ${TITLE_BUDGET} chars on ${path}: ${title.length}`);
+  if (description.length > DESCRIPTION_BUDGET)
+    console.warn(`[seo] description over ${DESCRIPTION_BUDGET} chars on ${path}: ${description.length}`);
+  if (description.length > 0 && description.length < 70)
+    console.warn(`[seo] description under 70 chars on ${path}: ${description.length}`);
+}
+
 export interface PageMetaInput {
-  /** ~50-60 chars. The site name is appended — do not include it. */
+  /** The page's own title. The site name is appended when it fits. */
   title: string;
-  /** ~120-160 chars. Written for a human reading a result, not for a crawler. */
+  /**
+   * A shorter title to fall back on when `title` will not fit the budget.
+   * Worth supplying wherever the title interpolates a value of unknown
+   * length — an organisation name, a country, a project title.
+   */
+  titleShort?: string;
+  /** Written for a human reading a result, not for a crawler. Clamped to 158. */
   description: string;
   /** Site-relative path, e.g. "/opportunities". Becomes the canonical URL. */
   path: string;
@@ -60,18 +135,21 @@ export function pageMetadata(input: PageMetaInput) {
     imageIsPortrait = false, index = true, type = "website",
   } = input;
 
-  const fullTitle = title.includes(SITE.name) ? title : `${title} — ${SITE.name}`;
+  const fullTitle = composeTitle(title, input.titleShort);
+  const desc = metaDescription(description, DESCRIPTION_BUDGET);
   const url = absoluteUrl(path);
   const img = image || "/og-default.png";
 
+  warnOnBudget(path, fullTitle, desc);
+
   return {
     title: fullTitle,
-    description,
+    description: desc,
     alternates: { canonical: url },
     robots: index ? ROBOTS_INDEX : ROBOTS_NOINDEX,
     openGraph: {
       title: fullTitle,
-      description,
+      description: desc,
       url,
       siteName: SITE.name,
       type,
@@ -85,14 +163,17 @@ export function pageMetadata(input: PageMetaInput) {
       // uncropped beside the text instead.
       card: imageIsPortrait ? ("summary" as const) : ("summary_large_image" as const),
       title: fullTitle,
-      description,
+      description: desc,
       images: [img],
     },
   };
 }
 
 /** Trim a body of text into a meta description without cutting mid-word. */
-export function metaDescription(text: string | null | undefined, max = 158): string {
+export function metaDescription(
+  text: string | null | undefined,
+  max = DESCRIPTION_BUDGET,
+): string {
   const clean = (text ?? "").replace(/\s+/g, " ").trim();
   if (!clean) return "";
   if (clean.length <= max) return clean;

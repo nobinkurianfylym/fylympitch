@@ -52,6 +52,7 @@ export async function generateMetadata(
   const s = hubStats(data.rows);
   return pageMetadata({
     title: `${data.name} — Funding Programmes`,
+    titleShort: data.name,
     description: `Every programme ${data.name} runs: ${s.count} opportunities with deadlines, award sizes and eligibility, kept current.`,
     path: `/organisations/${slug}`,
     index: data.rows.length >= HUB_MIN_RECORDS,

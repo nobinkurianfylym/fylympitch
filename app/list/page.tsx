@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import ShareLinkButton from "@/components/ShareLinkButton";
 import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 
 // Shareable destination for outreach to funders and producers. The homepage
 // block sends people straight to the two actions; this page exists so a cold
@@ -14,35 +15,13 @@ import type { Metadata } from "next";
 // on the right). It replaced /og-default.png, whose headline reads "Where
 // films find funding" — addressed to filmmakers, which is the wrong audience
 // for the one link we send to funders.
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "List with PITCH.FYLYM — for funders and producers",
   description:
     "If you fund or produce films, filmmakers should be able to find you. List a grant, fund, lab or producer call. Free, and we keep it current.",
-  alternates: { canonical: "/list" },
-  openGraph: {
-    // Declared explicitly: a page-level openGraph replaces the root
-    // layout's outright, so omitting this shares with no image at all.
-    images: [{ url: "/og-list.png", width: 1200, height: 630 }],
-    title: "List with PITCH.FYLYM — for funders and producers",
-    description:
-      "If you fund or produce films, filmmakers should be able to find you. List a grant, fund, lab or producer call. Free, and we keep it current.",
-    url: "/list",
-    siteName: "PITCH.FYLYM",
-    type: "website",
-  },
-  twitter: {
-    images: ["/og-list.png"],
-    // summary_large_image, not summary. X crops a "summary" card to a centred
-    // square: on a 1200x630 image that keeps the middle 630px and throws away
-    // both edges - including the P mark in the corner. This page was the only
-    // one in the app still set to "summary", which is why its card shared with
-    // no logo at all.
-    card: "summary_large_image",
-    title: "List with PITCH.FYLYM — for funders and producers",
-    description:
-      "If you fund or produce films, filmmakers should be able to find you. List a grant, fund, lab or producer call.",
-  },
-};
+  path: "/list",
+  image: "/og-list.png",
+});
 
 export default async function ListWithUsPage() {
   const supabase = await createClient();

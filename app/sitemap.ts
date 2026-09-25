@@ -3,6 +3,7 @@ import { createAnonClient } from "@/lib/supabase/anon";
 import { SITE, opportunityIndexability, projectIndexability, profileIndexability } from "@/lib/seo";
 import { loadIndexableOpportunities, countriesWithCounts, organisationsWithCounts, HUB_MIN_RECORDS } from "@/lib/hubs";
 import { OPPORTUNITY_FAMILIES, familyForType } from "@/lib/opportunity-taxonomy";
+import { FACETS, rowsForFacet, facetIndexability } from "@/lib/opportunity-facets";
 import { GUIDES } from "@/lib/guides";
 import { GLOSSARY } from "@/lib/glossary";
 
@@ -21,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/opportunities`, changeFrequency: "daily", priority: 0.9 },
     { url: `${BASE}/deadlines`, changeFrequency: "daily", priority: 0.9 },
     { url: `${BASE}/opportunities/country`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${BASE}/opportunities/for`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE}/organisations`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE}/guides`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/glossary`, changeFrequency: "monthly", priority: 0.6 },
@@ -138,6 +140,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // Facets apply a second gate on top of HUB_MIN_RECORDS: one that lists
+  // almost the whole catalogue is a duplicate of /opportunities and renders
+  // noindex, so it has no business in the sitemap either.
+  const facetUrls: MetadataRoute.Sitemap = FACETS
+    .map(f => ({ f, n: rowsForFacet(f, hubRows).length }))
+    .filter(x => facetIndexability(x.n, hubRows.length).index)
+    .map(({ f }) => ({
+      url: `${BASE}/opportunities/for/${f.slug}`,
+      lastModified: now,
+      changeFrequency: "daily" as const,
+      priority: 0.8,
+    }));
+
   const organisationUrls: MetadataRoute.Sitemap = organisationsWithCounts(hubRows).map(o => ({
     url: `${BASE}/organisations/${o.slug}`,
     lastModified: now,
@@ -161,6 +176,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...statics, ...oppUrls, ...projectUrls, ...profileUrls, ...announcementUrls,
-    ...familyUrls, ...countryUrls, ...organisationUrls, ...guideUrls, ...glossaryUrls,
+    ...familyUrls, ...countryUrls, ...facetUrls, ...organisationUrls,
+    ...guideUrls, ...glossaryUrls,
   ];
 }

@@ -47,6 +47,7 @@ export async function generateMetadata(
   const s = hubStats(data.rows);
   return pageMetadata({
     title: `Film Funding in ${data.name}`,
+    titleShort: `${data.name} Film Funding`,
     description: `${s.count} verified film grants, funds, labs and incentives in ${data.name}, with deadlines, award sizes and eligibility.`,
     path: `/opportunities/country/${slug}`,
     index: data.rows.length >= HUB_MIN_RECORDS,

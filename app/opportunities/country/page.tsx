@@ -59,6 +59,10 @@ export default async function CountryDirectory() {
               {f.label}
             </Link>
           ))}
+          <Link href="/opportunities/for"
+            className="rounded-full border border-line px-4 py-2 text-[12px] uppercase tracking-[0.12em] text-ash hover:border-gold hover:text-ink">
+            By who it is for
+          </Link>
         </div>
       </section>
     </main>
