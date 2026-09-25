@@ -166,12 +166,20 @@ export function opportunitySchema(
     app_link?: string | null;
     key_person?: string | null;
     contact_email?: string | null;
+    last_verified_at?: string | null;
   },
 ): Json | null {
   if (!opp.slug || !opp.title) return null;
   const pageUrl = absoluteUrl(`/opportunities/${opp.slug}`);
   const official = opp.app_link || opp.url || null;
   const t = opp.opp_type ?? "";
+
+  // Freshness. A funding record is only worth quoting if its reader can tell
+  // how recently it was checked, and this is the field both search engines
+  // and answer engines weigh when deciding whether a page is still current.
+  const verified = opp.last_verified_at
+    ? String(opp.last_verified_at).slice(0, 10)
+    : undefined;
 
   // Tax incentives / rebates → GovernmentService
   if (TAX_TYPES.has(t)) {
@@ -181,6 +189,7 @@ export function opportunitySchema(
       name: opp.title,
       description: opp.description ?? undefined,
       url: official ?? pageUrl,
+      dateModified: verified,
       areaServed: opp.country
         ? { "@type": "Country", name: opp.country }
         : place(opp),
@@ -212,6 +221,7 @@ export function opportunitySchema(
       name: opp.title,
       description: opp.description ?? undefined,
       url: official ?? pageUrl,
+      dateModified: verified,
       sameAs: official ? [official] : undefined,
       email: opp.contact_email ?? undefined,
       address: opp.country
@@ -227,6 +237,7 @@ export function opportunitySchema(
     name: opp.title,
     description: opp.description ?? undefined,
     url: pageUrl,
+    dateModified: verified,
     sameAs: official ? [official] : undefined,
     funder: funder(opp),
     amount: monetaryAmount(opp),

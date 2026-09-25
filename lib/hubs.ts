@@ -30,10 +30,18 @@ export type HubRow = {
   is_active: boolean | null;
   is_producer_post: boolean | null;
   posted_by_producer_id: string | null;
+  // Added for the hub pages: cadence tells a reader a rolling fund is open
+  // today rather than undated, and last_verified_at is the freshness signal
+  // both search engines and answer engines weigh.
+  deadline_type: string | null;
+  typical_month: number | null;
+  last_verified_at: string | null;
+  app_link: string | null;
+  organization_name: string | null;
 };
 
 const HUB_SELECT =
-  "id, slug, title, opp_type, country, region, deadline, deadline_note, max_award_usd, description, career_stages, eligible_countries, is_active, is_producer_post, posted_by_producer_id";
+  "id, slug, title, opp_type, country, region, deadline, deadline_note, max_award_usd, description, career_stages, eligible_countries, is_active, is_producer_post, posted_by_producer_id, deadline_type, typical_month, last_verified_at, app_link, organization_name";
 
 /** All opportunities that pass the indexation threshold, sorted by soonest deadline. */
 export async function getIndexableOpportunities(
@@ -47,7 +55,17 @@ export async function getIndexableOpportunities(
     .limit(5000);
 
   const rows = (data ?? []) as HubRow[];
-  return rows.filter((r) => opportunityIndexability(r).index);
+  const indexable = rows.filter((r) => opportunityIndexability(r).index);
+
+  // Soonest real deadline first, then rolling programmes (open today, so
+  // still useful), then everything undated.
+  const rank = (r: HubRow) =>
+    r.deadline ? 0 : r.deadline_type === "rolling" ? 1 : 2;
+
+  return indexable.sort((a, b) =>
+    rank(a) - rank(b) ||
+    (a.deadline ?? "9999").localeCompare(b.deadline ?? "9999") ||
+    a.title.localeCompare(b.title));
 }
 
 /**

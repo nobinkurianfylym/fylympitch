@@ -100,7 +100,7 @@ export default async function FundDetailPage({ params }: Props) {
     .select("*")
     .eq("slug", slug)
     .eq("is_active", true)
-    .single<Opportunity & { slug: string; key_person?: string | null; contact_email?: string | null; gender_focus?: string | null; copro_required?: boolean; festival_affiliated?: boolean; ott_affiliated?: boolean; deadline_note?: string | null; app_link?: string | null; posted_by_producer_id?: string | null; poster_url?: string | null; is_producer_post?: boolean }>();
+    .single<Opportunity & { slug: string; key_person?: string | null; contact_email?: string | null; gender_focus?: string | null; copro_required?: boolean; festival_affiliated?: boolean; ott_affiliated?: boolean; deadline_note?: string | null; app_link?: string | null; posted_by_producer_id?: string | null; poster_url?: string | null; is_producer_post?: boolean; last_verified_at?: string | null }>();
 
   if (!opp) notFound();
 
@@ -296,6 +296,20 @@ export default async function FundDetailPage({ params }: Props) {
               <p className="text-[10px] tracking-[0.18em] uppercase text-ash mb-1">Location</p>
               <p className="font-display text-[20px] text-ink">{location}</p>
             </div>
+            {/* Freshness, stated in the open. A funding record is only worth
+                trusting if the reader can see when it was last checked, and
+                this is the same date the page emits as dateModified. */}
+            {opp.last_verified_at && (
+              <div>
+                <p className="text-[10px] tracking-[0.18em] uppercase text-ash mb-1">Last verified</p>
+                <p className="font-display text-[20px] text-ink">
+                  <time dateTime={String(opp.last_verified_at).slice(0, 10)}>
+                    {new Date(opp.last_verified_at).toLocaleDateString("en-GB",
+                      { day: "numeric", month: "short", year: "numeric" })}
+                  </time>
+                </p>
+              </div>
+            )}
             {(opp.min_budget_usd != null || opp.max_budget_usd != null) && (
               <div>
                 <p className="text-[10px] tracking-[0.18em] uppercase text-ash mb-1">Budget range</p>

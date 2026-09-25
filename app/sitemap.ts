@@ -1,6 +1,10 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { SITE, opportunityIndexability, projectIndexability, profileIndexability } from "@/lib/seo";
+import { loadIndexableOpportunities, countriesWithCounts, HUB_MIN_RECORDS } from "@/lib/hubs";
+import { OPPORTUNITY_FAMILIES, familyForType } from "@/lib/opportunity-taxonomy";
+import { GUIDES } from "@/lib/guides";
+import { GLOSSARY } from "@/lib/glossary";
 
 export const revalidate = 3600; // regenerate hourly
 
@@ -13,6 +17,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const statics: MetadataRoute.Sitemap = [
     { url: BASE, changeFrequency: "weekly", priority: 1.0 },
     { url: `${BASE}/opportunities`, changeFrequency: "daily", priority: 0.9 },
+    { url: `${BASE}/deadlines`, changeFrequency: "daily", priority: 0.9 },
+    { url: `${BASE}/opportunities/country`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${BASE}/guides`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/glossary`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/filmprojects`, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/signup`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${BASE}/list`, changeFrequency: "monthly", priority: 0.5 },
@@ -103,5 +111,46 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.4,
   }));
 
-  return [...statics, ...oppUrls, ...projectUrls, ...profileUrls, ...announcementUrls];
+  // ── Hubs ─────────────────────────────────────────────────────
+  // Same gate the pages themselves apply: a hub below HUB_MIN_RECORDS
+  // renders noindex, so submitting it here would only ask a crawler to
+  // fetch a page we have told it to ignore.
+  const hubRows = await loadIndexableOpportunities();
+  const now = new Date().toISOString();
+
+  const familyUrls: MetadataRoute.Sitemap = OPPORTUNITY_FAMILIES
+    .map(f => ({ f, n: hubRows.filter(r => familyForType(r.opp_type)?.slug === f.slug).length }))
+    .filter(x => x.n >= HUB_MIN_RECORDS)
+    .map(({ f }) => ({
+      url: `${BASE}/opportunities/type/${f.slug}`,
+      lastModified: now,
+      changeFrequency: "daily" as const,
+      priority: 0.8,
+    }));
+
+  const countryUrls: MetadataRoute.Sitemap = countriesWithCounts(hubRows).map(c => ({
+    url: `${BASE}/opportunities/country/${c.slug}`,
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.8,
+  }));
+
+  // ── Editorial ────────────────────────────────────────────────
+  const guideUrls: MetadataRoute.Sitemap = GUIDES.map(g => ({
+    url: `${BASE}/guides/${g.slug}`,
+    lastModified: g.updated,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  const glossaryUrls: MetadataRoute.Sitemap = GLOSSARY.map(t => ({
+    url: `${BASE}/glossary/${t.slug}`,
+    changeFrequency: "yearly" as const,
+    priority: 0.5,
+  }));
+
+  return [
+    ...statics, ...oppUrls, ...projectUrls, ...profileUrls, ...announcementUrls,
+    ...familyUrls, ...countryUrls, ...guideUrls, ...glossaryUrls,
+  ];
 }
