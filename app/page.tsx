@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import ShareLinkButton from "@/components/ShareLinkButton";
 import HomepageDemo from "@/components/HomepageDemo";
 import HeroToggle from "@/components/HeroToggle";
+import FeaturedCard from "@/components/FeaturedCard";
 
 export const dynamic = "force-dynamic";
 import IntelligenceTicker from "@/components/IntelligenceTicker";
@@ -171,7 +172,12 @@ export default async function Home() {
         </nav>
 
         {/* HERO — grows to fill remaining viewport */}
-        <HeroToggle isLoggedIn={!!user} accountRole={accountRole} oppLabel={oppLabel} />
+        <HeroToggle
+          isLoggedIn={!!user}
+          accountRole={accountRole}
+          oppLabel={oppLabel}
+          aside={<FeaturedCard />}
+        />
       </div>
 
       {/* PLATFORM METRICS — live counts above the ticker */}

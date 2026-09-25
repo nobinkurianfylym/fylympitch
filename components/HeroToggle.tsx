@@ -47,9 +47,14 @@ export default function HeroToggle({
   isLoggedIn  = false,
   accountRole = "FILMMAKER",
   oppLabel    = "",
+  aside,
 }: {
   isLoggedIn?:  boolean
   accountRole?: string
+  /** Rendered as a narrow column to the right of the hero copy on desktop,
+   *  and below the category bar on mobile. A server component passed down
+   *  from the page, so this file stays client-side and data-free. */
+  aside?: React.ReactNode
   /** Live opportunity count, formatted on the server and read straight from
    *  the catalogue. Empty string when unknown, in which case the sentence
    *  drops the number rather than printing a stale one. */
@@ -74,6 +79,10 @@ export default function HeroToggle({
 
   return (
     <section className="relative flex-1 flex flex-col justify-center max-w-6xl mx-auto w-full px-6 pb-16">
+
+      {/* Two columns on desktop, stacked on mobile. The hero copy below is
+          unchanged; only this wrapper is new. */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_316px] lg:gap-12 lg:items-center">
 
       {/* ── Content — fades on role change ── */}
       <div key={role} style={{ animation: "heroFadeIn 0.35s ease both" }}>
@@ -132,6 +141,13 @@ export default function HeroToggle({
             </Link>
           )}
         </div>
+      </div>
+
+      {aside && (
+        <aside className="mt-10 lg:mt-0 w-full max-w-[420px] lg:max-w-none">
+          {aside}
+        </aside>
+      )}
       </div>
 
       {/* ── Category bar ── */}
