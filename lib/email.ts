@@ -761,3 +761,109 @@ export async function sendErrorDigestEmail({
     console.error("[email] sendErrorDigestEmail exception:", e);
   }
 }
+
+// ── Deadline Radar ─────────────────────────────────────────────
+// Admin-triggered. One email per filmmaker covering every project
+// they have, listing only funds they already match that close
+// inside the window. Urgency carries the email, so deadlines lead
+// and the match score is secondary.
+
+export type RadarItem = {
+  opportunity_id: string;
+  title: string;
+  organization: string | null;
+  deadline: string;
+  days_left: number;
+  score: number;
+};
+
+export type RadarProject = {
+  project_id: string;
+  title: string;
+  items: RadarItem[];
+};
+
+function closesIn(days: number): string {
+  if (days <= 0) return "closes today";
+  if (days === 1) return "closes tomorrow";
+  return `closes in ${days} days`;
+}
+
+function radarRow(item: RadarItem): string {
+  const name = escapeHtml(item.organization || item.title);
+  const sub  = item.organization ? escapeHtml(item.title) : "";
+  const urgent = item.days_left <= 7;
+  return `
+    <tr><td style="padding:14px 0;border-bottom:1px solid #E5E0D5;">
+      <p style="margin:0;font-size:15px;color:#1A1815;font-weight:500;">${name}</p>
+      ${sub ? `<p style="margin:2px 0 0;font-size:13px;color:#8A857C;">${sub}</p>` : ""}
+      <p style="margin:6px 0 0;font-size:13px;color:${urgent ? "#C0392B" : "#8A857C"};">
+        ${escapeHtml(closesIn(item.days_left))} · ${item.deadline} · match ${item.score}
+      </p>
+    </td></tr>`;
+}
+
+export async function sendDeadlineRadarEmail({
+  to,
+  filmmakerName,
+  projects,
+}: {
+  to: string;
+  filmmakerName: string;
+  projects: RadarProject[];
+}) {
+  const resend = getResend();
+  if (!resend) return { ok: false, error: "Resend not configured" };
+
+  const total = projects.reduce((n, p) => n + p.items.length, 0);
+  if (total === 0) return { ok: false, error: "nothing to send" };
+
+  const soonest = Math.min(...projects.flatMap(p => p.items.map(i => i.days_left)));
+
+  const blocks = projects.map(p => `
+    <p style="margin:28px 0 4px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#8A857C;">
+      ${escapeHtml(p.title)}
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0">
+      ${p.items.map(radarRow).join("")}
+    </table>`).join("");
+
+  const headline = total === 1
+    ? "1 deadline is closing"
+    : `${total} deadlines are closing`;
+
+  const content = `
+    <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#C0392B;">
+      Deadline Radar
+    </p>
+    <h1 style="margin:0 0 16px;font-size:26px;font-weight:400;line-height:1.25;color:#1A1815;">
+      ${headline}${soonest <= 7 ? ", one within a week" : ""}.
+    </h1>
+    <p style="margin:0;font-size:15px;line-height:1.7;color:#5A554D;">
+      ${escapeHtml(filmmakerName)}, these are funds your ${projects.length === 1 ? "project already matches" : "projects already match"}.
+      Nothing here is a cold application.
+    </p>
+    ${blocks}
+    ${divider()}
+    <p style="margin:0 0 18px;font-size:13px;line-height:1.7;color:#8A857C;">
+      Scores come from your own project details. Check each fund's own page for
+      eligibility before applying.
+    </p>
+    ${goldButton("Open your dashboard", `${SITE_URL}/dashboard`)}
+  `;
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: total === 1
+        ? "1 funding deadline is closing"
+        : `${total} funding deadlines are closing`,
+      html: wrap(content),
+    });
+    if (error) return { ok: false, error: String(error) };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}

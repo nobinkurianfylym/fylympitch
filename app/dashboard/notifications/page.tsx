@@ -20,6 +20,11 @@ const KIND_META: Record<string, { label: string; dot: string; icon: string; icon
   application_update: { label: "Application",       dot: "bg-violet-500",   icon: "●", iconBg: "bg-violet-50 text-violet-500" },
   new_opportunity:    { label: "Producer Brief",    dot: "bg-gold",         icon: "◉", iconBg: "bg-gold/10 text-gold" },
   new_fund:           { label: "New Fund",          dot: "bg-blue-500",     icon: "◈", iconBg: "bg-blue-50 text-blue-500" },
+  // Deadline Radar is the only time-critical notification a filmmaker gets, and
+  // it is the only one that is worthless if read late. Red is deliberate: it is
+  // the one colour nothing else on this page uses, so it reads as urgent at a
+  // glance rather than blending into the gold.
+  deadline_radar:     { label: "Deadline",           dot: "bg-red-500",      icon: "◷", iconBg: "bg-red-50 text-red-600" },
   admin_broadcast:    { label: "Announcement",      dot: "bg-gold",         icon: "◆", iconBg: "bg-gold/10 text-gold" },
   admin_message:      { label: "PITCH.FYLYM",       dot: "bg-gold",         icon: "✉", iconBg: "bg-gold/10 text-gold" },
   system:             { label: "System",            dot: "bg-ash",          icon: "◎", iconBg: "bg-parchment text-ash" },
