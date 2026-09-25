@@ -200,7 +200,6 @@ export async function createFeaturedSlot(formData: FormData): Promise<{ error?: 
   const { data: last } = await supabase
     .from("featured_slots")
     .select("sort_order")
-    .eq("kind", kind)
     .order("sort_order", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -286,6 +285,37 @@ export async function updateFeaturedSlot(formData: FormData): Promise<{ error?: 
   return {};
 }
 
+/**
+ * Write a whole kind's order in one go, which is what a drag produces.
+ *
+ * Renumbering from scratch (10, 20, 30…) rather than swapping pairs keeps
+ * the gaps even, so a later insert always has room and the numbers never
+ * drift into collisions.
+ */
+export async function reorderFeaturedSlots(ids: string[]): Promise<{ error?: string }> {
+  const { error, supabase } = await assertAdmin();
+  if (error || !supabase) return { error: error ?? "Not admin" };
+  if (!Array.isArray(ids) || ids.length === 0) return {};
+
+  // One queue, any kind, any order. Ids are still checked against the
+  // table so a malformed list cannot touch rows that do not exist.
+  const { data: owned } = await supabase.from("featured_slots").select("id");
+  const allowed = new Set((owned ?? []).map((r: any) => r.id));
+  const clean = ids.filter(id => allowed.has(id));
+  if (clean.length === 0) return {};
+
+  for (let i = 0; i < clean.length; i++) {
+    const { error: upErr } = await supabase
+      .from("featured_slots")
+      .update({ sort_order: (i + 1) * 10 })
+      .eq("id", clean[i]);
+    if (upErr) return { error: upErr.message };
+  }
+
+  refresh();
+  return {};
+}
+
 export async function deleteFeaturedSlot(formData: FormData): Promise<{ error?: string }> {
   const { error, supabase } = await assertAdmin();
   if (error || !supabase) return { error: error ?? "Not admin" };
@@ -342,13 +372,12 @@ export async function moveFeaturedSlot(formData: FormData): Promise<{ error?: st
   if (dir !== "up" && dir !== "down") return { error: "Bad direction" };
 
   const { data: me } = await supabase
-    .from("featured_slots").select("id, kind, sort_order").eq("id", id).maybeSingle();
+    .from("featured_slots").select("id, sort_order").eq("id", id).maybeSingle();
   if (!me) return { error: "Not found" };
 
   const { data: neighbour } = await supabase
     .from("featured_slots")
     .select("id, sort_order")
-    .eq("kind", me.kind)
     .neq("id", id)
     [dir === "up" ? "lt" : "gt"]("sort_order", me.sort_order)
     .order("sort_order", { ascending: dir !== "up" })

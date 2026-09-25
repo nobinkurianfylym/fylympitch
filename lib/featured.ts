@@ -43,8 +43,6 @@ export type FeaturedCardData = {
   rows: FeaturedRow[];
 };
 
-const KIND_ORDER: FeaturedKind[] = ["fund", "producer", "project", "custom"];
-
 const KIND_LABEL: Record<FeaturedKind, string> = {
   fund: "Featured fund",
   producer: "Featured producer",
@@ -65,42 +63,49 @@ export function dayNumber(d = new Date()): number {
 }
 
 /**
- * The kinds in the cycle. Always fund, then producer, then project,
- * whether or not anything is queued for them: a day with nothing
- * queued is filled automatically from the catalogue rather than
- * dropped. Custom joins as a fourth only when custom cards exist,
- * so an admin-made card still gets its turn without taking over.
+ * How many days one full pass takes.
+ *
+ * At least three, so an empty or near-empty queue still rotates fund,
+ * producer and project rather than repeating one card. Longer when the
+ * admin has queued more than three, because at that point they are
+ * driving and the queue is the schedule.
  */
-export function cycleKinds(slots: FeaturedSlot[]): FeaturedKind[] {
-  const base: FeaturedKind[] = ["fund", "producer", "project"];
-  return slots.some(s => s.kind === "custom") ? [...base, "custom"] : base;
+export function cycleLength(slots: FeaturedSlot[]): number {
+  return Math.max(3, slots.length);
+}
+
+/** The queue, in the order an admin arranged it. Kind is irrelevant here. */
+export function orderedSlots(slots: FeaturedSlot[]): FeaturedSlot[] {
+  return [...slots].sort((a, b) =>
+    a.sort_order - b.sort_order ||
+    a.created_at.localeCompare(b.created_at));
 }
 
 /**
- * Which kind a day belongs to, and the queued card for it if there
- * is one. A null slot does not mean an empty day: it means nobody
- * queued anything for that kind, so the automatic pick fills it.
+ * What a given day shows: a queued card, or the kind the automatic
+ * pick should fill that day with.
  *
- * Within a kind the queue advances one step each time its turn
- * comes round.
+ * Position in the cycle is the date. Positions the queue covers show
+ * the admin's card in the admin's order, whatever its kind — dragging
+ * is unconstrained on purpose, so a run of three projects is allowed
+ * if that is what someone wants. Positions beyond the queue fall to
+ * the automatic rotation, so the column keeps its variety instead of
+ * looping a single card.
  */
 export function pickForDay(
   slots: FeaturedSlot[],
   day: number,
-): { kind: FeaturedKind; slot: FeaturedSlot | null } {
-  const kinds = cycleKinds(slots);
-  const kind  = kinds[((day % kinds.length) + kinds.length) % kinds.length];
+): { kind: FeaturedKind; slot: FeaturedSlot | null; position: number } {
+  const period = cycleLength(slots);
+  const p = ((day % period) + period) % period;
+  const queue = orderedSlots(slots);
 
-  const queue = slots
-    .filter(s => s.kind === kind)
-    .sort((a, b) =>
-      a.sort_order - b.sort_order ||
-      a.created_at.localeCompare(b.created_at));
+  if (p < queue.length) {
+    return { kind: queue[p].kind, slot: queue[p], position: p };
+  }
 
-  if (queue.length === 0) return { kind, slot: null };
-
-  const turn = Math.floor(day / kinds.length);
-  return { kind, slot: queue[((turn % queue.length) + queue.length) % queue.length] };
+  const auto: FeaturedKind[] = ["fund", "producer", "project"];
+  return { kind: auto[p % auto.length], slot: null, position: p };
 }
 
 async function activeSlots(): Promise<FeaturedSlot[]> {

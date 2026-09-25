@@ -41,15 +41,19 @@ export default async function FeaturedAdminPage() {
       <p className="text-[16px] leading-[1.7] text-ash max-w-2xl mb-10">
         The card beside the hero changes at midnight UTC. The date decides it,
         so nothing can get stuck and every visitor on a given day sees the same
-        thing. The cycle is always fund, then producer, then project, with your
-        custom cards taking a fourth turn when any exist. A day with nothing
-        queued is filled automatically from the catalogue rather than skipped,
-        so the column is never blank.
+        thing. Your queue plays in order, one card a day, whatever mix of kinds
+        you put in it. Any day the queue does not reach is filled automatically
+        with a fund, a producer or a project, so the column is never blank and
+        never loops a single card.
       </p>
 
       {/* ── Schedule ── */}
       <section className="mb-14">
-        <p className="eyebrow mb-4">Next fourteen days</p>
+        <p className="eyebrow mb-2">Next fourteen days</p>
+        <p className="text-[13px] leading-[1.7] text-ash mb-4 max-w-2xl">
+          A preview of the result. Drag the queue below to change it: the order
+          there is the order here.
+        </p>
         <div className="border-t border-line">
           {upcoming.map((d, i) => (
             <div key={d.date} className="hairline py-2.5 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[13px]">
