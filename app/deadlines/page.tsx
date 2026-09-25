@@ -7,7 +7,8 @@
 
 import Link from "next/link";
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, absoluteUrl } from "@/lib/seo";
+import { hubItemListSchema, hubDatasetSchema, newestVerified } from "@/lib/schema";
 import { loadIndexableOpportunities } from "@/lib/hubs";
 import { OPPORTUNITY_FAMILIES } from "@/lib/opportunity-taxonomy";
 import HubList from "@/components/HubList";
@@ -40,8 +41,25 @@ export default async function DeadlinesPage() {
   const updated = new Date().toLocaleDateString("en-GB",
     { day: "numeric", month: "long", year: "numeric" });
 
+  const pageUrl = absoluteUrl("/deadlines");
+  const live = [...closing, ...open];
+  const jsonLd = [
+    hubItemListSchema("Open film funding deadlines", pageUrl, live),
+    hubDatasetSchema({
+      name: "Open film funding deadlines",
+      description: `${closing.length} film funding programmes closing within ${WINDOW_DAYS} days and ${open.length} accepting applications year-round.`,
+      pageUrl,
+      jsonUrl: absoluteUrl("/api/public/deadlines"),
+      dateModified: newestVerified(rows),
+      keywords: ["film funding deadlines", "film grants", "open calls"],
+    }),
+  ].filter(Boolean);
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-16 md:py-24">
+      <script type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
       <h1 className="font-display text-[34px] md:text-[46px] font-normal leading-[1.08]">
         Film funding <span className="italic text-gold">deadlines</span>
       </h1>

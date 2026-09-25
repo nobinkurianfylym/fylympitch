@@ -137,6 +137,48 @@ export function hubIntro(noun: string, scope: string | null, s: HubStats): strin
 
 // ── Grouping for directory pages ─────────────────────────────────────────────
 
+/**
+ * Organisations (with ≥ HUB_MIN_RECORDS indexable records), sorted by count.
+ *
+ * Grouped case-insensitively on the trimmed name, with the most common
+ * spelling used for display. That merges "BFI Film Fund" written two ways,
+ * but NOT genuine aliases: "BFI" and "British Film Institute" are still two
+ * entries, because deciding they are the same body is a judgement call and
+ * merging blind would glue together organisations that only look alike.
+ * A curated alias table is the proper fix and is deliberately not this.
+ */
+export function organisationsWithCounts(
+  rows: HubRow[],
+): { name: string; slug: string; count: number }[] {
+  const groups = new Map<string, { names: Map<string, number>; count: number }>();
+
+  for (const r of rows) {
+    const raw = r.organization_name?.trim();
+    if (!raw) continue;
+    const key = raw.toLowerCase();
+    const g = groups.get(key) ?? { names: new Map(), count: 0 };
+    g.count += 1;
+    g.names.set(raw, (g.names.get(raw) ?? 0) + 1);
+    groups.set(key, g);
+  }
+
+  return [...groups.values()]
+    .filter(g => g.count >= HUB_MIN_RECORDS)
+    .map(g => {
+      const name = [...g.names.entries()].sort((a, b) => b[1] - a[1])[0][0];
+      return { name, slug: countrySlug(name), count: g.count };
+    })
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+/** Every row belonging to one organisation slug. */
+export function rowsForOrganisation(rows: HubRow[], slug: string): HubRow[] {
+  return rows.filter(r => {
+    const n = r.organization_name?.trim();
+    return !!n && countrySlug(n) === slug;
+  });
+}
+
 /** Countries (with ≥ HUB_MIN_RECORDS indexable records), sorted by count desc. */
 export function countriesWithCounts(
   rows: HubRow[],

@@ -8,7 +8,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, absoluteUrl } from "@/lib/seo";
+import { hubItemListSchema, hubDatasetSchema, newestVerified } from "@/lib/schema";
 import { loadIndexableOpportunities, hubStats, hubIntro, HUB_MIN_RECORDS } from "@/lib/hubs";
 import { OPPORTUNITY_FAMILIES, familyBySlug, familyForType } from "@/lib/opportunity-taxonomy";
 import HubList from "@/components/HubList";
@@ -55,8 +56,24 @@ export default async function FamilyHub(
   const { family, rows } = data;
   const s = hubStats(rows);
 
+  const pageUrl = absoluteUrl(`/opportunities/type/${family.slug}`);
+  const jsonLd = [
+    hubItemListSchema(family.label, pageUrl, rows),
+    hubDatasetSchema({
+      name: family.label,
+      description: `${s.count} verified ${family.noun} for filmmakers worldwide.`,
+      pageUrl,
+      jsonUrl: absoluteUrl(`/api/public/type/${family.slug}`),
+      dateModified: newestVerified(rows),
+      keywords: ["film funding", family.label],
+    }),
+  ].filter(Boolean);
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-16 md:py-24">
+      <script type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
       <nav className="mb-6 text-[11px] uppercase tracking-[0.16em] text-ash">
         <Link href="/opportunities" className="hover:text-ink">Opportunities</Link>
         <span className="mx-2 text-ash/40">/</span>

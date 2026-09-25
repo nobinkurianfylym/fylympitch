@@ -7,7 +7,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { pageMetadata } from "@/lib/seo";
+import { pageMetadata, absoluteUrl } from "@/lib/seo";
+import { hubItemListSchema, hubDatasetSchema, newestVerified } from "@/lib/schema";
 import {
   loadIndexableOpportunities, countriesWithCounts,
   hubStats, hubIntro, HUB_MIN_RECORDS,
@@ -61,8 +62,24 @@ export default async function CountryHub(
     .map(f => ({ f, n: rows.filter(r => familyForType(r.opp_type)?.slug === f.slug).length }))
     .filter(x => x.n > 0);
 
+  const pageUrl = absoluteUrl(`/opportunities/country/${slug}`);
+  const jsonLd = [
+    hubItemListSchema(`Film funding in ${name}`, pageUrl, rows),
+    hubDatasetSchema({
+      name: `Film funding in ${name}`,
+      description: `${s.count} verified film funding opportunities in ${name}.`,
+      pageUrl,
+      jsonUrl: absoluteUrl(`/api/public/country/${slug}`),
+      dateModified: newestVerified(rows),
+      keywords: ["film funding", "film grants", name],
+    }),
+  ].filter(Boolean);
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-16 md:py-24">
+      <script type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
       <nav className="mb-6 text-[11px] uppercase tracking-[0.16em] text-ash">
         <Link href="/opportunities" className="hover:text-ink">Opportunities</Link>
         <span className="mx-2 text-ash/40">/</span>

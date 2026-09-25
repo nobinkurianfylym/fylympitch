@@ -245,6 +245,81 @@ export function opportunitySchema(
   });
 }
 
+// ── Hub pages → ItemList + Dataset ───────────────────────────────────────────
+//
+// Two different claims, both true and both useful.
+//
+// ItemList says "this page is an ordered collection of these records", which
+// is what lets an answer engine cite the page rather than guess at it.
+//
+// Dataset says "this is a maintained body of structured data", which is the
+// claim that makes the catalogue itself an entity rather than a web page that
+// happens to have a table on it. dateModified carries the freshness.
+
+export function hubItemListSchema(
+  name: string,
+  pageUrl: string,
+  items: { slug: string; title: string }[],
+): Json | null {
+  if (items.length === 0) return null;
+  return clean({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    url: pageUrl,
+    numberOfItems: items.length,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    itemListElement: items.slice(0, 100).map((it, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: it.title,
+      url: absoluteUrl(`/opportunities/${it.slug}`),
+    })),
+  });
+}
+
+export function hubDatasetSchema(opts: {
+  name: string;
+  description: string;
+  pageUrl: string;
+  /** JSON representation of the same data, when one is published. */
+  jsonUrl?: string | null;
+  /** Most recent verification across the records on the page. */
+  dateModified?: string | null;
+  keywords?: string[];
+}): Json {
+  return clean({
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: opts.name,
+    description: opts.description,
+    url: opts.pageUrl,
+    dateModified: opts.dateModified ?? undefined,
+    keywords: opts.keywords?.length ? opts.keywords : undefined,
+    isAccessibleForFree: true,
+    creator: { "@type": "Organization", name: SITE.name, url: SITE.host },
+    distribution: opts.jsonUrl
+      ? [{
+          "@type": "DataDownload",
+          encodingFormat: "application/json",
+          contentUrl: opts.jsonUrl,
+        }]
+      : undefined,
+  });
+}
+
+/** The newest last_verified_at across a set of records, as YYYY-MM-DD. */
+export function newestVerified(
+  rows: { last_verified_at?: string | null }[],
+): string | null {
+  let best: string | null = null;
+  for (const r of rows) {
+    const v = r.last_verified_at ? String(r.last_verified_at).slice(0, 10) : null;
+    if (v && (!best || v > best)) best = v;
+  }
+  return best;
+}
+
 /** Human label for an opp_type, falling back to the raw value. */
 export function typeLabel(oppType?: string | null): string {
   if (!oppType) return "Opportunity";

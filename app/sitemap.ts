@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { SITE, opportunityIndexability, projectIndexability, profileIndexability } from "@/lib/seo";
-import { loadIndexableOpportunities, countriesWithCounts, HUB_MIN_RECORDS } from "@/lib/hubs";
+import { loadIndexableOpportunities, countriesWithCounts, organisationsWithCounts, HUB_MIN_RECORDS } from "@/lib/hubs";
 import { OPPORTUNITY_FAMILIES, familyForType } from "@/lib/opportunity-taxonomy";
 import { GUIDES } from "@/lib/guides";
 import { GLOSSARY } from "@/lib/glossary";
@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/opportunities`, changeFrequency: "daily", priority: 0.9 },
     { url: `${BASE}/deadlines`, changeFrequency: "daily", priority: 0.9 },
     { url: `${BASE}/opportunities/country`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${BASE}/organisations`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE}/guides`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/glossary`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/filmprojects`, changeFrequency: "daily", priority: 0.7 },
@@ -135,6 +136,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  const organisationUrls: MetadataRoute.Sitemap = organisationsWithCounts(hubRows).map(o => ({
+    url: `${BASE}/organisations/${o.slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
   // ── Editorial ────────────────────────────────────────────────
   const guideUrls: MetadataRoute.Sitemap = GUIDES.map(g => ({
     url: `${BASE}/guides/${g.slug}`,
@@ -151,6 +159,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...statics, ...oppUrls, ...projectUrls, ...profileUrls, ...announcementUrls,
-    ...familyUrls, ...countryUrls, ...guideUrls, ...glossaryUrls,
+    ...familyUrls, ...countryUrls, ...organisationUrls, ...guideUrls, ...glossaryUrls,
   ];
 }
