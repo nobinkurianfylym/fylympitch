@@ -28,16 +28,25 @@ export default async function FeaturedCard() {
         </span>
       </div>
 
-      <div className="flex items-start gap-3">
-        {card.imageUrl ? (
+      {/* A poster is the reason someone looks at this card, so when there is
+          one it gets the top of the card at full width rather than sitting
+          beside the title as a thumbnail. Capped in height so the card still
+          fits inside a 100svh hero on a laptop. */}
+      {card.imageUrl && (
+        <div className="-mx-[18px] -mt-1 mb-3.5 overflow-hidden border-y border-line bg-parchment">
           <img
             src={card.imageUrl}
             alt=""
             loading="lazy"
             decoding="async"
-            className="h-[60px] w-11 shrink-0 rounded-[3px] border border-line object-cover"
+            className="w-full object-cover"
+            style={{ aspectRatio: "4 / 5", maxHeight: 300 }}
           />
-        ) : (
+        </div>
+      )}
+
+      <div className="flex items-start gap-3">
+        {!card.imageUrl && (
           <span
             aria-hidden="true"
             className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[15px] text-gold"
@@ -48,7 +57,7 @@ export default async function FeaturedCard() {
         )}
 
         <div className="min-w-0">
-          <p className="font-display text-[18px] font-normal leading-[1.2] group-hover:text-gold transition-colors">
+          <p className="font-display text-[19px] font-normal leading-[1.2] group-hover:text-gold transition-colors">
             {card.title}
           </p>
           {card.subtitle && (

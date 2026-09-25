@@ -9,6 +9,7 @@
 // missed simply never happens rather than shunting the queue.
 
 import { createClient } from "@/lib/supabase/server";
+import { preferThumb } from "@/lib/poster-url";
 
 export type FeaturedKind = "fund" | "producer" | "project" | "custom";
 
@@ -213,8 +214,10 @@ async function hydrate(slot: FeaturedSlot): Promise<FeaturedCardData | null> {
     href     ??= pr.slug ? `/filmprojects/${pr.slug}` : `/filmprojects/${pr.id}`;
 
     if (!image && pr.poster_path) {
+      // Posters are a full/thumb pair in the `thumbnails` bucket. The card is
+      // at most 300px tall, so the thumb is the right one to pull.
       const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-      image = `${base}/storage/v1/object/public/posters/${pr.poster_path}`;
+      image = `${base}/storage/v1/object/public/thumbnails/${preferThumb(pr.poster_path)}`;
     }
 
     if (!rows.length) {
@@ -245,10 +248,90 @@ async function hydrate(slot: FeaturedSlot): Promise<FeaturedCardData | null> {
   };
 }
 
+const AUTO_KINDS: FeaturedKind[] = ["fund", "producer", "project"];
+
 /**
- * Today's card. Falls back to the soonest-closing fund in the
- * catalogue when the queue is empty or the chosen slot no longer
- * resolves, so the column is never blank on a public homepage.
+ * When the admin queue is empty, the column runs itself: a fund, then a
+ * producer, then a project, then round again. Each kind keeps its own
+ * candidate list and advances one place every time its turn comes, so the
+ * same fund is not shown three weeks running.
+ *
+ * A kind with no candidates is skipped rather than shown blank, so a
+ * platform with nine producers still fills all three days.
+ */
+async function autoPick(day: number): Promise<{ kind: FeaturedKind; ref_id: string } | null> {
+  const supabase = await createClient();
+  const start = ((day % AUTO_KINDS.length) + AUTO_KINDS.length) % AUTO_KINDS.length;
+  const turn  = Math.floor(day / AUTO_KINDS.length);
+
+  for (let step = 0; step < AUTO_KINDS.length; step++) {
+    const kind = AUTO_KINDS[(start + step) % AUTO_KINDS.length];
+    let ids: string[] = [];
+
+    if (kind === "fund") {
+      // Closing soonest first: the most useful fund to put in front of
+      // someone is the one they are about to miss.
+      const { data } = await supabase
+        .from("opportunities")
+        .select("id")
+        .eq("is_active", true)
+        .eq("deadline_type", "fixed")
+        .gte("deadline", new Date().toISOString().slice(0, 10))
+        .order("deadline", { ascending: true })
+        .limit(20);
+      ids = (data ?? []).map((r: any) => r.id);
+
+      // No dated fund due? Use the ones that are open right now instead.
+      if (ids.length === 0) {
+        const { data: rolling } = await supabase
+          .from("opportunities")
+          .select("id")
+          .eq("is_active", true)
+          .eq("deadline_type", "rolling")
+          .order("created_at", { ascending: false })
+          .limit(20);
+        ids = (rolling ?? []).map((r: any) => r.id);
+      }
+    }
+
+    if (kind === "producer") {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("role", "producer")
+        .eq("approval_status", "approved")
+        .order("created_at", { ascending: true })
+        .limit(20);
+      ids = (data ?? []).map((r: any) => r.id);
+    }
+
+    if (kind === "project") {
+      // Poster required. A project card with no artwork is the weakest
+      // thing this column can show, and there is always a fund instead.
+      const { data } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("is_public", true)
+        .eq("admin_hidden", false)
+        .not("poster_path", "is", null)
+        .neq("poster_path", "")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      ids = (data ?? []).map((r: any) => r.id);
+    }
+
+    if (ids.length > 0) {
+      return { kind, ref_id: ids[((turn % ids.length) + ids.length) % ids.length] };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Today's card. The admin queue wins. With nothing queued, the column
+ * rotates fund, producer, project on its own, so it is never blank and
+ * never the same thing two days running.
  */
 export async function getFeaturedToday(): Promise<FeaturedCardData | null> {
   const slots = await activeSlots();
@@ -260,44 +343,37 @@ export async function getFeaturedToday(): Promise<FeaturedCardData | null> {
     if (card) return card;
   }
 
-  const supabase = await createClient();
-  const { data: o } = await supabase
-    .from("opportunities")
-    .select("id, slug, title, organization_name, opp_type, max_award_usd, country, deadline, deadline_type")
-    .eq("is_active", true)
-    .eq("deadline_type", "fixed")
-    .gte("deadline", new Date().toISOString().slice(0, 10))
-    .order("deadline", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const auto = await autoPick(day);
+  if (!auto) return null;
 
-  if (!o) return null;
-
-  return {
-    kind: "fund",
-    kindLabel: KIND_LABEL.fund,
-    title: o.organization_name?.trim() || o.title,
-    subtitle: String(o.opp_type ?? "").replace(/_/g, " "),
-    hook: null,
-    imageUrl: null,
-    href: o.slug ? `/opportunities/${o.slug}` : `/dashboard/opportunities/${o.id}`,
-    ctaLabel: DEFAULT_CTA.fund,
-    rows: [
-      money(o.max_award_usd) ? { label: "Up to", value: money(o.max_award_usd)!, gold: true } : null,
-      { label: "Open to", value: o.country?.trim() || "Worldwide" },
-      daysUntil(o.deadline) ? { label: "Closes", value: daysUntil(o.deadline)!, gold: true } : null,
-    ].filter(Boolean) as FeaturedRow[],
-  };
+  return hydrate({
+    id: "auto", kind: auto.kind, ref_id: auto.ref_id,
+    title: null, subtitle: null, hook: null, image_url: null,
+    link_url: null, cta_label: null, rows: [],
+    sort_order: 0, is_active: true, created_at: "",
+  });
 }
 
-/** What the next `days` days will show. Powers the admin schedule. */
+/**
+ * What the next `days` days will show. Powers the admin schedule.
+ *
+ * When no queued slot covers a day, `autoKind` says which kind the
+ * automatic rotation will reach for. It is computed from the date alone,
+ * without touching the database, because the schedule view only needs the
+ * shape of the week, not the specific record.
+ */
 export async function getUpcoming(days = 14): Promise<
-  { date: string; slot: FeaturedSlot | null }[]
+  { date: string; slot: FeaturedSlot | null; autoKind: FeaturedKind }[]
 > {
   const slots = await activeSlots();
   const today = dayNumber();
   return Array.from({ length: days }, (_, i) => {
-    const d = new Date((today + i) * 86_400_000);
-    return { date: d.toISOString().slice(0, 10), slot: pickForDay(slots, today + i) };
+    const day = today + i;
+    const d = new Date(day * 86_400_000);
+    return {
+      date: d.toISOString().slice(0, 10),
+      slot: pickForDay(slots, day),
+      autoKind: AUTO_KINDS[((day % AUTO_KINDS.length) + AUTO_KINDS.length) % AUTO_KINDS.length],
+    };
   });
 }

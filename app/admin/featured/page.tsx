@@ -70,7 +70,16 @@ export default async function FeaturedAdminPage() {
                   <span className="text-ink">{label(d.slot)}</span>
                 </>
               ) : (
-                <span className="text-ash/60">Fallback — soonest-closing fund</span>
+                <>
+                  <span className="text-[10px] tracking-[0.16em] uppercase px-2 py-0.5 rounded-full border border-line text-ash/70">
+                    Auto · {KIND_LABEL[d.autoKind]}
+                  </span>
+                  <span className="text-ash/60">
+                    {d.autoKind === "fund"     && "closing soonest"}
+                    {d.autoKind === "producer" && "approved producers, in turn"}
+                    {d.autoKind === "project"  && "newest public project with a poster"}
+                  </span>
+                </>
               )}
             </div>
           ))}
