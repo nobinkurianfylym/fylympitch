@@ -13,12 +13,21 @@ export default async function FeaturedCard() {
   const card = await getFeaturedToday();
   if (!card) return null;
 
-  return (
-    <Link
-      href={card.href}
-      className="group block rounded-card border border-line bg-white p-[18px] pb-4 transition-colors hover:border-gold hover:no-underline"
-      style={{ boxShadow: "0 14px 34px -26px rgba(26,24,21,0.55)" }}
-    >
+  // Opens in a new tab so the hero stays put. Someone reading the homepage
+  // has not decided to leave it yet, and sending them away to look at one
+  // fund loses the page they were actually on.
+  //
+  // A custom card can point anywhere, so an off-site link gets a plain
+  // anchor: next/link would try to prefetch a domain it does not own, and
+  // rel="noreferrer" keeps the new tab from reaching back through
+  // window.opener.
+  const external = /^https?:\/\//i.test(card.href);
+
+  const shell = "group block rounded-card border border-line bg-white p-[18px] pb-4 transition-colors hover:border-gold hover:no-underline";
+  const shadow = { boxShadow: "0 14px 34px -26px rgba(26,24,21,0.55)" };
+
+  const body = (
+    <>
       <div className="mb-3 flex items-baseline justify-between gap-2">
         <span className="text-[8.5px] tracking-[0.22em] uppercase text-gold">
           {card.kindLabel}
@@ -88,8 +97,18 @@ export default async function FeaturedCard() {
       )}
 
       <span className="mt-3 inline-block border-b border-gold pb-[3px] text-[9.5px] tracking-[0.16em] uppercase text-ink">
-        {card.ctaLabel} →
+        {card.ctaLabel} ↗
       </span>
+    </>
+  );
+
+  return external ? (
+    <a href={card.href} target="_blank" rel="noopener noreferrer" className={shell} style={shadow}>
+      {body}
+    </a>
+  ) : (
+    <Link href={card.href} target="_blank" rel="noopener" className={shell} style={shadow}>
+      {body}
     </Link>
   );
 }
