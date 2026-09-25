@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { createClient } from "@/lib/supabase/server";
+import { createAnonClient } from "@/lib/supabase/anon";
 import { SITE, opportunityIndexability, projectIndexability, profileIndexability } from "@/lib/seo";
 import { loadIndexableOpportunities, countriesWithCounts, organisationsWithCounts, HUB_MIN_RECORDS } from "@/lib/hubs";
 import { OPPORTUNITY_FAMILIES, familyForType } from "@/lib/opportunity-taxonomy";
@@ -11,7 +11,9 @@ export const revalidate = 3600; // regenerate hourly
 const BASE = SITE.host;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = await createClient();
+  // Anonymous read: the sitemap is the same for everyone, and reading
+  // cookies() here would quietly opt the route out of `revalidate`.
+  const supabase = createAnonClient();
 
   // ── Static / hub entry pages ──────────────────────────────────
   const statics: MetadataRoute.Sitemap = [

@@ -19,8 +19,14 @@ import HubList from "@/components/HubList";
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  const rows = await loadIndexableOpportunities();
-  return organisationsWithCounts(rows).map(o => ({ slug: o.slug }));
+  // Best effort — see the note on the country hub. A build must not depend on
+  // a network read that these pages do not need in order to work.
+  try {
+    const rows = await loadIndexableOpportunities();
+    return organisationsWithCounts(rows).map(o => ({ slug: o.slug }));
+  } catch {
+    return [];
+  }
 }
 
 async function load(slug: string) {

@@ -7,7 +7,7 @@
 
 import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/server";
+import { createAnonClient } from "@/lib/supabase/anon";
 import { opportunityIndexability } from "@/lib/seo";
 import { usd } from "@/lib/format";
 import { countrySlug } from "@/lib/opportunity-taxonomy";
@@ -72,8 +72,17 @@ export async function getIndexableOpportunities(
  * Request-scoped cached loader — dedupes the single big read across
  * generateMetadata() and the page body within one request.
  */
+// Read as an anonymous visitor, never with the caller's cookies.
+//
+// Two reasons. First, correctness: the indexable set is identical for every
+// visitor, so carrying a session buys nothing. Second, and the reason this
+// changed — generateStaticParams runs at BUILD time, where there is no HTTP
+// request and therefore no cookie store. The cookie-reading server client
+// throws there ("used cookies() inside generateStaticParams"), which fails
+// the whole build. RLS still applies exactly as it does to a logged-out
+// reader, which is the audience these pages are written for.
 export const loadIndexableOpportunities = cache(async (): Promise<HubRow[]> => {
-  const supabase = await createClient();
+  const supabase = createAnonClient();
   return getIndexableOpportunities(supabase);
 });
 

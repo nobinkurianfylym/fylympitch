@@ -19,8 +19,15 @@ import HubList from "@/components/HubList";
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  const rows = await loadIndexableOpportunities();
-  return countriesWithCounts(rows).map(c => ({ slug: c.slug }));
+  // Best effort. If the catalogue cannot be read at build time the pages still
+  // render on first request and cache for an hour, and the sitemap still lists
+  // every URL — so a transient failure here must not fail the build.
+  try {
+    const rows = await loadIndexableOpportunities();
+    return countriesWithCounts(rows).map(c => ({ slug: c.slug }));
+  } catch {
+    return [];
+  }
 }
 
 async function load(slug: string) {
