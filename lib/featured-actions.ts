@@ -28,6 +28,150 @@ function refresh() {
   revalidatePath("/");
 }
 
+export type FeaturableRow = {
+  id: string;
+  label: string;
+  sublabel: string | null;
+  image: string | null;
+  warning: string | null;
+};
+
+/**
+ * Search what can be featured, so an admin picks a name instead of
+ * hunting for a UUID. Admin-gated because it reads across projects
+ * and producers regardless of who owns them.
+ *
+ * Eligibility mirrors the card exactly: only public, non-hidden
+ * projects and only approved producers, because anything else
+ * would be refused at render time and look like a broken card.
+ */
+export async function searchFeaturable(
+  kind: "fund" | "producer" | "project",
+  q: string,
+): Promise<FeaturableRow[]> {
+  const { error, supabase } = await assertAdmin();
+  if (error || !supabase) return [];
+
+  const term = q.trim();
+  const like = `%${term}%`;
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+
+  if (kind === "fund") {
+    let query = supabase
+      .from("opportunities")
+      .select("id, title, organization_name, country, deadline, deadline_type")
+      .eq("is_active", true)
+      .limit(12);
+    if (term) query = query.or(`title.ilike.${like},organization_name.ilike.${like}`);
+    else      query = query.eq("deadline_type", "fixed").gte("deadline", new Date().toISOString().slice(0, 10)).order("deadline", { ascending: true });
+
+    const { data } = await query;
+    return (data ?? []).map((o: any) => ({
+      id: o.id,
+      label: o.organization_name?.trim() || o.title,
+      sublabel: [o.country?.trim(), o.deadline_type === "rolling" ? "open now" : o.deadline].filter(Boolean).join(" · ") || null,
+      image: null,
+      warning: null,
+    }));
+  }
+
+  if (kind === "producer") {
+    let query = supabase
+      .from("profiles")
+      .select("id, full_name, company, country, avatar_url")
+      .eq("role", "producer")
+      .eq("approval_status", "approved")
+      .limit(12);
+    if (term) query = query.or(`full_name.ilike.${like},company.ilike.${like}`);
+    else      query = query.order("created_at", { ascending: true });
+
+    const { data } = await query;
+    return (data ?? []).map((p: any) => ({
+      id: p.id,
+      label: p.company?.trim() || p.full_name?.trim() || "Producer",
+      sublabel: [p.company?.trim() ? p.full_name?.trim() : null, p.country?.trim()].filter(Boolean).join(" · ") || null,
+      image: p.avatar_url || null,
+      warning: null,
+    }));
+  }
+
+  let query = supabase
+    .from("projects")
+    .select("id, title, format, country, poster_path")
+    .eq("is_public", true)
+    .eq("admin_hidden", false)
+    .limit(12);
+  if (term) query = query.ilike("title", like);
+  else      query = query.order("created_at", { ascending: false });
+
+  const { data } = await query;
+  return (data ?? []).map((pr: any) => ({
+    id: pr.id,
+    label: pr.title,
+    sublabel: [pr.format, pr.country?.trim()].filter(Boolean).join(" · ") || null,
+    image: pr.poster_path
+      ? `${base}/storage/v1/object/public/thumbnails/${pr.poster_path.includes("-poster-full.") ? pr.poster_path.replace("-poster-full.", "-poster-thumb.") : pr.poster_path}`
+      : null,
+    // Not a blocker, but the card is far weaker without artwork and the
+    // admin should know before choosing it.
+    warning: pr.poster_path ? null : "no poster",
+  }));
+}
+
+/** Resolve one already-chosen record, so editing shows a name not a UUID. */
+export async function getFeaturableById(
+  kind: "fund" | "producer" | "project",
+  id: string,
+): Promise<FeaturableRow | null> {
+  const { error, supabase } = await assertAdmin();
+  if (error || !supabase || !id) return null;
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+
+  if (kind === "fund") {
+    const { data: o } = await supabase
+      .from("opportunities")
+      .select("id, title, organization_name, country, deadline, deadline_type")
+      .eq("id", id).maybeSingle();
+    if (!o) return null;
+    return {
+      id: o.id,
+      label: o.organization_name?.trim() || o.title,
+      sublabel: [o.country?.trim(), o.deadline_type === "rolling" ? "open now" : o.deadline].filter(Boolean).join(" · ") || null,
+      image: null, warning: null,
+    };
+  }
+
+  if (kind === "producer") {
+    const { data: p } = await supabase
+      .from("profiles")
+      .select("id, full_name, company, country, avatar_url, approval_status")
+      .eq("id", id).maybeSingle();
+    if (!p) return null;
+    return {
+      id: p.id,
+      label: p.company?.trim() || p.full_name?.trim() || "Producer",
+      sublabel: [p.country?.trim()].filter(Boolean).join(" · ") || null,
+      image: p.avatar_url || null,
+      warning: p.approval_status === "approved" ? null : "not approved",
+    };
+  }
+
+  const { data: pr } = await supabase
+    .from("projects")
+    .select("id, title, format, country, poster_path, is_public, admin_hidden")
+    .eq("id", id).maybeSingle();
+  if (!pr) return null;
+  return {
+    id: pr.id,
+    label: pr.title,
+    sublabel: [pr.format, pr.country?.trim()].filter(Boolean).join(" · ") || null,
+    image: pr.poster_path
+      ? `${base}/storage/v1/object/public/thumbnails/${pr.poster_path.includes("-poster-full.") ? pr.poster_path.replace("-poster-full.", "-poster-thumb.") : pr.poster_path}`
+      : null,
+    warning: !pr.is_public || pr.admin_hidden ? "no longer public" : pr.poster_path ? null : "no poster",
+  };
+}
+
 export async function createFeaturedSlot(formData: FormData): Promise<{ error?: string }> {
   const { error, supabase, userId } = await assertAdmin();
   if (error || !supabase) return { error: error ?? "Not admin" };

@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createFeaturedSlot, updateFeaturedSlot } from "@/lib/featured-actions";
 import type { FeaturedSlot } from "@/lib/featured";
+import RefPicker from "./RefPicker";
 
 const BUCKET = "featured-images";
 const MAX_BYTES = 4 * 1024 * 1024;
@@ -119,10 +120,15 @@ export default function FeaturedForm({
 
       <div className="grid sm:grid-cols-2 gap-5">
         {!custom && (
-          <label className="block sm:col-span-2">
-            <span className="eyebrow block mb-2">Id</span>
-            <input name="ref_id" defaultValue={existing?.ref_id ?? ""} className="field w-full" placeholder="00000000-0000-0000-0000-000000000000" />
-          </label>
+          <div className="block sm:col-span-2">
+            <span className="eyebrow block mb-2">
+              Which {kind === "fund" ? "fund" : kind === "producer" ? "producer" : "project"}
+            </span>
+            <RefPicker
+              kind={kind as "fund" | "producer" | "project"}
+              initialId={existing?.ref_id ?? ""}
+            />
+          </div>
         )}
 
         <label className="block">
