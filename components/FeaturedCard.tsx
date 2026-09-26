@@ -11,6 +11,39 @@
 import Link from "next/link";
 import { getFeaturedToday } from "@/lib/featured";
 import ShareLinkButton from "@/components/ShareLinkButton";
+import { SITE } from "@/lib/seo";
+
+/**
+ * Resolve a card's href to a site-relative path, or null if it really is
+ * off-site.
+ *
+ * A custom slot's link_url may be absolute, and the obvious way for an admin
+ * to fill that field is to paste the whole URL out of the address bar — which
+ * is how "https://pitch.fylym.com/opportunities/…" ends up stored for a page
+ * on this very site. Testing for a leading http:// therefore misclassified
+ * our own pages as external: no share control, a plain anchor instead of a
+ * Link, and rel="noreferrer" on an internal navigation.
+ *
+ * www is treated as the same host, because it is.
+ */
+function ownPath(href: string): string | null {
+  if (href.startsWith("/")) return href;
+
+  const bare = (h: string) => h.toLowerCase().replace(/^www\./, "");
+  const ours = new Set<string>();
+  for (const candidate of [SITE.host, process.env.NEXT_PUBLIC_SITE_URL]) {
+    if (!candidate) continue;
+    try { ours.add(bare(new URL(candidate).host)); } catch { /* ignore */ }
+  }
+
+  try {
+    const u = new URL(href);
+    if (!ours.has(bare(u.host))) return null;
+    return `${u.pathname}${u.search}${u.hash}` || "/";
+  } catch {
+    return null; // not a URL we can reason about
+  }
+}
 
 export default async function FeaturedCard() {
   const card = await getFeaturedToday();
@@ -24,7 +57,10 @@ export default async function FeaturedCard() {
   // anchor: next/link would try to prefetch a domain it does not own, and
   // rel="noreferrer" keeps the new tab from reaching back through
   // window.opener.
-  const external = /^https?:\/\//i.test(card.href);
+  // Null means genuinely another site. An absolute URL on our own host
+  // resolves to its path and is treated as internal, which is what it is.
+  const path = ownPath(card.href);
+  const external = path === null;
 
   // A share button cannot live inside the card's <a>: a button nested in an
   // anchor is invalid, and a click on it would follow the link. So the anchor
@@ -126,7 +162,7 @@ export default async function FeaturedCard() {
         {!external && (
           <div className="relative z-[2] shrink-0">
             <ShareLinkButton
-              path={card.href}
+              path={path!}
               title={card.title}
               text={shareText}
               label={`Share this ${card.kind === "custom" ? "feature" : card.kind}`}
@@ -154,7 +190,7 @@ export default async function FeaturedCard() {
         />
       ) : (
         <Link
-          href={card.href}
+          href={path!}
           target="_blank"
           rel="noopener"
           aria-label={linkLabel}
