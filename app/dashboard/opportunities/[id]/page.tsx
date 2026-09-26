@@ -105,7 +105,19 @@ export default async function OpportunityDetailPage({
               <p className="eyebrow mb-2">Match for</p>
               <p className="font-display text-[20px]">{selected.title}</p>
             </div>
-            <MatchBadge score={match.score} tier={match.tier} />
+            <div className="text-right">
+              <MatchBadge score={match.score} tier={match.tier} />
+              {/* State the evidence base rather than a vague confidence word.
+                  A score built on criteria the fund never published is an
+                  estimate, and the filmmaker is entitled to know which it is. */}
+              <p className="mt-2 text-[11.5px] leading-[1.5] text-ash">
+                {match.declaredCount === 0
+                  ? "Estimated. This fund publishes none of the criteria we match on."
+                  : `Verified against ${match.declaredCount} ${
+                      match.declaredCount === 1 ? "criterion" : "criteria"
+                    } this fund publishes.`}
+              </p>
+            </div>
           </div>
 
           {match.strengths.length > 0 && (
@@ -121,6 +133,23 @@ export default async function OpportunityDetailPage({
               <p className="eyebrow mb-3">Watch out for</p>
               <ul className="space-y-2 text-[14px] text-[#9a6b1f]">
                 {match.warnings.map((w) => <li key={w} className="flex gap-3"><span>—</span>{w}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {/* What the fund has NOT said. These were scored in your favour at
+              partial credit, because a fund that publishes no restriction
+              usually has none. But it is not verified, and presenting it as a
+              reason the project fits would be inventing a fact. */}
+          {match.unstated.length > 0 && (
+            <div className="mt-6">
+              <p className="eyebrow mb-1">Not stated by this fund</p>
+              <p className="mb-3 text-[13px] leading-[1.6] text-ash">
+                Counted partly in your favour, but unverified. Check the
+                official site before you build a plan around it.
+              </p>
+              <ul className="space-y-2 text-[14px] text-ash">
+                {match.unstated.map((u) => <li key={u} className="flex gap-3"><span className="text-ash/50">?</span>{u}</li>)}
               </ul>
             </div>
           )}

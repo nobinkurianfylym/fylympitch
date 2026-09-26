@@ -126,8 +126,24 @@ console.log("1. Hybrid opportunity matches:");
 for (const m of result.matches) {
   console.log(`   ${m.match.score.toString().padStart(3)}  ${m.match.tier.padEnd(9)} ${m.opportunity.title}`);
 }
+// Measure the bump against the SAME opportunity scored without its extras,
+// rather than against a hardcoded number. The old assertion was `score > 83`
+// with a comment reading "base ~83", which baked the v1 component weights
+// into an unrelated test: re-weighting the engine failed it even though the
+// career-stage bump was working exactly as before. Torino declares no genres,
+// languages or budget range, so under v2 its base is lower by design.
+const withoutExtras = await runFylympitchEngine({
+  project,
+  opportunities,
+  opportunityExtras: {},
+  producerProfiles,
+  openaiApiKey: process.env.OPENAI_API_KEY,
+});
 const torino = result.matches.find((m) => m.opportunity.id === "o2")!;
-expect("Torino FilmLab gets a career-stage + weight bump", torino.match.score > 83, torino.match.score); // base ~83
+const torinoBase = withoutExtras.matches.find((m) => m.opportunity.id === "o2")!;
+expect("Torino FilmLab gets a career-stage + weight bump",
+  torino.match.score > torinoBase.match.score,
+  { withExtras: torino.match.score, base: torinoBase.match.score });
 expect("all returned matches clear the hidden tier", result.matches.every((m) => m.match.tier !== "hidden"));
 
 // ---------- 2. Funding readiness ----------

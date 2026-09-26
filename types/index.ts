@@ -164,10 +164,16 @@ export interface Notification {
 export interface MatchResult {
   score: number;
   tier: "excellent" | "strong" | "possible" | "hidden";
+  /** Derived from how many criteria the OPPORTUNITY declared, not from points scored. */
   confidence: "high" | "medium" | "low";
   reasons: string[];
+  /** Verified full matches only. Never an absence of a restriction. */
   strengths: string[];
+  /** Criteria this opportunity has not published, so the fit is unverified. */
+  unstated: string[];
   warnings: string[];
+  /** How many of the weighted criteria the opportunity actually declared. */
+  declaredCount: number;
 }
 
 export type CertificateType = "incorporation" | "accreditation" | "id_proof" | "tax" | "other";
