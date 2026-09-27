@@ -1,253 +1,141 @@
-"use client";
+// components/HomepageDemo.tsx
+//
+// "See the engine in action", the data half. Server component.
+//
+// Scores REAL public pitches against the REAL catalogue, at request time,
+// behind the hourly cache in lib/cached-queries. It replaced three synthetic
+// "Sample Feature" projects whose numbers were baked offline against the
+// MASTER_DATA seed: that data went stale the moment the engine changed, and
+// did exactly that after the v2 scoring work, leaving the section claiming
+// "real engine results" while showing the previous engine's numbers.
+//
+// Only pitches a filmmaker has already published are eligible, read through
+// the anonymous client so row-level security applies as it does to any
+// logged-out visitor. If fewer than three qualify, the baked samples render
+// instead — the section degrades to honest illustration rather than to an
+// empty frame or a single lonely card.
 
-import { useState } from "react";
-import Link from "next/link";
+import { computeFundingReadiness, rankHybridMatches } from "@/services/fylympitchEngine";
+import { getShowcaseProjects, getActiveOpportunitiesForEngine } from "@/lib/cached-queries";
 import { DEMO_PROJECTS, type DemoProject } from "./homepage-demo-data";
+import { familyForType } from "@/lib/opportunity-taxonomy";
+import { usd, TYPE_LABEL } from "@/lib/format";
+import { supabaseUrl } from "@/lib/supabase/env";
+import HomepageDemoClient from "./HomepageDemoClient";
 
-// ============================================================
-// HomepageDemo — "See the engine in action"
-//
-// Renders REAL FYLYMPITCH ENGINE output (services/fylympitchEngine.ts)
-// for representative sample projects. Every score, readiness value,
-// match count and award is genuine engine output baked at authoring
-// time from the live MASTER_DATA catalog — see homepage-demo-data.ts
-// and scripts/gen-homepage-demo.ts. The only written copy is each
-// sample's logline, which is illustrative and labelled as a sample.
-//
-// Regenerate after ANY engine or catalogue change:
-//   npx tsx scripts/gen-homepage-demo.ts
-// The v2 scoring change moved every number here, which is exactly the
-// situation the generator exists to catch.
-//
-// Poster plates are typographic rather than artwork: these are sample
-// projects, and inventing a film poster would suggest a real title.
-// ============================================================
+const WANTED = 3;
 
-const GOLD = "#BF9953";
-const INK = "#1A1815";
-const ASH = "#8A857C";
-const LINE = "#E5E0D5";
-const PARCHMENT = "#F1EDE4";
-
-/** Per-genre plate, so the three tabs are visually distinct without artwork. */
-const PLATE: Record<string, string> = {
-  Comedy:      "linear-gradient(155deg,#6B4A32,#241610)",
-  Drama:       "linear-gradient(155deg,#3C4A52,#171C20)",
-  Documentary: "linear-gradient(155deg,#4A4232,#1C1813)",
-};
-
-function Ring({ value }: { value: number }) {
-  const R = 46, C = 2 * Math.PI * R;
-  return (
-    <div style={{ position: "relative", width: 112, height: 112, flex: "0 0 112px" }}>
-      <svg width="112" height="112" viewBox="0 0 112 112" aria-hidden>
-        <circle cx="56" cy="56" r={R} fill="none" stroke={LINE} strokeWidth="7" />
-        <circle
-          cx="56" cy="56" r={R} fill="none" stroke={GOLD} strokeWidth="7"
-          strokeLinecap="round" strokeDasharray={`${(value / 100) * C} ${C}`}
-          transform="rotate(-90 56 56)"
-        />
-      </svg>
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center", textAlign: "center" }}>
-        <p style={{ fontFamily: "var(--font-display), Georgia, serif", fontSize: 30,
-                    lineHeight: 1, color: INK }}>
-          {value}<span style={{ fontSize: 13, color: ASH }}>/100</span>
-        </p>
-        <p style={{ fontSize: 8.5, letterSpacing: "0.14em", textTransform: "uppercase",
-                    color: ASH, marginTop: 5, maxWidth: 74, lineHeight: 1.3 }}>
-          Funding readiness
-        </p>
-      </div>
-    </div>
-  );
+/** Same derivation ProjectThumbnail uses, so one poster renders identically everywhere. */
+function posterUrl(path: string | null): string | null {
+  if (!path) return null;
+  try {
+    return `${supabaseUrl()}/storage/v1/object/public/thumbnails/${path}`;
+  } catch {
+    return null; // env missing at build time; the card falls back to its plate
+  }
 }
 
-/** Done / Current / Next / Upcoming, derived from the engine's roadmap. */
-function stageLabel(status: DemoProject["roadmap"][number]["status"], isFirstUpcoming: boolean) {
-  if (status === "done") return "Done";
-  if (status === "current") return "Current";
-  return isFirstUpcoming ? "Next" : "Upcoming";
+function award(o: any): string {
+  return o?.max_award_usd != null && o.max_award_usd > 0
+    ? `Up to ${usd(o.max_award_usd)}`
+    : "Amount varies";
 }
 
-export default function HomepageDemo() {
-  const [idx, setIdx] = useState(0);
-  const p = DEMO_PROJECTS[idx];
-  const firstUpcoming = p.roadmap.findIndex(s => s.status === "upcoming");
+/** Group counts, using the same families as the opportunity hubs. */
+function categories(rows: { opportunity: any }[]): DemoProject["categories"] {
+  const counts = new Map<string, number>();
+  for (const r of rows) {
+    const label = familyForType(r.opportunity?.opp_type)?.label ?? "Other";
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([label, count]) => ({ label, count }));
+}
 
-  return (
-    <div style={{ color: INK }}>
+export default async function HomepageDemo() {
+  const [candidates, opportunities] = await Promise.all([
+    getShowcaseProjects(),
+    getActiveOpportunitiesForEngine(),
+  ]);
 
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div style={{ textAlign: "center", maxWidth: 760, margin: "0 auto 34px" }}>
-        <p className="eyebrow" style={{ marginBottom: 14 }}>PITCH.FYLYM Engine</p>
-        <h2 className="font-display"
-            style={{ fontSize: "clamp(30px,5vw,46px)", fontWeight: 400, lineHeight: 1.08, letterSpacing: "-0.01em" }}>
-          See the engine <span style={{ fontStyle: "italic", color: GOLD }}>in action.</span>
-        </h2>
-        <p style={{ marginTop: 16, fontSize: 16, lineHeight: 1.7, color: ASH }}>
-          Real engine results for sample projects, scored against every active
-          opportunity in the catalogue. Submit your own to see your funding
-          readiness and matched sources.
-        </p>
-      </div>
+  const built: DemoProject[] = [];
 
-      {/* ── Genre tabs ─────────────────────────────────────── */}
-      <div role="tablist" aria-label="Sample projects"
-           style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 26, flexWrap: "wrap" }}>
-        {DEMO_PROJECTS.map((d, i) => {
-          const on = i === idx;
-          return (
-            <button
-              key={d.genre} role="tab" aria-selected={on} type="button"
-              onClick={() => setIdx(i)}
-              style={{
-                fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase",
-                padding: "9px 18px", borderRadius: 999, cursor: "pointer",
-                fontFamily: "inherit",
-                border: `1px solid ${on ? GOLD : LINE}`,
-                background: on ? "rgba(191,153,83,0.10)" : "transparent",
-                color: on ? INK : ASH,
-                transition: "border-color .15s, color .15s, background .15s",
-              }}
-            >
-              {d.genre}
-            </button>
-          );
-        })}
-      </div>
+  if (opportunities.length > 0) {
+    for (const c of candidates) {
+      if (built.length >= WANTED) break;
 
-      {/* ── Two cards ──────────────────────────────────────── */}
-      <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))" }}>
+      const project: any = {
+        id: c.id, owner_id: "", slug: c.slug, title: c.title,
+        genre: c.genre, format: c.format, stage: c.stage,
+        country: c.country, language: c.language,
+        budget_usd: c.budget_usd, funding_needed_usd: c.funding_needed_usd,
+        logline: c.logline, is_public: true, created_at: "",
+        // Funding readiness reads presence, not content. These stand in for
+        // fields we deliberately did not fetch: without them every real pitch
+        // would score 40/100 or less, and the homepage would be publishing a
+        // false verdict on someone's film because of a missing SELECT.
+        synopsis: c.has_synopsis ? "present" : null,
+        director_statement: c.has_director_statement ? "present" : null,
+        producer_info: c.has_producer_info ? "present" : null,
+        pitch_deck_path: c.has_deck ? "present" : null,
+        script_path: c.has_script ? "present" : null,
+      };
 
-        {/* Left: the project */}
-        <article style={{ border: `1px solid ${LINE}`, borderRadius: 14, background: "#fff", padding: 20 }}>
-          <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
-            <div style={{ flex: "0 0 150px", width: 150, aspectRatio: "2 / 3", borderRadius: 8,
-                          overflow: "hidden", background: PLATE[p.genre] ?? PLATE.Drama,
-                          display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: 14 }}>
-              <p className="font-display"
-                 style={{ color: "#F3EFE6", fontSize: 19, lineHeight: 1.15, fontStyle: "italic" }}>
-                Sample<br />Feature
-              </p>
-              <p style={{ color: "rgba(243,239,230,0.6)", fontSize: 7.5, letterSpacing: "0.18em",
-                          textTransform: "uppercase", marginTop: 8 }}>
-                A {p.genre} {p.format}
-              </p>
-            </div>
+      const ranked = rankHybridMatches(project, opportunities as any[]);
+      // A pitch with almost nothing to show would undersell the engine and
+      // expose the filmmaker to a thin public verdict. Skip it; there are
+      // others.
+      if (ranked.length < 5) continue;
 
-            <div style={{ flex: "1 1 200px", minWidth: 0 }}>
-              <p className="eyebrow" style={{ marginBottom: 8 }}>Sample project</p>
-              <h3 className="font-display" style={{ fontSize: 25, fontWeight: 400, lineHeight: 1.15 }}>
-                Sample Feature
-                <span style={{ color: ASH }}> · {p.genre}</span>
-              </h3>
-              <p style={{ marginTop: 9, fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: GOLD }}>
-                {p.genre} · {p.format} · {p.country}
-              </p>
-              <p style={{ marginTop: 13, fontSize: 14.5, lineHeight: 1.65, color: ASH }}>
-                {p.logline}
-              </p>
-            </div>
-          </div>
+      const readiness = computeFundingReadiness(project, ranked.slice(0, 3));
 
-          <dl style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12,
-                       marginTop: 20, borderTop: `1px solid ${LINE}`, paddingTop: 16 }}>
-            {[["Budget", p.budgetLabel], ["Seeking", p.seekingLabel], ["Country", p.country]].map(([k, v]) => (
-              <div key={k}>
-                <dt style={{ fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase", color: ASH }}>{k}</dt>
-                <dd className="font-display" style={{ fontSize: 21, marginTop: 3 }}>{v}</dd>
-              </div>
-            ))}
-          </dl>
-        </article>
+      built.push({
+        title: c.title,
+        genre: c.genre ?? "",
+        format: c.format ?? "",
+        country: c.country ?? "",
+        language: c.language ?? "",
+        logline: c.logline ?? "",
+        budgetLabel: c.budget_usd != null ? usd(c.budget_usd) : "—",
+        seekingLabel: c.funding_needed_usd != null ? usd(c.funding_needed_usd) : "—",
+        readiness: readiness.score,
+        matchedSources: ranked.length,
+        categories: categories(ranked),
+        topMatches: ranked.slice(0, 4).map((m) => ({
+          name: m.opportunity.title,
+          typeLabel: TYPE_LABEL[m.opportunity.opp_type as keyof typeof TYPE_LABEL] ?? m.opportunity.opp_type,
+          country: m.opportunity.country ?? m.opportunity.region ?? "Various",
+          award: award(m.opportunity),
+          deadline: m.opportunity.deadline_note ?? "See site",
+          score: m.match.score,
+          tier: m.match.tier === "hidden" ? "possible" : m.match.tier,
+        })),
+        // The roadmap belongs to the full engine run, which is more work than
+        // this section needs. The stepper reads the project's own stage.
+        roadmap: roadmapFor(c.stage),
+        ep: "",
+        posterUrl: posterUrl(c.poster_path),
+        href: c.slug ? `/filmprojects/${c.slug}` : `/filmprojects/${c.id}`,
+      });
+    }
+  }
 
-        {/* Right: what the engine returned */}
-        <article style={{ border: `1px solid ${LINE}`, borderRadius: 14, background: "#fff", padding: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-            <Ring value={p.readiness} />
-            <div style={{ flex: "1 1 170px", minWidth: 0 }}>
-              <p style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
-                <span className="font-display" style={{ fontSize: 42, lineHeight: 1 }}>{p.matchedSources}</span>
-                <span style={{ fontSize: 15, color: ASH }}>
-                  {p.matchedSources === 1 ? "match" : "matches"}
-                </span>
-              </p>
-              <p style={{ marginTop: 9, fontSize: 12.5, lineHeight: 1.65, color: ASH }}>
-                {p.categories.map(c => `${c.count} ${c.label.toLowerCase()}`).join(" · ")}
-              </p>
-            </div>
-          </div>
+  const live = built.length >= WANTED;
+  return <HomepageDemoClient projects={live ? built : DEMO_PROJECTS} live={live} />;
+}
 
-          <div style={{ marginTop: 20, borderTop: `1px solid ${LINE}`, paddingTop: 16 }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
-              <p className="font-display" style={{ fontSize: 17 }}>Top matches</p>
-              <Link href="/signup"
-                    style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: ASH }}>
-                View all {p.matchedSources} ↗
-              </Link>
-            </div>
-
-            <ul style={{ marginTop: 10 }}>
-              {p.topMatches.map((m, i) => (
-                <li key={m.name}
-                    style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "13px 0",
-                             borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}>
-                  <span className="font-display"
-                        style={{ flex: "0 0 52px", fontSize: 22, color: GOLD, lineHeight: 1.1 }}>
-                    {m.score}<span style={{ fontSize: 12 }}>%</span>
-                  </span>
-                  <span style={{ minWidth: 0, flex: 1 }}>
-                    <span style={{ display: "block", fontSize: 14.5, lineHeight: 1.35 }}>{m.name}</span>
-                    <span style={{ display: "block", marginTop: 3, fontSize: 12, color: ASH }}>
-                      {m.typeLabel} · {m.country} · {m.award}
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </article>
-      </div>
-
-      {/* ── Funding journey + CTA ──────────────────────────── */}
-      <div style={{ marginTop: 22, border: `1px solid ${LINE}`, borderRadius: 14,
-                    background: PARCHMENT, padding: "20px 22px", display: "flex",
-                    alignItems: "center", justifyContent: "space-between", gap: 26, flexWrap: "wrap" }}>
-        <div style={{ flex: "1 1 460px", minWidth: 0 }}>
-          <p className="eyebrow" style={{ marginBottom: 14 }}>Funding journey</p>
-          <ol style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {p.roadmap.map((s, i) => {
-              const done = s.status === "done";
-              const current = s.status === "current";
-              return (
-                <li key={s.label} style={{ flex: "1 1 88px", minWidth: 80 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                    <span aria-hidden style={{
-                      width: 13, height: 13, borderRadius: "50%", flex: "0 0 13px",
-                      background: done ? GOLD : "transparent",
-                      border: `1.5px solid ${done || current ? GOLD : "rgba(26,24,21,0.18)"}`,
-                    }} />
-                    {i < p.roadmap.length - 1 && (
-                      <span aria-hidden style={{ flex: 1, height: 1,
-                        background: done ? GOLD : "rgba(26,24,21,0.12)" }} />
-                    )}
-                  </div>
-                  <p style={{ marginTop: 7, fontSize: 12, color: current ? INK : ASH }}>{s.label}</p>
-                  <p style={{ fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
-                              color: current ? GOLD : "rgba(138,133,124,0.75)" }}>
-                    {stageLabel(s.status, i === firstUpcoming)}
-                  </p>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
-
-        <Link href="/signup" className="btn-primary" style={{ flex: "0 0 auto" }}>
-          Check your matches →
-        </Link>
-      </div>
-    </div>
-  );
+/** Where the project sits on the funding path, from its own declared stage. */
+function roadmapFor(stage: string | null): DemoProject["roadmap"] {
+  const labels = ["Script", "Labs", "Co-production", "Grants", "Investors", "Production"];
+  const at: Record<string, number> = {
+    development: 1, pre_production: 2, production: 5, post_production: 5, completed: 5,
+  };
+  const current = at[stage ?? "development"] ?? 1;
+  return labels.map((label, i) => ({
+    label,
+    status: i < current ? "done" : i === current ? "current" : "upcoming",
+    live: 0,
+  }));
 }

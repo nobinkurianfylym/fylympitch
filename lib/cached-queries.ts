@@ -197,3 +197,137 @@ export const getOpportunities = unstable_cache(
   ["public-opportunities"],
   { revalidate: TTL, tags: ["opportunities"] },
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Showcase for "See the engine in action".
+//
+// This replaced three synthetic "Sample Feature" projects scored offline
+// against the MASTER_DATA seed. Real public pitches, scored live against the
+// real catalogue, are both more convincing and harder to get wrong: baked
+// numbers went stale the moment the engine changed, and did exactly that
+// after the v2 scoring work.
+//
+// Only pitches the filmmaker has already made public are eligible, read
+// through the anonymous client so RLS applies exactly as it does to a
+// logged-out visitor. A poster is required: without one the card has nothing
+// to show, and a generated placeholder beside real artwork reads as unfinished.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Titles built on somebody else's franchise.
+ *
+ * A filmmaker may legitimately post a proof-of-concept for an existing
+ * property on the public showcase; putting that property on our marketing
+ * homepage is a different kind of exposure and not one to take by accident.
+ * Matched loosely on the title, and deliberately conservative: a false
+ * positive costs one candidate out of many, a false negative is a letter.
+ */
+const FRANCHISE_TERMS = [
+  "batman", "superman", "spider-man", "spiderman", "marvel", "dc comics",
+  "star wars", "star trek", "james bond", "harry potter", "pokemon", "pokémon",
+  "disney", "avengers", "jurassic", "godzilla", "transformers", "barbie",
+];
+
+function isThirdPartyFranchise(title: string): boolean {
+  const t = title.toLowerCase();
+  return FRANCHISE_TERMS.some((term) => t.includes(term));
+}
+
+export type ShowcaseProject = {
+  id: string;
+  slug: string | null;
+  title: string;
+  genre: string | null;
+  format: string | null;
+  stage: string | null;
+  country: string | null;
+  language: string | null;
+  logline: string | null;
+  budget_usd: number | null;
+  funding_needed_usd: number | null;
+  poster_path: string | null;
+  deck_cover_path: string | null;
+  // Funding readiness is a COMPLETENESS score over nine fields. Presence is
+  // all it reads, so presence is all we carry: fetching the text of someone's
+  // synopsis or the path to their script to answer a yes/no question would
+  // move private material further than it needs to go.
+  has_synopsis: boolean;
+  has_director_statement: boolean;
+  has_producer_info: boolean;
+  has_deck: boolean;
+  has_script: boolean;
+};
+
+/**
+ * Public pitches eligible for the homepage engine demo, newest first.
+ *
+ * Over-fetches so the caller can drop franchise titles and anything missing
+ * the fields the engine needs, and still have three to show.
+ */
+export const getShowcaseProjects = unstable_cache(
+  async (): Promise<ShowcaseProject[]> => {
+    try {
+      const supabase = createAnonClient();
+      const { data } = await supabase
+        .from("projects")
+        .select(
+          "id, slug, title, genre, format, stage, country, language, logline, budget_usd, funding_needed_usd, poster_path, deck_cover_path, synopsis, director_statement, producer_info, pitch_deck_path, script_path",
+        )
+        .eq("is_public", true)
+        .eq("admin_hidden", false)
+        .not("poster_path", "is", null)
+        .neq("poster_path", "")
+        .order("created_at", { ascending: false })
+        .limit(40);
+
+      return (data ?? [])
+        .filter((p: any) => p.title && !isThirdPartyFranchise(p.title))
+        // The engine reads these. Without them the card would show a score
+        // derived from almost nothing, which is the failure v2 was built to
+        // stop making.
+        .filter((p: any) => p.genre && p.format && p.stage && p.country)
+        .map((p: any) => ({
+          id: p.id, slug: p.slug ?? null, title: p.title,
+          genre: p.genre, format: p.format, stage: p.stage,
+          country: p.country, language: p.language ?? null,
+          logline: p.logline ?? null,
+          budget_usd: p.budget_usd ?? null,
+          funding_needed_usd: p.funding_needed_usd ?? null,
+          poster_path: p.poster_path ?? null,
+          deck_cover_path: p.deck_cover_path ?? null,
+          has_synopsis: !!p.synopsis,
+          has_director_statement: !!p.director_statement,
+          has_producer_info: !!p.producer_info,
+          has_deck: !!p.pitch_deck_path,
+          has_script: !!p.script_path,
+        })) as ShowcaseProject[];
+    } catch (err) {
+      console.error("[cached-queries] getShowcaseProjects failed:", err);
+      return [];
+    }
+  },
+  ["showcase-projects"],
+  { revalidate: TTL, tags: ["projects"] },
+);
+
+/** Active opportunities, with the columns the matching engine reads. */
+export const getActiveOpportunitiesForEngine = unstable_cache(
+  async (): Promise<any[]> => {
+    try {
+      const supabase = createAnonClient();
+      const { data } = await supabase
+        .from("opportunities")
+        .select(
+          "id, title, slug, opp_type, country, region, genres, formats, stages, languages, career_stages, match_weight, min_budget_usd, max_budget_usd, max_award_usd, deadline, deadline_note, copro_required, is_active",
+        )
+        .eq("is_active", true)
+        .limit(2000);
+      return data ?? [];
+    } catch (err) {
+      console.error("[cached-queries] getActiveOpportunitiesForEngine failed:", err);
+      return [];
+    }
+  },
+  ["engine-opportunities"],
+  { revalidate: TTL, tags: ["opportunities"] },
+);

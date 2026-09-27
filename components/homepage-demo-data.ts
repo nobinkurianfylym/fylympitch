@@ -15,6 +15,9 @@ export interface DemoProject {
   title: string; genre: string; format: string; country: string; language: string;
   /** Illustrative, for the sample card. Not engine output. */
   logline: string;
+  /** Set only for a real published pitch. Absent on the baked samples. */
+  posterUrl?: string | null;
+  href?: string | null;
   budgetLabel: string; seekingLabel: string; readiness: number; matchedSources: number;
   categories: DemoCategory[]; topMatches: DemoMatch[]; roadmap: DemoStage[]; ep: string;
 }

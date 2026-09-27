@@ -310,8 +310,14 @@ export default async function Home() {
 
               <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-7">
                 {[
+                  // NOT "we store only a fingerprint": the platform does store
+                  // the PDF, in the private pitch-decks bucket, because a
+                  // producer has to be able to read it. Only the PROOF is
+                  // fingerprint-only — proofUtils hashes in the browser and
+                  // posts the digest, so the file never reaches the timestamp.
+                  // The old line contradicted step 1 below on the same screen.
                   { icon: "lock",         label: "Private",
-                    sub: "Your deck stays yours. We store only a fingerprint." },
+                    sub: "Your file stays in private storage. Only its fingerprint is published." },
                   { icon: "infinity",     label: "Permanent",
                     sub: "Recorded on Bitcoin. Cannot be changed." },
                   { icon: "shield-check", label: "Verifiable",
