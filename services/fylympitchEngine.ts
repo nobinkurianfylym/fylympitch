@@ -34,7 +34,7 @@
 // ============================================================
 
 import type { Project, Opportunity, OpportunityType, ProjectStage, MatchResult } from "@/types";
-import { calculateMatchScore, tierOf } from "./matching.ts";
+import { calculateMatchScore, tierOf, VISIBLE_MIN } from "./matching.ts";
 import { usd } from "../lib/format.ts";
 
 // ------------------------------------------------------------
@@ -452,7 +452,7 @@ export function computeFundingObstacles(
   const FESTIVAL_STAGES: ProjectStage[] = ["post_production", "completed"];
   if (FESTIVAL_STAGES.includes(project.stage)) {
     const festivalReady = matches.some(
-      (m) => ["market", "distribution", "sales_agent"].includes(m.opportunity.opp_type) && m.match.score >= 60
+      (m) => ["market", "distribution", "sales_agent"].includes(m.opportunity.opp_type) && m.match.score >= VISIBLE_MIN
     );
     if (!festivalReady) {
       obstacles.push({
@@ -541,7 +541,7 @@ export function computeRoadmap(
   for (const { key } of ROADMAP_ORDER) {
     const types = ROADMAP_TYPE_MAP[key];
     countsByStage[key] = matches.filter(
-      (m) => types.some((t) => m.opportunity.opp_type?.includes(t)) && m.match.score >= 60
+      (m) => types.some((t) => m.opportunity.opp_type?.includes(t)) && m.match.score >= VISIBLE_MIN
     ).length;
   }
 

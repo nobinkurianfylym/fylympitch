@@ -42,6 +42,7 @@ import {
   type FylympitchEngineInput,
   type FylympitchEngineResult,
 } from "./fylympitchEngine.ts";
+import { VISIBLE_MIN } from "./matching.ts";
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -672,7 +673,7 @@ export async function runAIEnhancedEngine(input: AIEngineInput): Promise<AIEngin
   const RULE_WEIGHT = 1 - AI_WEIGHT;
 
   // ── Steps 1 + 3: Parallelised — project analysis and opportunity batch are independent ──
-  const ruleMatches = base.matches.filter((m) => m.match.score >= 60).slice(0, 20);
+  const ruleMatches = base.matches.filter((m) => m.match.score >= VISIBLE_MIN).slice(0, 20);
   console.log(`[aiEngine] Analysing project + ${ruleMatches.length} opportunities in parallel via ${provider}…`);
   const [projectProfile, opportunityProfiles] = await Promise.all([
     analyzeProject(project, keys),

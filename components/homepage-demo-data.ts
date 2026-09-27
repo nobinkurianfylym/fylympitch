@@ -13,6 +13,8 @@ export interface DemoStage { label: string; status: "done" | "current" | "upcomi
 export interface DemoCategory { label: string; count: number; }
 export interface DemoProject {
   title: string; genre: string; format: string; country: string; language: string;
+  /** Illustrative, for the sample card. Not engine output. */
+  logline: string;
   budgetLabel: string; seekingLabel: string; readiness: number; matchedSources: number;
   categories: DemoCategory[]; topMatches: DemoMatch[]; roadmap: DemoStage[]; ep: string;
 }
@@ -23,22 +25,23 @@ export const DEMO_PROJECTS: DemoProject[] = [
     "format": "feature",
     "country": "India",
     "language": "Hindi",
+    "logline": "Three strangers share a battered van across the country, and none of them is going where they said.",
     "budgetLabel": "$2.5M",
     "seekingLabel": "$1.8M",
     "readiness": 90,
-    "matchedSources": 51,
+    "matchedSources": 57,
     "categories": [
       {
         "label": "Grants & funds",
-        "count": 30
+        "count": 33
       },
       {
         "label": "Labs & residencies",
-        "count": 14
+        "count": 16
       },
       {
         "label": "Markets & co-pro",
-        "count": 7
+        "count": 8
       }
     ],
     "topMatches": [
@@ -48,7 +51,7 @@ export const DEMO_PROJECTS: DemoProject[] = [
         "country": "India",
         "award": "Amount varies",
         "deadline": "Annual; check website",
-        "score": 99,
+        "score": 84,
         "tier": "excellent"
       },
       {
@@ -57,7 +60,7 @@ export const DEMO_PROJECTS: DemoProject[] = [
         "country": "India",
         "award": "Amount varies",
         "deadline": "Apply before shoot; claim post-completion",
-        "score": 99,
+        "score": 84,
         "tier": "excellent"
       },
       {
@@ -66,16 +69,16 @@ export const DEMO_PROJECTS: DemoProject[] = [
         "country": "India",
         "award": "Amount varies",
         "deadline": "Annual",
-        "score": 99,
+        "score": 84,
         "tier": "excellent"
       },
       {
-        "name": "KOFIC — Korea Film Council",
+        "name": "Screen Australia Development Funding",
         "typeLabel": "Development Fund",
-        "country": "South Korea",
-        "award": "Up to $2.0M",
-        "deadline": "Multiple windows — check kofic.or.kr",
-        "score": 98,
+        "country": "Australia",
+        "award": "Up to $370K",
+        "deadline": "Rolling (4 rounds/year)",
+        "score": 78,
         "tier": "excellent"
       }
     ],
@@ -88,7 +91,7 @@ export const DEMO_PROJECTS: DemoProject[] = [
       {
         "label": "Labs",
         "status": "current",
-        "live": 14
+        "live": 16
       },
       {
         "label": "Co-production",
@@ -98,7 +101,7 @@ export const DEMO_PROJECTS: DemoProject[] = [
       {
         "label": "Grants",
         "status": "upcoming",
-        "live": 30
+        "live": 33
       },
       {
         "label": "Investors",
@@ -108,10 +111,10 @@ export const DEMO_PROJECTS: DemoProject[] = [
       {
         "label": "Production",
         "status": "upcoming",
-        "live": 7
+        "live": 8
       }
     ],
-    "ep": "\"SAMPLE FEATURE — COMEDY\" scores 99/100 against \"Reborn India Screenwriters' Lab\", its strongest current match. The project profile is well-rounded for this category."
+    "ep": "\"SAMPLE FEATURE — COMEDY\" scores 84/100 against \"Reborn India Screenwriters' Lab\", its strongest current match. The project profile is well-rounded for this category."
   },
   {
     "title": "SAMPLE FEATURE — DRAMA",
@@ -119,14 +122,15 @@ export const DEMO_PROJECTS: DemoProject[] = [
     "format": "feature",
     "country": "India",
     "language": "Malayalam",
+    "logline": "A fisherman returns to a coast he left thirty years ago, to a daughter who has built a life without him.",
     "budgetLabel": "$1.5M",
     "seekingLabel": "$1.1M",
     "readiness": 90,
-    "matchedSources": 9,
+    "matchedSources": 10,
     "categories": [
       {
         "label": "Markets & co-pro",
-        "count": 9
+        "count": 10
       }
     ],
     "topMatches": [
@@ -136,26 +140,17 @@ export const DEMO_PROJECTS: DemoProject[] = [
         "country": "Singapore",
         "award": "Amount varies",
         "deadline": "Annual; December (Singapore)",
-        "score": 83,
+        "score": 68,
         "tier": "strong"
       },
       {
-        "name": "Berlinale Co-Production Market",
+        "name": "Warsaw Industry Days (WID)",
         "typeLabel": "Film Market",
-        "country": "Germany",
+        "country": "Poland",
         "award": "Amount varies",
-        "deadline": "Annual — Feb (during Berlinale). Applications open ~Oct.",
-        "score": 78,
-        "tier": "strong"
-      },
-      {
-        "name": "Cannes Marché du Film",
-        "typeLabel": "Film Market",
-        "country": "France",
-        "award": "Amount varies",
-        "deadline": "Annual — May. Registration opens ~Feb each year.",
-        "score": 78,
-        "tier": "strong"
+        "deadline": "Annual; October",
+        "score": 61,
+        "tier": "possible"
       },
       {
         "name": "Docedge Kolkata",
@@ -163,7 +158,16 @@ export const DEMO_PROJECTS: DemoProject[] = [
         "country": "India",
         "award": "Amount varies",
         "deadline": "Annual — March. Applications open ~Nov. Check docedgekolkata.com",
-        "score": 73,
+        "score": 58,
+        "tier": "possible"
+      },
+      {
+        "name": "NFDC Film Bazaar — IFFI Goa",
+        "typeLabel": "Film Market",
+        "country": "India",
+        "award": "Amount varies",
+        "deadline": "Annual — November (IFFI Goa). Applications open ~Aug.",
+        "score": 58,
         "tier": "possible"
       }
     ],
@@ -196,10 +200,10 @@ export const DEMO_PROJECTS: DemoProject[] = [
       {
         "label": "Production",
         "status": "upcoming",
-        "live": 9
+        "live": 10
       }
     ],
-    "ep": "\"SAMPLE FEATURE — DRAMA\" scores 83/100 against \"Asia TV Forum & Market (ATF)\", its strongest current match. The project profile is well-rounded for this category."
+    "ep": "\"SAMPLE FEATURE — DRAMA\" scores 68/100 against \"Asia TV Forum & Market (ATF)\", its strongest current match. The project profile is well-rounded for this category."
   },
   {
     "title": "SAMPLE FEATURE — DOCUMENTARY",
@@ -207,22 +211,23 @@ export const DEMO_PROJECTS: DemoProject[] = [
     "format": "documentary",
     "country": "India",
     "language": "English",
+    "logline": "The last three projectionists of a dying single-screen circuit, and the films they refuse to stop showing.",
     "budgetLabel": "$200K",
     "seekingLabel": "$150K",
     "readiness": 75,
-    "matchedSources": 64,
+    "matchedSources": 61,
     "categories": [
       {
         "label": "Grants & funds",
-        "count": 42
+        "count": 40
       },
       {
         "label": "Labs & residencies",
-        "count": 12
+        "count": 13
       },
       {
         "label": "Markets & co-pro",
-        "count": 10
+        "count": 8
       }
     ],
     "topMatches": [
@@ -232,25 +237,7 @@ export const DEMO_PROJECTS: DemoProject[] = [
         "country": "Australia",
         "award": "Up to $370K",
         "deadline": "Rolling (4 rounds/year)",
-        "score": 99,
-        "tier": "excellent"
-      },
-      {
-        "name": "KOFIC — Korea Film Council",
-        "typeLabel": "Development Fund",
-        "country": "South Korea",
-        "award": "Up to $2.0M",
-        "deadline": "Multiple windows — check kofic.or.kr",
-        "score": 98,
-        "tier": "excellent"
-      },
-      {
-        "name": "Film Victoria Australia",
-        "typeLabel": "Development Fund",
-        "country": "Australia",
-        "award": "Up to $2.0M",
-        "deadline": "Rolling applications — film.vic.gov.au",
-        "score": 98,
+        "score": 89,
         "tier": "excellent"
       },
       {
@@ -259,8 +246,26 @@ export const DEMO_PROJECTS: DemoProject[] = [
         "country": "Europe",
         "award": "Up to $220K",
         "deadline": "Annual",
-        "score": 96,
+        "score": 79,
         "tier": "excellent"
+      },
+      {
+        "name": "Docedge Kolkata",
+        "typeLabel": "Film Market",
+        "country": "India",
+        "award": "Amount varies",
+        "deadline": "Annual — March. Applications open ~Nov. Check docedgekolkata.com",
+        "score": 78,
+        "tier": "excellent"
+      },
+      {
+        "name": "Whicker's World Foundation",
+        "typeLabel": "Development Fund",
+        "country": "United Kingdom",
+        "award": "Amount varies",
+        "deadline": "Annual (spring)",
+        "score": 77,
+        "tier": "strong"
       }
     ],
     "roadmap": [
@@ -272,7 +277,7 @@ export const DEMO_PROJECTS: DemoProject[] = [
       {
         "label": "Labs",
         "status": "current",
-        "live": 12
+        "live": 13
       },
       {
         "label": "Co-production",
@@ -282,7 +287,7 @@ export const DEMO_PROJECTS: DemoProject[] = [
       {
         "label": "Grants",
         "status": "upcoming",
-        "live": 42
+        "live": 40
       },
       {
         "label": "Investors",
@@ -292,9 +297,9 @@ export const DEMO_PROJECTS: DemoProject[] = [
       {
         "label": "Production",
         "status": "upcoming",
-        "live": 10
+        "live": 8
       }
     ],
-    "ep": "\"SAMPLE FEATURE — DOCUMENTARY\" scores 99/100 against \"Screen Australia Development Funding\", its strongest current match. The project profile is well-rounded for this category."
+    "ep": "\"SAMPLE FEATURE — DOCUMENTARY\" scores 89/100 against \"Screen Australia Development Funding\", its strongest current match. The project profile is well-rounded for this category."
   }
 ];

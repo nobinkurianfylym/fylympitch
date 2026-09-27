@@ -6,7 +6,7 @@
 // a requirement. They are now inverted: an undeclared criterion must score
 // lower than a declared match and must never appear as a reason the project
 // fits.
-import { calculateMatchScore, rankOpportunities, tierOf } from "../services/matching.ts";
+import { calculateMatchScore, rankOpportunities, tierOf, TIER_MIN, VISIBLE_MIN } from "../services/matching.ts";
 
 let pass = 0, fail = 0;
 function expect(name: string, cond: boolean, detail?: unknown) {
@@ -108,7 +108,31 @@ expect("score never exceeds 100", ranked.every(r => r.match.score <= 100));
 expect("a documented match outranks an undocumented one",
   ranked[0].opportunity.id === "o1", ranked.map(r => [r.opportunity.id, r.match.score]));
 
-expect("tier boundaries", tierOf(90) === "excellent" && tierOf(89) === "strong" && tierOf(75) === "strong" && tierOf(74) === "possible" && tierOf(60) === "possible" && tierOf(59) === "hidden");
+// Boundaries are asserted against the exported constants, not magic numbers,
+// so re-deriving them for a new score distribution cannot silently break the
+// contract that each tier is contiguous and reachable.
+expect("tier boundaries are contiguous",
+  tierOf(TIER_MIN.excellent)     === "excellent" &&
+  tierOf(TIER_MIN.excellent - 1) === "strong"    &&
+  tierOf(TIER_MIN.strong)        === "strong"    &&
+  tierOf(TIER_MIN.strong - 1)    === "possible"  &&
+  tierOf(TIER_MIN.possible)      === "possible"  &&
+  tierOf(TIER_MIN.possible - 1)  === "hidden",
+  TIER_MIN);
+
+expect("tiers are ordered", TIER_MIN.excellent > TIER_MIN.strong && TIER_MIN.strong > TIER_MIN.possible, TIER_MIN);
+expect("the visible cutoff is the bottom tier", VISIBLE_MIN === TIER_MIN.possible, { VISIBLE_MIN, TIER_MIN });
+
+// A fund that declares nothing scores 60 by construction (0.6 credit on every
+// weighted criterion). It must land in "possible": unknown is not a strong
+// claim, but it is not grounds for hiding the fund either.
+expect("a fund that declares nothing is 'possible', never hidden or strong",
+  r3.score === 60 && tierOf(r3.score) === "possible", { score: r3.score, tier: tierOf(r3.score) });
+
+// "excellent" has to be achievable, or it is decoration. The old >= 90 was
+// not: nothing in the catalogue could reach it under v2.
+expect("'excellent' is reachable by a fully documented match",
+  tierOf(r1.score) === "excellent", { score: r1.score });
 
 // ── Region handling (MASTER_DATA import) ───────────────────────────────────
 // "Global" is a positive statement of eligibility, so it IS a declared match

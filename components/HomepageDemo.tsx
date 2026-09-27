@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { DEMO_PROJECTS, type DemoProject } from "./homepage-demo-data";
 
 // ============================================================
@@ -9,155 +10,243 @@ import { DEMO_PROJECTS, type DemoProject } from "./homepage-demo-data";
 // Renders REAL FYLYMPITCH ENGINE output (services/fylympitchEngine.ts)
 // for representative sample projects. Every score, readiness value,
 // match count and award is genuine engine output baked at authoring
-// time from the live MASTER_DATA catalog — see components/homepage-demo-data.ts
-// and scripts/gen-homepage-demo.ts. No fabricated or hand-tuned numbers.
+// time from the live MASTER_DATA catalog — see homepage-demo-data.ts
+// and scripts/gen-homepage-demo.ts. The only written copy is each
+// sample's logline, which is illustrative and labelled as a sample.
+//
+// Regenerate after ANY engine or catalogue change:
+//   npx tsx scripts/gen-homepage-demo.ts
+// The v2 scoring change moved every number here, which is exactly the
+// situation the generator exists to catch.
+//
+// Poster plates are typographic rather than artwork: these are sample
+// projects, and inventing a film poster would suggest a real title.
 // ============================================================
 
-const STAGE_STYLE: Record<DemoProject["roadmap"][number]["status"], { dot: string; text: string; bg: string; label: string }> = {
-  done:     { dot: "#BF9953", text: "#7a5e1a", bg: "rgba(191,153,83,0.16)", label: "Done" },
-  current:  { dot: "#BF9953", text: "#7a5e1a", bg: "rgba(191,153,83,0.20)", label: "Current" },
-  upcoming: { dot: "rgba(26,24,21,0.2)", text: "#8A857C", bg: "rgba(26,24,21,0.06)", label: "Upcoming" },
+const GOLD = "#BF9953";
+const INK = "#1A1815";
+const ASH = "#8A857C";
+const LINE = "#E5E0D5";
+const PARCHMENT = "#F1EDE4";
+
+/** Per-genre plate, so the three tabs are visually distinct without artwork. */
+const PLATE: Record<string, string> = {
+  Comedy:      "linear-gradient(155deg,#6B4A32,#241610)",
+  Drama:       "linear-gradient(155deg,#3C4A52,#171C20)",
+  Documentary: "linear-gradient(155deg,#4A4232,#1C1813)",
 };
 
-function scoreBadge(score: number) {
-  if (score >= 90) return { bg: "rgba(191,153,83,0.16)", color: "#7a5e1a" };
-  if (score >= 75) return { bg: "rgba(42,107,42,0.12)", color: "#2a6b2a" };
-  return { bg: "rgba(26,24,21,0.08)", color: "#8A857C" };
+function Ring({ value }: { value: number }) {
+  const R = 46, C = 2 * Math.PI * R;
+  return (
+    <div style={{ position: "relative", width: 112, height: 112, flex: "0 0 112px" }}>
+      <svg width="112" height="112" viewBox="0 0 112 112" aria-hidden>
+        <circle cx="56" cy="56" r={R} fill="none" stroke={LINE} strokeWidth="7" />
+        <circle
+          cx="56" cy="56" r={R} fill="none" stroke={GOLD} strokeWidth="7"
+          strokeLinecap="round" strokeDasharray={`${(value / 100) * C} ${C}`}
+          transform="rotate(-90 56 56)"
+        />
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+        <p style={{ fontFamily: "var(--font-display), Georgia, serif", fontSize: 30,
+                    lineHeight: 1, color: INK }}>
+          {value}<span style={{ fontSize: 13, color: ASH }}>/100</span>
+        </p>
+        <p style={{ fontSize: 8.5, letterSpacing: "0.14em", textTransform: "uppercase",
+                    color: ASH, marginTop: 5, maxWidth: 74, lineHeight: 1.3 }}>
+          Funding readiness
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/** Done / Current / Next / Upcoming, derived from the engine's roadmap. */
+function stageLabel(status: DemoProject["roadmap"][number]["status"], isFirstUpcoming: boolean) {
+  if (status === "done") return "Done";
+  if (status === "current") return "Current";
+  return isFirstUpcoming ? "Next" : "Upcoming";
 }
 
 export default function HomepageDemo() {
   const [idx, setIdx] = useState(0);
   const p = DEMO_PROJECTS[idx];
+  const firstUpcoming = p.roadmap.findIndex(s => s.status === "upcoming");
 
   return (
-    <div style={{ fontFamily: "'Montserrat', sans-serif", color: "#1A1815" }}>
+    <div style={{ color: INK }}>
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "20px", marginBottom: "32px" }}>
-        <div>
-          <p style={{ fontSize: "10px", letterSpacing: "0.26em", textTransform: "uppercase", color: "#8A857C", marginBottom: "10px" }}>Illustrative example</p>
-          <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "30px", fontWeight: 400, color: "#1A1815", marginBottom: "8px", lineHeight: 1.2 }}>
-            See the engine in action
-          </h2>
-          <p style={{ fontSize: "14px", color: "#8A857C", maxWidth: "440px", lineHeight: 1.65 }}>
-            These are real engine results for sample projects, scored against every active opportunity in the platform. Submit your own to see your funding readiness and matched sources.
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "4px" }}>
-          {DEMO_PROJECTS.map((proj, i) => (
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div style={{ textAlign: "center", maxWidth: 760, margin: "0 auto 34px" }}>
+        <p className="eyebrow" style={{ marginBottom: 14 }}>PITCH.FYLYM Engine</p>
+        <h2 className="font-display"
+            style={{ fontSize: "clamp(30px,5vw,46px)", fontWeight: 400, lineHeight: 1.08, letterSpacing: "-0.01em" }}>
+          See the engine <span style={{ fontStyle: "italic", color: GOLD }}>in action.</span>
+        </h2>
+        <p style={{ marginTop: 16, fontSize: 16, lineHeight: 1.7, color: ASH }}>
+          Real engine results for sample projects, scored against every active
+          opportunity in the catalogue. Submit your own to see your funding
+          readiness and matched sources.
+        </p>
+      </div>
+
+      {/* ── Genre tabs ─────────────────────────────────────── */}
+      <div role="tablist" aria-label="Sample projects"
+           style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 26, flexWrap: "wrap" }}>
+        {DEMO_PROJECTS.map((d, i) => {
+          const on = i === idx;
+          return (
             <button
-              key={proj.title}
+              key={d.genre} role="tab" aria-selected={on} type="button"
               onClick={() => setIdx(i)}
               style={{
-                background: i === idx ? "#1A1815" : "transparent",
-                color: i === idx ? "#F8F5F0" : "#8A857C",
-                border: `0.5px solid ${i === idx ? "#1A1815" : "rgba(26,24,21,0.18)"}`,
-                borderRadius: "7px", padding: "7px 14px",
-                fontFamily: "'Montserrat', sans-serif", fontSize: "11px",
-                letterSpacing: "0.1em", textTransform: "uppercase",
-                cursor: "pointer", transition: "all 0.2s",
+                fontSize: 12, letterSpacing: "0.12em", textTransform: "uppercase",
+                padding: "9px 18px", borderRadius: 999, cursor: "pointer",
+                fontFamily: "inherit",
+                border: `1px solid ${on ? GOLD : LINE}`,
+                background: on ? "rgba(191,153,83,0.10)" : "transparent",
+                color: on ? INK : ASH,
+                transition: "border-color .15s, color .15s, background .15s",
               }}
             >
-              {proj.genre}
+              {d.genre}
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
-      {/* Engine hero card */}
-      <div style={{ background: "#1A1815", borderRadius: "14px", padding: "28px 28px 24px", marginBottom: "20px" }}>
-        <p style={{ fontSize: "10px", letterSpacing: "0.26em", textTransform: "uppercase", color: "rgba(248,245,240,0.4)", marginBottom: "10px" }}>
-          PITCH.FYLYM ENGINE
-        </p>
-        <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "26px", fontWeight: 400, color: "#F8F5F0", lineHeight: 1.25, marginBottom: "6px" }}>
-          <em>{p.title}</em> matches{" "}
-          <span style={{ color: "#BF9953" }}>{p.matchedSources} active funding sources</span>
-        </h3>
-        <p style={{ fontSize: "12px", color: "rgba(248,245,240,0.45)", marginBottom: "20px" }}>
-          scored against every live opportunity — grants, labs, markets and platforms
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "20px" }}>
-          {p.categories.map((c) => (
-            <div key={c.label} style={{ background: "rgba(255,255,255,0.08)", borderRadius: "9px", padding: "10px 14px", textAlign: "center", minWidth: "96px" }}>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "20px", color: "#BF9953" }}>{c.count}</div>
-              <div style={{ fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(248,245,240,0.42)", marginTop: "3px" }}>{c.label}</div>
+      {/* ── Two cards ──────────────────────────────────────── */}
+      <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))" }}>
+
+        {/* Left: the project */}
+        <article style={{ border: `1px solid ${LINE}`, borderRadius: 14, background: "#fff", padding: 20 }}>
+          <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+            <div style={{ flex: "0 0 150px", width: 150, aspectRatio: "2 / 3", borderRadius: 8,
+                          overflow: "hidden", background: PLATE[p.genre] ?? PLATE.Drama,
+                          display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: 14 }}>
+              <p className="font-display"
+                 style={{ color: "#F3EFE6", fontSize: 19, lineHeight: 1.15, fontStyle: "italic" }}>
+                Sample<br />Feature
+              </p>
+              <p style={{ color: "rgba(243,239,230,0.6)", fontSize: 7.5, letterSpacing: "0.18em",
+                          textTransform: "uppercase", marginTop: 8 }}>
+                A {p.genre} {p.format}
+              </p>
             </div>
-          ))}
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div style={{ flex: 1, height: "4px", borderRadius: "3px", background: "rgba(255,255,255,0.12)" }}>
-            <div style={{ width: `${p.readiness}%`, height: "4px", borderRadius: "3px", background: "#BF9953", transition: "width 0.8s ease" }} />
-          </div>
-          <span style={{ fontSize: "11px", color: "rgba(248,245,240,0.45)", whiteSpace: "nowrap" }}>{p.readiness}/100 funding readiness</span>
-        </div>
-      </div>
 
-      {/* Two-column grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px", marginBottom: "16px" }}>
-
-        {/* Top matches */}
-        <div style={{ border: "0.5px solid rgba(26,24,21,0.12)", borderRadius: "12px", overflow: "hidden" }}>
-          <div style={{ padding: "12px 16px", borderBottom: "0.5px solid rgba(26,24,21,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <p style={{ fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "#8A857C" }}>Top matches</p>
-            <span style={{ fontSize: "11px", color: "#8A857C" }}>{p.matchedSources} total</span>
+            <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+              <p className="eyebrow" style={{ marginBottom: 8 }}>Sample project</p>
+              <h3 className="font-display" style={{ fontSize: 25, fontWeight: 400, lineHeight: 1.15 }}>
+                Sample Feature
+                <span style={{ color: ASH }}> · {p.genre}</span>
+              </h3>
+              <p style={{ marginTop: 9, fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: GOLD }}>
+                {p.genre} · {p.format} · {p.country}
+              </p>
+              <p style={{ marginTop: 13, fontSize: 14.5, lineHeight: 1.65, color: ASH }}>
+                {p.logline}
+              </p>
+            </div>
           </div>
-          {p.topMatches.map((m) => {
-            const bs = scoreBadge(m.score);
-            return (
-              <div key={m.name} style={{ padding: "12px 16px", borderBottom: "0.5px solid rgba(26,24,21,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: "13px", fontWeight: 500, color: "#1A1815", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.name}</div>
-                  <div style={{ fontSize: "11px", color: "#8A857C", marginTop: "2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.typeLabel} · {m.country} · {m.award}</div>
-                </div>
-                <span style={{ background: bs.bg, color: bs.color, fontSize: "10px", letterSpacing: "0.06em", padding: "3px 9px", borderRadius: "20px", whiteSpace: "nowrap", fontWeight: 600 }}>
-                  {m.score}%
-                </span>
+
+          <dl style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12,
+                       marginTop: 20, borderTop: `1px solid ${LINE}`, paddingTop: 16 }}>
+            {[["Budget", p.budgetLabel], ["Seeking", p.seekingLabel], ["Country", p.country]].map(([k, v]) => (
+              <div key={k}>
+                <dt style={{ fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase", color: ASH }}>{k}</dt>
+                <dd className="font-display" style={{ fontSize: 21, marginTop: 3 }}>{v}</dd>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </dl>
+        </article>
 
-        {/* Journey + EP brief */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <div style={{ border: "0.5px solid rgba(26,24,21,0.12)", borderRadius: "12px", padding: "14px 16px", flex: 1 }}>
-            <p style={{ fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "#8A857C", marginBottom: "12px" }}>Funding Journey</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
-              {p.roadmap.map((st) => {
-                const ss = STAGE_STYLE[st.status];
-                const rightLabel = st.status === "upcoming" && st.live > 0 ? `${st.live} live` : ss.label;
-                return (
-                  <div key={st.label} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: ss.dot, flexShrink: 0 }} />
-                    <span style={{ fontSize: "12px", color: st.status === "current" ? "#1A1815" : "#8A857C", flex: 1, fontWeight: st.status === "current" ? 500 : 400 }}>{st.label}</span>
-                    <span style={{ fontSize: "9px", letterSpacing: "0.12em", textTransform: "uppercase", background: ss.bg, color: ss.text, padding: "2px 7px", borderRadius: "20px" }}>{rightLabel}</span>
-                  </div>
-                );
-              })}
+        {/* Right: what the engine returned */}
+        <article style={{ border: `1px solid ${LINE}`, borderRadius: 14, background: "#fff", padding: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+            <Ring value={p.readiness} />
+            <div style={{ flex: "1 1 170px", minWidth: 0 }}>
+              <p style={{ display: "flex", alignItems: "baseline", gap: 9 }}>
+                <span className="font-display" style={{ fontSize: 42, lineHeight: 1 }}>{p.matchedSources}</span>
+                <span style={{ fontSize: 15, color: ASH }}>
+                  {p.matchedSources === 1 ? "match" : "matches"}
+                </span>
+              </p>
+              <p style={{ marginTop: 9, fontSize: 12.5, lineHeight: 1.65, color: ASH }}>
+                {p.categories.map(c => `${c.count} ${c.label.toLowerCase()}`).join(" · ")}
+              </p>
             </div>
           </div>
 
-          <div style={{ border: "0.5px solid rgba(191,153,83,0.35)", borderRadius: "12px", padding: "14px 16px", background: "rgba(191,153,83,0.04)" }}>
-            <p style={{ fontSize: "10px", letterSpacing: "0.22em", textTransform: "uppercase", color: "#BF9953", marginBottom: "7px" }}>AI Executive Producer</p>
-            <p style={{ fontSize: "12px", color: "#1A1815", lineHeight: 1.65 }}>{p.ep}</p>
+          <div style={{ marginTop: 20, borderTop: `1px solid ${LINE}`, paddingTop: 16 }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+              <p className="font-display" style={{ fontSize: 17 }}>Top matches</p>
+              <Link href="/signup"
+                    style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: ASH }}>
+                View all {p.matchedSources} ↗
+              </Link>
+            </div>
+
+            <ul style={{ marginTop: 10 }}>
+              {p.topMatches.map((m, i) => (
+                <li key={m.name}
+                    style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "13px 0",
+                             borderTop: i === 0 ? "none" : `1px solid ${LINE}` }}>
+                  <span className="font-display"
+                        style={{ flex: "0 0 52px", fontSize: 22, color: GOLD, lineHeight: 1.1 }}>
+                    {m.score}<span style={{ fontSize: 12 }}>%</span>
+                  </span>
+                  <span style={{ minWidth: 0, flex: 1 }}>
+                    <span style={{ display: "block", fontSize: 14.5, lineHeight: 1.35 }}>{m.name}</span>
+                    <span style={{ display: "block", marginTop: 3, fontSize: 12, color: ASH }}>
+                      {m.typeLabel} · {m.country} · {m.award}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
+        </article>
       </div>
 
-      {/* Project meta footer */}
-      <div style={{ background: "#F8F5F0", borderRadius: "10px", padding: "12px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
-        <div style={{ display: "flex", gap: "20px", flexWrap: "wrap" }}>
-          {[
-            `${p.genre} · ${p.format[0].toUpperCase()}${p.format.slice(1)}`,
-            `Budget — ${p.budgetLabel}`,
-            `Seeking — ${p.seekingLabel}`,
-            `Country — ${p.country}`,
-          ].map((item) => (
-            <span key={item} style={{ fontSize: "12px", color: "#8A857C" }}>{item}</span>
-          ))}
+      {/* ── Funding journey + CTA ──────────────────────────── */}
+      <div style={{ marginTop: 22, border: `1px solid ${LINE}`, borderRadius: 14,
+                    background: PARCHMENT, padding: "20px 22px", display: "flex",
+                    alignItems: "center", justifyContent: "space-between", gap: 26, flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 460px", minWidth: 0 }}>
+          <p className="eyebrow" style={{ marginBottom: 14 }}>Funding journey</p>
+          <ol style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {p.roadmap.map((s, i) => {
+              const done = s.status === "done";
+              const current = s.status === "current";
+              return (
+                <li key={s.label} style={{ flex: "1 1 88px", minWidth: 80 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <span aria-hidden style={{
+                      width: 13, height: 13, borderRadius: "50%", flex: "0 0 13px",
+                      background: done ? GOLD : "transparent",
+                      border: `1.5px solid ${done || current ? GOLD : "rgba(26,24,21,0.18)"}`,
+                    }} />
+                    {i < p.roadmap.length - 1 && (
+                      <span aria-hidden style={{ flex: 1, height: 1,
+                        background: done ? GOLD : "rgba(26,24,21,0.12)" }} />
+                    )}
+                  </div>
+                  <p style={{ marginTop: 7, fontSize: 12, color: current ? INK : ASH }}>{s.label}</p>
+                  <p style={{ fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase",
+                              color: current ? GOLD : "rgba(138,133,124,0.75)" }}>
+                    {stageLabel(s.status, i === firstUpcoming)}
+                  </p>
+                </li>
+              );
+            })}
+          </ol>
         </div>
-        <a href="/login" style={{ background: "#1A1815", color: "#F8F5F0", border: "none", padding: "9px 20px", fontFamily: "'Montserrat', sans-serif", fontSize: "11px", letterSpacing: "0.1em", textTransform: "uppercase", borderRadius: "6px", cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap" }}>
-          Submit your project →
-        </a>
+
+        <Link href="/signup" className="btn-primary" style={{ flex: "0 0 auto" }}>
+          Check your matches →
+        </Link>
       </div>
     </div>
   );

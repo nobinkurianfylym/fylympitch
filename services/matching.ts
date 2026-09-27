@@ -260,10 +260,45 @@ function historicalScore(rate?: number): Part {
 
 // ── Assembly ─────────────────────────────────────────────────────────────────
 
+/**
+ * Tier boundaries, re-derived for the v2 distribution.
+ *
+ * v1 compressed every score into roughly 93-99, because a criterion the fund
+ * never published scored full marks. The old boundaries (90 / 75 / 60) were
+ * chosen for that compressed scale. v2 spreads the same catalogue across
+ * 15-86, measured over 880 project-to-opportunity scores by
+ * scripts/score-distribution.ts, which left "excellent" at >= 90 literally
+ * unreachable: nothing in the catalogue could earn it.
+ *
+ * Re-derived from that distribution, so each label is both rare and possible:
+ *   excellent  >= 78   about  2% of the catalogue
+ *   strong     >= 65   about 16%
+ *   possible   >= 50   about 45%
+ *   hidden      < 50
+ *
+ * The semantic anchor is 60: a fund that declares NOTHING scores exactly that.
+ * It therefore sits inside "possible" — unknown and worth a look, but never
+ * presented as a strong claim. Anything below 60 has declared criteria the
+ * project fails, and below 50 it fails enough of them not to be worth showing.
+ *
+ * Measured against the MASTER_DATA seed (110 opportunities). The live
+ * catalogue is larger and its metadata sparser, which pushes scores toward 60
+ * rather than away from it, so these are worth re-checking against production
+ * data before they are treated as settled.
+ */
+export const TIER_MIN = {
+  excellent: 78,
+  strong: 65,
+  possible: 50,
+} as const;
+
+/** Below this a match is not shown at all. One source of truth for every gate. */
+export const VISIBLE_MIN = TIER_MIN.possible;
+
 export function tierOf(score: number): MatchResult["tier"] {
-  if (score >= 90) return "excellent";
-  if (score >= 75) return "strong";
-  if (score >= 60) return "possible";
+  if (score >= TIER_MIN.excellent) return "excellent";
+  if (score >= TIER_MIN.strong) return "strong";
+  if (score >= TIER_MIN.possible) return "possible";
   return "hidden";
 }
 

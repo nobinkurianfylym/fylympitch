@@ -18,7 +18,7 @@
 // ============================================================
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { runFylympitchEngine, rankHybridMatches } from "../services/fylympitchEngine.ts";
 import { usd, TYPE_LABEL } from "../lib/format.ts";
 import type { Opportunity, Project } from "../types/index.ts";
@@ -29,7 +29,7 @@ const SEED = path.join(ROOT, "supabase/migrations/005_master_data_seed.sql");
 // ---- Parse the MASTER_DATA seed INSERT into Opportunity rows ----
 const COLS = ["title","opp_type","description","country","region","genres","formats","stages","languages","min_budget_usd","max_budget_usd","max_award_usd","deadline","url","is_active","career_stages","match_weight","gender_focus","copro_required","festival_affiliated","ott_affiliated","contact_email","contact_phone","key_person","app_link","deadline_note"];
 
-function parseSeed(sql: string): Opportunity[] {
+export function parseSeed(sql: string): Opportunity[] {
   const start = sql.toLowerCase().indexOf(") values") + ") values".length;
   const end = sql.toLowerCase().lastIndexOf("on conflict");
   const body = sql.slice(start, end).trim().replace(/;\s*$/, "").trim();
@@ -106,7 +106,8 @@ function parseSeed(sql: string): Opportunity[] {
   return opps;
 }
 
-const active = parseSeed(fs.readFileSync(SEED, "utf8")).filter(o => o.is_active);
+export const activeSeedOpportunities = parseSeed(fs.readFileSync(SEED, "utf8")).filter(o => o.is_active);
+const active = activeSeedOpportunities;
 const extras: Record<string, any> = {};
 for (const o of active) extras[o.id] = { career_stages: o.career_stages ?? [], match_weight: o.match_weight ?? undefined, festival_affiliated: o.festival_affiliated, ott_affiliated: o.ott_affiliated };
 
@@ -118,7 +119,8 @@ function mk(over: any): Project & { career_stage?: string } {
     budget_currency: "USD", budget_usd: over.budget_usd, budget_amount: over.budget_usd,
     finance_secured_usd: 0, finance_secured_amount: 0,
     funding_needed_usd: over.funding_needed_usd, funding_needed_amount: over.funding_needed_usd,
-    stage: over.stage ?? "development", logline: "Representative sample logline.",
+    stage: over.stage ?? "development",
+    logline: over.logline ?? "Representative sample logline.",
     synopsis: "Representative sample synopsis.",
     director_statement: "director_statement" in over ? over.director_statement : "Sample statement.",
     producer_info: "producer_info" in over ? over.producer_info : "Attached producer.",
@@ -138,9 +140,9 @@ function mk(over: any): Project & { career_stage?: string } {
 // how much of the gap they actually cover — the scores below are whatever the
 // engine returns for these inputs, never hand-picked.
 const samples = [
-  mk({ id: "s-comedy", title: "SAMPLE FEATURE — COMEDY", genre: "Comedy", format: "feature", country: "India", language: "Hindi", budget_usd: 2500000, funding_needed_usd: 1800000, stage: "development", career_stage: "Emerging", script_path: null }),
-  mk({ id: "s-drama", title: "SAMPLE FEATURE — DRAMA", genre: "Drama", format: "feature", country: "India", language: "Malayalam", budget_usd: 1500000, funding_needed_usd: 1100000, stage: "pre_production", career_stage: "First-time", has_coproducer: false, producer_info: null }),
-  mk({ id: "s-doc", title: "SAMPLE FEATURE — DOCUMENTARY", genre: "Documentary", format: "documentary", country: "India", language: "English", budget_usd: 200000, funding_needed_usd: 150000, stage: "development", career_stage: "Emerging", has_coproducer: false, pitch_deck_path: null, producer_info: null }),
+  mk({ id: "s-comedy", logline: "Three strangers share a battered van across the country, and none of them is going where they said.", title: "SAMPLE FEATURE — COMEDY", genre: "Comedy", format: "feature", country: "India", language: "Hindi", budget_usd: 2500000, funding_needed_usd: 1800000, stage: "development", career_stage: "Emerging", script_path: null }),
+  mk({ id: "s-drama", logline: "A fisherman returns to a coast he left thirty years ago, to a daughter who has built a life without him.", title: "SAMPLE FEATURE — DRAMA", genre: "Drama", format: "feature", country: "India", language: "Malayalam", budget_usd: 1500000, funding_needed_usd: 1100000, stage: "pre_production", career_stage: "First-time", has_coproducer: false, producer_info: null }),
+  mk({ id: "s-doc", logline: "The last three projectionists of a dying single-screen circuit, and the films they refuse to stop showing.", title: "SAMPLE FEATURE — DOCUMENTARY", genre: "Documentary", format: "documentary", country: "India", language: "English", budget_usd: 200000, funding_needed_usd: 150000, stage: "development", career_stage: "Emerging", has_coproducer: false, pitch_deck_path: null, producer_info: null }),
 ];
 
 const CAT = (t: string) =>
@@ -162,6 +164,7 @@ async function main() {
     for (const m of full) counts[CAT(m.opportunity.opp_type)]++;
     out.push({
       title: p.title, genre: p.genre, format: p.format, country: p.country, language: p.language,
+      logline: p.logline,
       budgetLabel: usd(p.budget_usd), seekingLabel: usd(p.funding_needed_usd),
       readiness: r.funding_readiness.score, matchedSources: full.length,
       categories: [
@@ -196,6 +199,8 @@ export interface DemoStage { label: string; status: "done" | "current" | "upcomi
 export interface DemoCategory { label: string; count: number; }
 export interface DemoProject {
   title: string; genre: string; format: string; country: string; language: string;
+  /** Illustrative, for the sample card. Not engine output. */
+  logline: string;
   budgetLabel: string; seekingLabel: string; readiness: number; matchedSources: number;
   categories: DemoCategory[]; topMatches: DemoMatch[]; roadmap: DemoStage[]; ep: string;
 }
@@ -203,4 +208,6 @@ export const DEMO_PROJECTS: DemoProject[] = `;
   fs.writeFileSync(path.join(ROOT, "components/homepage-demo-data.ts"), header + JSON.stringify(out, null, 2) + ";\n");
   console.log("Wrote components/homepage-demo-data.ts —", out.length, "sample projects");
 }
-main();
+// Only run when invoked directly, so this file can also be imported for
+// analysis (see scripts/score-distribution.ts) without rewriting the data.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

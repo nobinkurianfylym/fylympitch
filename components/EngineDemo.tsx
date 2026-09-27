@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { tierOf } from "@/services/matching";
 
 const ENGINE_STEPS = [
   { label: "Saving your project",                            dur: 380  },
@@ -154,7 +155,7 @@ export default function EngineDemo() {
                       {r.score}
                     </span>
                     <span className="text-[10px] tracking-[0.18em] uppercase text-gold/80 hidden sm:block">
-                      {r.score >= 90 ? "Excellent" : "Strong"}
+                      {tierOf(r.score) === "excellent" ? "Excellent" : "Strong"}
                     </span>
                   </div>
                 </div>
