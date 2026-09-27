@@ -21,6 +21,19 @@ import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { getTrendingProjects, getOpportunityCount } from "@/lib/cached-queries";
 
+/**
+ * The date on the sample certificate in the Proof of Existence section.
+ *
+ * Deliberately a constant rather than `new Date()`: rendering today's date
+ * would make an illustration look like a live event that never happened.
+ * It is a mockup of what a filmmaker receives, in the same spirit as the
+ * "Sample Feature" poster in the engine section.
+ *
+ * It does age. The stronger version of this card points at a REAL proof —
+ * any public one — so the date is true and the chip can link to /verify.
+ */
+const PROOF_SAMPLE_STAMP = "Sample · 25 May 2026 · 10:48 IST";
+
 // ── SEO ──────────────────────────────────────────────────────────────────────
 // The homepage had no metadata of its own and fell back to the root layout's,
 // which is written to be a sane default for every page rather than to rank for
@@ -268,176 +281,170 @@ export default async function Home() {
       </section>
 
       {/* PROOF OF EXISTENCE */}
+      {/*
+          Light ground, not the dark band it used to be. The previous version
+          ran hero + hash strip + how-it-works + a full certificate card +
+          a trust row + a closing line, which is six ideas where the page only
+          needs two: what this is, and what you get. The certificate detail
+          (transaction id, block height) now lives where it belongs — on the
+          real certificate at /verify — rather than being mocked up here.
+      */}
+      <section className="bg-ivory">
+        <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">
 
-      {/* — Hero: dark — */}
-      <section className="bg-deep text-ivory">
-        <div className="max-w-3xl mx-auto px-6 pt-24 md:pt-32 pb-16 text-center">
+          <div className="grid md:grid-cols-2 gap-16 md:gap-20 items-center">
 
-          <p className="text-[10px] tracking-[0.28em] uppercase text-ivory/40 mb-5">
-            The safest place to submit your film
-          </p>
-          <p className="eyebrow text-gold mb-8">Proof of existence</p>
+            {/* ── Left: the claim ─────────────────────────── */}
+            <div>
+              <p className="eyebrow mb-5">Proof of existence</p>
 
-          <h2 className="font-display text-[30px] md:text-[46px] leading-[1.12] font-normal mb-8">
-            Time-stamped{" "}
-            <span className="italic text-gold">the moment you submit.</span>
-          </h2>
+              <h2 className="font-display text-[34px] md:text-[52px] leading-[1.06] font-normal">
+                Submit your film pitch
+                <span className="italic text-gold"> with confidence.</span>
+              </h2>
 
-          <p className="text-[16px] leading-[1.8] text-ivory/50 mb-5 max-w-xl mx-auto">
-            We record a fingerprint of your deck on Bitcoin &mdash; a permanent,
-            independent record of the date your version existed. Your file never
-            leaves your account.
-          </p>
+              <p className="mt-6 text-[17px] leading-[1.75] text-ash max-w-md">
+                We create a permanent timestamp of your pitch deck on the
+                Bitcoin blockchain.
+              </p>
 
-          <p className="text-[16px] leading-[1.8] text-ivory/50 mb-6 max-w-xl mx-auto">
-            If authorship is ever disputed, that&rsquo;s dated evidence you can
-            produce: exactly what you had, and when. Not our word for it &mdash;
-            a record neither we nor anyone else can alter.
-          </p>
-
-          {/* Says the limit out loud. A timestamp is evidence of date, not
-              ownership, and copyright registration is a separate thing — the
-              Terms page says so, and this line keeps the two in step. */}
-          <p className="text-[13px] leading-[1.7] text-ivory/35 mb-10 max-w-xl mx-auto">
-            Supports a copyright claim by establishing when your version existed.
-            It is evidence of date, not a substitute for registration.
-          </p>
-
-          <div
-            className="inline-flex flex-wrap justify-center items-center gap-x-5 gap-y-2 mb-10 px-6 py-4"
-            style={{ border: "1px solid rgba(255,255,255,0.08)" }}
-          >
-            <span className="text-[10px] tracking-[0.22em] uppercase text-gold/60">SHA-256</span>
-            <span className="font-mono text-[12px] text-ivory/40 tracking-wider">3a7f2c9b·1e48d6f2·a09c3b7e···</span>
-            <span className="text-[10px] tracking-[0.15em] uppercase text-ivory/30">Block #893,441</span>
-            <span className="text-[10px] tracking-[0.15em] uppercase text-ivory/30">14 Jun 2025 · 09:41 UTC</span>
-          </div>
-
-          <Link href="/signup" className="btn-gold">
-            Timestamp your deck →
-          </Link>
-
-        </div>
-
-        {/* How it works, the certificate and the trust row — same ground, so the
-            whole proof story reads as one chapter rather than three bands. */}
-        <div className="max-w-5xl mx-auto px-6 pb-20 md:pb-24">
-
-          {/* Steps */}
-          <p className="eyebrow text-center mb-14" style={{ color: "rgba(245,245,247,0.45)" }}>How it works</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-16">
-            {[
-              { icon: "file-text",       label: "Upload your deck",    sub: "A PDF. It stays in private storage.",          gold: false },
-              { icon: "fingerprint",     label: "We take a fingerprint", sub: "A short code unique to your file.",           gold: false },
-              { icon: "currency-bitcoin",label: "We record it on Bitcoin", sub: "Where nobody can change or delete it.",     gold: true  },
-              { icon: "certificate",     label: "You get a certificate", sub: "Instantly, with a link anyone can check.",     gold: false },
-            ].map((step) => (
-              <div key={step.label} className="flex flex-col items-center text-center">
-                <div
-                  className="w-11 h-11 rounded-full flex items-center justify-center mb-4 shrink-0"
-                  style={{
-                    background: step.gold ? "#BF9953" : "rgba(245,245,247,0.07)",
-                    border: step.gold ? "none" : "1px solid rgba(245,245,247,0.14)",
-                  }}
-                >
-                  <Icon name={step.icon} className={step.gold ? "text-deep" : "text-ivory"} style={{ fontSize: 18 }} />
-                </div>
-                <p className="text-[12px] font-semibold text-ivory leading-snug mb-2">{step.label}</p>
-                <p className="text-[11px] text-ivory/45 leading-relaxed">{step.sub}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Proof certificate card */}
-          <div
-            className="bg-white rounded-card mx-auto mb-14 max-w-md"
-            style={{
-              border: "1px solid rgba(26,24,21,0.1)",
-              padding: "24px 28px",
-              boxShadow: "0 24px 60px -30px rgba(0,0,0,0.75)",
-            }}
-          >
-            <div className="flex justify-between items-start mb-5">
-              <div>
-                <p className="text-[9px] tracking-[0.2em] uppercase text-ash mb-2">Proof of existence</p>
-                <p className="text-[12px] text-ash leading-snug">
-                  Your deck&rsquo;s fingerprint is now<br />recorded on Bitcoin.
-                </p>
-              </div>
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 ml-4"
-                style={{ background: "#22c55e" }}
-              >
-                <Icon name="check" className="text-white" style={{ fontSize: 13 }} />
-              </div>
-            </div>
-
-            <div className="space-y-3" style={{ borderTop: "1px solid rgba(26,24,21,0.08)", paddingTop: 16 }}>
-              {[
-                { icon: "clock",            iconCls: "text-ash",  label: "Timestamp",      value: "May 25, 2025 · 10:48 AM IST",  mono: false, green: false },
-                { icon: "currency-bitcoin", iconCls: "text-gold", label: "Blockchain",     value: "Bitcoin (via OpenTimestamps)", mono: false, green: false },
-                { icon: "hash",             iconCls: "text-ash",  label: "Transaction ID", value: "b4f7c2...8e9a1d7",             mono: true,  green: false },
-                { icon: "shield-check",     iconCls: "text-ash",  label: "Status",         value: "Confirmed",                   mono: false, green: true  },
-              ].map((row) => (
-                <div key={row.label} className="flex items-center gap-3">
-                  <Icon name={row.icon} className={`${row.iconCls} shrink-0`} style={{ fontSize: 14 }} />
-                  <div>
-                    <p className="text-[9px] tracking-[0.12em] uppercase text-ash mb-0.5">{row.label}</p>
-                    <p className={`text-[12px] font-medium ${row.green ? "text-green-600" : "text-ink"} ${row.mono ? "font-mono" : ""}`}>
-                      {row.value}
-                    </p>
+              <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-7">
+                {[
+                  { icon: "lock",         label: "Private",
+                    sub: "Your deck stays yours. We store only a fingerprint." },
+                  { icon: "infinity",     label: "Permanent",
+                    sub: "Recorded on Bitcoin. Cannot be changed." },
+                  { icon: "shield-check", label: "Verifiable",
+                    sub: "Independent proof of when your version existed." },
+                ].map((f) => (
+                  <div key={f.label}>
+                    <Icon name={f.icon} className="text-ink"
+                          style={{ fontSize: 26, display: "block", marginBottom: 12 }} />
+                    <p className="text-[14px] font-semibold text-ink mb-1.5">{f.label}</p>
+                    <p className="text-[13px] leading-[1.6] text-ash">{f.sub}</p>
                   </div>
+                ))}
+              </div>
+
+              <div className="mt-10">
+                <Link href="/signup" className="btn-primary">
+                  Timestamp your deck →
+                </Link>
+              </div>
+
+              {/* A timestamp is evidence of date, not ownership. Said plainly,
+                  and kept in step with the Terms page. */}
+              <p className="mt-5 text-[13px] leading-[1.7] text-ash/80">
+                Date evidence, not a substitute for copyright registration.
+              </p>
+            </div>
+
+            {/* ── Right: what you get ─────────────────────── */}
+            {/* Built in CSS and SVG rather than photographed. There is no deck
+                mockup in /public, and a photograph of a real-looking film
+                would imply a title that does not exist. */}
+            <div className="relative mx-auto w-full max-w-[420px] aspect-[4/3.4]" aria-hidden>
+
+              {/* The slab the deck leans on */}
+              <div className="absolute rounded-[3px]"
+                   style={{ right: "4%", top: "16%", width: "34%", height: "62%",
+                            background: "linear-gradient(150deg,#3a3631,#1b1815)",
+                            boxShadow: "0 30px 50px -28px rgba(26,24,21,0.7)" }} />
+
+              {/* The deck cover */}
+              <div className="absolute overflow-hidden"
+                   style={{ left: "6%", top: "4%", width: "62%", height: "88%",
+                            borderRadius: "3px 6px 6px 3px",
+                            transform: "rotate(-4deg)",
+                            background: "#F7F5F0",
+                            boxShadow: "0 40px 70px -34px rgba(26,24,21,0.65), 0 2px 0 rgba(26,24,21,0.06)" }}>
+
+                {/* Spine shadow, so it reads as a bound document */}
+                <div className="absolute inset-y-0 left-0" style={{ width: 9,
+                     background: "linear-gradient(90deg,rgba(26,24,21,0.16),transparent)" }} />
+
+                <div className="px-7 pt-12 text-center">
+                  <p className="text-[9px] tracking-[0.3em] uppercase text-ash">The</p>
+                  <p className="font-display text-[22px] leading-[1.15] tracking-[0.06em] text-ink mt-1">
+                    NEXT CHAPTER
+                  </p>
+                  <span className="block mx-auto my-4" style={{ width: 34, height: 1, background: "#C9C2B2" }} />
+                  <p className="text-[8px] tracking-[0.26em] uppercase text-ash">A feature film</p>
                 </div>
+
+                {/* Landscape plate: drawn, not a photograph */}
+                <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 200 128" preserveAspectRatio="none"
+                     style={{ height: "52%" }}>
+                  <defs>
+                    <linearGradient id="pxSky" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#E8D9BE" />
+                      <stop offset="55%" stopColor="#C9B492" />
+                      <stop offset="100%" stopColor="#8E8370" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="200" height="128" fill="url(#pxSky)" />
+                  <circle cx="141" cy="40" r="11" fill="#F3E7D0" opacity="0.85" />
+                  <path d="M0 96 L34 62 L60 88 L84 58 L112 96 Z" fill="#6E6656" opacity="0.72" />
+                  <path d="M76 128 L118 54 L160 128 Z" fill="#4A463C" opacity="0.86" />
+                  <path d="M140 128 L176 74 L200 108 L200 128 Z" fill="#37342D" opacity="0.9" />
+                  <rect y="112" width="200" height="16" fill="#2B2823" opacity="0.55" />
+                </svg>
+              </div>
+
+              {/* The certificate chip */}
+              <div className="absolute bg-white rounded-card"
+                   style={{ right: "-2%", bottom: "2%", width: "62%", padding: "15px 17px",
+                            border: "1px solid rgba(26,24,21,0.10)",
+                            boxShadow: "0 26px 54px -26px rgba(26,24,21,0.55)" }}>
+                <p className="text-[8.5px] tracking-[0.2em] uppercase text-ash mb-2.5">Proof of existence</p>
+                <div className="flex items-center gap-2.5">
+                  <span className="flex items-center justify-center rounded-full shrink-0"
+                        style={{ width: 22, height: 22, background: "#2E6B4E" }}>
+                    <Icon name="check" className="text-white" style={{ fontSize: 12 }} />
+                  </span>
+                  <p className="text-[14px] font-semibold text-ink">Timestamped</p>
+                </div>
+                <p className="mt-2.5 text-[11px] text-ash">{PROOF_SAMPLE_STAMP}</p>
+                <p className="text-[11px] text-ash">Bitcoin (via OpenTimestamps)</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ── How it works ──────────────────────────────── */}
+          <div className="mt-24 pt-14" style={{ borderTop: "1px solid #E5E0D5" }}>
+            <p className="eyebrow mb-12">How it works</p>
+
+            <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-4">
+              {[
+                { icon: "file-text",        label: "Upload your deck",      sub: "A PDF. It stays in private storage." },
+                { icon: "fingerprint",      label: "We take a fingerprint", sub: "A unique code (SHA-256) for your file." },
+                { icon: "currency-bitcoin", label: "We record it on Bitcoin", sub: "Where nobody can change or delete it." },
+                { icon: "certificate",      label: "You get a certificate", sub: "Instantly, with a link anyone can verify." },
+              ].map((s, i, all) => (
+                <li key={s.label} className="relative">
+                  <div className="flex items-center gap-3.5 mb-4">
+                    <span className="flex items-center justify-center rounded-full text-[11px] text-ash shrink-0"
+                          style={{ width: 26, height: 26, background: "#F1EDE4" }}>
+                      {i + 1}
+                    </span>
+                    <Icon name={s.icon} className="text-ink" style={{ fontSize: 26 }} />
+
+                    {/* Connector, on wide screens only: on a narrow column the
+                        steps stack, and an arrow pointing right would be a lie. */}
+                    {i < all.length - 1 && (
+                      <Icon name="arrow-right"
+                            className="hidden lg:block text-ash/35 absolute"
+                            style={{ fontSize: 18, right: 12, top: 4 }} />
+                    )}
+                  </div>
+                  <p className="text-[14px] font-semibold text-ink mb-1.5 pr-6">{s.label}</p>
+                  <p className="text-[13px] leading-[1.6] text-ash pr-6">{s.sub}</p>
+                </li>
               ))}
-            </div>
-
-            <div
-              className="flex justify-between items-center mt-4 pt-3"
-              style={{ borderTop: "1px solid rgba(26,24,21,0.08)" }}
-            >
-              <p className="font-display italic text-[11px] text-ash">Signed</p>
-              <div className="flex items-center gap-1.5">
-                <Icon name="shield" className="text-gold" style={{ fontSize: 12 }} />
-                <span className="text-[9px] tracking-[0.14em] uppercase font-semibold text-ink">PITCH.FYLYM</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Trust signals */}
-          <div
-            className="grid grid-cols-3"
-            style={{ border: "1px solid rgba(245,245,247,0.12)", borderRadius: 8, overflow: "hidden" }}
-          >
-            {[
-              { icon: "lock",         label: "Private",   sub: "We store the fingerprint, never your file."   },
-              { icon: "shield-check", label: "Permanent", sub: "Nobody can change the record. Not even us."    },
-              { icon: "world",        label: "Checkable", sub: "Anyone can verify it, from anywhere, anytime." },
-            ].map((item, i) => (
-              <div
-                key={item.label}
-                className="p-5"
-                style={{ borderLeft: i > 0 ? "1px solid rgba(245,245,247,0.12)" : undefined }}
-              >
-                <Icon name={item.icon} className="text-gold" style={{ fontSize: 20, display: "block", marginBottom: 10 }} />
-                <p className="text-[12px] font-semibold text-ivory mb-1.5">{item.label}</p>
-                <p className="text-[11px] text-ivory/45 leading-relaxed">{item.sub}</p>
-              </div>
-            ))}
+            </ol>
           </div>
 
         </div>
-
-        {/* Closing line — inside the same ground, separated by a hairline
-            rather than by a change of background. */}
-        <div className="max-w-5xl mx-auto px-6 pb-24">
-          <div className="pt-10 text-center" style={{ borderTop: "1px solid rgba(245,245,247,0.10)" }}>
-            <p className="font-display text-[18px] md:text-[22px] text-ivory/90">
-              Your idea. Your creation. Your proof.{" "}
-              <span className="italic text-gold">Forever.</span>
-            </p>
-          </div>
-        </div>
-
       </section>
 
       {/* FOR FILMMAKERS */}
