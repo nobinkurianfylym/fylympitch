@@ -349,57 +349,38 @@ export default async function Home() {
             {/* Built in CSS and SVG rather than photographed. There is no deck
                 mockup in /public, and a photograph of a real-looking film
                 would imply a title that does not exist. */}
-            <div className="relative mx-auto w-full max-w-[420px] aspect-[4/3.4]" aria-hidden>
+            <div className="relative mx-auto w-full max-w-[420px] aspect-[4/3.6]" aria-hidden>
 
-              {/* The slab the deck leans on */}
-              <div className="absolute rounded-[3px]"
-                   style={{ right: "4%", top: "16%", width: "34%", height: "62%",
-                            background: "linear-gradient(150deg,#3a3631,#1b1815)",
-                            boxShadow: "0 30px 50px -28px rgba(26,24,21,0.7)" }} />
-
-              {/* The deck cover */}
+              {/* The poster.
+                  This replaced a cover drawn in CSS with a typographic title
+                  and an SVG landscape, which existed only because there was no
+                  artwork to use. There is now: a real film, so the section
+                  shows a real one. Held at 2:3 by aspect-ratio rather than a
+                  fixed height, so the artwork is never squeezed. */}
               <div className="absolute overflow-hidden"
-                   style={{ left: "6%", top: "4%", width: "62%", height: "88%",
+                   style={{ left: "8%", top: "0%", width: "60%",
+                            aspectRatio: "1448 / 2048",
                             borderRadius: "3px 6px 6px 3px",
                             transform: "rotate(-4deg)",
-                            background: "#F7F5F0",
                             boxShadow: "0 40px 70px -34px rgba(26,24,21,0.65), 0 2px 0 rgba(26,24,21,0.06)" }}>
-
-                {/* Spine shadow, so it reads as a bound document */}
-                <div className="absolute inset-y-0 left-0" style={{ width: 9,
-                     background: "linear-gradient(90deg,rgba(26,24,21,0.16),transparent)" }} />
-
-                <div className="px-7 pt-12 text-center">
-                  <p className="text-[9px] tracking-[0.3em] uppercase text-ash">The</p>
-                  <p className="font-display text-[22px] leading-[1.15] tracking-[0.06em] text-ink mt-1">
-                    NEXT CHAPTER
-                  </p>
-                  <span className="block mx-auto my-4" style={{ width: 34, height: 1, background: "#C9C2B2" }} />
-                  <p className="text-[8px] tracking-[0.26em] uppercase text-ash">A feature film</p>
-                </div>
-
-                {/* Landscape plate: drawn, not a photograph */}
-                <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 200 128" preserveAspectRatio="none"
-                     style={{ height: "52%" }}>
-                  <defs>
-                    <linearGradient id="pxSky" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#E8D9BE" />
-                      <stop offset="55%" stopColor="#C9B492" />
-                      <stop offset="100%" stopColor="#8E8370" />
-                    </linearGradient>
-                  </defs>
-                  <rect width="200" height="128" fill="url(#pxSky)" />
-                  <circle cx="141" cy="40" r="11" fill="#F3E7D0" opacity="0.85" />
-                  <path d="M0 96 L34 62 L60 88 L84 58 L112 96 Z" fill="#6E6656" opacity="0.72" />
-                  <path d="M76 128 L118 54 L160 128 Z" fill="#4A463C" opacity="0.86" />
-                  <path d="M140 128 L176 74 L200 108 L200 128 Z" fill="#37342D" opacity="0.9" />
-                  <rect y="112" width="200" height="16" fill="#2B2823" opacity="0.55" />
-                </svg>
+                <img
+                  src="/proof/end-of-the-day.webp"
+                  alt="Poster for End of the Day, a feature film by Green Pepper Productions"
+                  width={560}
+                  height={792}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover"
+                />
+                {/* Spine shadow, so it still reads as a bound document rather
+                    than a flat rectangle pasted on the page. */}
+                <div className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: 9,
+                     background: "linear-gradient(90deg,rgba(26,24,21,0.28),transparent)" }} />
               </div>
 
               {/* The certificate chip */}
               <div className="absolute bg-white rounded-card"
-                   style={{ right: "-2%", bottom: "2%", width: "62%", padding: "15px 17px",
+                   style={{ right: "0%", bottom: "4%", width: "54%", padding: "15px 17px",
                             border: "1px solid rgba(26,24,21,0.10)",
                             boxShadow: "0 26px 54px -26px rgba(26,24,21,0.55)" }}>
                 <p className="text-[8.5px] tracking-[0.2em] uppercase text-ash mb-2.5">Proof of existence</p>
