@@ -71,35 +71,19 @@ function exactCount(n: number): string {
 }
 
 const STEPS = [
-  {
-    num: "01",
-    icon: "file-pencil",
-    title: "Add your film",
-    body: "Title, logline, budget and your pitch deck. Takes about ten minutes.",
-  },
-  {
-    num: "02",
-    icon: "target",
-    title: "See which funds fit",
-    body: "We check your film against %OPPS% grants, funds and labs worldwide, then show you the ones you qualify for and why.",
-  },
-  {
-    num: "03",
-    icon: "eye",
-    title: "Get seen by producers",
-    body: "Producers looking for their next film can find your project and contact you directly.",
-  },
-  {
-    num: "04",
-    icon: "check",
-    title: "Apply and keep track",
-    body: "Deadlines, materials and submissions in one place, instead of a spreadsheet.",
-  },
+  { num: "01", title: "Add your film",
+    body: "Title, logline, budget, deck. About ten minutes." },
+  { num: "02", title: "See which funds fit",
+    body: "Scored against %OPPS%funds worldwide. You see which fit, and why." },
+  { num: "03", title: "Get seen by producers",
+    body: "Producers hunting their next film find you and make contact." },
+  { num: "04", title: "Apply and keep track",
+    body: "Deadlines, materials and submissions in one place." },
 ];
 
 const FAQS = [
   ["Who can see my script and pitch deck?", "It depends how you submit your project. Public projects are visible to everyone browsing PITCH.FYLYM. Private projects are visible only to you, PITCH.FYLYM administrators, and industry accounts that have been individually verified and approved. Files live in private storage with row-level access control — there are no public links to private materials."],
-  ["How is the match score calculated?", "Eight weighted criteria totalling 100 points: genre (20), stage (20), territory (15), budget (15), format (10), funding gap (10), language (5) and historical success (5). Anything under 60 is hidden so you only see real prospects."],
+  ["How is the match score calculated?", "Eight weighted criteria totalling 100 points: genre (20), stage (20), territory (15), budget (15), format (10), funding gap (10), language (5) and historical success (5). Anything under 50 is hidden, so you only see real prospects. A criterion the fund never published scores partial credit rather than full marks, and the page tells you which ones those were."],
   ["Is PITCH.FYLYM free for filmmakers?", "Yes. The platform is in public beta and every feature is free for filmmakers and producers during this period."],
   ["How do producers and investors join?", "Sign up with a single Google account or email — you automatically get access to the Producer Studio. Once an admin verifies your account, you'll also see private projects submitted by filmmakers."],
 ];
@@ -200,78 +184,51 @@ export default async function Home() {
       <IntelligenceTicker />
 
       {/* PLATFORM */}
+      {/* PLATFORM
+          Was ~1,180px: an opening, four steps wearing icon circles, a separate
+          "The idea" block with a decorative join, then the button. Four things
+          competing to be read first, and the button sat after all of them, so
+          anyone already convinced had to scroll past the explanation to act.
+
+          Now one glance. The claim and the button hold the left column, the
+          four steps stack on the right. "The idea" folded into the supporting
+          line, because the headline was already making that argument. */}
       <section id="features" className="bg-parchment">
-        <div className="max-w-6xl mx-auto px-6 py-24 md:py-32">
+        <div className="max-w-6xl mx-auto px-6 py-20 md:py-24">
+          <div className="grid md:grid-cols-[0.9fr_1.1fr] gap-12 md:gap-16 items-start">
 
-          {/* Opening */}
-          <div className="max-w-3xl mb-20">
-            <p className="eyebrow mb-5">Platform</p>
-            <h2 className="font-display text-[36px] md:text-[52px] leading-[1.08] font-normal">
-              You add the film pitch.<br className="hidden md:block" />{" "}
-              <span className="italic text-gold">We find the funds.</span>
-            </h2>
-            <p className="mt-6 text-[18px] leading-[1.7] text-ash max-w-xl">
-              Add it once, and we keep checking — new grants, closing dates, and
-              which ones you actually qualify for.
-            </p>
-          </div>
-
-          {/* 4 Steps */}
-          <div className="grid md:grid-cols-2 gap-x-20 gap-y-0">
-            {STEPS.map((s) => (
-              <div key={s.num} className="hairline pt-8 pb-8">
-                <div className="flex items-start gap-5">
-                  {/* Icon circle */}
-                  <div
-                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center mt-0.5"
-                    style={{ border: "1px solid rgba(191,153,83,0.35)", background: "rgba(191,153,83,0.06)" }}
-                  >
-                    <Icon name={s.icon} className="text-gold" style={{ fontSize: 16 }} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] tracking-[0.2em] uppercase text-ash/50 mb-2">{s.num}</p>
-                    <h3 className="font-display text-[22px] font-normal mb-3">{s.title}</h3>
-                    <p className="text-[16px] leading-[1.7] text-ash">{s.body.replace("%OPPS% ", oppLabel ? oppLabel + " " : "")}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Closing — the two needs, shown meeting rather than described.
-              The layout carries the argument: two halves, a join, a resolution. */}
-          <div className="mt-24 border-t border-line pt-16">
-            <p className="eyebrow text-center mb-12">The idea</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-y-8 gap-x-10 max-w-4xl mx-auto">
-              <p className="font-display text-[26px] md:text-[32px] leading-[1.25] font-normal text-center md:text-right">
-                Filmmakers need <span className="text-gold">funding</span>.
+            <div>
+              <p className="eyebrow mb-5">Platform</p>
+              <h2 className="font-display text-[34px] md:text-[44px] leading-[1.08] font-normal">
+                You add the film pitch.<br className="hidden md:block" />{" "}
+                <span className="italic text-gold">We find the funds.</span>
+              </h2>
+              <p className="mt-5 text-[16px] leading-[1.7] text-ash max-w-md">
+                Filmmakers need funding. Producers need stories. This is where
+                they meet.
               </p>
-
-              {/* Join — a hairline through a gold lozenge. Horizontal on mobile,
-                  vertical on desktop, so the two halves always read as meeting. */}
-              <div className="flex md:flex-col items-center justify-center gap-3" aria-hidden="true">
-                <span className="block h-px w-14 md:h-12 md:w-px bg-line" />
-                <span className="block h-[7px] w-[7px] rotate-45 bg-gold shrink-0" />
-                <span className="block h-px w-14 md:h-12 md:w-px bg-line" />
-              </div>
-
-              <p className="font-display text-[26px] md:text-[32px] leading-[1.25] font-normal text-center md:text-left">
-                Producers need <span className="text-gold">stories</span>.
-              </p>
-            </div>
-
-            <p className="font-display text-[24px] md:text-[34px] leading-[1.3] font-normal text-center mt-14 max-w-3xl mx-auto text-balance">
-              PITCH.FYLYM is where they <span className="italic text-gold">find each other</span>.
-            </p>
-
-            <div className="text-center">
-              <Link href="/signup" className="btn-gold mt-12 inline-block">
+              <Link href="/signup" className="btn-gold mt-8 inline-block">
                 Create your free account
               </Link>
             </div>
-          </div>
 
+            <ol>
+              {STEPS.map((s, i) => (
+                <li key={s.num}
+                    className={`flex gap-4 py-4 ${i === 0 ? "" : "border-t border-line"}`}>
+                  <span className="font-display text-[15px] text-gold shrink-0 w-6 leading-[1.6]">
+                    {s.num}
+                  </span>
+                  <div>
+                    <p className="text-[14.5px] font-semibold leading-snug">{s.title}</p>
+                    <p className="mt-1 text-[13.5px] leading-[1.6] text-ash">
+                      {s.body.replace("%OPPS%", oppLabel ? oppLabel + " " : "")}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
         </div>
       </section>
 
