@@ -3,6 +3,7 @@ import { ROBOTS_NOINDEX } from "@/lib/seo";
 import { createClient } from "@/lib/supabase/server";
 import { getPublishedResources } from "@/lib/resources";
 import { sized, srcSet2x } from "@/lib/image-url";
+import ShareLinkButton from "@/components/ShareLinkButton";
 
 export const metadata: Metadata = {
   title: "Filmmaking Resources",
@@ -52,14 +53,18 @@ export default async function ResourcesPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {items.map((r) => (
+              // The share button sits beside the card's link, not inside it: a
+              // button nested in an <a> is invalid and its click would follow
+              // the link. It shares the resource's own URL — this page needs a
+              // login, so sending it would hand the recipient a sign-in screen.
+              <div key={r.id} className="relative">
               <a
-                key={r.id}
                 href={r.url}
                 target="_blank"
                 // nofollow: these are curated links, not endorsements, and the
                 // page is noindex anyway.
                 rel="noopener noreferrer nofollow"
-                className="card p-5 flex items-start gap-5 group"
+                className="card p-5 pr-16 flex items-start gap-5 group h-full"
               >
                 <div className="w-[72px] h-[72px] shrink-0 rounded-card border border-line bg-parchment overflow-hidden flex items-center justify-center">
                   {r.image_url ? (
@@ -87,6 +92,16 @@ export default async function ResourcesPage() {
                   </span>
                 </div>
               </a>
+              <div className="absolute top-4 right-4 z-[2]">
+                <ShareLinkButton
+                  compact
+                  url={r.url}
+                  label={`Share ${r.title}`}
+                  title={`${r.title} — via PITCH.FYLYM`}
+                  text={`${r.title}. Found on PITCH.FYLYM Filmmaking Resources.`}
+                />
+              </div>
+              </div>
             ))}
           </div>
         </section>
