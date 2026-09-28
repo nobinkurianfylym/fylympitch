@@ -458,7 +458,7 @@ export default function ProjectForm({
         {/* Asset Readiness */}
         <div className="pt-4 border-t border-line">
           <p className="eyebrow text-ash mb-3">
-            Tick what you have ready, if asked
+            Tick what you have ready, if asked by a verified producer
           </p>
           <div className="flex flex-wrap gap-3">
             {([
