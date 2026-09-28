@@ -16,13 +16,17 @@ import { createPortal } from "react-dom";
  */
 export default function ShareLinkButton({
   path,
+  url: absoluteUrl,
   title,
   text,
   label = "Share this page",
   compact = false,
 }: {
   /** Site-relative, e.g. "/list" or "/opportunities/sundance-doc-fund". */
-  path: string;
+  path?: string;
+  /** Absolute URL to share instead of a page on this site — e.g. an external
+   *  filmmaking resource. Takes precedence over `path`. */
+  url?: string;
   title: string;
   text: string;
   label?: string;
@@ -43,7 +47,7 @@ export default function ShareLinkButton({
   }, []);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pitch.fylym.com";
-  const url     = `${siteUrl}${path}`;
+  const url     = absoluteUrl ?? `${siteUrl}${path ?? "/"}`;
 
   const links = [
     {
