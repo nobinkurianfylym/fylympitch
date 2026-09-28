@@ -14,6 +14,8 @@ interface Props {
   selectedId:    string | null;
   loading:       boolean;
   onSelect:      (id: string) => void;
+  /** Filmmaker inbox: explain that producers start conversations. */
+  isFilmmaker?:  boolean;
 }
 
 export function ConversationList({
@@ -21,6 +23,7 @@ export function ConversationList({
   selectedId,
   loading,
   onSelect,
+  isFilmmaker = false,
 }: Props) {
   const [query, setQuery] = useState("");
 
@@ -91,10 +94,24 @@ export function ConversationList({
           </div>
         )}
 
-        {!loading && conversations.length === 0 && (
+        {!loading && conversations.length === 0 && !isFilmmaker && (
           <div className="py-12 px-4">
             <EmptyState variant="no-conversations" />
           </div>
+        )}
+
+        {/* Filmmaker, empty inbox. On desktop the full note sits in the right
+            panel, so the list stays quiet; on mobile the right panel is hidden
+            until a thread opens, so the note lives here instead. */}
+        {!loading && conversations.length === 0 && isFilmmaker && (
+          <>
+            <div className="py-12 px-4 md:hidden">
+              <EmptyState variant="filmmaker-intro" />
+            </div>
+            <div className="hidden md:block px-5 py-10 text-center">
+              <p className="text-[12px] text-ash">No conversations yet</p>
+            </div>
+          </>
         )}
 
         {!loading && conversations.length > 0 && filtered.length === 0 && (

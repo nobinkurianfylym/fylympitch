@@ -62,6 +62,10 @@ export default function InboxShell({
 
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
 
+  // Same shell serves both inboxes. Filmmakers cannot start a conversation,
+  // so they get the producer-led note instead of producer instructions.
+  const isFilmmaker = inboxPath.startsWith("/dashboard");
+
   // ── Sync URL with selected conversation ───────────────────────
   useEffect(() => {
     if (!selectedId) {
@@ -123,6 +127,7 @@ export default function InboxShell({
           selectedId={selectedId}
           loading={loadingConversations && conversations.length === 0}
           onSelect={handleSelect}
+          isFilmmaker={isFilmmaker}
         />
       </div>
 
@@ -136,7 +141,7 @@ export default function InboxShell({
         aria-label="Message panel"
       >
         {!selected && !isProofThread ? (
-          <EmptyState variant="no-selection" />
+          <EmptyState variant={isFilmmaker ? "filmmaker-intro" : "no-selection"} />
         ) : isProofThread ? (
           <ProofNotificationThread
             filmakerId={currentUserId}
