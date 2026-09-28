@@ -1407,6 +1407,20 @@ export async function saveProducerProfile(_prevState: unknown, formData: FormDat
 
   if (upsertError) return { error: upsertError.message };
 
+  // Mark onboarding complete. middleware.ts sends every producer whose
+  // profiles.profile_completed is false back to /producerstudio/onboarding,
+  // and nothing else in the producer path ever set it (handle_new_user
+  // creates every account with false). So "Enter Producer Studio" saved the
+  // form, pushed to /producerstudio, and the middleware bounced the producer
+  // straight back to the form — an endless loop with no error shown.
+  // Set only after the producer_profiles upsert succeeds, because the studio
+  // layout also requires that row.
+  const { error: completeError } = await supabase
+    .from("profiles")
+    .update({ profile_completed: true })
+    .eq("id", user.id);
+  if (completeError) return { error: completeError.message };
+
   // When a producer goes public for the first time, log for retroactive
   // rematch. New project submissions after this point will pick up this
   // producer automatically via the fixed engine query.
