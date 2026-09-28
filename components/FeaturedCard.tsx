@@ -94,18 +94,23 @@ export default async function FeaturedCard() {
       </div>
 
       {/* A poster is the reason someone looks at this card, so when there is
-          one it gets the top of the card at full width rather than sitting
-          beside the title as a thumbnail. Capped in height so the card still
+          one it gets the top of the card rather than sitting beside the title
+          as a thumbnail. The whole poster is always shown: it used to be
+          object-cover in a 4:5 box capped at 300px, which on a ~316px card is
+          really ~1:1, so a 2:3 one-sheet lost its title and billing block.
+          Now the image keeps its own proportions inside a parchment mat —
+          portrait posters sit centred with margin either side, landscape
+          stills run the full width. Same 300px ceiling, so the card still
           fits inside a 100svh hero on a laptop. */}
       {card.imageUrl && (
-        <div className="-mx-[18px] -mt-1 mb-3.5 overflow-hidden border-y border-line bg-parchment">
+        <div className="-mx-[18px] -mt-1 mb-3.5 flex items-center justify-center border-y border-line bg-parchment p-3">
           <img
             src={card.imageUrl}
             alt=""
             loading="lazy"
             decoding="async"
-            className="w-full object-cover"
-            style={{ aspectRatio: "4 / 5", maxHeight: 300 }}
+            className="block h-auto w-auto max-w-full object-contain"
+            style={{ maxHeight: 276, boxShadow: "0 6px 18px -10px rgba(26,24,21,0.45)" }}
           />
         </div>
       )}
