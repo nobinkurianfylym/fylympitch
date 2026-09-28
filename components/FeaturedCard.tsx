@@ -98,19 +98,31 @@ export default async function FeaturedCard() {
           as a thumbnail. The whole poster is always shown: it used to be
           object-cover in a 4:5 box capped at 300px, which on a ~316px card is
           really ~1:1, so a 2:3 one-sheet lost its title and billing block.
-          Now the image keeps its own proportions inside a parchment mat —
-          portrait posters sit centred with margin either side, landscape
-          stills run the full width. Same 300px ceiling, so the card still
-          fits inside a 100svh hero on a laptop. */}
+          Now the poster is drawn whole (object-contain) and the space it does
+          not cover is filled with a blurred copy of the same image, so the
+          frame is always full edge to edge with no bars and no mat. Same URL
+          for both layers, so the browser downloads it once. Fixed 300px
+          height, so the card still fits inside a 100svh hero on a laptop. */}
       {card.imageUrl && (
-        <div className="-mx-[18px] -mt-1 mb-3.5 flex items-center justify-center border-y border-line bg-parchment p-3">
+        <div
+          className="relative -mx-[18px] -mt-1 mb-3.5 overflow-hidden border-y border-line bg-parchment"
+          style={{ height: 300 }}
+        >
+          <img
+            src={card.imageUrl}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ filter: "blur(22px) brightness(0.92)", transform: "scale(1.2)" }}
+          />
           <img
             src={card.imageUrl}
             alt=""
             loading="lazy"
             decoding="async"
-            className="block h-auto w-auto max-w-full object-contain"
-            style={{ maxHeight: 276, boxShadow: "0 6px 18px -10px rgba(26,24,21,0.45)" }}
+            className="relative block h-full w-full object-contain"
           />
         </div>
       )}
