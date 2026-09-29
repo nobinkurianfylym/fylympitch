@@ -267,6 +267,56 @@ export type ShowcaseProject = {
  * Over-fetches so the caller can drop franchise titles and anything missing
  * the fields the engine needs, and still have three to show.
  */
+export type SampleProject = {
+  id: string;
+  slug: string | null;
+  title: string;
+  genre: string | null;
+  format: string | null;
+  stage: string | null;
+  country: string | null;
+  poster_path: string;
+};
+
+/**
+ * Posters for the homepage "For producers" section.
+ *
+ * Real public pitches with a poster, in the admin's Pitch order: pinned first,
+ * then newest or most liked (/admin/projects/order). The page drops any the
+ * engine section is already showing and keeps three, so twelve leaves room.
+ * Third-party franchise titles are skipped, as they are in the engine demo.
+ */
+export const getProducerSampleProjects = unstable_cache(
+  async (): Promise<SampleProject[]> => {
+    try {
+      const supabase = createAnonClient();
+      const { data } = await withPitchOrder((order) =>
+        order(supabase
+          .from("projects")
+          .select("id, slug, title, genre, format, stage, country, poster_path")
+          .eq("is_public", true)
+          .eq("admin_hidden", false)
+          .not("poster_path", "is", null)
+          .neq("poster_path", ""))
+          .limit(12),
+      );
+      return (data ?? [])
+        .filter((p: any) => p.title && !isThirdPartyFranchise(p.title))
+        .map((p: any) => ({
+          id: p.id, slug: p.slug ?? null, title: p.title,
+          genre: p.genre ?? null, format: p.format ?? null,
+          stage: p.stage ?? null, country: p.country ?? null,
+          poster_path: p.poster_path,
+        }));
+    } catch (err) {
+      console.error("[cached-queries] getProducerSampleProjects failed:", err);
+      return [];
+    }
+  },
+  ["producer-sample-projects"],
+  { revalidate: TTL, tags: ["projects"] },
+);
+
 export const getShowcaseProjects = unstable_cache(
   async (): Promise<ShowcaseProject[]> => {
     try {

@@ -4,7 +4,8 @@ import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { Footer } from "@/components/Footer";
 import ShareLinkButton from "@/components/ShareLinkButton";
-import HomepageDemo from "@/components/HomepageDemo";
+import HomepageDemo, { getEngineDemo } from "@/components/HomepageDemo";
+import ProducerShowcasePreview from "@/components/ProducerShowcasePreview";
 import HeroToggle from "@/components/HeroToggle";
 import FeaturedCard from "@/components/FeaturedCard";
 
@@ -19,7 +20,7 @@ import ProducerProjectTicker from "@/components/ProducerProjectTicker";
 import { Icon } from "@/components/Icon";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
-import { getTrendingProjects, getOpportunityCount } from "@/lib/cached-queries";
+import { getTrendingProjects, getOpportunityCount, getProducerSampleProjects } from "@/lib/cached-queries";
 
 /**
  * The date on the sample certificate in the Proof of Existence section.
@@ -99,11 +100,20 @@ export default async function Home() {
   // the page spent three round-trips to Supabase doing nothing but waiting.
   // The queries themselves take single-digit milliseconds; the latency is the
   // hop, and the hop is what this removes.
-  const [userRes, trendingProjects, oppCount] = await Promise.all([
+  const [userRes, trendingProjects, oppCount, producerCandidates, engineDemo] = await Promise.all([
     supabase.auth.getUser(),
     getTrendingProjects(),
     getOpportunityCount(),
+    getProducerSampleProjects(),
+    // Cached, and the same call HomepageDemo makes: asking here costs no
+    // second engine run. It says which pitches the engine section shows.
+    getEngineDemo(),
   ]);
+
+  // "For producers" shows three real posters, never ones the engine section
+  // above is already showing.
+  const engineDemoIds = new Set(engineDemo.ids);
+  const producerSamples = producerCandidates.filter((p) => !engineDemoIds.has(p.id)).slice(0, 3);
 
   const user = userRes.data.user;
 
@@ -462,16 +472,16 @@ export default async function Home() {
                 Discover projects that fit your slate.
               </h2>
               <p className="text-[17px] leading-relaxed text-ash mb-10">
-                Browse verified filmmaker projects by genre, stage, language and
-                territory. Approval-only access means every filmmaker you contact
-                is serious, working, and ready to pitch.
+                Browse independent projects by genre, stage, language and
+                territory. Every pitch arrives with its logline, budget, stage and
+                materials in one place, scored by the PITCH.FYLYM engine.
               </p>
               <div className="mb-10">
                 {[
-                  "Filter the project showcase by genre, format and territory",
-                  "Request scripts and pitch decks through access control",
-                  "Send structured co-production, investment or acquisition offers",
-                  "Every project submitted through the PITCH.FYLYM engine",
+                  "Filter the showcase by genre, format, language and territory",
+                  "Open the pitch decks and scripts filmmakers share with you",
+                  "Send structured co-production, investment, distribution or acquisition offers",
+                  "Save projects to your pipeline and track every conversation",
                 ].map((item) => (
                   <div key={item} className="hairline pt-4 pb-1 text-[14px] text-ash">{item}</div>
                 ))}
@@ -479,31 +489,8 @@ export default async function Home() {
               <Link href="/signup?role=producer" className="btn-ghost">Join as producer</Link>
             </div>
 
-            {/* Right — project showcase preview */}
-            <div>
-              <p className="eyebrow mb-8">Project showcase</p>
-              {[
-                { title: "The Monsoon Letters", meta: "Drama · Hindi · Development",           score: 94 },
-                { title: "Neon Shadows",         meta: "Thriller · Japanese · Post-production", score: 87 },
-                { title: "Soil & Sky",           meta: "Documentary · Swahili · Production",    score: 82 },
-              ].map((proj) => (
-                <div key={proj.title} className="hairline py-5 flex items-center justify-between gap-6">
-                  <div className="min-w-0">
-                    <p className="font-display text-[18px] mb-1.5">{proj.title}</p>
-                    <p className="text-[12px] tracking-[0.13em] uppercase text-ash">{proj.meta}</p>
-                  </div>
-                  <div
-                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-[13px] text-gold"
-                    style={{ border: "1px solid rgba(191,153,83,0.35)" }}
-                  >
-                    {proj.score}
-                  </div>
-                </div>
-              ))}
-              <p className="mt-6 text-[11px] tracking-[0.18em] uppercase text-ash/50">
-                Private projects unlock after verification
-              </p>
-            </div>
+            {/* Right — real public pitches with their posters */}
+            <ProducerShowcasePreview projects={producerSamples} />
 
           </div>
         </div>
