@@ -4,7 +4,8 @@ import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { Footer } from "@/components/Footer";
 import ShareLinkButton from "@/components/ShareLinkButton";
-import HomepageDemo, { getEngineDemo } from "@/components/HomepageDemo";
+import HomepageDemo, { getEngineDemo, getFilmmakerSectionMatches } from "@/components/HomepageDemo";
+import FilmmakerMatchesPreview from "@/components/FilmmakerMatchesPreview";
 import ProducerShowcasePreview from "@/components/ProducerShowcasePreview";
 import HeroToggle from "@/components/HeroToggle";
 import FeaturedCard from "@/components/FeaturedCard";
@@ -100,7 +101,7 @@ export default async function Home() {
   // the page spent three round-trips to Supabase doing nothing but waiting.
   // The queries themselves take single-digit milliseconds; the latency is the
   // hop, and the hop is what this removes.
-  const [userRes, trendingProjects, oppCount, producerCandidates, engineDemo] = await Promise.all([
+  const [userRes, trendingProjects, oppCount, producerCandidates, engineDemo, filmmakerMatches] = await Promise.all([
     supabase.auth.getUser(),
     getTrendingProjects(),
     getOpportunityCount(),
@@ -108,6 +109,9 @@ export default async function Home() {
     // Cached, and the same call HomepageDemo makes: asking here costs no
     // second engine run. It says which pitches the engine section shows.
     getEngineDemo(),
+    // Real engine output for "For filmmakers": a pitch the engine section is
+    // not showing, and three of its matches. Cached like the demo.
+    getFilmmakerSectionMatches(),
   ]);
 
   // "For producers" shows three real posters, never ones the engine section
@@ -430,31 +434,8 @@ export default async function Home() {
               <Link href="/signup" className="btn-gold">Submit your project</Link>
             </div>
 
-            {/* Right — opportunity preview */}
-            <div>
-              <p className="eyebrow mb-8">Matched opportunities</p>
-              {[
-                { title: "3 MEDIA / Creative Europe",  meta: "Development Lab · Deadline 30 Jun",  score: 85 },
-                { title: "Torino FilmLab",              meta: "Production Grant · Deadline 1 Dec",  score: 79 },
-                { title: "Hubert Bals Fund",            meta: "Film Fund · Deadline TBA 2026",      score: 78 },
-              ].map((opp) => (
-                <div key={opp.title} className="hairline py-5 flex items-center justify-between gap-6">
-                  <div className="min-w-0">
-                    <p className="text-[15px] mb-1.5">{opp.title}</p>
-                    <p className="text-[12px] tracking-[0.13em] uppercase text-ash">{opp.meta}</p>
-                  </div>
-                  <div
-                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-[13px] text-gold"
-                    style={{ border: "1px solid rgba(191,153,83,0.35)" }}
-                  >
-                    {opp.score}
-                  </div>
-                </div>
-              ))}
-              <p className="mt-6 text-[11px] tracking-[0.18em] uppercase text-ash/50">
-                Free for filmmakers — no verification needed
-              </p>
-            </div>
+            {/* Right — real matches for a real public pitch, with funder logos */}
+            <FilmmakerMatchesPreview data={filmmakerMatches} />
 
           </div>
         </div>

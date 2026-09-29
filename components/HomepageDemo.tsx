@@ -17,7 +17,8 @@
 // empty frame or a single lonely card.
 
 import { unstable_cache } from "next/cache";
-import { getShowcaseProjects, getActiveOpportunitiesForEngine } from "@/lib/cached-queries";
+import { getShowcaseProjects, getActiveOpportunitiesForEngine, type ShowcaseProject } from "@/lib/cached-queries";
+import { fundLogo, fundMonogram } from "@/lib/fund-logos";
 import { DEMO_PROJECTS, type DemoProject } from "./homepage-demo-data";
 import { familyForType } from "@/lib/opportunity-taxonomy";
 import { usd, TYPE_LABEL } from "@/lib/format";
@@ -55,6 +56,26 @@ function categories(rows: { opportunity: any }[]): DemoProject["categories"] {
     .map(([label, count]) => ({ label, count }));
 }
 
+/** A showcase row in the shape the engine reads. */
+function toEngineProject(c: ShowcaseProject): any {
+  return {
+    id: c.id, owner_id: "", slug: c.slug, title: c.title,
+    genre: c.genre, format: c.format, stage: c.stage,
+    country: c.country, language: c.language,
+    budget_usd: c.budget_usd, funding_needed_usd: c.funding_needed_usd,
+    logline: c.logline, is_public: true, created_at: "",
+    // Funding readiness reads presence, not content. These stand in for
+    // fields we deliberately did not fetch: without them every real pitch
+    // would score 40/100 or less, and the homepage would be publishing a
+    // false verdict on someone's film because of a missing SELECT.
+    synopsis: c.has_synopsis ? "present" : null,
+    director_statement: c.has_director_statement ? "present" : null,
+    producer_info: c.has_producer_info ? "present" : null,
+    pitch_deck_path: c.has_deck ? "present" : null,
+    script_path: c.has_script ? "present" : null,
+  };
+}
+
 /**
  * The demo's pick, computed once and cached.
  *
@@ -82,22 +103,7 @@ export const getEngineDemo = unstable_cache(
       for (const c of candidates) {
         if (built.length >= WANTED) break;
 
-        const project: any = {
-          id: c.id, owner_id: "", slug: c.slug, title: c.title,
-          genre: c.genre, format: c.format, stage: c.stage,
-          country: c.country, language: c.language,
-          budget_usd: c.budget_usd, funding_needed_usd: c.funding_needed_usd,
-          logline: c.logline, is_public: true, created_at: "",
-          // Funding readiness reads presence, not content. These stand in for
-          // fields we deliberately did not fetch: without them every real pitch
-          // would score 40/100 or less, and the homepage would be publishing a
-          // false verdict on someone's film because of a missing SELECT.
-          synopsis: c.has_synopsis ? "present" : null,
-          director_statement: c.has_director_statement ? "present" : null,
-          producer_info: c.has_producer_info ? "present" : null,
-          pitch_deck_path: c.has_deck ? "present" : null,
-          script_path: c.has_script ? "present" : null,
-        };
+        const project = toEngineProject(c);
 
         const ranked = rankHybridMatches(project, opportunities as any[]);
         // A pitch with almost nothing to show would undersell the engine and
@@ -143,6 +149,91 @@ export const getEngineDemo = unstable_cache(
     return { projects: live ? built : DEMO_PROJECTS, ids: live ? ids : [], live };
   },
   ["homepage-engine-demo"],
+  { revalidate: 300, tags: ["projects", "opportunities"] },
+);
+
+export type FilmmakerMatch = {
+  name: string;
+  typeLabel: string;
+  deadline: string;
+  score: number;
+  logo: string | null;
+  monogram: string;
+};
+
+export type FilmmakerMatches = {
+  project: { title: string; href: string };
+  total: number;
+  matches: FilmmakerMatch[];
+};
+
+function deadlineText(o: any): string {
+  if (o?.deadline_note?.trim()) return o.deadline_note.trim();
+  if (o?.deadline) {
+    const d = new Date(o.deadline);
+    if (!Number.isNaN(d.getTime())) {
+      return `Deadline ${d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}`;
+    }
+  }
+  return "Deadline varies";
+}
+
+/**
+ * Real engine output for the homepage "For filmmakers" section.
+ *
+ * It replaced three hard-coded rows whose scores (85, 79, 78) nothing had
+ * calculated. Now: one public pitch the engine section is NOT already showing,
+ * scored against the live catalogue, and three of its matches. Funders whose
+ * logo we hold are preferred among its top fifteen, so the rows are not
+ * necessarily its top three; the section says "3 of its N matches" for that
+ * reason. Every score shown is the engine's own.
+ *
+ * Cached with the engine demo, and for the same reasons.
+ */
+export const getFilmmakerSectionMatches = unstable_cache(
+  async (): Promise<FilmmakerMatches | null> => {
+    const { rankHybridMatches } = await import("@/services/fylympitchEngine");
+    const [candidates, opportunities, demo] = await Promise.all([
+      getShowcaseProjects(),
+      getActiveOpportunitiesForEngine(),
+      getEngineDemo(),
+    ]);
+    if (opportunities.length === 0) return null;
+
+    const alreadyShown = new Set(demo.ids);
+    for (const c of candidates) {
+      if (alreadyShown.has(c.id)) continue;
+
+      const ranked = rankHybridMatches(toEngineProject(c), opportunities as any[]);
+      if (ranked.length < 5) continue;
+
+      const pool = ranked.slice(0, 15);
+      const picked = pool.filter((m) => fundLogo(m.opportunity.title)).slice(0, 3);
+      for (const m of pool) {
+        if (picked.length >= 3) break;
+        if (!picked.includes(m)) picked.push(m);
+      }
+      picked.sort((a, b) => b.match.score - a.match.score);
+
+      return {
+        project: {
+          title: c.title,
+          href: c.slug ? `/filmprojects/${c.slug}` : `/filmprojects/${c.id}`,
+        },
+        total: ranked.length,
+        matches: picked.map((m) => ({
+          name: m.opportunity.title,
+          typeLabel: TYPE_LABEL[m.opportunity.opp_type as keyof typeof TYPE_LABEL] ?? m.opportunity.opp_type,
+          deadline: deadlineText(m.opportunity),
+          score: m.match.score,
+          logo: fundLogo(m.opportunity.title),
+          monogram: fundMonogram(m.opportunity.title),
+        })),
+      };
+    }
+    return null;
+  },
+  ["homepage-filmmaker-matches"],
   { revalidate: 300, tags: ["projects", "opportunities"] },
 );
 
