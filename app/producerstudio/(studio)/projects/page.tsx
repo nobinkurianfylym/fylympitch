@@ -1,3 +1,4 @@
+import { withPitchOrder } from "@/lib/pitch-order";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -39,21 +40,22 @@ export default async function ProducerProjectsPage({
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
-  let query = supabase
-    .from("projects")
-    .select("id, slug, title, genre, format, stage, country, language, director_name, logline, budget_usd, finance_secured_usd, funding_needed_usd, poster_path, pitch_deck_path, is_public, created_at, owner_id, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, username, career_stage)")
-    .eq("admin_hidden", false)
-    .is("target_producer_id", null)
-    .order("created_at", { ascending: false })
-    .limit(100);
+  // Order: admin-pinned pitches first (/admin/projects/order), then newest.
+  const { data: projects } = await withPitchOrder((order) => {
+    let query = order(supabase
+      .from("projects")
+      .select("id, slug, title, genre, format, stage, country, language, director_name, logline, budget_usd, finance_secured_usd, funding_needed_usd, poster_path, pitch_deck_path, is_public, created_at, owner_id, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name, username, career_stage)")
+      .eq("admin_hidden", false)
+      .is("target_producer_id", null))
+      .limit(100);
 
-  if (genre)    query = query.eq("genre", genre);
-  if (format)   query = query.eq("format", format.toLowerCase());
-  if (q)        query = (query as any).or(`title.ilike.%${q}%,logline.ilike.%${q}%`);
-  if (country)  query = query.ilike("country", `%${country}%`);
-  if (language) query = query.ilike("language", `%${language}%`);
-
-  const { data: projects } = await query;
+    if (genre)    query = query.eq("genre", genre);
+    if (format)   query = query.eq("format", format.toLowerCase());
+    if (q)        query = query.or(`title.ilike.%${q}%,logline.ilike.%${q}%`);
+    if (country)  query = query.ilike("country", `%${country}%`);
+    if (language) query = query.ilike("language", `%${language}%`);
+    return query;
+  });
 
   const projectIds = (projects ?? []).map((p) => p.id);
 

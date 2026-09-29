@@ -50,6 +50,9 @@ export default async function AdminProjects({
           <a href="/admin/projects?filter=private" className={`btn-ghost ${filter === "private" ? "border-gold text-ink" : ""}`}>
             Filmmaker private
           </a>
+          <a href="/admin/projects/order" className="btn-ghost border-gold/50 text-ink">
+            Pitch order
+          </a>
         </div>
       </div>
 

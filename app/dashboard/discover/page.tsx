@@ -1,3 +1,4 @@
+import { withPitchOrder } from "@/lib/pitch-order";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { usd } from "@/lib/format";
@@ -55,23 +56,24 @@ export default async function DiscoverPage({
     );
   }
 
-  let query = supabase
-    .from("projects")
-    .select("id, title, genre, format, language, country, budget_usd, funding_needed_usd, stage, logline, synopsis, pitch_deck_path, script_path, created_at, profiles!projects_owner_id_fkey(full_name, country)")
-    .eq("is_public", true)
-    // Neither of these was filtered here, so an approved industry user saw
-    // admin-hidden projects and other producers' exclusive pitches.
-    .eq("admin_hidden", false)
-    // Exclusivity is not privacy (085). is_public above already decides who
-    // may see this; a pitch addressed to a producer and marked Public belongs
-    // on the showcase the filmmaker was promised.
-    .order("created_at", { ascending: false })
-    .limit(40);
+  // Order: admin-pinned pitches first (/admin/projects/order), then newest.
+  const { data: projects } = await withPitchOrder((order) => {
+    let query = order(supabase
+      .from("projects")
+      .select("id, title, genre, format, language, country, budget_usd, funding_needed_usd, stage, logline, synopsis, pitch_deck_path, script_path, created_at, profiles!projects_owner_id_fkey(full_name, country)")
+      .eq("is_public", true)
+      // Neither of these was filtered here, so an approved industry user saw
+      // admin-hidden projects and other producers' exclusive pitches.
+      .eq("admin_hidden", false))
+      // Exclusivity is not privacy (085). is_public above already decides who
+      // may see this; a pitch addressed to a producer and marked Public belongs
+      // on the showcase the filmmaker was promised.
+      .limit(40);
 
-  if (q) query = query.or(`title.ilike.%${q}%,logline.ilike.%${q}%`);
-  if (genre) query = query.eq("genre", genre);
-
-  const { data: projects } = await query;
+    if (q) query = query.or(`title.ilike.%${q}%,logline.ilike.%${q}%`);
+    if (genre) query = query.eq("genre", genre);
+    return query;
+  });
 
   // Signed URLs for scripts and decks (1 hour)
   const withLinks = await Promise.all(

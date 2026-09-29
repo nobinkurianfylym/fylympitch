@@ -1,6 +1,7 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { createAnonClient } from "@/lib/supabase/anon";
+import { withPitchOrder } from "@/lib/pitch-order";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared, NON user-specific queries, cached in R2.
@@ -137,26 +138,28 @@ export const getPublicProjects = unstable_cache(
   async (format?: string, page = 0): Promise<any[]> => {
     try {
       const supabase = createAnonClient();
-      let query = supabase
-        .from("projects")
-        .select("id, slug, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
-        .eq("is_public", true)
-        // admin_hidden belongs in the query as well as in RLS. Relying on a
-        // policy alone means one permissive policy added later silently
-        // unhides everything — which is exactly what projects_select was
-        // doing before migration 081.
-        .eq("admin_hidden", false)
-        // Exclusivity is not privacy (085). is_public above already decides who
-        // may see this; a pitch addressed to a producer and marked Public belongs
-        // on the showcase the filmmaker was promised.
-        .order("created_at", { ascending: false })
-        // One extra row, never rendered: its presence is how the page knows a
-        // next page exists without a second count(*) query on every request.
-        .range(page * PUBLIC_PAGE_SIZE, page * PUBLIC_PAGE_SIZE + PUBLIC_PAGE_SIZE);
+      const { data } = await withPitchOrder((order) => {
+        let query = order(supabase
+          .from("projects")
+          .select("id, slug, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+          .eq("is_public", true)
+          // admin_hidden belongs in the query as well as in RLS. Relying on a
+          // policy alone means one permissive policy added later silently
+          // unhides everything — which is exactly what projects_select was
+          // doing before migration 081.
+          .eq("admin_hidden", false))
+          // Exclusivity is not privacy (085). is_public above already decides who
+          // may see this; a pitch addressed to a producer and marked Public belongs
+          // on the showcase the filmmaker was promised.
+          //
+          // Order: admin-pinned pitches first (/admin/projects/order), then newest.
+          // One extra row, never rendered: its presence is how the page knows a
+          // next page exists without a second count(*) query on every request.
+          .range(page * PUBLIC_PAGE_SIZE, page * PUBLIC_PAGE_SIZE + PUBLIC_PAGE_SIZE);
 
-      if (format) query = query.eq("format", format.toLowerCase());
-
-      const { data } = await query;
+        if (format) query = query.eq("format", format.toLowerCase());
+        return query;
+      });
       return data ?? [];
     } catch (err) {
       console.error("[cached-queries] getPublicProjects failed:", err);

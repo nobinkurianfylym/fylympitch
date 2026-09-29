@@ -9,6 +9,7 @@ import FilmIdentity from "@/components/FilmIdentity";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
 import { getPublicProjects, PUBLIC_PAGE_SIZE } from "@/lib/cached-queries";
+import { withPitchOrder } from "@/lib/pitch-order";
 
 export const dynamic = "force-dynamic";
 
@@ -42,18 +43,19 @@ export default async function ProjectsPage({
   // database rather than filling R2 with entries nobody asks for twice.
   const search = q?.trim();
   const listing: Promise<any[]> = search
-    ? (supabase
-        .from("projects")
-        .select("id, slug, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
-        .eq("is_public", true)
-        .eq("admin_hidden", false)
-        // Exclusivity is not privacy (085). is_public above already decides who
-        // may see this; a pitch addressed to a producer and marked Public belongs
-        // on the showcase the filmmaker was promised.
-        .order("created_at", { ascending: false })
-        .range(page * PUBLIC_PAGE_SIZE, page * PUBLIC_PAGE_SIZE + PUBLIC_PAGE_SIZE) as any)
-        .or(`title.ilike.%${search}%,logline.ilike.%${search}%`)
-        .then((r: any) => r.data ?? [])
+    ? withPitchOrder((order) =>
+        order(supabase
+          .from("projects")
+          .select("id, slug, title, genre, format, stage, language, country, director_name, logline, budget_usd, budget_currency, finance_secured_usd, funding_needed_usd, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, career_stage)")
+          .eq("is_public", true)
+          .eq("admin_hidden", false))
+          // Exclusivity is not privacy (085). is_public above already decides who
+          // may see this; a pitch addressed to a producer and marked Public belongs
+          // on the showcase the filmmaker was promised.
+          // Order: admin-pinned pitches first, then newest.
+          .range(page * PUBLIC_PAGE_SIZE, page * PUBLIC_PAGE_SIZE + PUBLIC_PAGE_SIZE)
+          .or(`title.ilike.%${search}%,logline.ilike.%${search}%`)
+      ).then((r: any) => r.data ?? [])
     : getPublicProjects(format, page);
 
   const [userRes, projects] = await Promise.all([
