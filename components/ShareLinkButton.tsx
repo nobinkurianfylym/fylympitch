@@ -21,6 +21,9 @@ export default function ShareLinkButton({
   text,
   label = "Share this page",
   compact = false,
+  appendUrl = true,
+  copyMessage = false,
+  tone = "light",
 }: {
   /** Site-relative, e.g. "/list" or "/opportunities/sundance-doc-fund". */
   path?: string;
@@ -32,9 +35,17 @@ export default function ShareLinkButton({
   label?: string;
   /** Icon-only, for sitting beside a heading rather than under a paragraph. */
   compact?: boolean;
+  /** false when `text` already names the site: the link is not appended to
+   *  Email, WhatsApp, X or the share sheet a second time. LinkedIn only ever
+   *  takes the URL. */
+  appendUrl?: boolean;
+  /** Also offer "Copy message", which copies the whole text. */
+  copyMessage?: boolean;
+  /** "dark" styles the trigger for a dark background, such as the footer. */
+  tone?: "light" | "dark";
 }) {
   const [open, setOpen]           = useState(false);
-  const [copied, setCopied]       = useState(false);
+  const [copied, setCopied]       = useState<"link" | "message" | null>(null);
   const [mounted, setMounted]     = useState(false);
   const [canNativeShare, setCanNativeShare] = useState(false);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
@@ -53,7 +64,7 @@ export default function ShareLinkButton({
     {
       label: "Email",
       icon: "✉",
-      href: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(`${text}\n\n${url}`)}`,
+      href: `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(appendUrl ? `${text}\n\n${url}` : text)}`,
     },
     {
       label: "LinkedIn",
@@ -63,12 +74,12 @@ export default function ShareLinkButton({
     {
       label: "Twitter / X",
       icon: "𝕏",
-      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}${appendUrl ? `&url=${encodeURIComponent(url)}` : ""}`,
     },
     {
       label: "WhatsApp",
       icon: "◉",
-      href: `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`,
+      href: `https://wa.me/?text=${encodeURIComponent(appendUrl ? `${text} ${url}` : text)}`,
     },
   ];
 
@@ -89,17 +100,17 @@ export default function ShareLinkButton({
     setOpen((o) => !o);
   }
 
-  async function copyLink() {
+  async function copy(kind: "link" | "message") {
     try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => { setCopied(false); setOpen(false); }, 1500);
+      await navigator.clipboard.writeText(kind === "message" ? (appendUrl ? `${text}\n\n${url}` : text) : url);
+      setCopied(kind);
+      setTimeout(() => { setCopied(null); setOpen(false); }, 1500);
     } catch { /* clipboard blocked — the other options still work */ }
   }
 
   async function nativeShare() {
     if (canNativeShare) {
-      try { await navigator.share({ title, text, url }); } catch { /* dismissed */ }
+      try { await navigator.share(appendUrl ? { title, text, url } : { title, text }); } catch { /* dismissed */ }
       setOpen(false);
     }
   }
@@ -133,11 +144,19 @@ export default function ShareLinkButton({
           </a>
         ))}
         <button
-          onClick={copyLink}
+          onClick={() => copy("link")}
           className="w-full text-left px-4 py-2.5 text-[13px] text-ash hover:text-ink hover:bg-parchment flex items-center gap-2.5 border-t border-line mt-1"
         >
-          <span className="text-[11px] w-4">⎘</span> {copied ? "Copied!" : "Copy link"}
+          <span className="text-[11px] w-4">⎘</span> {copied === "link" ? "Copied!" : "Copy link"}
         </button>
+        {copyMessage && (
+          <button
+            onClick={() => copy("message")}
+            className="w-full text-left px-4 py-2.5 text-[13px] text-ash hover:text-ink hover:bg-parchment flex items-center gap-2.5"
+          >
+            <span className="text-[11px] w-4">¶</span> {copied === "message" ? "Copied!" : "Copy message"}
+          </button>
+        )}
       </div>
     </>,
     document.body
@@ -154,9 +173,12 @@ export default function ShareLinkButton({
         aria-label={label}
         title={label}
         className={
-          compact
-            ? "inline-flex items-center justify-center w-9 h-9 rounded-full border border-line bg-white text-ash transition-colors hover:border-gold hover:text-ink"
-            : "inline-flex items-center gap-2 rounded-full border border-line bg-white px-5 py-2.5 text-[12px] tracking-[0.14em] uppercase text-ash transition-colors hover:border-gold hover:text-ink"
+          (compact
+            ? "inline-flex items-center justify-center w-9 h-9 rounded-full border transition-colors hover:border-gold "
+            : "inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-[12px] tracking-[0.14em] uppercase transition-colors hover:border-gold ") +
+          (tone === "dark"
+            ? "border-ivory/20 bg-transparent text-ivory/70 hover:text-ivory"
+            : "border-line bg-white text-ash hover:text-ink")
         }
       >
         {/* Standard share glyph: a node linked to two others. Reads as "send

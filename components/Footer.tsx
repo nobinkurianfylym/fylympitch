@@ -1,4 +1,16 @@
 import Link from "next/link";
+import ShareLinkButton from "@/components/ShareLinkButton";
+
+// What "Share FYLYM" sends. It names the site itself, so the share button is
+// told not to append the link a second time (appendUrl={false}); LinkedIn,
+// which only takes a URL, gets https://www.fylym.com.
+const SHARE_URL = "https://www.fylym.com";
+const SHARE_MESSAGE = [
+  "www.FYLYM.com — Where Films Find Funding.",
+  "🎬 Filmmakers: Share your pitch, get discovered, and find funding.",
+  "🎥 Producers: Discover promising projects, explore investment opportunities, and connect with filmmakers.",
+  "Share. Discover. Fund.",
+].join("\n");
 
 
 function SocialIcon({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
@@ -63,6 +75,17 @@ export function Footer() {
                   <path d="M15.12 5.32H17V2.14A26.11 26.11 0 0 0 14.26 2C11.54 2 9.68 3.66 9.68 6.7v2.62H6.61v3.56h3.07V22h3.68v-9.12h3.06l.46-3.56h-3.52V7.05c0-1.03.28-1.73 1.76-1.73Z"/>
                 </svg>
               </SocialIcon>
+            </div>
+            <div className="mt-6">
+              <ShareLinkButton
+                url={SHARE_URL}
+                title="FYLYM — Where Films Find Funding"
+                text={SHARE_MESSAGE}
+                label="Share FYLYM"
+                appendUrl={false}
+                copyMessage
+                tone="dark"
+              />
             </div>
           </div>
 
