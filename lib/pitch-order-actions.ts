@@ -75,6 +75,27 @@ export async function unpinPitch(projectId: string): Promise<{ error?: string }>
   return {};
 }
 
+/** What follows the pinned pitches: newest first, or most liked first. */
+export async function setPitchOrderMode(mode: string): Promise<{ error?: string }> {
+  const { error, supabase, userId } = await assertAdmin();
+  if (error || !supabase || !userId) return { error: error ?? "Admins only." };
+  if (mode !== "newest" && mode !== "likes") return { error: "Unknown order." };
+
+  const { error: upErr } = await supabase
+    .from("pitch_order_config")
+    .upsert({ id: true, mode, updated_at: new Date().toISOString(), updated_by: userId }, { onConflict: "id" });
+  if (upErr) return { error: upErr.message };
+
+  const { error: logErr } = await supabase.from("audit_logs").insert({
+    actor_id: userId, action: mode === "likes" ? "pitch_order_likes" : "pitch_order_newest",
+    target: "pitch_order_config", target_id: null,
+  });
+  if (logErr) console.error("[pitch-order] audit log failed:", logErr.message);
+
+  refresh();
+  return {};
+}
+
 /** Save the pinned list in the given order: first id is shown first. */
 export async function reorderPinnedPitches(ids: string[]): Promise<{ error?: string }> {
   const { error, supabase, userId } = await assertAdmin();

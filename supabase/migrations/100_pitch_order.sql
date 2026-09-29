@@ -1,11 +1,12 @@
 -- ============================================================
 -- FYLYMPITCH — Migration 100: Admin pitch order
--- Run once in Supabase SQL Editor, BEFORE deploying the code
--- that reads projects.admin_rank (the code falls back to
--- newest-first if the column is missing, but run this first).
+-- Run in Supabase SQL Editor BEFORE deploying the code that
+-- reads it (the code falls back to newest-first if it is
+-- missing, but run this first). Safe to re-run: every
+-- statement is idempotent.
 --
 -- 1. projects.admin_rank — admin-pinned position.
---    null  = not pinned (listed after pinned pitches, newest first)
+--    null  = not pinned
 --    lower = higher up. The admin page writes 10, 20, 30…
 --
 -- 2. guard_project_admin_fields() — only an admin may set
@@ -18,9 +19,15 @@
 --
 --    Non-admin changes to these two columns are silently kept at
 --    their previous values rather than rejected, so an ordinary
---    project edit that happens to send them never fails.
+--    project edit — or the love_count trigger (022), which updates
+--    projects as the person pressing Love — never fails.
 --    Service-role calls and the SQL Editor (no signed-in user)
 --    are not affected.
+--
+-- 3. pitch_order_config — what comes after the pinned pitches:
+--    'newest' (default) or 'likes' (most-loved first, then newest).
+--    One row, readable by everyone (listings read it), written by
+--    admins only. Same shape as featured_config (097).
 -- ============================================================
 
 -- ---------- 1. Column ----------
@@ -60,8 +67,41 @@ create trigger trg_guard_project_admin_fields
   before insert or update on public.projects
   for each row execute function public.guard_project_admin_fields();
 
--- ---------- 3. Verify (optional) ----------
+-- ---------- 3. Order mode after the pinned pitches ----------
+create table if not exists public.pitch_order_config (
+  id          boolean primary key default true check (id),
+  mode        text not null default 'newest' check (mode in ('newest', 'likes')),
+  updated_at  timestamptz not null default now(),
+  updated_by  uuid references public.profiles(id) on delete set null
+);
+
+insert into public.pitch_order_config (id) values (true)
+on conflict (id) do nothing;
+
+alter table public.pitch_order_config enable row level security;
+
+revoke insert, update, delete on public.pitch_order_config from anon;
+grant  select on public.pitch_order_config to anon, authenticated;
+
+drop policy if exists "read pitch order config" on public.pitch_order_config;
+create policy "read pitch order config"
+  on public.pitch_order_config for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "admin writes pitch order config" on public.pitch_order_config;
+create policy "admin writes pitch order config"
+  on public.pitch_order_config for all
+  using      (public.is_admin())
+  with check (public.is_admin());
+
+-- Most-loved ordering reads love_count (kept in sync by migration 022).
+create index if not exists idx_projects_love_count
+  on public.projects (love_count desc, created_at desc);
+
+-- ---------- 4. Verify (optional) ----------
 -- select column_name from information_schema.columns
 --  where table_schema = 'public' and table_name = 'projects' and column_name = 'admin_rank';
 -- select tgname from pg_trigger
 --  where tgrelid = 'public.projects'::regclass and tgname = 'trg_guard_project_admin_fields';
+-- select mode from public.pitch_order_config;   -- expect: newest

@@ -10,7 +10,9 @@
 // on Unpin or View is never swallowed by a drag.
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { pinPitch, unpinPitch, reorderPinnedPitches } from "@/lib/pitch-order-actions";
+import { pinPitch, unpinPitch, reorderPinnedPitches, setPitchOrderMode } from "@/lib/pitch-order-actions";
+
+type Mode = "newest" | "likes";
 
 export type OrderPitch = {
   id: string;
@@ -22,7 +24,22 @@ export type OrderPitch = {
   adminHidden: boolean;
   exclusive: boolean;
   createdAt: string;
+  loveCount: number;
 };
+
+/** The order the unpinned pitches are listed in, for the chosen mode. */
+function sortRest(list: OrderPitch[], mode: Mode): OrderPitch[] {
+  return [...list].sort((a, b) =>
+    (mode === "likes" ? b.loveCount - a.loveCount : 0) || b.createdAt.localeCompare(a.createdAt));
+}
+
+function Loves({ n }: { n: number }) {
+  return (
+    <span className="text-[12px] text-ash tabular-nums" title={`${n} ${n === 1 ? "like" : "likes"}`}>
+      <span aria-hidden="true" className="text-gold">♥</span> {n}
+    </span>
+  );
+}
 
 function move(ids: string[], id: string, to: number): string[] {
   const next = ids.filter((x) => x !== id);
@@ -52,9 +69,11 @@ function Visibility({ p }: { p: OrderPitch }) {
   return null;
 }
 
-export default function PitchOrderList({ pinned, rest }: { pinned: OrderPitch[]; rest: OrderPitch[] }) {
+export default function PitchOrderList({ pinned, rest, mode }: { pinned: OrderPitch[]; rest: OrderPitch[]; mode: Mode }) {
   const [localPinned, setLocalPinned] = useState(pinned);
   const [localRest, setLocalRest]     = useState(rest);
+  const [localMode, setLocalMode]     = useState<Mode>(mode);
+  const [modeBusy, setModeBusy]       = useState(false);
   const [armedId, setArmedId]         = useState<string | null>(null);
   const [dragId, setDragId]           = useState<string | null>(null);
   const [marker, setMarker]           = useState<{ index: number; before: boolean } | null>(null);
@@ -73,6 +92,30 @@ export default function PitchOrderList({ pinned, rest }: { pinned: OrderPitch[];
     setLocalPinned(pinned);
     setLocalRest(rest);
   }, [pinned, rest]);
+  useEffect(() => { setLocalMode(mode); }, [mode]);
+
+  function chooseMode(next: Mode) {
+    if (next === localMode || modeBusy) return;
+    setError(null);
+    setModeBusy(true);
+    setLocalMode(next);
+    setLocalRest((prev) => sortRest(prev, next));
+    start(async () => {
+      const res = await setPitchOrderMode(next);
+      setModeBusy(false);
+      if (res.error) { setLocalMode(mode); setLocalRest(sortRest(rest, mode)); setError(res.error); }
+    });
+  }
+
+  function sortPinnedByLikes() {
+    // Stable: equal likes keep their current relative order.
+    const ids = localPinned
+      .map((p, i) => ({ p, i }))
+      .sort((a, b) => b.p.loveCount - a.p.loveCount || a.i - b.i)
+      .map(({ p }) => p.id);
+    if (ids.join(",") === localPinned.map((p) => p.id).join(",")) return;
+    commit(ids);
+  }
 
   const filteredRest = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -112,7 +155,7 @@ export default function PitchOrderList({ pinned, rest }: { pinned: OrderPitch[];
     pendingOrder.current = nextIds;
     setLocalPinned((prev) => prev.filter((x) => x.id !== p.id));
     if (p.isPublic && !p.adminHidden) {
-      setLocalRest((prev) => [...prev, p].sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+      setLocalRest((prev) => sortRest([...prev, p], localMode));
     }
     start(async () => {
       const res = await unpinPitch(p.id);
@@ -142,15 +185,51 @@ export default function PitchOrderList({ pinned, rest }: { pinned: OrderPitch[];
         </p>
       )}
 
+      {/* ── Order after the pinned pitches ── */}
+      <section className="border border-line rounded-card px-5 py-4 flex flex-wrap items-center justify-between gap-4 bg-white/60">
+        <div className="min-w-0">
+          <p className="text-[14px] text-ink">After the pinned pitches, list the rest</p>
+          <p className="text-[12px] text-ash mt-0.5">
+            {localMode === "likes"
+              ? "Most liked first. Pitches with the same number of likes are listed newest first."
+              : "Newest first."}
+          </p>
+        </div>
+        <div role="radiogroup" aria-label="Order after the pinned pitches" className="inline-flex rounded-full border border-line p-1 bg-white">
+          {([["newest", "Newest first"], ["likes", "Most liked first"]] as [Mode, string][]).map(([value, label]) => (
+            <button
+              key={value}
+              id={`pitch-order-mode-${value}`}
+              type="button"
+              role="radio"
+              aria-checked={localMode === value}
+              disabled={modeBusy}
+              onClick={() => chooseMode(value)}
+              className={`rounded-full px-4 py-1.5 text-[11px] tracking-[0.12em] uppercase transition-colors ${
+                localMode === value ? "bg-ink text-ivory" : "text-ash hover:text-ink"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+
       {/* ── Pinned ── */}
       <section>
-        <div className="flex items-baseline justify-between gap-4 mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <p className="eyebrow">Pinned to the top{localPinned.length > 0 ? ` · ${localPinned.length}` : ""}</p>
+          {localPinned.length > 1 && (
+            <button type="button" onClick={sortPinnedByLikes} className={btn}
+              title="Reorder the pinned list once, most liked first. You can still drag afterwards.">
+              Sort pinned by likes
+            </button>
+          )}
         </div>
 
         {localPinned.length === 0 ? (
           <p className="text-[14px] text-ash border border-line rounded-card px-5 py-6 max-w-2xl">
-            Nothing pinned. Every listing shows the newest pitch first. Pin a pitch below to put it at the top.
+            Nothing pinned. Every listing follows the order set above. Pin a pitch below to put it at the top.
           </p>
         ) : (
           <div className="border-t border-line" onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
@@ -207,6 +286,7 @@ export default function PitchOrderList({ pinned, rest }: { pinned: OrderPitch[];
                       <p className="text-[13px] font-semibold uppercase text-ink" style={{ letterSpacing: "-0.01em" }}>{p.title}</p>
                       <div className="mt-0.5 flex flex-wrap items-center gap-2">
                         {p.meta && <span className="text-[12px] text-ash">{p.meta}</span>}
+                        <Loves n={p.loveCount} />
                         <Visibility p={p} />
                       </div>
                     </div>
@@ -229,7 +309,7 @@ export default function PitchOrderList({ pinned, rest }: { pinned: OrderPitch[];
       <section>
         <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
           <div>
-            <p className="eyebrow">Other public pitches · newest first</p>
+            <p className="eyebrow">Other public pitches · {localMode === "likes" ? "most liked first" : "newest first"}</p>
             <p className="text-[12px] text-ash mt-1.5">Pinning adds a pitch to the end of the pinned list. Drag it higher from there.</p>
           </div>
           <input
@@ -254,7 +334,10 @@ export default function PitchOrderList({ pinned, rest }: { pinned: OrderPitch[];
                 <Thumb url={p.imageUrl} />
                 <div className="min-w-[180px] flex-1">
                   <p className="text-[13px] font-semibold uppercase text-ink" style={{ letterSpacing: "-0.01em" }}>{p.title}</p>
-                  {p.meta && <p className="mt-0.5 text-[12px] text-ash">{p.meta}</p>}
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                    {p.meta && <span className="text-[12px] text-ash">{p.meta}</span>}
+                    <Loves n={p.loveCount} />
+                  </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
                   <a href={p.href} target="_blank" rel="noopener" className={btn}>View</a>

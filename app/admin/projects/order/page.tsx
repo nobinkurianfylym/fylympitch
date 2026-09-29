@@ -2,11 +2,12 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { preferThumb } from "@/lib/poster-url";
 import PitchOrderList, { type OrderPitch } from "./PitchOrderList";
+import type { PitchOrderMode } from "@/lib/pitch-order";
 
 export const dynamic = "force-dynamic";
 
 const SELECT =
-  "id, slug, title, format, country, poster_path, is_public, admin_hidden, target_producer_id, created_at, admin_rank, filmmaker:profiles!projects_owner_id_fkey(full_name)";
+  "id, slug, title, format, country, poster_path, is_public, admin_hidden, target_producer_id, created_at, admin_rank, love_count, filmmaker:profiles!projects_owner_id_fkey(full_name)";
 
 function toPitch(p: any): OrderPitch {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
@@ -21,22 +22,30 @@ function toPitch(p: any): OrderPitch {
     adminHidden: !!p.admin_hidden,
     exclusive: !!p.target_producer_id,
     createdAt: p.created_at,
+    loveCount: Number(p.love_count ?? 0),
   };
 }
 
 export default async function PitchOrderPage() {
   const supabase = await createClient();
 
+  // Read directly, not through the cached getter: this page must show the
+  // setting as it is right now.
+  const { data: config } = await supabase.from("pitch_order_config").select("mode").maybeSingle();
+  const mode: PitchOrderMode = config?.mode === "likes" ? "likes" : "newest";
+
+  let restQuery = supabase.from("projects").select(SELECT)
+    .is("admin_rank", null)
+    .eq("is_public", true)
+    .eq("admin_hidden", false);
+  if (mode === "likes") restQuery = restQuery.order("love_count", { ascending: false });
+  restQuery = restQuery.order("created_at", { ascending: false }).limit(300);
+
   const [pinnedRes, restRes] = await Promise.all([
     supabase.from("projects").select(SELECT)
       .not("admin_rank", "is", null)
       .order("admin_rank", { ascending: true }),
-    supabase.from("projects").select(SELECT)
-      .is("admin_rank", null)
-      .eq("is_public", true)
-      .eq("admin_hidden", false)
-      .order("created_at", { ascending: false })
-      .limit(300),
+    restQuery,
   ]);
 
   const missingColumn = [pinnedRes.error, restRes.error].some((e) => e && /admin_rank/i.test(e.message));
@@ -51,7 +60,8 @@ export default async function PitchOrderPage() {
           <p className="text-[13px] leading-[1.7] text-ash mt-3 max-w-2xl">
             Pinned pitches are listed first, in the order below, on the Film Projects showcase,
             Producer Studio → All Projects, and Discover for approved industry accounts. Every other
-            pitch follows, newest first. Producer Studio&rsquo;s personal top matches stay ranked by match.
+            pitch follows, newest first or most liked first, as set below. Producer Studio&rsquo;s
+            personal top matches stay ranked by match.
           </p>
         </div>
         <Link href="/admin/projects" className="btn-ghost">Back to projects</Link>
@@ -70,6 +80,7 @@ export default async function PitchOrderPage() {
         <PitchOrderList
           pinned={(pinnedRes.data ?? []).map(toPitch)}
           rest={(restRes.data ?? []).map(toPitch)}
+          mode={mode}
         />
       )}
     </div>
