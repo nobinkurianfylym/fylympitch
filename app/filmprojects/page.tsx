@@ -95,7 +95,11 @@ export default async function ProjectsPage({
           .eq("user_id", user.id)
           .in("project_id", projects.map((p: any) => p.id))
       : Promise.resolve({ data: null }),
-    deckPaths.length
+    // Signed only for signed-in visitors. The pitch-decks bucket refuses to
+    // sign for an anonymous reader (measured: 15 of 15 refused), so for every
+    // logged-out visit this was a round trip to Supabase Storage that came
+    // back empty-handed -- the single largest cost on this page.
+    user && deckPaths.length
       ? supabase.storage.from("pitch-decks")
           .createSignedUrls(deckPaths.map((p: any) => p.pitch_deck_path), 3600)
       : Promise.resolve({ data: null }),
@@ -207,7 +211,10 @@ export default async function ProjectsPage({
                     deckUrl: deckUrlMap.get(p.id) ?? null,
                   }}
                   supabaseUrl={supabaseUrl}
-                  href={`/filmprojects/${p.id}`}
+                  // The slug, not the id. /filmprojects/<id> looks the slug up
+                  // and redirects, so an id link cost every click a second
+                  // page load.
+                  href={`/filmprojects/${p.slug ?? p.id}`}
                   actions={
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">

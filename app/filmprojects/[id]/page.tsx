@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
@@ -102,7 +103,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
   }
 
   const { data: p } = await supabase.from("projects")
-    .select("id, slug, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, director_name, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, is_public, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username)")
+    .select("id, slug, title, genre, format, stage, language, country, logline, synopsis, director_statement, producer_info, director_name, budget_currency, budget_usd, finance_secured_usd, funding_needed_usd, is_public, poster_path, deck_cover_path, pitch_deck_path, love_count, owner_id, filmmaker:profiles!projects_owner_id_fkey(full_name, avatar_url, career_stage, username, credits:filmmaker_credits(id, title, year, festivals, awards))")
     .eq(isUuid ? "id" : "slug", id)
     .eq("is_public", true)
     .eq("admin_hidden", false)
@@ -113,13 +114,23 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
 
   if (!p) notFound();
 
-  const { data: filmmakerCredits } = await supabase
-    .from("filmmaker_credits").select("*").eq("user_id", p.owner_id).order("year", { ascending: false });
-
   const filmmaker = Array.isArray(p.filmmaker) ? p.filmmaker[0] : p.filmmaker;
+
+  // Credits arrive with the project (embedded above) instead of in a second
+  // query that had to wait for this one to return the owner's id. Newest
+  // first, undated first, as `order by year desc` gave.
+  const filmmakerCredits = [...((filmmaker as any)?.credits ?? [])].sort(
+    (a: any, b: any) => (b.year ?? Infinity) - (a.year ?? Infinity),
+  );
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
-  const deckUrl = (!p.poster_path && !p.deck_cover_path && p.pitch_deck_path)
+  // Only attempted for a signed-in visitor. The pitch-decks bucket refuses to
+  // sign for an anonymous reader, so for everyone else this was one more
+  // round trip that always returned nothing. A cookie is only a reason to
+  // try; storage policy still decides.
+  const cookieStore = await cookies();
+  const signedIn = cookieStore.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
+  const deckUrl = (signedIn && !p.poster_path && !p.deck_cover_path && p.pitch_deck_path)
     ? (await supabase.storage.from("pitch-decks").createSignedUrl(p.pitch_deck_path, 3600)).data?.signedUrl
     : null;
 
