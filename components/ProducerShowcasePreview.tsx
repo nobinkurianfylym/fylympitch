@@ -17,7 +17,8 @@ import { sized, srcSet2x } from "@/lib/image-url";
 import { preferThumb } from "@/lib/poster-url";
 import { supabaseUrl } from "@/lib/supabase/env";
 import { formatCountry, formatFormat, formatStage } from "@/lib/film-identity";
-import type { SampleProject } from "@/lib/cached-queries";
+import { getProducerSampleProjects, type SampleProject } from "@/lib/cached-queries";
+import { getEngineDemo } from "@/components/HomepageDemo";
 
 function posterUrl(path: string): string | null {
   try {
@@ -25,6 +26,16 @@ function posterUrl(path: string): string | null {
   } catch {
     return null; // env missing at build time; the frame shows its plate
   }
+}
+
+/**
+ * The column with its data, streamed on the homepage like the engine demo.
+ * Never shows a pitch the engine section above is already showing.
+ */
+export async function ProducerShowcaseLive() {
+  const [candidates, demo] = await Promise.all([getProducerSampleProjects(), getEngineDemo()]);
+  const shown = new Set(demo.ids);
+  return <ProducerShowcasePreview projects={candidates.filter((p) => !shown.has(p.id)).slice(0, 3)} />;
 }
 
 export default function ProducerShowcasePreview({ projects }: { projects: SampleProject[] }) {

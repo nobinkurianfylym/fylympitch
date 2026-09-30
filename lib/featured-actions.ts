@@ -6,7 +6,7 @@
 // is so the UI gets a sentence rather than a silent no-op.
 
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 const BUCKET = "featured-images";
 
@@ -24,6 +24,8 @@ const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 const nil = (v: string) => (v === "" ? null : v);
 
 function refresh() {
+  // The homepage card is cached under "featured" (lib/featured.ts).
+  revalidateTag("featured", { expire: 0 });
   revalidatePath("/admin/featured");
   revalidatePath("/");
 }

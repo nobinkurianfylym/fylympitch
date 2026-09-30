@@ -1,12 +1,12 @@
-import { cache } from "react";
+import { cache, Suspense } from "react";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
 import { Footer } from "@/components/Footer";
 import ShareLinkButton from "@/components/ShareLinkButton";
-import HomepageDemo, { getEngineDemo, getFilmmakerSectionMatches } from "@/components/HomepageDemo";
-import FilmmakerMatchesPreview from "@/components/FilmmakerMatchesPreview";
-import ProducerShowcasePreview from "@/components/ProducerShowcasePreview";
+import HomepageDemo from "@/components/HomepageDemo";
+import { FilmmakerMatchesLive } from "@/components/FilmmakerMatchesPreview";
+import { ProducerShowcaseLive } from "@/components/ProducerShowcasePreview";
 import HeroToggle from "@/components/HeroToggle";
 import FeaturedCard from "@/components/FeaturedCard";
 
@@ -21,7 +21,16 @@ import ProducerProjectTicker from "@/components/ProducerProjectTicker";
 import { Icon } from "@/components/Icon";
 import type { Metadata } from "next";
 import { pageMetadata } from "@/lib/seo";
-import { getTrendingProjects, getOpportunityCount, getProducerSampleProjects } from "@/lib/cached-queries";
+import { getTrendingProjects, getOpportunityCount } from "@/lib/cached-queries";
+
+/**
+ * Holds the space of a streamed section while its data arrives, so nothing
+ * below it jumps when it lands. On a warm cache the section is ready before
+ * the page is sent and this is never seen.
+ */
+function SectionHold({ className }: { className: string }) {
+  return <div aria-hidden="true" className={className} />;
+}
 
 /**
  * The date on the sample certificate in the Proof of Existence section.
@@ -101,23 +110,16 @@ export default async function Home() {
   // the page spent three round-trips to Supabase doing nothing but waiting.
   // The queries themselves take single-digit milliseconds; the latency is the
   // hop, and the hop is what this removes.
-  const [userRes, trendingProjects, oppCount, producerCandidates, engineDemo, filmmakerMatches] = await Promise.all([
+  //
+  // Only what the header and hero need is awaited here. The engine-driven
+  // sections further down (the engine demo, "For filmmakers", "For
+  // producers") load their own data inside <Suspense>, so the top of the page
+  // is sent as soon as it is ready instead of waiting on the slowest section.
+  const [userRes, trendingProjects, oppCount] = await Promise.all([
     supabase.auth.getUser(),
     getTrendingProjects(),
     getOpportunityCount(),
-    getProducerSampleProjects(),
-    // Cached, and the same call HomepageDemo makes: asking here costs no
-    // second engine run. It says which pitches the engine section shows.
-    getEngineDemo(),
-    // Real engine output for "For filmmakers": a pitch the engine section is
-    // not showing, and three of its matches. Cached like the demo.
-    getFilmmakerSectionMatches(),
   ]);
-
-  // "For producers" shows three real posters, never ones the engine section
-  // above is already showing.
-  const engineDemoIds = new Set(engineDemo.ids);
-  const producerSamples = producerCandidates.filter((p) => !engineDemoIds.has(p.id)).slice(0, 3);
 
   const user = userRes.data.user;
 
@@ -248,7 +250,9 @@ export default async function Home() {
 
       {/* LIVE DEMO */}
       <section id="how" className="max-w-6xl mx-auto px-6 py-24 md:py-32">
-        <HomepageDemo />
+        <Suspense fallback={<SectionHold className="min-h-[760px]" />}>
+          <HomepageDemo />
+        </Suspense>
       </section>
 
       {/* PROOF OF EXISTENCE */}
@@ -435,7 +439,9 @@ export default async function Home() {
             </div>
 
             {/* Right — real matches for a real public pitch, with funder logos */}
-            <FilmmakerMatchesPreview data={filmmakerMatches} />
+            <Suspense fallback={<SectionHold className="min-h-[520px]" />}>
+              <FilmmakerMatchesLive />
+            </Suspense>
 
           </div>
         </div>
@@ -471,7 +477,9 @@ export default async function Home() {
             </div>
 
             {/* Right — real public pitches with their posters */}
-            <ProducerShowcasePreview projects={producerSamples} />
+            <Suspense fallback={<SectionHold className="min-h-[440px]" />}>
+              <ProducerShowcaseLive />
+            </Suspense>
 
           </div>
         </div>

@@ -16,6 +16,7 @@
 // instead — the section degrades to honest illustration rather than to an
 // empty frame or a single lonely card.
 
+import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { getShowcaseProjects, getActiveOpportunitiesForEngine, type ShowcaseProject } from "@/lib/cached-queries";
 import { fundLogo, fundMonogram } from "@/lib/fund-logos";
@@ -88,7 +89,7 @@ function toEngineProject(c: ShowcaseProject): any {
  * a static import of engine code in a high-traffic page is what drove the
  * Worker CPU overruns.
  */
-export const getEngineDemo = unstable_cache(
+const engineDemoCached = unstable_cache(
   async (): Promise<{ projects: DemoProject[]; ids: string[]; live: boolean }> => {
     const { computeFundingReadiness, rankHybridMatches } = await import("@/services/fylympitchEngine");
     const [candidates, opportunities] = await Promise.all([
@@ -151,6 +152,17 @@ export const getEngineDemo = unstable_cache(
   ["homepage-engine-demo"],
   { revalidate: 300, tags: ["projects", "opportunities"] },
 );
+
+/**
+ * The engine demo, asked for once per request.
+ *
+ * Three homepage sections read it (the engine demo itself, "For filmmakers"
+ * and "For producers"), and they now render side by side as streamed
+ * sections. On a cold cache — the first visitor after a deploy — unstable_cache
+ * alone would run the engine three times at once; React's cache() makes the
+ * other two wait for the first run instead.
+ */
+export const getEngineDemo = cache(() => engineDemoCached());
 
 export type FilmmakerMatch = {
   name: string;

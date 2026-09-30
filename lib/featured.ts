@@ -8,8 +8,16 @@
 // render on a given day picks the same card, and a day that is
 // missed simply never happens rather than shunting the queue.
 
+import { unstable_cache } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAnonClient } from "@/lib/supabase/anon";
 import { preferThumb } from "@/lib/poster-url";
+
+/**
+ * Either Supabase client. The admin schedule reads with the admin's session;
+ * the homepage card reads as an anonymous visitor, from the shared cache.
+ */
+type Db = Awaited<ReturnType<typeof createClient>> | ReturnType<typeof createAnonClient>;
 
 export type FeaturedKind = "fund" | "producer" | "project" | "custom";
 
@@ -114,8 +122,8 @@ export function pickForDay(
 }
 
 /** The day the queue was last arranged. Position one belongs to it. */
-export async function anchorDay(): Promise<number> {
-  const supabase = await createClient();
+export async function anchorDay(db?: Db): Promise<number> {
+  const supabase: any = db ?? await createClient();
   const { data } = await supabase
     .from("featured_config").select("anchor_date").eq("id", true).maybeSingle();
   if (!data?.anchor_date) return 0;
@@ -123,8 +131,8 @@ export async function anchorDay(): Promise<number> {
   return Number.isNaN(t) ? 0 : Math.floor(t / 86_400_000);
 }
 
-async function activeSlots(): Promise<FeaturedSlot[]> {
-  const supabase = await createClient();
+async function activeSlots(db?: Db): Promise<FeaturedSlot[]> {
+  const supabase: any = db ?? await createClient();
   const { data } = await supabase
     .from("featured_slots")
     .select("*")
@@ -157,8 +165,8 @@ const money = (n: number | null) =>
  * so an admin can fix a title or a hook without touching the fund,
  * the profile or the project it refers to.
  */
-async function hydrate(slot: FeaturedSlot): Promise<FeaturedCardData | null> {
-  const supabase = await createClient();
+async function hydrate(slot: FeaturedSlot, db?: Db): Promise<FeaturedCardData | null> {
+  const supabase: any = db ?? await createClient();
 
   let title    = slot.title ?? null;
   let subtitle = slot.subtitle ?? null;
@@ -297,8 +305,9 @@ const AUTO_KINDS: FeaturedKind[] = ["fund", "producer", "project"];
 async function autoPick(
   day: number,
   prefer: FeaturedKind,
+  db?: Db,
 ): Promise<{ kind: FeaturedKind; ref_id: string } | null> {
-  const supabase = await createClient();
+  const supabase: any = db ?? await createClient();
   const turn = Math.floor(day / AUTO_KINDS.length);
 
   // Try the day's own kind first, then the others, so an empty pool
@@ -374,26 +383,53 @@ async function autoPick(
  * Today's card. The admin queue wins. With nothing queued, the column
  * rotates fund, producer, project on its own, so it is never blank and
  * never the same thing two days running.
+ *
+ * Cached. This card sits in the homepage hero, and uncached it cost two to
+ * four Supabase round trips, one after another, on every single homepage
+ * request: slots and anchor, then the fund or project, then the match count.
+ * That chain was the largest part of the homepage's server time.
+ *
+ * The day number is the cache key's argument, so midnight UTC starts a fresh
+ * entry and the rotation still turns on the date alone. Within a day an
+ * admin edit shows up within five minutes.
+ *
+ * Read as an anonymous visitor. That is what most people who see this card
+ * are, and it keeps the private-project rule enforced twice: by the
+ * is_public check in hydrate and by RLS.
  */
+const featuredForDay = unstable_cache(
+  async (day: number): Promise<FeaturedCardData | null> => {
+    const db = createAnonClient();
+    const [slots, anchor] = await Promise.all([activeSlots(db), anchorDay(db)]);
+
+    const { kind, slot } = pickForDay(slots, day, anchor);
+    if (slot) {
+      const card = await hydrate(slot, db);
+      if (card) return card;
+    }
+
+    const auto = await autoPick(day, kind, db);
+    if (!auto) return null;
+
+    return hydrate({
+      id: "auto", kind: auto.kind, ref_id: auto.ref_id,
+      title: null, subtitle: null, hook: null, image_url: null,
+      link_url: null, cta_label: null, rows: [],
+      sort_order: 0, is_active: true, created_at: "",
+    }, db);
+  },
+  ["featured-today"],
+  { revalidate: 300, tags: ["featured", "projects", "opportunities"] },
+);
+
 export async function getFeaturedToday(): Promise<FeaturedCardData | null> {
-  const [slots, anchor] = await Promise.all([activeSlots(), anchorDay()]);
-  const day = dayNumber();
-
-  const { kind, slot } = pickForDay(slots, day, anchor);
-  if (slot) {
-    const card = await hydrate(slot);
-    if (card) return card;
+  try {
+    return await featuredForDay(dayNumber());
+  } catch (err) {
+    // The hero must render whatever happens to this column.
+    console.error("[featured] getFeaturedToday failed:", err);
+    return null;
   }
-
-  const auto = await autoPick(day, kind);
-  if (!auto) return null;
-
-  return hydrate({
-    id: "auto", kind: auto.kind, ref_id: auto.ref_id,
-    title: null, subtitle: null, hook: null, image_url: null,
-    link_url: null, cta_label: null, rows: [],
-    sort_order: 0, is_active: true, created_at: "",
-  });
 }
 
 /**

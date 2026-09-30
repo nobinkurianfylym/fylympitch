@@ -9,7 +9,17 @@
 // tile shows the funder's initials instead; never a guessed logo.
 
 import Link from "next/link";
-import type { FilmmakerMatches } from "@/components/HomepageDemo";
+import { getFilmmakerSectionMatches, type FilmmakerMatches } from "@/components/HomepageDemo";
+
+/**
+ * The column with its data. Rendered inside <Suspense> on the homepage, so
+ * the engine work behind it (cached, but not free on a cold cache) never
+ * holds up the hero.
+ */
+export async function FilmmakerMatchesLive() {
+  const data = await getFilmmakerSectionMatches();
+  return <FilmmakerMatchesPreview data={data} />;
+}
 
 export default function FilmmakerMatchesPreview({ data }: { data: FilmmakerMatches | null }) {
   return (
